@@ -149,6 +149,33 @@ class DSGCNBlock(nn.Module):
 
 
 # ══════════════════════════════════════════════════════════════════
+#  SECTION 2b — JOINT INDICES, GEOMETRIC FEATURES, DROPPATH
+# ══════════════════════════════════════════════════════════════════
+
+_THUMB_MCP  = 2;  _THUMB_IP   = 3;  _THUMB_TIP  = 4
+_INDEX_MCP  = 5;  _INDEX_PIP  = 6;  _INDEX_TIP  = 8
+_MIDDLE_MCP = 9;  _MIDDLE_PIP = 10; _MIDDLE_TIP = 12
+_RING_MCP   = 13; _RING_PIP   = 14; _RING_TIP   = 16
+_PINKY_MCP  = 17; _PINKY_PIP  = 18; _PINKY_TIP  = 20
+
+N_GEO_FEATURES = 12
+
+
+class DropPath(nn.Module):
+    """Stochastic depth: randomly skip transformer residuals during training."""
+    def __init__(self, drop_prob=0.0):
+        super().__init__()
+        self.drop_prob = drop_prob
+
+    def forward(self, x):
+        if not self.training or self.drop_prob == 0.0:
+            return x
+        keep = 1.0 - self.drop_prob
+        shape = (x.shape[0],) + (1,) * (x.ndim - 1)
+        return x * (torch.rand(shape, device=x.device) < keep) / keep
+
+
+# ══════════════════════════════════════════════════════════════════
 #  SECTION 3 — ENCODER
 #  Produces a temporal sequence of sign features.
 #  Output: [B, T, d_model]  — sequence is PRESERVED, not pooled.
@@ -165,19 +192,18 @@ class DSGCNEncoder(nn.Module):
     Input : [B, 32, 21, 9]
     Output: [B, 32, d_model]   — full temporal sequence, no pooling
 
-    Stage 1: downstream head mean-pools this and classifies
+    Stage 1: downstream head attention-pools this and classifies
     Stage 2: downstream CTC head takes this directly
     Stage 3: not involved (pure text stage)
     """
     def __init__(self, in_channels=9, d_model=256,
-                 nhead=8, num_transformer_layers=4, dropout=0.1):
+                 nhead=8, num_transformer_layers=4, dropout=0.1,
+                 drop_path_rate=0.1):
         super().__init__()
 
         A = build_adjacency_matrices(21)
         self.register_buffer('A', A)   # [3, 21, 21] fixed, not learned
 
-        # Per-sample LayerNorm on channel dim.
-        # Works identically at B=256 (training) and B=1 (webcam inference).
         self.input_norm = nn.LayerNorm(in_channels)
 
         self.input_proj = nn.Sequential(
@@ -191,25 +217,37 @@ class DSGCNEncoder(nn.Module):
         self.gcn2 = DSGCNBlock(128,      128,     temporal_kernel=3, dropout=dropout)
         self.gcn3 = DSGCNBlock(128,      d_model, temporal_kernel=5, dropout=dropout)
 
+        # Attention pooling over 21 nodes (replaces lossy mean pool)
+        self.node_attn = nn.Sequential(
+            nn.Linear(d_model, d_model // 4),
+            nn.GELU(),
+            nn.Linear(d_model // 4, 1),
+        )
+
+        # Geometric feature branch: 12 hand-shape descriptors → fused with GCN output
+        self.geo_norm = nn.LayerNorm(N_GEO_FEATURES)
+        self.geo_proj = nn.Linear(d_model + N_GEO_FEATURES, d_model)
+
         # Learned positional encoding for the 32-frame temporal axis
         self.pos_enc = nn.Parameter(torch.zeros(1, 32, d_model))
         nn.init.trunc_normal_(self.pos_enc, std=0.02)
 
-        # Transformer Encoder — temporal context across 32 frames
-        # Pre-LN (norm_first=True) is more stable than Post-LN for deep stacks
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=d_model, nhead=nhead,
-            dim_feedforward=d_model * 4,
-            dropout=dropout,
-            activation='gelu',
-            batch_first=True,
-            norm_first=True,
-        )
-        self.transformer = nn.TransformerEncoder(
-            encoder_layer,
-            num_layers=num_transformer_layers,
-            enable_nested_tensor=False,   # required for MPS + DataParallel
-        )
+        # Transformer with stochastic depth (DropPath)
+        dp_rates = [drop_path_rate * i / max(num_transformer_layers - 1, 1)
+                    for i in range(num_transformer_layers)]
+        self.transformer_layers = nn.ModuleList()
+        self.drop_paths = nn.ModuleList()
+        for dp in dp_rates:
+            self.transformer_layers.append(nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead,
+                dim_feedforward=d_model * 4,
+                dropout=dropout,
+                activation='gelu',
+                batch_first=True,
+                norm_first=True,
+            ))
+            self.drop_paths.append(DropPath(dp))
+        self.transformer_norm = nn.LayerNorm(d_model)
 
         self._init_weights()
 
@@ -222,17 +260,68 @@ class DSGCNEncoder(nn.Module):
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
+    @staticmethod
+    def _geo_dist(a, b):
+        return torch.sqrt(((a - b) ** 2).sum(dim=-1) + 1e-6)
+
+    def _compute_geo_features(self, xyz):
+        """12 hand-shape descriptors from xyz positions [B, T, 21, 3]."""
+        d = self._geo_dist
+
+        tips = [
+            d(xyz[:,:,_THUMB_TIP],  xyz[:,:,_INDEX_TIP]),
+            d(xyz[:,:,_INDEX_TIP],  xyz[:,:,_MIDDLE_TIP]),
+            d(xyz[:,:,_MIDDLE_TIP], xyz[:,:,_RING_TIP]),
+            d(xyz[:,:,_RING_TIP],   xyz[:,:,_PINKY_TIP]),
+            d(xyz[:,:,_THUMB_TIP],  xyz[:,:,_PINKY_TIP]),
+        ]
+
+        curls = [
+            d(xyz[:,:,_THUMB_MCP],  xyz[:,:,_THUMB_TIP])
+                / (d(xyz[:,:,_THUMB_MCP],  xyz[:,:,_THUMB_IP])   + 1e-4),
+            d(xyz[:,:,_INDEX_MCP],  xyz[:,:,_INDEX_TIP])
+                / (d(xyz[:,:,_INDEX_MCP],  xyz[:,:,_INDEX_PIP])  + 1e-4),
+            d(xyz[:,:,_MIDDLE_MCP], xyz[:,:,_MIDDLE_TIP])
+                / (d(xyz[:,:,_MIDDLE_MCP], xyz[:,:,_MIDDLE_PIP]) + 1e-4),
+            d(xyz[:,:,_RING_MCP],   xyz[:,:,_RING_TIP])
+                / (d(xyz[:,:,_RING_MCP],   xyz[:,:,_RING_PIP])  + 1e-4),
+            d(xyz[:,:,_PINKY_MCP],  xyz[:,:,_PINKY_TIP])
+                / (d(xyz[:,:,_PINKY_MCP],  xyz[:,:,_PINKY_PIP]) + 1e-4),
+        ]
+
+        cross_idx_mid  = xyz[:,:,_INDEX_TIP,0] - xyz[:,:,_MIDDLE_TIP,0]
+        d_thumb_idxmcp = d(xyz[:,:,_THUMB_TIP], xyz[:,:,_INDEX_MCP])
+
+        return torch.stack(tips + curls + [cross_idx_mid, d_thumb_idxmcp], dim=-1)
+
     def forward(self, x):
         # x: [B, 32, 21, 9]
-        h = self.input_norm(x)      # [B, 32, 21, 9]
-        h = self.input_proj(h)      # [B, 32, 21, 64]
-        h = self.gcn1(h, self.A)    # [B, 32, 21, 128]
-        h = self.gcn2(h, self.A)    # [B, 32, 21, 128]
-        h = self.gcn3(h, self.A)    # [B, 32, 21, d_model]
-        h = h.mean(dim=2)           # [B, 32, d_model]  collapse 21 nodes
-        h = h + self.pos_enc        # add temporal positional signal
-        h = self.transformer(h)     # [B, 32, d_model]  — sequence preserved
-        return h                    # Stage 2 loads up to here
+        xyz = x[:, :, :, :3]
+
+        h = self.input_norm(x)           # [B, 32, 21, 9]
+        h = self.input_proj(h)           # [B, 32, 21, 64]
+        h = self.gcn1(h, self.A)         # [B, 32, 21, 128]
+        h = self.gcn2(h, self.A)         # [B, 32, 21, 128]
+        h = self.gcn3(h, self.A)         # [B, 32, 21, d_model]
+
+        # Attention pooling over 21 nodes
+        attn = self.node_attn(h).squeeze(-1)          # [B, T, 21]
+        attn = F.softmax(attn, dim=2)
+        h = (h * attn.unsqueeze(-1)).sum(dim=2)       # [B, T, d_model]
+
+        # Fuse geometric features
+        geo = self._compute_geo_features(xyz)         # [B, T, 12]
+        geo = self.geo_norm(geo)
+        h = self.geo_proj(torch.cat([h, geo], dim=-1))  # [B, T, d_model]
+
+        h = h + self.pos_enc
+
+        # Transformer with stochastic depth
+        for layer, dp in zip(self.transformer_layers, self.drop_paths):
+            h = h + dp(layer(h) - h)
+        h = self.transformer_norm(h)
+
+        return h                         # Stage 2 loads up to here
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -245,12 +334,17 @@ class DSGCNEncoder(nn.Module):
 class ClassifierHead(nn.Module):
     """
     Stage 1 classification head.
-    [B, T, d_model] → mean pool → [B, d_model] → [B, num_classes]
+    [B, T, d_model] → attention pool → [B, d_model] → [B, num_classes]
 
     Discarded entirely in Stage 2 — the encoder weights are what matter.
     """
     def __init__(self, d_model=256, num_classes=29, dropout=0.4):
         super().__init__()
+        self.frame_attn = nn.Sequential(
+            nn.Linear(d_model, d_model // 4),
+            nn.GELU(),
+            nn.Linear(d_model // 4, 1),
+        )
         self.net = nn.Sequential(
             nn.LayerNorm(d_model),
             nn.Linear(d_model, d_model * 2),
@@ -266,8 +360,10 @@ class ClassifierHead(nn.Module):
 
     def forward(self, x):
         # x: [B, T, d_model]
-        h = x.mean(dim=1)   # [B, d_model]  — collapse 32 frames
-        return self.net(h)   # [B, num_classes]
+        attn = self.frame_attn(x).squeeze(-1)        # [B, T]
+        attn = F.softmax(attn, dim=1)
+        h = (x * attn.unsqueeze(-1)).sum(dim=1)      # [B, d_model]
+        return self.net(h)                            # [B, num_classes]
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -280,7 +376,7 @@ class ClassifierHead(nn.Module):
 class SLTStage1(nn.Module):
     def __init__(self, num_classes, in_channels=9, d_model=256,
                  nhead=8, num_transformer_layers=4,
-                 dropout=0.1, head_dropout=0.4):
+                 dropout=0.1, head_dropout=0.4, drop_path_rate=0.1):
         super().__init__()
         self.encoder = DSGCNEncoder(
             in_channels=in_channels,
@@ -288,6 +384,7 @@ class SLTStage1(nn.Module):
             nhead=nhead,
             num_transformer_layers=num_transformer_layers,
             dropout=dropout,
+            drop_path_rate=drop_path_rate,
         )
         self.head = ClassifierHead(
             d_model=d_model,
@@ -581,15 +678,15 @@ def train(
     save_dir  = '/kaggle/working/',
 
     # ── Training ───────────────────────────────────────────────────
-    epochs              = 120,
+    epochs              = 200,
     batch_size          = 512,     # GPU-preloaded data eliminates CPU bottleneck
     lr                  = 5e-4,    # scaled up with batch_size (128→512)
     weight_decay        = 0.01,
     warmup_epochs       = 5,      # was 10 — reach peak LR faster
     val_ratio           = 0.15,
-    label_smoothing     = 0.10,    # was 0.05 — model overfits, stronger smoothing helps
+    label_smoothing     = 0.05,
     grad_clip           = 5.0,
-    patience            = 20,     # more room to converge with smaller batches
+    patience            = 30,
     sampler_temperature = 0.5,
 
     # ── Model ──────────────────────────────────────────────────────
@@ -598,7 +695,7 @@ def train(
     nhead                  = 8,
     num_transformer_layers = 4,
     dropout                = 0.10,
-    head_dropout           = 0.25, # raised from 0.15 — model overfits (98% train, 89% val)
+    head_dropout           = 0.15,
 ):
     # ── Device ─────────────────────────────────────────────────────
     device  = torch.device('cuda' if torch.cuda.is_available() else
@@ -741,16 +838,13 @@ def train(
         for x, y in train_loader:
             x = x.to(device, non_blocking=True)
             y = y.to(device, non_blocking=True)
-            x = online_augment(x, rotation_deg=15.0, noise_std=0.005)
-            x, y_a, y_b, lam = mixup_batch(x, y, alpha=0.2)
+            x = online_augment(x)
             optimizer.zero_grad(set_to_none=True)
 
             with torch.amp.autocast('cuda', enabled=use_amp):
                 logits = model(x)
-                loss   = (lam * F.cross_entropy(logits, y_a,
-                                                label_smoothing=label_smoothing) +
-                          (1 - lam) * F.cross_entropy(logits, y_b,
-                                                      label_smoothing=label_smoothing))
+                loss   = F.cross_entropy(logits, y,
+                                         label_smoothing=label_smoothing)
 
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
@@ -759,10 +853,8 @@ def train(
             scaler.update()
 
             epoch_loss  += loss.item()
-            preds = logits.argmax(1)
-            train_corr  += (lam * (preds == y_a).sum().item() +
-                            (1 - lam) * (preds == y_b).sum().item())
-            train_total += y_a.size(0)
+            train_corr  += (logits.argmax(1) == y).sum().item()
+            train_total += y.size(0)
 
         cur_lr = optimizer.param_groups[0]['lr']
         scheduler.step()
