@@ -32,7 +32,7 @@ if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
 # Note: You MUST have train_kaggle.py in the same folder for this to work!
-from train_kaggle import SLTStage1
+from train_stage_1 import SLTStage1
 
 
 # ── Feature pipeline (must match extract_augment.py) ──────────
