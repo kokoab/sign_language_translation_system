@@ -36,7 +36,7 @@ except ImportError:
 # =====================================================================
 # CONFIGURATION
 # =====================================================================
-VIDEO_PATH = "sample_videos/how you.mp4"  
+VIDEO_PATH = "sample_videos/HOW_YOU_training.mp4"  
 STAGE2_CKPT = "weights/stage2_best_model.pth"
 STAGE3_DIR = "weights/slt_final_t5_model"
 
