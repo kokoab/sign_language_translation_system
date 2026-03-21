@@ -21,6 +21,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import mediapipe as mp
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import json
+import pickle
+import math
+from collections import defaultdict
 
 try:
     from train_stage_2 import SLTStage2CTC
@@ -32,19 +35,32 @@ except ImportError:
 # CONFIGURATION
 # =====================================================================
 STAGE2_CKPT = "weights/stage2_best_model.pth"
-STAGE3_DIR = "weights/slt_final_t5_model"
+STAGE3_DIR = "weights/slt_conversational_t5_model"  # Updated to conversational model
+GLOSS_LM_PATH = "weights/gloss_bigram_lm.pkl"  # N-gram language model
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
-# Constants (matching extract.py / test_video_pipeline.py)
+# Constants (ALIGNED with extract.py - this is critical for train/inference consistency!)
 L_WRIST = 0
 R_WRIST = 21
 L_MIDDLE_MCP = 9
 R_MIDDLE_MCP = 30
+NUM_NODES = 47  # 42 hand + 5 face
 TARGET_FRAMES = 32
-MIN_RAW_FRAMES = 5
-MIN_DETECTION_CONF = 0.80
-MIN_TRACKING_CONF = 0.80
-MODEL_COMPLEXITY = 0
+MIN_RAW_FRAMES = 8  # Aligned with extract.py v7.0
+
+# Face landmark indices in MediaPipe FaceMesh
+FACE_LANDMARK_INDICES = [1, 152, 10, 234, 454]  # nose, chin, forehead, left ear, right ear
+
+# MediaPipe configuration (ALIGNED with extract.py for consistency)
+MIN_DETECTION_CONF = 0.80  # Upgraded to 0.80 per Master Plan
+MIN_TRACKING_CONF = 0.80   # Upgraded to 0.80 per Master Plan
+MODEL_COMPLEXITY = 1       # Was 0 - now matches extract.py
+
+# Confidence threshold for rejecting low-confidence predictions
+MIN_CONFIDENCE_THRESHOLD = 0.15
+
+# Language model weight for beam search rescoring
+LM_WEIGHT = 0.3
 
 # Camera buffer: max frames to keep (e.g. ~3 sec at 30 fps)
 CAMERA_BUFFER_MAX = 120
@@ -52,6 +68,13 @@ CAMERA_BUFFER_MAX = 120
 # Display: max dimension for window (larger = bigger window; 0 = no resize, use camera native)
 DISPLAY_MAX_SIZE = 960
 
+# Conversation history for context-aware translation
+CONVERSATION_HISTORY = []
+MAX_HISTORY_TURNS = 5
+
+# =====================================================================
+# N-GRAM LANGUAGE MODEL FOR BEAM SEARCH RESCORING
+# =====================================================================
 # =====================================================================
 # HAND-COUNT PRIOR: Load from training data to bias scoring
 # =====================================================================
@@ -75,12 +98,83 @@ def _build_hand_count_lookup():
             try:
                 data = np.load(os.path.join("ASL_landmarks_float16", fname))
                 l_on = data[:, :21, 9].max() > 0.5
-                r_on = data[:, 21:, 9].max() > 0.5
+                r_on = data[:, 21:42, 9].max() > 0.5
                 counts.append(int(l_on) + int(r_on))
             except Exception:
                 pass
         if counts:
             GLOSS_HAND_COUNT[gloss] = max(counts)
+
+# =====================================================================
+# N-GRAM LANGUAGE MODEL: For CTC beam search rescoring
+# =====================================================================
+class GlossNGramLM:
+    """Simple bigram language model for CTC beam rescoring."""
+
+    def __init__(self, smoothing=0.1):
+        self.unigram_counts = defaultdict(int)
+        self.bigram_counts = defaultdict(lambda: defaultdict(int))
+        self.smoothing = smoothing
+        self.vocab = set()
+        self.total_unigrams = 0
+        self.vocab_size = 0
+
+    def log_prob(self, gloss, prev_gloss='<s>'):
+        """Get log probability of gloss given previous gloss."""
+        bigram_count = self.bigram_counts[prev_gloss][gloss]
+        prev_count = self.unigram_counts[prev_gloss]
+
+        if prev_count == 0:
+            # Fallback to unigram
+            prob = (self.unigram_counts[gloss] + self.smoothing) / \
+                   (self.total_unigrams + self.smoothing * self.vocab_size)
+        else:
+            prob = (bigram_count + self.smoothing) / \
+                   (prev_count + self.smoothing * self.vocab_size)
+
+        return math.log(prob + 1e-10)
+
+    def score_sequence(self, gloss_list):
+        """Score a full gloss sequence."""
+        score = 0.0
+        prev = '<s>'
+        for gloss in gloss_list:
+            score += self.log_prob(gloss, prev)
+            prev = gloss
+        score += self.log_prob('</s>', prev)
+        return score
+
+    @classmethod
+    def load(cls, path):
+        """Load a trained language model from pickle file."""
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+        lm = cls(smoothing=data.get('smoothing', 0.1))
+        lm.unigram_counts = defaultdict(int, data.get('unigram_counts', {}))
+        lm.bigram_counts = defaultdict(lambda: defaultdict(int))
+        for k, v in data.get('bigram_counts', {}).items():
+            lm.bigram_counts[k] = defaultdict(int, v)
+        lm.vocab = data.get('vocab', set())
+        lm.total_unigrams = data.get('total_unigrams', 0)
+        lm.vocab_size = len(lm.vocab)
+        return lm
+
+
+# Global LM instance (loaded lazily)
+GLOSS_LM = None
+
+def _load_gloss_lm():
+    """Load the N-gram language model if available."""
+    global GLOSS_LM
+    if os.path.exists(GLOSS_LM_PATH):
+        try:
+            GLOSS_LM = GlossNGramLM.load(GLOSS_LM_PATH)
+            print(f"   Loaded gloss LM (vocab={GLOSS_LM.vocab_size})")
+        except Exception as e:
+            print(f"   Warning: Could not load LM: {e}")
+            GLOSS_LM = None
+    else:
+        print(f"   No LM found at {GLOSS_LM_PATH} - using acoustic-only decoding")
 
 # =====================================================================
 # HELPERS (same as test_video_pipeline.py / extract.py)
@@ -98,6 +192,19 @@ def interpolate_hand(hand_seq, valid_indices, total_frames):
     ])
     return result.reshape(total_frames, 21, 3).astype(np.float32)
 
+def interpolate_face(face_seq, valid_indices, total_frames):
+    if not valid_indices:
+        return np.zeros((total_frames, 5, 3), dtype=np.float32)
+    flat = face_seq.reshape(len(face_seq), -1)
+    if len(valid_indices) == 1:
+        return np.tile(flat[0], (total_frames, 1)).reshape(total_frames, 5, 3).astype(np.float32)
+    x_new = np.arange(total_frames, dtype=np.float64)
+    xp = np.array(valid_indices, dtype=np.float64)
+    result = np.column_stack([
+        np.interp(x_new, xp, flat[:, c]) for c in range(flat.shape[1])
+    ])
+    return result.reshape(total_frames, 5, 3).astype(np.float32)
+
 def temporal_resample(seq, target_frames):
     N, P, C = seq.shape
     if N == target_frames:
@@ -111,6 +218,7 @@ def temporal_resample(seq, target_frames):
     return result.reshape(target_frames, P, C).astype(np.float32)
 
 def normalize_sequence(seq, l_ever, r_ever):
+    """Normalize 47-point sequence (hands + face landmarks)."""
     norm_seq = seq.copy().astype(np.float64)
     valid_wrists = []
     if l_ever:
@@ -127,6 +235,8 @@ def normalize_sequence(seq, l_ever, r_ever):
         norm_seq[:, 0:21] -= center
     if r_ever:
         norm_seq[:, 21:42] -= center
+    # Face landmarks normalized to same center
+    norm_seq[:, 42:47] -= center
     bone_lengths = []
     if l_ever:
         bone_lengths.extend(np.linalg.norm(norm_seq[:, L_MIDDLE_MCP] - norm_seq[:, L_WRIST], axis=-1))
@@ -138,8 +248,8 @@ def normalize_sequence(seq, l_ever, r_ever):
             norm_seq /= (np.median(filtered) + 1e-8)
     return norm_seq.astype(np.float32)
 
-def compute_kinematics(seq, l_ever, r_ever):
-    """Central-difference velocity & acceleration on a single [F,42,3] sequence."""
+def compute_kinematics(seq, l_ever, r_ever, face_ever=False):
+    """Central-difference velocity & acceleration on a single [F,47,3] sequence."""
     F, P, _ = seq.shape
     vel = np.zeros_like(seq)
     vel[1:-1] = (seq[2:] - seq[:-2]) / 2.0
@@ -154,6 +264,8 @@ def compute_kinematics(seq, l_ever, r_ever):
         mask[:, 0:21, 0] = 1.0
     if r_ever:
         mask[:, 21:42, 0] = 1.0
+    if face_ever:
+        mask[:, 42:47, 0] = 1.0
     return np.concatenate([seq, vel, acc, mask], axis=-1).astype(np.float32)
 
 # =====================================================================
@@ -186,7 +298,7 @@ def find_best_split_points(xyz_seq, n_splits):
     selected.sort()
     return selected
 
-def build_hypothesis(xyz_seq, n_signs, l_ever, r_ever):
+def build_hypothesis(xyz_seq, n_signs, l_ever, r_ever, face_ever=False):
     """Build a feature tensor for the hypothesis that the video contains n_signs signs."""
     if n_signs == 1:
         segments = [xyz_seq]
@@ -224,7 +336,7 @@ def build_hypothesis(xyz_seq, n_signs, l_ever, r_ever):
             seg_copy[:, 21:42, :] = 0.0
         resampled = temporal_resample(seg_copy, TARGET_FRAMES)
         normalized = normalize_sequence(resampled, seg_l_active, seg_r_active)
-        features = compute_kinematics(normalized, seg_l_active, seg_r_active)
+        features = compute_kinematics(normalized, seg_l_active, seg_r_active, face_ever)
         processed.append(features)
     return np.concatenate(processed, axis=0), seg_hand_counts
 
@@ -232,11 +344,12 @@ def build_hypothesis(xyz_seq, n_signs, l_ever, r_ever):
 # STAGE 0: EXTRACTION FROM CAMERA FRAME BUFFER
 # =====================================================================
 def extract_landmarks_from_frames(frames_landmarks, mirror=False, swap_hands=False):
-    """Extract and process hand landmarks from a list of per-frame (left, right) landmark data.
+    """Extract and process hand+face landmarks from a list of per-frame data.
 
-    frames_landmarks: list of (l_coords, r_coords) per frame.
-      - l_coords / r_coords: list of 21 [x,y,z] or None if hand not detected.
-    Same normalization, interpolation, and kinematics as extract_landmarks_from_video.
+    frames_landmarks: list of (l_coords, r_coords, face_coords) per frame.
+      - l_coords / r_coords: list of 21 [x,y,z] or None
+      - face_coords: list of 5 [x,y,z] or None
+    Returns [T, 47, 3] combined sequence, l_ever, r_ever, face_ever.
     """
     total_raw = len(frames_landmarks)
     if total_raw < MIN_RAW_FRAMES:
@@ -244,24 +357,27 @@ def extract_landmarks_from_frames(frames_landmarks, mirror=False, swap_hands=Fal
 
     l_valid = [i for i in range(total_raw) if frames_landmarks[i][0] is not None]
     r_valid = [i for i in range(total_raw) if frames_landmarks[i][1] is not None]
+    face_valid = [i for i in range(total_raw) if len(frames_landmarks[i]) > 2 and frames_landmarks[i][2] is not None]
 
     if not l_valid and not r_valid:
         raise ValueError("No hand detections in buffer")
 
     l_seq = np.array([frames_landmarks[i][0] for i in l_valid], dtype=np.float32) if l_valid else np.zeros((0, 21, 3), dtype=np.float32)
     r_seq = np.array([frames_landmarks[i][1] for i in r_valid], dtype=np.float32) if r_valid else np.zeros((0, 21, 3), dtype=np.float32)
+    face_seq = np.array([frames_landmarks[i][2] for i in face_valid], dtype=np.float32) if face_valid else np.zeros((0, 5, 3), dtype=np.float32)
 
-    l_ever, r_ever = bool(l_valid), bool(r_valid)
+    l_ever, r_ever, face_ever = bool(l_valid), bool(r_valid), bool(face_valid)
     l_full = interpolate_hand(l_seq, l_valid, total_raw)
     r_full = interpolate_hand(r_seq, r_valid, total_raw)
+    face_full = interpolate_face(face_seq, face_valid, total_raw)
 
     if swap_hands:
-        combined = np.concatenate([r_full, l_full], axis=1)
+        combined = np.concatenate([r_full, l_full, face_full], axis=1)
         l_ever, r_ever = r_ever, l_ever
     else:
-        combined = np.concatenate([l_full, r_full], axis=1)
+        combined = np.concatenate([l_full, r_full, face_full], axis=1)
 
-    return combined, l_ever, r_ever
+    return combined, l_ever, r_ever, face_ever
 
 # =====================================================================
 # STAGE 2: RECOGNITION (Multi-Hypothesis + CTC DECODING)
@@ -311,7 +427,7 @@ def _ctc_beam_search(log_probs, beam_width=25, blank=0):
     return results
 
 def _score_hypothesis(model, features_np, idx_to_gloss):
-    """Run Stage 2 on a feature array using CTC beam search."""
+    """Run Stage 2 on a feature array using CTC beam search with optional LM rescoring."""
     t = torch.from_numpy(features_np).unsqueeze(0).float().to(DEVICE)
     lens = torch.tensor([t.shape[1]], dtype=torch.long).to(DEVICE)
     with torch.no_grad():
@@ -324,16 +440,31 @@ def _score_hypothesis(model, features_np, idx_to_gloss):
         if len(token_ids) == 0:
             continue
         glosses = [idx_to_gloss.get(int(i), idx_to_gloss.get(str(i), f"UNK_{i}")) for i in token_ids]
-        decoded_beams.append((glosses, log_prob))
+
+        # Apply language model rescoring if available
+        lm_score = 0.0
+        if GLOSS_LM is not None:
+            prev = '<s>'
+            for gloss in glosses:
+                lm_score += GLOSS_LM.log_prob(gloss, prev)
+                prev = gloss
+            lm_score += GLOSS_LM.log_prob('</s>', prev)
+
+        # Combine acoustic and language model scores
+        combined_score = log_prob + LM_WEIGHT * lm_score
+        decoded_beams.append((glosses, combined_score))
+
+    # Re-sort by combined score
+    decoded_beams.sort(key=lambda x: -x[1])
     return decoded_beams
 
-def run_stage2_recognition(model, xyz_seq, l_ever, r_ever, idx_to_gloss):
+def run_stage2_recognition(model, xyz_seq, l_ever, r_ever, idx_to_gloss, face_ever=False):
     """Try N=1,2,3,4 sign hypotheses with beam search decoding and hand-count prior."""
     model.eval()
     max_signs = min(4, max(1, xyz_seq.shape[0] // 10))
     all_candidates = []
     for n in range(1, max_signs + 1):
-        features, seg_hand_counts = build_hypothesis(xyz_seq, n, l_ever, r_ever)
+        features, seg_hand_counts = build_hypothesis(xyz_seq, n, l_ever, r_ever, face_ever)
         beams = _score_hypothesis(model, features, idx_to_gloss)
         n_candidates = []
         for bi, (glosses, log_prob) in enumerate(beams[:8]):
@@ -367,11 +498,18 @@ def run_stage2_recognition(model, xyz_seq, l_ever, r_ever, idx_to_gloss):
 # =====================================================================
 # STAGE 3: TRANSLATION (T5)
 # =====================================================================
-def run_stage3_translation(model, tokenizer, gloss_list):
+def run_stage3_translation(model, tokenizer, gloss_list, context_history=None):
     if not gloss_list:
         return "[No signs detected]"
     gloss_string = " ".join(gloss_list)
-    prompt = f"translate ASL gloss to English: {gloss_string}"
+    
+    if context_history:
+        # Limit to last 4 turns to match training context window
+        context_str = " | ".join(context_history[-4:])
+        prompt = f"[Previous: {context_str}] Translate this ASL gloss to natural conversational English: {gloss_string}"
+    else:
+        prompt = f"Translate this ASL gloss to natural conversational English: {gloss_string}"
+        
     inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
     with torch.no_grad():
         outputs = model.generate(
@@ -406,6 +544,11 @@ def main():
     if GLOSS_HAND_COUNT:
         print(f"   Loaded hand-count prior for {len(GLOSS_HAND_COUNT)} glosses")
 
+    # Load N-gram language model for beam search rescoring
+    _load_gloss_lm()
+    if GLOSS_LM is not None:
+        print(f"   LM vocab size: {GLOSS_LM.vocab_size}")
+
     if not os.path.exists(STAGE2_CKPT):
         print(f"Error: Cannot find Stage 2 checkpoint at {STAGE2_CKPT}")
         return
@@ -432,6 +575,13 @@ def main():
         min_detection_confidence=MIN_DETECTION_CONF,
         min_tracking_confidence=MIN_TRACKING_CONF,
         model_complexity=MODEL_COMPLEXITY,
+    )
+    face_mesh = mp.solutions.face_mesh.FaceMesh(
+        static_image_mode=False,
+        max_num_faces=1,
+        min_detection_confidence=MIN_DETECTION_CONF,
+        min_tracking_confidence=MIN_TRACKING_CONF,
+        refine_landmarks=False,
     )
 
     cap = cv2.VideoCapture(args.camera)
@@ -468,6 +618,7 @@ def main():
 
         l_coords = None
         r_coords = None
+        face_coords = None
         if res.multi_hand_landmarks and res.multi_handedness:
             for hand_lm, handedness in zip(res.multi_hand_landmarks, res.multi_handedness):
                 if handedness.classification[0].score >= MIN_DETECTION_CONF:
@@ -479,7 +630,14 @@ def main():
             for hand_lm in res.multi_hand_landmarks:
                 mp_draw.draw_landmarks(frame, hand_lm, mp_hands.HAND_CONNECTIONS)
 
-        frame_buffer.append((l_coords, r_coords))
+        # Face detection for 5 reference landmarks
+        face_res = face_mesh.process(rgb)
+        if face_res.multi_face_landmarks:
+            fl = face_res.multi_face_landmarks[0]
+            face_coords = [[fl.landmark[idx].x, fl.landmark[idx].y, fl.landmark[idx].z]
+                           for idx in FACE_LANDMARK_INDICES]
+
+        frame_buffer.append((l_coords, r_coords, face_coords))
 
         # HUD
         fh, fw = frame.shape[:2]
@@ -500,20 +658,29 @@ def main():
             last_gloss_str = ""
             last_english = ""
             last_conf = 0.0
+            CONVERSATION_HISTORY.clear()
             continue
         if key == ord(" "):
             if len(frame_buffer) < MIN_RAW_FRAMES:
                 print(f"   Need at least {MIN_RAW_FRAMES} frames, have {len(frame_buffer)}")
                 continue
             try:
-                xyz_seq, l_ever, r_ever = extract_landmarks_from_frames(
+                xyz_seq, l_ever, r_ever, face_ever = extract_landmarks_from_frames(
                     list(frame_buffer), mirror=False, swap_hands=args.swap_hands
                 )
                 overall_best_glosses, overall_best_conf, best_n = run_stage2_recognition(
-                    s2_model, xyz_seq, l_ever, r_ever, idx_to_gloss
+                    s2_model, xyz_seq, l_ever, r_ever, idx_to_gloss, face_ever
                 )
                 gloss_str = " ".join(overall_best_glosses) if overall_best_glosses else "(empty)"
-                english_sentence = run_stage3_translation(s3_model, s3_tokenizer, overall_best_glosses)
+                
+                # Pass conversation history to translation
+                english_sentence = run_stage3_translation(s3_model, s3_tokenizer, overall_best_glosses, CONVERSATION_HISTORY)
+                
+                if overall_best_glosses and overall_best_conf >= MIN_CONFIDENCE_THRESHOLD:
+                    CONVERSATION_HISTORY.append(english_sentence)
+                    if len(CONVERSATION_HISTORY) > MAX_HISTORY_TURNS:
+                        CONVERSATION_HISTORY.pop(0)
+                        
                 last_gloss_str = gloss_str
                 last_english = english_sentence
                 last_conf = overall_best_conf
@@ -527,6 +694,7 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
     hands.close()
+    face_mesh.close()
     print("Done.")
 
 if __name__ == "__main__":

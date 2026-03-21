@@ -47,10 +47,10 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.ba
 L_WRIST = 0; R_WRIST = 21
 L_MIDDLE_MCP = 9; R_MIDDLE_MCP = 30
 TARGET_FRAMES = 32
-MIN_RAW_FRAMES = 5
+MIN_RAW_FRAMES = 8   # Aligned with extract.py v7.0
 MIN_DETECTION_CONF = 0.80
 MIN_TRACKING_CONF = 0.80
-MODEL_COMPLEXITY = 0
+MODEL_COMPLEXITY = 1  # Aligned with extract.py (was 0)
 
 # =====================================================================
 # HAND-COUNT PRIOR: Load from training data to bias scoring

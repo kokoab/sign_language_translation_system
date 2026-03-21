@@ -1,8 +1,8 @@
 """
 ╔══════════════════════════════════════════════════════════════════╗
-║  SLT Stage 1 — Isolated Sign Classification (Dual Hand Edition)  ║
+║  SLT Stage 1 — Isolated Sign Classification (Face-Aware Edition) ║
 ║  DS-GCN Spatial Encoder + Transformer Encoder + Classifier Head  ║
-║  Input : [B, 32, 42, 10] (Both Hands: xyz + vel + acc + mask)    ║
+║  Input : [B, 32, 47, 10] (Hands + Face: xyz + vel + acc + mask)  ║
 ╚══════════════════════════════════════════════════════════════════╝
 """
 
@@ -35,18 +35,43 @@ torch.backends.cudnn.benchmark = True
 
 # Base edges for a single hand
 _EDGES_SINGLE = [
-    (0,1),(1,2),(2,3),(3,4),        
-    (0,5),(5,6),(6,7),(7,8),        
-    (0,9),(9,10),(10,11),(11,12),   
-    (0,13),(13,14),(14,15),(15,16), 
-    (0,17),(17,18),(18,19),(19,20), 
-    (5,9),(9,13),(13,17),            
+    (0,1),(1,2),(2,3),(3,4),
+    (0,5),(5,6),(6,7),(7,8),
+    (0,9),(9,10),(10,11),(11,12),
+    (0,13),(13,14),(14,15),(15,16),
+    (0,17),(17,18),(18,19),(19,20),
+    (5,9),(9,13),(13,17),
 ]
-# Replicate the exact same connections for the second hand (offset by +21)
-_EDGES = _EDGES_SINGLE + [(u+21, v+21) for u, v in _EDGES_SINGLE]
+# Replicate for right hand (offset +21)
+_EDGES_HANDS = _EDGES_SINGLE + [(u+21, v+21) for u, v in _EDGES_SINGLE]
 
-# 42 Nodes total (21 Left + 21 Right)
-def build_adjacency_matrices(num_nodes: int = 42) -> torch.Tensor:
+# Face node indices: 42=Nose, 43=Chin, 44=Forehead, 45=L_Ear, 46=R_Ear
+NOSE_NODE = 42; CHIN_NODE = 43; FOREHEAD_NODE = 44; L_EAR_NODE = 45; R_EAR_NODE = 46
+
+# Face internal edges
+_EDGES_FACE = [
+    (NOSE_NODE, CHIN_NODE), (NOSE_NODE, FOREHEAD_NODE),
+    (NOSE_NODE, L_EAR_NODE), (NOSE_NODE, R_EAR_NODE),
+    (CHIN_NODE, FOREHEAD_NODE),
+]
+
+# Wrist-to-face edges (spatial context for hand-face interaction)
+_EDGES_HAND_FACE = [
+    (0, NOSE_NODE), (0, CHIN_NODE), (0, FOREHEAD_NODE),   # L_WRIST -> face
+    (21, NOSE_NODE), (21, CHIN_NODE), (21, FOREHEAD_NODE), # R_WRIST -> face
+    # Fingertips to key face points (for signs touching face)
+    (4, NOSE_NODE), (4, FOREHEAD_NODE), (4, CHIN_NODE),    # L_THUMB_TIP
+    (8, NOSE_NODE), (8, FOREHEAD_NODE), (8, CHIN_NODE),    # L_INDEX_TIP
+    (25, NOSE_NODE), (25, FOREHEAD_NODE), (25, CHIN_NODE),  # R_THUMB_TIP
+    (29, NOSE_NODE), (29, FOREHEAD_NODE), (29, CHIN_NODE),  # R_INDEX_TIP
+]
+
+_EDGES = _EDGES_HANDS + _EDGES_FACE + _EDGES_HAND_FACE
+
+# 47 Nodes total (21 Left + 21 Right + 5 Face)
+NUM_NODES = 47
+
+def build_adjacency_matrices(num_nodes: int = NUM_NODES) -> torch.Tensor:
     def _norm(M):
         deg = M.sum(axis=1, keepdims=True).clip(min=1)
         return M / deg
@@ -91,8 +116,8 @@ _MIDDLE_MCP = 9;  _MIDDLE_PIP = 10; _MIDDLE_TIP = 12
 _RING_MCP   = 13; _RING_PIP   = 14; _RING_TIP   = 16
 _PINKY_MCP  = 17; _PINKY_PIP  = 18; _PINKY_TIP  = 20
 
-# 12 Features per hand x 2 hands = 24 features
-N_GEO_FEATURES = 24 
+# 12 per hand x 2 = 24, + 10 hand-to-face features = 34
+N_GEO_FEATURES = 34
 
 class DropPath(nn.Module):
     def __init__(self, drop_prob=0.0):
@@ -107,7 +132,7 @@ class DropPath(nn.Module):
 class DSGCNEncoder(nn.Module):
     def __init__(self, in_channels=10, d_model=256, nhead=8, num_transformer_layers=4, dropout=0.1, drop_path_rate=0.1):
         super().__init__()
-        self.register_buffer('A', build_adjacency_matrices(42)) # 42 Node Adjacency
+        self.register_buffer('A', build_adjacency_matrices(NUM_NODES))
         self.input_norm = nn.LayerNorm(in_channels)
         self.input_proj = nn.Sequential(nn.Linear(in_channels, 64), nn.LayerNorm(64), nn.GELU())
         self.gcn1 = DSGCNBlock(64,  128, temporal_kernel=3, dropout=dropout)
@@ -136,10 +161,9 @@ class DSGCNEncoder(nn.Module):
     @staticmethod
     def _geo_dist(a, b): return torch.sqrt(((a - b) ** 2).sum(dim=-1) + 1e-6)
 
-    def _compute_geo_features(self, xyz):
+    def _compute_geo_features(self, xyz, face_mask=None):
         d = self._geo_dist
-        
-        # Helper to compute features for a specific hand (base offset 0 or 21)
+
         def get_hand_features(base):
             tips = [d(xyz[:,:,base+_THUMB_TIP], xyz[:,:,base+_INDEX_TIP]), d(xyz[:,:,base+_INDEX_TIP], xyz[:,:,base+_MIDDLE_TIP]), d(xyz[:,:,base+_MIDDLE_TIP], xyz[:,:,base+_RING_TIP]), d(xyz[:,:,base+_RING_TIP], xyz[:,:,base+_PINKY_TIP]), d(xyz[:,:,base+_THUMB_TIP], xyz[:,:,base+_PINKY_TIP])]
             curls = [d(xyz[:,:,base+_THUMB_MCP], xyz[:,:,base+_THUMB_TIP]) / (d(xyz[:,:,base+_THUMB_MCP], xyz[:,:,base+_THUMB_IP]) + 1e-4), d(xyz[:,:,base+_INDEX_MCP], xyz[:,:,base+_INDEX_TIP]) / (d(xyz[:,:,base+_INDEX_MCP], xyz[:,:,base+_INDEX_PIP]) + 1e-4), d(xyz[:,:,base+_MIDDLE_MCP], xyz[:,:,base+_MIDDLE_TIP]) / (d(xyz[:,:,base+_MIDDLE_MCP], xyz[:,:,base+_MIDDLE_PIP]) + 1e-4), d(xyz[:,:,base+_RING_MCP], xyz[:,:,base+_RING_TIP]) / (d(xyz[:,:,base+_RING_MCP], xyz[:,:,base+_RING_PIP]) + 1e-4), d(xyz[:,:,base+_PINKY_MCP], xyz[:,:,base+_PINKY_TIP]) / (d(xyz[:,:,base+_PINKY_MCP], xyz[:,:,base+_PINKY_PIP]) + 1e-4)]
@@ -147,19 +171,41 @@ class DSGCNEncoder(nn.Module):
             d_thumb_idxmcp = d(xyz[:,:,base+_THUMB_TIP], xyz[:,:,base+_INDEX_MCP])
             return tips + curls + [cross_idx_mid, d_thumb_idxmcp]
 
-        feats_hand1 = get_hand_features(0)  # Left Hand
-        feats_hand2 = get_hand_features(21) # Right Hand
-        
-        # Concatenate 12 features per hand = 24 features total
-        return torch.stack(feats_hand1 + feats_hand2, dim=-1)
+        feats_hand1 = get_hand_features(0)   # Left Hand: 12 features
+        feats_hand2 = get_hand_features(21)  # Right Hand: 12 features
+
+        # Hand-to-face distance features (for signs interacting with face)
+        face_feats = [
+            d(xyz[:,:,0], xyz[:,:,NOSE_NODE]),       # L_wrist to nose
+            d(xyz[:,:,0], xyz[:,:,CHIN_NODE]),        # L_wrist to chin
+            d(xyz[:,:,0], xyz[:,:,FOREHEAD_NODE]),    # L_wrist to forehead
+            d(xyz[:,:,21], xyz[:,:,NOSE_NODE]),       # R_wrist to nose
+            d(xyz[:,:,21], xyz[:,:,CHIN_NODE]),       # R_wrist to chin
+            d(xyz[:,:,21], xyz[:,:,FOREHEAD_NODE]),   # R_wrist to forehead
+            d(xyz[:,:,_INDEX_TIP], xyz[:,:,NOSE_NODE]),       # L_index to nose
+            d(xyz[:,:,_INDEX_TIP], xyz[:,:,FOREHEAD_NODE]),   # L_index to forehead
+            d(xyz[:,:,21+_INDEX_TIP], xyz[:,:,NOSE_NODE]),    # R_index to nose
+            d(xyz[:,:,21+_INDEX_TIP], xyz[:,:,FOREHEAD_NODE]),# R_index to forehead
+        ]
+
+        # Gate face geo features: zero them out when face is not detected
+        if face_mask is not None:
+            face_gate = face_mask[:, :, 0, 0]  # [B, T] — 1.0 if face detected
+            face_feats = [f * face_gate for f in face_feats]
+
+        # 12 + 12 + 10 = 34 features total
+        return torch.stack(feats_hand1 + feats_hand2 + face_feats, dim=-1)
 
     def forward(self, x):
         xyz = x[:, :, :, :3]
+        face_mask = x[:, :, 42:47, 9:10]  # [B, T, 5, 1] — 1.0 if face detected, 0.0 otherwise
         h = self.input_proj(self.input_norm(x))
+        # Gate face node features by mask before GCN aggregation (Issue #5)
+        h[:, :, 42:47, :] = h[:, :, 42:47, :] * face_mask
         h = self.gcn3(self.gcn2(self.gcn1(h, self.A), self.A), self.A)
         attn = F.softmax(self.node_attn(h).squeeze(-1), dim=2)
         h = (h * attn.unsqueeze(-1)).sum(dim=2)
-        h = self.geo_proj(torch.cat([h, self.geo_norm(self._compute_geo_features(xyz))], dim=-1)) + self.pos_enc
+        h = self.geo_proj(torch.cat([h, self.geo_norm(self._compute_geo_features(xyz, face_mask))], dim=-1)) + self.pos_enc
         for layer, dp in zip(self.transformer_layers, self.drop_paths): h = h + dp(layer(h) - h)
         return self.transformer_norm(h)
 
@@ -182,6 +228,18 @@ class SLTStage1(nn.Module):
 # ══════════════════════════════════════════════════════════════════
 #  SECTION 2 — DATASET, LOADER, & EMA
 # ══════════════════════════════════════════════════════════════════
+
+def is_single_hand(tensor: torch.Tensor) -> bool:
+    """Check if only one hand is active (for curriculum learning).
+
+    Args:
+        tensor: Shape [32, 47, 10] - 32 frames, 47 joints, 10 features
+                Feature index 9 is the hand mask (1.0 = active, 0.0 = inactive)
+    """
+    l_active = tensor[:, :21, 9].max() > 0.5
+    r_active = tensor[:, 21:42, 9].max() > 0.5
+    return bool(l_active) != bool(r_active)
+
 
 class SignDataset(Dataset):
     def __init__(self, data_path: str, label_to_idx: dict, manifest: dict, cache_path: str = None):
@@ -216,8 +274,8 @@ class SignDataset(Dataset):
                 
             arr = np.load(data_path / fname).astype(np.float32)
 
-            # Accept ONLY (32, 42, 10)
-            if arr.shape != (32, 42, 10):
+            # Accept ONLY (32, 47, 10)
+            if arr.shape != (32, 47, 10):
                 continue
                 
             data_list.append(arr)
@@ -225,7 +283,7 @@ class SignDataset(Dataset):
             filename_list.append(fname)
 
         if len(data_list) == 0:
-            raise ValueError("🛑 CRITICAL: Every file was skipped! Ensure your .npy files are actually (32, 42, 10).")
+            raise ValueError("CRITICAL: Every file was skipped! Ensure your .npy files are (32, 47, 10).")
 
         self.data      = torch.from_numpy(np.stack(data_list))
         self.targets   = torch.tensor(target_list, dtype=torch.long)
@@ -273,8 +331,117 @@ class ModelEMA:
                 p.data.copy_(self.backup[n])
 
 # ══════════════════════════════════════════════════════════════════
-#  SECTION 3 — TRAINING, EVAL, SCHEDULER
+#  SECTION 3 — TRAINING, EVAL, SCHEDULER, AUGMENTATION
 # ══════════════════════════════════════════════════════════════════
+
+def temporal_speed_warp(xyz_tensor, min_speed=0.75, max_speed=1.25):
+    """
+    Warp temporal axis to simulate fast/slow signing.
+    MUST be applied to XYZ BEFORE computing velocity/acceleration.
+
+    Args:
+        xyz_tensor: [B, T, N, 3] raw XYZ positions (numpy or tensor), N=47
+        min_speed: Minimum speed multiplier (0.75 = 25% slower)
+        max_speed: Maximum speed multiplier (1.25 = 25% faster)
+
+    Returns:
+        Warped tensor with same shape
+    """
+    # Handle numpy input
+    if isinstance(xyz_tensor, np.ndarray):
+        xyz_np = xyz_tensor
+        was_numpy = True
+    else:
+        xyz_np = xyz_tensor.cpu().numpy()
+        was_numpy = False
+        device = xyz_tensor.device
+
+    # Add batch dim if needed
+    squeeze = False
+    if xyz_np.ndim == 3:
+        xyz_np = xyz_np[None, ...]
+        squeeze = True
+
+    B, T, V, C = xyz_np.shape
+    warped_batch = []
+
+    for b in range(B):
+        # Random speed factor for this sample
+        speed = np.random.uniform(min_speed, max_speed)
+
+        # Original and warped time points
+        orig_t = np.linspace(0, 1, T)
+        # Quadratic warp to preserve endpoints
+        warp_amount = (speed - 1.0) * 0.5
+        warped_t = orig_t + warp_amount * orig_t * (1 - orig_t) * 4
+        warped_t = np.clip(warped_t, 0, 1)
+        warped_t = np.sort(warped_t)  # Ensure monotonic
+
+        # Interpolate each vertex/coordinate
+        xyz_sample = xyz_np[b]  # [T, 42, 3]
+        flat = xyz_sample.reshape(T, -1)  # [T, 126]
+
+        warped_flat = np.zeros_like(flat)
+        for c in range(flat.shape[1]):
+            warped_flat[:, c] = np.interp(orig_t, warped_t, flat[:, c])
+
+        warped_batch.append(warped_flat.reshape(T, V, C))
+
+    result = np.stack(warped_batch, axis=0).astype(np.float32)
+
+    if squeeze:
+        result = result[0]
+
+    if was_numpy:
+        return result
+    else:
+        return torch.from_numpy(result).to(device)
+
+
+def recompute_kinematics(xyz):
+    """
+    Recompute velocity and acceleration from XYZ positions.
+
+    Args:
+        xyz: [B, T, N, 3] or [T, N, 3] XYZ tensor
+
+    Returns:
+        Tuple of (velocity, acceleration) with same shape as input
+    """
+    squeeze = False
+    if xyz.ndim == 3:
+        xyz = xyz.unsqueeze(0)
+        squeeze = True
+
+    B, T, N, _ = xyz.shape
+    device = xyz.device if hasattr(xyz, 'device') else None
+
+    # Central difference for velocity
+    vel = torch.zeros_like(xyz) if device else np.zeros_like(xyz)
+    if T > 2:
+        if device:
+            vel[:, 1:-1] = (xyz[:, 2:] - xyz[:, :-2]) / 2.0
+        else:
+            vel[:, 1:-1] = (xyz[:, 2:] - xyz[:, :-2]) / 2.0
+        vel[:, 0] = vel[:, 1]
+        vel[:, -1] = vel[:, -2]
+
+    # Central difference for acceleration
+    acc = torch.zeros_like(xyz) if device else np.zeros_like(xyz)
+    if T > 2:
+        if device:
+            acc[:, 1:-1] = (vel[:, 2:] - vel[:, :-2]) / 2.0
+        else:
+            acc[:, 1:-1] = (vel[:, 2:] - vel[:, :-2]) / 2.0
+        acc[:, 0] = acc[:, 1]
+        acc[:, -1] = acc[:, -2]
+
+    if squeeze:
+        vel = vel[0]
+        acc = acc[0]
+
+    return vel, acc
+
 
 def _batch_rotation_matrices(batch_size, max_deg, device):
     angles = torch.randn(batch_size, 3, device=device) * max_deg
@@ -288,25 +455,60 @@ def _batch_rotation_matrices(batch_size, max_deg, device):
     Rz = torch.stack([cz, -sz, zero, sz, cz, zero, zero, zero, one], dim=1).view(-1, 3, 3)
     return Rx @ Ry @ Rz
 
-def online_augment(x, rotation_deg=10.0, scale_lo=0.85, scale_hi=1.15, noise_std=0.003):
+def online_augment(x, rotation_deg=10.0, scale_lo=0.85, scale_hi=1.15, noise_std=0.003,
+                   speed_warp_prob=0.5, min_speed=0.75, max_speed=1.25):
+    """
+    Enhanced augmentation with temporal speed warping.
+
+    Args:
+        x: [B, T, N, C] tensor with C=10 (xyz, vel, acc, mask)
+        rotation_deg: Max rotation in degrees
+        scale_lo/hi: Scale range
+        noise_std: Gaussian noise std
+        speed_warp_prob: Probability of applying speed warp
+        min_speed/max_speed: Speed warp range
+    """
     B, T, N, C = x.shape
     device = x.device
-    R = _batch_rotation_matrices(B, rotation_deg, device)         
-    
-    # ⚠️ Keep this logic aligned with your 10 channels. We rotate the first 9 (xyz, v, a)
-    # and safely stitch the 10th (mask) back on without rotating it.
+
+    # Step 1: Apply speed warp BEFORE spatial rotation (recomputes kinematics)
+    if torch.rand(1).item() < speed_warp_prob:
+        # Extract XYZ and mask
+        xyz = x[..., :3]  # [B, T, N, 3]
+        mask = x[..., 9:10]  # [B, T, N, 1]
+
+        # Warp XYZ positions
+        warped_xyz = temporal_speed_warp(xyz, min_speed, max_speed)
+
+        # Recompute velocity and acceleration from warped XYZ
+        vel, acc = recompute_kinematics(warped_xyz)
+
+        # Reconstruct tensor
+        x = torch.cat([warped_xyz, vel, acc, mask], dim=-1)
+
+    # Step 2: Rotation augmentation
+    R = _batch_rotation_matrices(B, rotation_deg, device)
+
+    # Rotate the first 9 channels (xyz, vel, acc), keep mask unchanged
     spatial_features = x[..., :9]
-    mask_features    = x[..., 9:]
-    
-    xr = spatial_features.view(B, T, N, 3, 3)                                
-    xr = torch.einsum('btngi,bij->btngj', xr, R)                  
+    mask_features = x[..., 9:]
+
+    xr = spatial_features.view(B, T, N, 3, 3)
+    xr = torch.einsum('btngi,bij->btngj', xr, R)
     xr = xr.reshape(B, T, N, 9)
-    
-    # Stitch mask back
+
     x_rotated = torch.cat([xr, mask_features], dim=-1)
-    
+
+    # Step 3: Scale and noise (applied to spatial channels only, mask preserved)
     scale = scale_lo + torch.rand(B, 1, 1, 1, device=device) * (scale_hi - scale_lo)
-    return x_rotated * scale + torch.randn_like(x_rotated) * noise_std
+    spatial = x_rotated[..., :9] * scale + torch.randn(B, T, N, 9, device=device) * noise_std
+    return torch.cat([spatial, x_rotated[..., 9:]], dim=-1)
+
+def focal_cross_entropy(logits, targets, gamma=2.0, label_smoothing=0.0):
+    """Focal loss: downweights easy examples, focuses on hard ones."""
+    ce = F.cross_entropy(logits, targets, label_smoothing=label_smoothing, reduction='none')
+    pt = torch.exp(-ce)
+    return ((1 - pt) ** gamma * ce).mean()
 
 def apply_mixup(x, y, alpha=0.2):
     if alpha <= 0: return x, y, y, 1.0
@@ -374,14 +576,19 @@ def train(
     # UPDATE THIS to your Kaggle dataset path containing BOTH .npy files and manifest.json
     data_path = '/kaggle/input/datasets/kokoab/batch-1/ASL_landmarks_float16',
     save_dir  = '/kaggle/working/',
-    
+
     smoke_test = False,
-    
+
     epochs = 200, batch_size = 256, accum_steps = 4, lr = 1e-3, weight_decay = 0.01,
-    warmup_epochs = 5, label_smoothing = 0.05, grad_clip = 5.0, patience = 40,
+    warmup_epochs = 5, label_smoothing = 0.15, grad_clip = 5.0, patience = 40,
+    focal_gamma = 2.0,  # Focal loss gamma (0 = disabled, standard CE)
     sampler_temperature = 0.5, in_channels = 10, d_model = 256, nhead = 8,
     num_transformer_layers = 4, dropout = 0.10, head_dropout = 0.15,
-    mixup_alpha = 0.2
+    mixup_alpha = 0.2,
+    # Curriculum learning settings
+    curriculum_learning = True,  # Enable curriculum: train single-hand signs first
+    curriculum_phase1_epochs = 50,  # Epochs to train only single-hand signs
+    curriculum_phase2_epochs = 50,  # Epochs to gradually mix in two-hand signs
 ):
     device  = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     use_amp = (device.type == 'cuda')
@@ -412,19 +619,39 @@ def train(
     full_ds    = SignDataset(data_path, label_to_idx, manifest=manifest, cache_path=cache_path)
     
     indices = list(range(len(full_ds)))
-    train_idx, val_idx = train_test_split(
+    train_idx, temp_idx = train_test_split(
         indices, test_size=0.30, random_state=42, stratify=full_ds.targets.numpy()
     )
-    
+    temp_targets = full_ds.targets.numpy()[temp_idx]
+    val_idx, test_idx = train_test_split(
+        temp_idx, test_size=0.50, random_state=42, stratify=temp_targets
+    )
+
     if smoke_test:
         train_idx = train_idx[:400]
         val_idx = val_idx[:100]
+        test_idx = test_idx[:100]
 
     train_ds = Subset(full_ds, train_idx)
     val_ds   = Subset(full_ds, val_idx)
-    log.info(f"Dataset Stratified Split: 70% Train ({len(train_ds)}) | 30% Val ({len(val_ds)})")
+    test_ds  = Subset(full_ds, test_idx)
+    log.info(f"Dataset Stratified Split: 70% Train ({len(train_ds)}) | 15% Val ({len(val_ds)}) | 15% Test ({len(test_ds)})")
 
     sample_weights = full_ds.class_weights(temperature=sampler_temperature)[train_ds.indices]
+
+    # Curriculum learning: identify single-hand vs two-hand signs
+    single_hand_mask = None
+    if curriculum_learning:
+        log.info("Analyzing dataset for curriculum learning (single-hand vs two-hand)...")
+        single_hand_mask = torch.zeros(len(train_idx), dtype=torch.bool)
+        for i, idx in enumerate(train_idx):
+            single_hand_mask[i] = is_single_hand(full_ds.data[idx])
+        n_single = single_hand_mask.sum().item()
+        n_two = len(train_idx) - n_single
+        log.info(f"  Single-hand signs: {n_single} | Two-hand signs: {n_two}")
+        log.info(f"  Phase 1 (epochs 1-{curriculum_phase1_epochs}): Single-hand only")
+        log.info(f"  Phase 2 (epochs {curriculum_phase1_epochs+1}-{curriculum_phase1_epochs+curriculum_phase2_epochs}): Gradual mix")
+        log.info(f"  Phase 3 (epochs {curriculum_phase1_epochs+curriculum_phase2_epochs+1}+): Full dataset")
 
     on_gpu = False
     if device.type == 'cuda':
@@ -438,6 +665,7 @@ def train(
     nw = 0 if on_gpu else (2 if device.type == 'cuda' else 0)
     train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=sampler, num_workers=nw, pin_memory=(not on_gpu and use_amp), drop_last=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=nw, pin_memory=(not on_gpu and use_amp))
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=nw, pin_memory=(not on_gpu and use_amp))
 
     model = SLTStage1(num_classes=full_ds.num_classes, in_channels=in_channels, d_model=d_model, nhead=nhead, num_transformer_layers=num_transformer_layers, dropout=dropout, head_dropout=head_dropout)
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay, betas=(0.9, 0.98))
@@ -469,7 +697,36 @@ def train(
     history = []
     converged_epoch = None
 
+    def get_curriculum_weights(epoch, base_weights, single_hand_mask):
+        """Get adjusted sample weights based on curriculum phase."""
+        if single_hand_mask is None:
+            return base_weights
+
+        weights = base_weights.clone()
+
+        if epoch <= curriculum_phase1_epochs:
+            # Phase 1: Only single-hand signs
+            weights[~single_hand_mask] = 0.0
+        elif epoch <= curriculum_phase1_epochs + curriculum_phase2_epochs:
+            # Phase 2: Gradually mix in two-hand signs
+            progress = (epoch - curriculum_phase1_epochs) / curriculum_phase2_epochs
+            weights[~single_hand_mask] *= progress
+        # Phase 3: Full dataset (no modification needed)
+
+        # Renormalize
+        if weights.sum() > 0:
+            weights = weights / weights.sum() * len(weights)
+
+        return weights
+
     for epoch in range(start_epoch, epochs + 1):
+        # Update sampler with curriculum-adjusted weights
+        if curriculum_learning and single_hand_mask is not None:
+            curr_weights = get_curriculum_weights(epoch, sample_weights, single_hand_mask)
+            sampler = WeightedRandomSampler(curr_weights, len(curr_weights), replacement=True)
+            train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=sampler,
+                                       num_workers=nw, pin_memory=(not on_gpu and use_amp), drop_last=True)
+
         model.train()
         epoch_loss = 0.0
         
@@ -483,8 +740,12 @@ def train(
 
             with torch.amp.autocast('cuda', enabled=use_amp):
                 logits = model(x)
-                loss_a = F.cross_entropy(logits, y_a, label_smoothing=label_smoothing)
-                loss_b = F.cross_entropy(logits, y_b, label_smoothing=label_smoothing)
+                if focal_gamma > 0:
+                    loss_a = focal_cross_entropy(logits, y_a, gamma=focal_gamma, label_smoothing=label_smoothing)
+                    loss_b = focal_cross_entropy(logits, y_b, gamma=focal_gamma, label_smoothing=label_smoothing)
+                else:
+                    loss_a = F.cross_entropy(logits, y_a, label_smoothing=label_smoothing)
+                    loss_b = F.cross_entropy(logits, y_b, label_smoothing=label_smoothing)
                 loss = (lam * loss_a + (1 - lam) * loss_b) / accum_steps
 
             scaler.scale(loss).backward()
@@ -539,6 +800,47 @@ def train(
             break
 
     log.info(f"🏆 Best model peaked at Epoch {converged_epoch} with Validation Accuracy: {best_acc:.2f}%")
+
+    # Final test evaluation using best checkpoint
+    if BEST_CKPT.exists():
+        best_ckpt = torch.load(BEST_CKPT, map_location=device, weights_only=False)
+        model.load_state_dict(best_ckpt['model_state_dict'])
+        if 'ema_shadow' in best_ckpt and best_ckpt['ema_shadow'] is not None:
+            for n, p in model.named_parameters():
+                if n in best_ckpt['ema_shadow']:
+                    p.data.copy_(best_ckpt['ema_shadow'][n])
+        model.eval()
+        test_metrics = evaluate(model, test_loader, device, use_amp)
+        test_acc, test_top5 = test_metrics["acc"], test_metrics["top5_acc"]
+        log.info(f"🧪 Final Test Set: Top-1 Acc: {test_acc:.2f}% | Top-5 Acc: {test_top5:.2f}%")
+        history.append({"test_acc": round(test_acc, 3), "test_top5": round(test_top5, 3)})
+
+        # Per-class accuracy on test set
+        per_class_correct = Counter()
+        per_class_total = Counter()
+        with torch.no_grad():
+            for x, y in test_loader:
+                x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
+                preds = model(x).argmax(dim=1)
+                for pred, target in zip(preds.cpu().tolist(), y.cpu().tolist()):
+                    lbl = idx_to_label.get(str(target), f"UNK_{target}")
+                    per_class_total[lbl] += 1
+                    if pred == target:
+                        per_class_correct[lbl] += 1
+
+        per_class_acc = {}
+        for lbl in sorted(per_class_total.keys()):
+            acc = per_class_correct[lbl] / max(per_class_total[lbl], 1) * 100
+            per_class_acc[lbl] = {"correct": per_class_correct[lbl], "total": per_class_total[lbl], "acc": round(acc, 1)}
+
+        # Log weakest classes
+        sorted_by_acc = sorted(per_class_acc.items(), key=lambda x: x[1]["acc"])
+        log.info("Bottom 15 classes by test accuracy:")
+        for lbl, stats in sorted_by_acc[:15]:
+            log.info(f"  {lbl}: {stats['acc']}% ({stats['correct']}/{stats['total']})")
+
+        history.append({"per_class_acc": per_class_acc})
+
     with open(save_dir / 'history.json', 'w') as f: json.dump(history, f, indent=2)
 
     try:
