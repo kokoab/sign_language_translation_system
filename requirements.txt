@@ -1,9 +1,18 @@
 # SLT — Sign Language Translator (full pipeline)
 # Install: pip install -r requirements.txt
-# Run scripts with the same Python that pip uses (e.g. conda: conda activate base;
-#   or: /path/to/python test/SLT_test.py).
+#
+# VENV SETUP (Windows / macOS / Linux):
+#   python -m venv venv
+#   venv\Scripts\activate        (Windows)
+#   source venv/bin/activate     (macOS/Linux)
+#   pip install -r requirements.txt
+#
+# If you get "mediapipe has no attribute 'solutions'":
+#   - Ensure 64-bit Python (not 32-bit). Check: python -c "import struct; print(struct.calcsize('P')*8)"
+#   - Do NOT have a folder/file named "mediapipe" in your project (shadows the package)
+#   - pip uninstall mediapipe && pip install mediapipe==0.10.10 --no-cache-dir
 
-# Core (existing)
+# Core (extraction, inference)
 opencv-python>=4.8
 mediapipe>=0.10.9
 numpy>=1.24
