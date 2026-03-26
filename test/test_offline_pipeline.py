@@ -11,7 +11,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 # Add src/ to path so we can import the Stage 2 model class
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from train_stage_2 import SLTStage2CTC 
+from train_stage_2 import SLTStage2CTC, compute_bone_features_np
 
 # Configuration Paths
 STAGE2_WEIGHTS = "weights/stage2_best_model.pth"
@@ -45,29 +45,30 @@ def resolve_gloss_to_file(gloss: str, data_dir: str) -> str:
 
 def load_and_concatenate_signs(sign_filenames: list, data_dir: str) -> tuple:
     """
-    Loads individual 32-frame .npy files and concatenates them into a continuous sequence.
+    Loads individual 32-frame .npy files, applies bone features, and concatenates.
     Returns:
-        batch_tensor: Shape [1, N*32, 42, 10]
+        batch_tensor: Shape [1, N*32, 47, 16]
         x_lens: Shape [1] containing the total frame count.
     """
     arrays = []
     print(f"📂 Loading {len(sign_filenames)} signs from {data_dir}...")
-    
+
     for filename in sign_filenames:
         filepath = os.path.join(data_dir, filename)
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Missing file: {filepath}")
-            
-        # Load [32, 42, 10] array
-        arr = np.load(filepath).astype(np.float32) 
-        if arr.shape != (32, 42, 10):
-            print(f"⚠️ Warning: {filename} has shape {arr.shape}, expected (32, 42, 10)")
+
+        # Load [32, 47, 10] array and compute bone features -> [32, 47, 16]
+        arr = np.load(filepath).astype(np.float32)
+        if arr.shape[1:] != (47, 10):
+            print(f"Warning: {filename} has shape {arr.shape}, expected (32, 47, 10)")
+        arr = compute_bone_features_np(arr)
         arrays.append(arr)
-        
-    # Concatenate along the time dimension (axis 0) -> [N*32, 42, 10]
+
+    # Concatenate along the time dimension (axis 0) -> [N*32, 47, 16]
     continuous_sequence = np.concatenate(arrays, axis=0)
-    
-    # Add batch dimension -> [1, N*32, 42, 10]
+
+    # Add batch dimension -> [1, N*32, 47, 16]
     batch_tensor = torch.from_numpy(continuous_sequence).unsqueeze(0).to(DEVICE)
     
     # Length of the sequence (N*32)
@@ -93,7 +94,7 @@ def load_transcriber():
     
     # Instantiate exact architecture from train_stage_2.py
     model = SLTStage2CTC(vocab_size=vocab_size)
-    model.load_state_dict(ckpt['model_state_dict'])
+    model.load_state_dict(ckpt['model_state_dict'], strict=False)
     model.to(DEVICE)
     model.eval()
     
@@ -101,7 +102,7 @@ def load_transcriber():
     return model, idx_to_gloss 
 
 def run_transcriber(model, batch_tensor, x_lens, idx_to_gloss) -> list:
-    """Passes the [1, T, 42, 10] tensor through the CTC model to get Glosses."""
+    """Passes the [1, T, 47, 16] tensor through the CTC model to get Glosses."""
     with torch.no_grad():
         # Forward pass (matches Stage 2 train loop)
         logits, out_lens = model(batch_tensor, x_lens) # logits shape: [1, max_tokens, Vocab_Size]

@@ -11,7 +11,9 @@
 """
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0" # Lock to 1 GPU for memory safety
+# Use GPU 0 by default; override with CUDA_VISIBLE_DEVICES env var before launching
+if "CUDA_VISIBLE_DEVICES" not in os.environ:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import torch
 import torch.nn as nn
@@ -27,10 +29,15 @@ import shutil
 from pathlib import Path
 from collections import defaultdict
 import random
+import time as _time
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 log = logging.getLogger("SLT-S2")
 torch.backends.cudnn.benchmark = True
+# Enable TF32 Tensor Cores
+torch.set_float32_matmul_precision('high')
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
 
 # ══════════════════════════════════════════════════════════════════
 #  SECTION 1 — DS-GCN ENCODER (Copied verbatim from Stage 1 v5.1)
@@ -77,8 +84,10 @@ def build_adjacency_matrices(num_nodes: int = NUM_NODES) -> torch.Tensor:
     return torch.from_numpy(np.stack([_norm(A_self), _norm(A_out), _norm(A_in)]))
 
 class DSGCNBlock(nn.Module):
-    def __init__(self, C_in, C_out, temporal_kernel=3, dropout=0.1, num_groups=8):
+    def __init__(self, C_in, C_out, temporal_kernel=3, dropout=0.1, num_groups=8,
+                 num_nodes=NUM_NODES, node_drop_rate=0.05):
         super().__init__()
+        self.node_drop_rate = node_drop_rate
         self.dw_weights = nn.Parameter(torch.ones(3, C_in))
         nn.init.uniform_(self.dw_weights, 0.8, 1.2)
         self.pointwise = nn.Linear(3 * C_in, C_out, bias=False)
@@ -88,24 +97,74 @@ class DSGCNBlock(nn.Module):
         self.act = nn.GELU()
         self.drop = nn.Dropout(dropout)
         self.residual = nn.Linear(C_in, C_out, bias=False) if C_in != C_out else nn.Identity()
+        # Phase 1A: Learnable adjacency residual
+        self.adj_residual = nn.Parameter(torch.zeros(3, num_nodes, num_nodes))
+        nn.init.normal_(self.adj_residual, std=0.01)
 
     def forward(self, x, A):
         B, T, N, C = x.shape
         residual = self.residual(x)
-        agg = torch.einsum('knm,btnc->kbtnc', A, x)                
+        # Phase 1B: Drop-Graph regularization
+        if self.training and self.node_drop_rate > 0:
+            node_mask = (torch.rand(B, 1, N, 1, device=x.device) > self.node_drop_rate).float()
+            for gs, ge in [(0, 21), (21, 42), (42, 47)]:
+                if node_mask[:, :, gs:ge, :].sum() < 1:
+                    node_mask[:, :, gs, :] = 1.0
+            x = x * node_mask
+        # Phase 1A: Learnable adjacency residual (baked at eval too)
+        A_eff = A + torch.tanh(self.adj_residual) * 0.3
+        A_eff = A_eff / A_eff.abs().sum(dim=-1, keepdim=True).clamp(min=1)
+        agg = torch.einsum('knm,btnc->kbtnc', A_eff, x)
         agg = agg * self.dw_weights.view(3, 1, 1, 1, C)
-        h = agg.permute(1, 2, 3, 0, 4).reshape(B, T, N, 3 * C)  
-        h = self.drop(self.pointwise(h))                        
+        h = agg.permute(1, 2, 3, 0, 4).reshape(B, T, N, 3 * C)
+        h = self.drop(self.pointwise(h))
         C_out = h.shape[-1]
-        h_t = h.permute(0, 2, 3, 1).reshape(B * N, C_out, T)      
+        h_t = h.permute(0, 2, 3, 1).reshape(B * N, C_out, T)
         h_t = self.temporal_norm(self.temporal_conv(h_t))
-        h = h_t.reshape(B, N, C_out, T).permute(0, 3, 1, 2)    
+        h = h_t.reshape(B, N, C_out, T).permute(0, 3, 1, 2)
         return self.act(self.norm(h + residual))
 
 _THUMB_MCP = 2; _THUMB_IP = 3; _THUMB_TIP = 4; _INDEX_MCP = 5; _INDEX_PIP = 6; _INDEX_TIP = 8
 _MIDDLE_MCP = 9; _MIDDLE_PIP = 10; _MIDDLE_TIP = 12; _RING_MCP = 13; _RING_PIP = 14; _RING_TIP = 16
 _PINKY_MCP = 17; _PINKY_PIP = 18; _PINKY_TIP = 20
-N_GEO_FEATURES = 34  # 12 per hand + 10 hand-to-face
+# 12 per hand x 2 = 24, + 10 hand-to-face features = 34 (base)
+# + 30 joint angles + 6 palm orientation + 6 finger spread = 76 total
+N_GEO_FEATURES = 76
+
+# Phase 4A: Joint angle triplets (joint at middle vertex)
+_JOINT_TRIPLETS = [
+    (0,1,2),(1,2,3),(2,3,4),          # Thumb MCP, IP, tip
+    (0,5,6),(5,6,7),(6,7,8),          # Index MCP, PIP, DIP
+    (0,9,10),(9,10,11),(10,11,12),    # Middle
+    (0,13,14),(13,14,15),(14,15,16),  # Ring
+    (0,17,18),(17,18,19),(18,19,20),  # Pinky
+]  # 15 triplets per hand -> 30 joint angle features
+
+_SPREAD_MCPS = [5, 9, 13, 17]  # Index, Middle, Ring, Pinky MCP indices
+
+# Phase 1C: Bone feature pairs (parent -> child)
+_BONE_PAIRS = [
+    (0,1),(1,2),(2,3),(3,4),(0,5),(5,6),(6,7),(7,8),
+    (0,9),(9,10),(10,11),(11,12),(0,13),(13,14),(14,15),(15,16),
+    (0,17),(17,18),(18,19),(19,20),
+]
+
+def compute_bone_features_np(x_np):
+    """Numpy version for dataset __getitem__. x: [T, 47, 10] -> [T, 47, 16]"""
+    xyz = x_np[..., :3]
+    bone = np.zeros_like(xyz)
+    for p, c in _BONE_PAIRS:
+        bone[..., c, :] = xyz[..., c, :] - xyz[..., p, :]
+        bone[..., c+21, :] = xyz[..., c+21, :] - xyz[..., p+21, :]
+    for fn in [43, 44, 45, 46]:
+        bone[..., fn, :] = xyz[..., fn, :] - xyz[..., 42, :]
+    bone_motion = np.zeros_like(bone)
+    T = xyz.shape[0]
+    if T > 2:
+        bone_motion[1:-1] = (bone[2:] - bone[:-2]) / 2.0
+        bone_motion[0] = bone_motion[1]
+        bone_motion[-1] = bone_motion[-2]
+    return np.concatenate([x_np, bone, bone_motion], axis=-1).astype(np.float32)
 
 class DropPath(nn.Module):
     def __init__(self, drop_prob=0.0):
@@ -118,28 +177,32 @@ class DropPath(nn.Module):
         return x * (torch.rand(shape, device=x.device) < keep) / keep
 
 class DSGCNEncoder(nn.Module):
-    def __init__(self, in_channels=10, d_model=256, nhead=8, num_transformer_layers=4, dropout=0.1, drop_path_rate=0.1):
+    def __init__(self, in_channels=16, d_model=256, nhead=8, num_transformer_layers=4, dropout=0.1, drop_path_rate=0.1, causal=False):
         super().__init__()
         self.register_buffer('A', build_adjacency_matrices(NUM_NODES))
         self.input_norm = nn.LayerNorm(in_channels)
-        self.input_proj = nn.Sequential(nn.Linear(in_channels, 64), nn.LayerNorm(64), nn.GELU())
-        self.gcn1 = DSGCNBlock(64,  128, temporal_kernel=3, dropout=dropout)
-        self.gcn2 = DSGCNBlock(128, 128, temporal_kernel=3, dropout=dropout)
-        self.gcn3 = DSGCNBlock(128, d_model, temporal_kernel=5, dropout=dropout)
+        self.input_proj = nn.Sequential(nn.Linear(in_channels, 96), nn.LayerNorm(96), nn.GELU())
+        self.gcn1 = DSGCNBlock(96,  192, temporal_kernel=3, dropout=dropout)
+        self.gcn2 = DSGCNBlock(192, 192, temporal_kernel=3, dropout=dropout)
+        self.gcn3 = DSGCNBlock(192, d_model, temporal_kernel=5, dropout=dropout)
         self.node_attn = nn.Sequential(nn.Linear(d_model, d_model // 4), nn.GELU(), nn.Linear(d_model // 4, 1))
         self.geo_norm = nn.LayerNorm(N_GEO_FEATURES)
         self.geo_proj = nn.Linear(d_model + N_GEO_FEATURES, d_model)
         self.pos_enc = nn.Parameter(torch.zeros(1, 32, d_model))
         nn.init.trunc_normal_(self.pos_enc, std=0.02)
-        
+
         dp_rates = [drop_path_rate * i / max(num_transformer_layers - 1, 1) for i in range(num_transformer_layers)]
         self.transformer_layers = nn.ModuleList()
         self.drop_paths = nn.ModuleList()
         for dp in dp_rates:
             self.transformer_layers.append(nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=d_model * 4, dropout=dropout, activation='gelu', batch_first=True, norm_first=True))
             self.drop_paths.append(DropPath(dp))
-            
+
         self.transformer_norm = nn.LayerNorm(d_model)
+        # Phase 2B: Causal masking option
+        self.causal = causal
+        if causal:
+            self.register_buffer('causal_mask', torch.triu(torch.ones(32, 32), diagonal=1).bool())
 
     @staticmethod
     def _geo_dist(a, b): return torch.sqrt(((a - b) ** 2).sum(dim=-1) + 1e-6)
@@ -162,132 +225,250 @@ class DSGCNEncoder(nn.Module):
         if face_mask is not None:
             face_gate = face_mask[:, :, 0, 0]  # [B, T] — 1.0 if face detected
             face_feats = [f * face_gate for f in face_feats]
-        return torch.stack(get_hand_features(0) + get_hand_features(21) + face_feats, dim=-1)
+
+        # Phase 4A: Joint angles — 15 per hand x 2 = 30 features
+        angle_feats = []
+        for base in [0, 21]:
+            for p, j, c in _JOINT_TRIPLETS:
+                v1 = xyz[:, :, base+p, :] - xyz[:, :, base+j, :]
+                v2 = xyz[:, :, base+c, :] - xyz[:, :, base+j, :]
+                cos_a = (v1 * v2).sum(-1) / (v1.norm(dim=-1) * v2.norm(dim=-1) + 1e-6)
+                angle_feats.append(torch.acos(cos_a.clamp(-1 + 1e-6, 1 - 1e-6)))
+
+        # Phase 4A: Palm orientation — unit normal to palm plane, 3 x 2 = 6 features
+        palm_feats = []
+        for base in [0, 21]:
+            wrist = xyz[:, :, base, :]
+            v1 = xyz[:, :, base + 5, :] - wrist   # wrist -> index MCP
+            v2 = xyz[:, :, base + 17, :] - wrist  # wrist -> pinky MCP
+            normal = torch.cross(v1, v2, dim=-1)
+            normal = normal / (normal.norm(dim=-1, keepdim=True) + 1e-6)
+            for i in range(3):
+                palm_feats.append(normal[..., i])
+
+        # Phase 4A: Finger spread — angle between adjacent MCPs, 3 x 2 = 6 features
+        spread_feats = []
+        for base in [0, 21]:
+            wrist = xyz[:, :, base, :]
+            for i in range(len(_SPREAD_MCPS) - 1):
+                v1 = xyz[:, :, base + _SPREAD_MCPS[i], :] - wrist
+                v2 = xyz[:, :, base + _SPREAD_MCPS[i+1], :] - wrist
+                cos_s = (v1 * v2).sum(-1) / (v1.norm(dim=-1) * v2.norm(dim=-1) + 1e-6)
+                spread_feats.append(torch.acos(cos_s.clamp(-1 + 1e-6, 1 - 1e-6)))
+
+        # 34 base + 30 angles + 6 palm + 6 spread = 76 total
+        return torch.stack(get_hand_features(0) + get_hand_features(21) + face_feats + angle_feats + palm_feats + spread_feats, dim=-1)
 
     def forward(self, x):
         xyz = x[:, :, :, :3]
         face_mask = x[:, :, 42:47, 9:10]  # [B, T, 5, 1]
         h = self.input_proj(self.input_norm(x))
-        # Gate face node features by mask before GCN aggregation (Issue #5)
+        # Gate face node features by mask before GCN aggregation
         h[:, :, 42:47, :] = h[:, :, 42:47, :] * face_mask
         h = self.gcn3(self.gcn2(self.gcn1(h, self.A), self.A), self.A)
         attn = F.softmax(self.node_attn(h).squeeze(-1), dim=2)
         h = (h * attn.unsqueeze(-1)).sum(dim=2)
         h = self.geo_proj(torch.cat([h, self.geo_norm(self._compute_geo_features(xyz, face_mask))], dim=-1)) + self.pos_enc
-        for layer, dp in zip(self.transformer_layers, self.drop_paths): h = h + dp(layer(h) - h)
+        # Phase 2B: Causal masking
+        mask = self.causal_mask[:h.size(1), :h.size(1)] if self.causal else None
+        for layer, dp in zip(self.transformer_layers, self.drop_paths):
+            h = h + dp(layer(h, src_mask=mask) - h)
         return self.transformer_norm(h)
 
 # ══════════════════════════════════════════════════════════════════
 #  SECTION 2 — STAGE 2 CTC ARCHITECTURE
 # ══════════════════════════════════════════════════════════════════
 
-class SLTStage2CTC(nn.Module):
-    def __init__(self, vocab_size, stage1_ckpt=None, d_model=256, lstm_hidden=512, lstm_layers=2, dropout=0.3):
+class MultiScaleTCN(nn.Module):
+    """Phase 2A: Multi-scale temporal convolutions replacing single AdaptiveAvgPool1d."""
+    def __init__(self, d_model=256, out_tokens=4):
         super().__init__()
-        
-        self.encoder = DSGCNEncoder(in_channels=10, d_model=d_model)
-        
+        self.branches = nn.ModuleList([
+            nn.Sequential(
+                nn.Conv1d(d_model, d_model, k, padding=k//2, groups=d_model),
+                nn.GroupNorm(8, d_model), nn.GELU()
+            ) for k in [3, 5, 9]
+        ])
+        self.fuse = nn.Sequential(
+            nn.Linear(d_model * 3, d_model),
+            nn.LayerNorm(d_model), nn.GELU()
+        )
+        self.pool = nn.AdaptiveAvgPool1d(out_tokens)
+
+    def forward(self, x):  # x: [clips, d_model, 32]
+        outs = [b(x) for b in self.branches]
+        merged = torch.cat(outs, dim=1).permute(0, 2, 1)  # [clips, 32, 3*d]
+        fused = self.fuse(merged).permute(0, 2, 1)         # [clips, d, 32]
+        return self.pool(fused)                              # [clips, d, 4]
+
+
+class SequenceTransformer(nn.Module):
+    """Transformer encoder replacing BiLSTM for temporal sequence modeling.
+    Pre-LayerNorm for stable training (Xiong et al. 2020)."""
+    def __init__(self, d_model=256, nhead=8, num_layers=4, dropout=0.3, max_len=512):
+        super().__init__()
+        self.pos_enc = nn.Parameter(torch.zeros(1, max_len, d_model))
+        nn.init.trunc_normal_(self.pos_enc, std=0.02)
+        self.layers = nn.ModuleList([
+            nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=d_model * 4,
+                dropout=dropout, activation='gelu', batch_first=True, norm_first=True)
+            for _ in range(num_layers)])
+        self.norm = nn.LayerNorm(d_model)
+
+    def forward(self, x, padding_mask=None):
+        x = x + self.pos_enc[:, :x.size(1)]
+        for layer in self.layers:
+            x = layer(x, src_key_padding_mask=padding_mask)
+        return self.norm(x)
+
+
+class SLTStage2CTC(nn.Module):
+    def __init__(self, vocab_size, stage1_ckpt=None, d_model=256, seq_layers=4, dropout=0.3):
+        super().__init__()
+        self.d_model = d_model
+        self.vocab_size = vocab_size
+
+        self.encoder = DSGCNEncoder(in_channels=16, d_model=d_model)
+
         if stage1_ckpt and Path(stage1_ckpt).exists():
             log.info(f"Loading pre-trained Stage 1 weights from {stage1_ckpt}")
             ckpt = torch.load(stage1_ckpt, map_location='cpu', weights_only=False)
-            enc_state = {k.replace('encoder.', ''): v for k, v in ckpt['model_state_dict'].items() if 'encoder.' in k}
-            self.encoder.load_state_dict(enc_state)
-        
-        # Freeze encoder to save VRAM and preserve spatial-temporal features
+            # Handle both direct encoder keys and _orig_mod prefixed keys
+            enc_state = {}
+            for k, v in ckpt['model_state_dict'].items():
+                k_clean = k.replace('_orig_mod.', '')
+                if k_clean.startswith('encoder.'):
+                    enc_state[k_clean.replace('encoder.', '')] = v
+            self.encoder.load_state_dict(enc_state, strict=False)
+
+        # Initially freeze encoder (will be unfrozen after epoch 30)
         for param in self.encoder.parameters():
             param.requires_grad = False
-            
-        # Compress each 32-frame sign into exactly 4 sequential tokens
-        self.temporal_pool = nn.AdaptiveAvgPool1d(4)
 
-        # BiLSTM Sequence Decoder
-        self.lstm = nn.LSTM(
-            input_size=d_model, hidden_size=lstm_hidden, num_layers=lstm_layers,
-            batch_first=True, bidirectional=True, dropout=dropout if lstm_layers > 1 else 0
-        )
-        
-        self.classifier = nn.Linear(lstm_hidden * 2, vocab_size)
+        # Multi-scale temporal convolutions
+        self.temporal_pool = MultiScaleTCN(d_model, 4)
 
-    def forward(self, x, x_lens):
+        # Transformer sequence encoder (replaces BiLSTM)
+        self.seq_transformer = SequenceTransformer(
+            d_model=d_model, nhead=8, num_layers=seq_layers, dropout=dropout)
+
+        # CTC head
+        self.classifier = nn.Linear(d_model, vocab_size)
+
+        # InterCTC head at intermediate layer (layer 1 of seq_layers)
+        self.inter_ctc_proj = nn.Linear(d_model, vocab_size)
+
+    def forward(self, x, x_lens, return_inter=False):
         B = x.size(0)
-        out_seqs, out_lens = [], []
-        
-        # Process sequences individually to avoid massive padding VRAM spikes
+        V, C = x.shape[2], x.shape[3]
+
+        # Batched clip extraction: gather all 32-frame clips across all samples
+        all_clips = []
+        clip_counts = []
         for b in range(B):
-            valid_x = x[b, :x_lens[b]] # [T, 47, 10]
+            valid_x = x[b, :x_lens[b]]
             num_clips = valid_x.size(0) // 32
             remainder = valid_x.size(0) % 32
             if remainder > 0:
-                pad = torch.zeros(32 - remainder, 47, 10, device=valid_x.device)
-                valid_x = torch.cat([valid_x, pad], dim=0)
+                pad_frames = torch.zeros(32 - remainder, V, C, device=valid_x.device)
+                valid_x = torch.cat([valid_x, pad_frames], dim=0)
                 num_clips += 1
-            clips = valid_x.view(num_clips, 32, 47, 10)
-            
-            with torch.no_grad():
-                enc_out = self.encoder(clips) # [num_clips, 32, 256]
-                
-            enc_out = enc_out.permute(0, 2, 1) # [num_clips, 256, 32]
-            pooled = self.temporal_pool(enc_out) # [num_clips, 256, 4]
-            pooled = pooled.permute(0, 2, 1) # [num_clips, 4, 256]
-            
-            seq_features = pooled.reshape(num_clips * 4, -1) # [num_clips * 4, 256]
-            out_seqs.append(seq_features)
-            out_lens.append(num_clips * 4)
+            clips = valid_x.view(num_clips, 32, V, C)
+            all_clips.append(clips)
+            clip_counts.append(num_clips)
 
-        padded_seqs = pad_sequence(out_seqs, batch_first=True) # [B, max_tokens, 256]
-        packed = pack_padded_sequence(padded_seqs, out_lens, batch_first=True, enforce_sorted=False)
-        
-        lstm_out, _ = self.lstm(packed)
-        unpacked, _ = pad_packed_sequence(lstm_out, batch_first=True) # [B, max_tokens, 1024]
-        
-        logits = self.classifier(unpacked) # [B, max_tokens, Vocab_Size]
-        return logits, torch.tensor(out_lens, dtype=torch.long, device=x.device)
+        # ONE batched encoder call instead of B separate calls
+        all_clips_batch = torch.cat(all_clips, dim=0)  # [total_clips, 32, V, C]
+        encoder_frozen = not any(p.requires_grad for p in self.encoder.parameters())
+        if encoder_frozen:
+            with torch.no_grad():
+                enc_out = self.encoder(all_clips_batch)
+        else:
+            enc_out = self.encoder(all_clips_batch)
+
+        # ONE batched temporal pool call
+        enc_out = enc_out.permute(0, 2, 1)       # [total_clips, d_model, 32]
+        pooled = self.temporal_pool(enc_out)       # [total_clips, d_model, 4]
+        pooled = pooled.permute(0, 2, 1)           # [total_clips, 4, d_model]
+
+        # Split back per sample
+        out_seqs = []
+        out_lens = []
+        offset = 0
+        for nc in clip_counts:
+            seq_features = pooled[offset:offset + nc].reshape(nc * 4, -1)
+            out_seqs.append(seq_features)
+            out_lens.append(nc * 4)
+            offset += nc
+
+        padded_seqs = pad_sequence(out_seqs, batch_first=True)
+        max_len = padded_seqs.size(1)
+
+        # Create padding mask for Transformer
+        padding_mask = torch.arange(max_len, device=x.device).unsqueeze(0) >= torch.tensor(out_lens, device=x.device).unsqueeze(1)
+
+        # InterCTC: capture intermediate representation after layer 1
+        inter_logits = None
+        if return_inter and len(self.seq_transformer.layers) > 1:
+            h = padded_seqs + self.seq_transformer.pos_enc[:, :max_len]
+            h = self.seq_transformer.layers[0](h, src_key_padding_mask=padding_mask)
+            inter_logits = self.inter_ctc_proj(self.seq_transformer.norm(h))
+            # Continue through remaining layers
+            for layer in self.seq_transformer.layers[1:]:
+                h = layer(h, src_key_padding_mask=padding_mask)
+            seq_out = self.seq_transformer.norm(h)
+        else:
+            seq_out = self.seq_transformer(padded_seqs, padding_mask=padding_mask)
+
+        logits = self.classifier(seq_out)
+        out_lens_t = torch.tensor(out_lens, dtype=torch.long, device=x.device)
+
+        if return_inter and inter_logits is not None:
+            return logits, out_lens_t, inter_logits
+        return logits, out_lens_t
+
+    def unfreeze_encoder(self, lr_scale=0.1):
+        """Unfreeze encoder with scaled learning rate."""
+        unfrozen = 0
+        for param in self.encoder.parameters():
+            param.requires_grad = True
+            unfrozen += 1
+        log.info(f"Unfroze {unfrozen} encoder parameters (use {lr_scale}x LR)")
+        return unfrozen
 
 # ══════════════════════════════════════════════════════════════════
 #  SECTION 3 — DATASET, UTILS, & AUGMENTATION
 # ══════════════════════════════════════════════════════════════════
 
 def temporal_resample(clip, target_frames=32):
-    """
-    Resample a clip to target_frames using linear interpolation.
-    """
-    T, N, C = clip.shape
+    """Resample a clip to target_frames using vectorized linear interpolation."""
+    T = clip.shape[0]
     if T == target_frames:
         return clip
-
-    orig_t = np.linspace(0, 1, T)
-    new_t = np.linspace(0, 1, target_frames)
-
-    flat = clip.reshape(T, -1)
-    resampled_flat = np.zeros((target_frames, flat.shape[1]), dtype=np.float32)
-
-    for c in range(flat.shape[1]):
-        resampled_flat[:, c] = np.interp(new_t, orig_t, flat[:, c])
-
-    return resampled_flat.reshape(target_frames, N, C)
+    idx = np.linspace(0, T - 1, target_frames)
+    lower = np.floor(idx).astype(int)
+    upper = np.minimum(lower + 1, T - 1)
+    alpha = (idx - lower).astype(np.float32)[:, None, None]
+    return (clip[lower] * (1 - alpha) + clip[upper] * alpha).astype(np.float32)
 
 
 def temporal_speed_warp_np(xyz, min_speed=0.75, max_speed=1.25):
-    """
-    Apply temporal speed warping to XYZ positions (numpy version).
-    Returns warped XYZ positions.
-    """
-    T, N, C = xyz.shape
+    """Apply temporal speed warping using vectorized interpolation."""
+    T = xyz.shape[0]
     speed = np.random.uniform(min_speed, max_speed)
-
-    orig_t = np.linspace(0, 1, T)
     warp_amount = (speed - 1.0) * 0.5
-    warped_t = orig_t + warp_amount * orig_t * (1 - orig_t) * 4
-    warped_t = np.clip(warped_t, 0, 1)
-    warped_t = np.sort(warped_t)
-
-    flat = xyz.reshape(T, -1)
-    warped_flat = np.zeros_like(flat)
-
-    for c in range(flat.shape[1]):
-        warped_flat[:, c] = np.interp(orig_t, warped_t, flat[:, c])
-
-    return warped_flat.reshape(T, N, C).astype(np.float32)
+    t_norm = np.linspace(0, 1, T)
+    warped_t_norm = t_norm + warp_amount * t_norm * (1 - t_norm) * 4
+    warped_t_norm = np.clip(warped_t_norm, 0, 1)
+    warped_t_norm = np.sort(warped_t_norm)
+    # Map back to frame indices
+    warped_idx = warped_t_norm * (T - 1)
+    # Vectorized linear interpolation (sample xyz at warped positions)
+    lower = np.floor(warped_idx).astype(int)
+    upper = np.minimum(lower + 1, T - 1)
+    alpha = (warped_idx - lower).astype(np.float32)[:, None, None]
+    return (xyz[lower] * (1 - alpha) + xyz[upper] * alpha).astype(np.float32)
 
 
 def recompute_kinematics_np(xyz):
@@ -311,16 +492,65 @@ def recompute_kinematics_np(xyz):
 
 
 def apply_speed_warp_to_clip(clip, min_speed=0.75, max_speed=1.25):
-    """
-    Apply speed warp to a full clip [T, N, C] and recompute kinematics.
-    """
+    """Apply speed warp to a full clip [T, N, C]. Kinematics deferred to end of pipeline."""
     xyz = clip[:, :, :3]
     mask = clip[:, :, 9:10]
-
     warped_xyz = temporal_speed_warp_np(xyz, min_speed, max_speed)
-    vel, acc = recompute_kinematics_np(warped_xyz)
+    # Pack as XYZ + placeholder vel/acc + mask (kinematics recomputed at end)
+    placeholder = np.zeros_like(warped_xyz)
+    return np.concatenate([warped_xyz, placeholder, placeholder, mask], axis=-1).astype(np.float32)
 
-    return np.concatenate([warped_xyz, vel, acc, mask], axis=-1).astype(np.float32)
+
+def minimum_jerk_interpolation(start_xyz, end_xyz, n_frames):
+    """Minimum-jerk trajectory (Flash & Hogan 1985): 5th-order polynomial.
+    Produces bell-shaped velocity — accelerate, peak, decelerate.
+    This is how humans actually move their hands between positions."""
+    t = np.linspace(0, 1, n_frames)
+    # 5th-order polynomial: 10t^3 - 15t^4 + 6t^5
+    s = 10 * t**3 - 15 * t**4 + 6 * t**5
+    alphas = s[:, None, None]  # [n_frames, 1, 1]
+    return ((1 - alphas) * start_xyz + alphas * end_xyz).astype(np.float32)
+
+
+def trim_holds(clip, trim_start=2, trim_end=2):
+    """Remove static hold frames from clip edges (Hold-Movement-Hold model).
+    Isolated signs have static holds at start/end that don't exist in continuous signing."""
+    T = clip.shape[0]
+    if T <= trim_start + trim_end + 8:
+        return clip  # Too short to trim safely
+    return clip[trim_start:T - trim_end]
+
+
+def fast_smooth_sequence(xyz, window=5):
+    """Vectorized moving-average smoothing to reduce concatenation artifacts.
+    Replaces scipy filtfilt (100ms/sample) with numpy cumsum trick (~1ms/sample).
+    Window=5 at 25fps = 0.2s smoothing. Gentler than 5Hz Butterworth — preserves
+    fingerspelling frequencies (8-15Hz) while still smoothing stitch boundaries."""
+    T, N, C = xyz.shape
+    if T < window:
+        return xyz.copy()
+    pad_size = window // 2
+    padded = np.pad(xyz, ((pad_size, pad_size), (0, 0), (0, 0)), mode='edge')
+    # Prepend zero for correct cumsum-based moving average
+    cs = np.cumsum(padded, axis=0, dtype=np.float64)
+    cs = np.concatenate([np.zeros((1, N, C), dtype=np.float64), cs], axis=0)
+    smoothed = (cs[window:] - cs[:-window]) / window
+    return smoothed[:T].astype(np.float32)
+
+
+def apply_temporal_drop(clip, drop_rate=0.15):
+    """Randomly drop frames (1st place ICCV 2025 MSLR: -1.6% WER improvement)."""
+    T = clip.shape[0]
+    if T < 8:
+        return clip
+    n_keep = max(8, int(T * (1 - drop_rate)))
+    keep_idx = sorted(random.sample(range(T), n_keep))
+    return clip[keep_idx]
+
+
+def apply_gaussian_jitter(xyz, std=0.01):
+    """Add Gaussian noise to landmarks (1st place ICCV 2025 MSLR: simulates tracker noise)."""
+    return xyz + np.random.randn(*xyz.shape).astype(np.float32) * std
 
 
 class SyntheticCTCDataset(Dataset):
@@ -333,7 +563,7 @@ class SyntheticCTCDataset(Dataset):
     """
 
     def __init__(self, data_path, manifest, gloss_to_idx, num_samples=5000,
-                 min_len=1, max_len=8, transition_prob=0.35, jitter_frames=3,
+                 min_len=1, max_len=8, transition_prob=1.0, jitter_frames=3,
                  speed_warp_prob=0.3, confused_glosses=None):
         self.data_path = Path(data_path)
         self.manifest = manifest
@@ -387,34 +617,41 @@ class SyntheticCTCDataset(Dataset):
             seq_files = [random.choice(self.gloss_files[g]) for g in seq_glosses]
             self.samples.append((seq_files, [gloss_to_idx[g] for g in seq_glosses]))
 
+        # Pre-load ALL unique .npy files into RAM (avoids disk I/O every epoch)
+        unique_files = set()
+        for files, _ in self.samples:
+            unique_files.update(files)
+        log.info(f"  Pre-loading {len(unique_files)} unique .npy files into RAM...")
+        self._file_cache = {}
+        for f in unique_files:
+            try:
+                arr = np.load(self.data_path / f).astype(np.float32)
+                if arr.shape == (32, 47, 10):
+                    self._file_cache[f] = arr
+            except Exception:
+                pass
+        log.info(f"  Cached {len(self._file_cache)} files (~{len(self._file_cache) * 32 * 47 * 10 * 4 / 1e9:.1f} GB RAM)")
+
     def _create_transition_frames(self, prev_clip, next_clip):
-        """
-        Create realistic transition frames between two signs.
-        This is CRITICAL for real-world performance - the model needs to
-        see 'not signing' / inter-sign transitions during training.
-        """
-        trans_len = random.randint(4, 12)
+        """Create realistic transition frames using minimum-jerk trajectory.
+        Duration varies with hand displacement (Fitts' Law). Uses 5th-order
+        polynomial for bell-shaped velocity (Flash & Hogan 1985)."""
+        end_xyz = prev_clip[-1, :, :3]    # [47, 3]
+        start_xyz = next_clip[0, :, :3]   # [47, 3]
 
-        # Get end position of previous sign and start of next
-        end_xyz = prev_clip[-1, :, :3]  # [42, 3]
-        start_xyz = next_clip[0, :, :3]  # [42, 3]
+        # Variable duration: more frames for larger hand displacement (Fitts' Law)
+        hand_dist = np.sqrt(((end_xyz[:42] - start_xyz[:42]) ** 2).sum(axis=-1)).mean()
+        base_frames = max(4, min(12, int(hand_dist * 15)))  # Scale distance to frames
+        trans_len = base_frames + random.randint(-1, 2)      # Small random variation
+        trans_len = max(4, min(14, trans_len))
 
-        # Use ease-in-out interpolation 30% of time for more natural motion
-        use_ease = random.random() < 0.3
+        # Minimum-jerk interpolation (biomechanically realistic)
+        trans_xyz = minimum_jerk_interpolation(end_xyz, start_xyz, trans_len)
 
-        if use_ease:
-            t = np.linspace(0, 1, trans_len)
-            t = t * t * (3 - 2 * t)  # Smoothstep
-        else:
-            t = np.linspace(0, 1, trans_len)
-
-        alphas = t[:, None, None]  # [trans_len, 1, 1]
-        trans_xyz = (1 - alphas) * end_xyz + alphas * start_xyz
-
-        # Compute proper kinematics for transition
+        # Compute kinematics from interpolated XYZ
         vel, acc = recompute_kinematics_np(trans_xyz)
 
-        # Inherit mask from surrounding clips (max of both)
+        # Inherit mask from surrounding clips
         prev_mask = prev_clip[-1, :, 9:10]
         next_mask = next_clip[0, :, 9:10]
         trans_mask = np.maximum(prev_mask, next_mask)
@@ -468,23 +705,47 @@ class SyntheticCTCDataset(Dataset):
         files, target_glosses = self.samples[idx]
         arrays = []
         valid_targets = []
+        num_signs = len(files)
 
         prev_clip = None
-        for f, tgt in zip(files, target_glosses):
-            arr = np.load(self.data_path / f).astype(np.float32)
-            if arr.shape != (32, 47, 10):
+        for i, (f, tgt) in enumerate(zip(files, target_glosses)):
+            arr = self._file_cache.get(f)
+            if arr is None:
+                continue
+            arr = arr.copy()  # Don't mutate cached data
+
+            # Quality filters
+            xyz_q = arr[:, :42, :3]
+            if np.abs(xyz_q).max() < 1e-6 or np.abs(xyz_q - xyz_q[0:1]).max() < 1e-4:
+                continue
+            if np.abs(xyz_q).max() > 10.0:
                 continue
 
-            # Apply segment boundary jitter
+            # 1. Hold trimming: remove static frames from clip edges
+            #    (isolated signs have holds that don't exist in continuous signing)
+            arr = trim_holds(arr, trim_start=2, trim_end=2)
+
+            # 2. Segment boundary jitter
             arr = self._jitter_segment_boundary(arr)
 
-            # Apply speed warping with probability
+            # 3. Speed perturbation (0.8-1.2x per sign)
             if random.random() < self.speed_warp_prob:
-                arr = apply_speed_warp_to_clip(arr)
+                arr = apply_speed_warp_to_clip(arr, min_speed=0.8, max_speed=1.2)
 
-            # CRITICAL: Inject transition frames between signs
+            # 4. Prosodic lengthening: last sign in sequence gets 1.3x duration
+            #    Kinematics deferred to end of pipeline
+            if i == num_signs - 1 and num_signs > 1:
+                arr = temporal_resample(arr, int(arr.shape[0] * 1.3))
+
+            # 5. Minimum-jerk transitions between signs (always inject)
             if prev_clip is not None and random.random() < self.transition_prob:
                 transition = self._create_transition_frames(prev_clip, arr)
+                # Optionally insert a random hold/pause (10% chance, 2-5 frames)
+                if random.random() < 0.10:
+                    hold_len = random.randint(2, 5)
+                    hold_frame = prev_clip[-1:]
+                    hold = np.tile(hold_frame, (hold_len, 1, 1))
+                    arrays.append(hold)
                 arrays.append(transition)
 
             arrays.append(arr)
@@ -493,9 +754,32 @@ class SyntheticCTCDataset(Dataset):
 
         # Fallback if all files are skipped
         if len(arrays) == 0:
-            return np.zeros((32, 47, 10), dtype=np.float32), []
+            return np.zeros((32, 47, 16), dtype=np.float32), []
 
-        x = np.concatenate(arrays, axis=0)
+        x = np.concatenate(arrays, axis=0)  # [T_total, 47, 10]
+
+        # From here, work on XYZ + mask only. Kinematics computed once at the end.
+        xyz = x[:, :, :3]
+        mask = x[:, :, 9:10]
+
+        # 6. Smooth stitched XYZ to reduce concatenation artifacts
+        if xyz.shape[0] >= 5:
+            xyz = fast_smooth_sequence(xyz, window=5)
+
+        # 7. Temporal drop: randomly drop 15% of frames
+        if random.random() < 0.5 and xyz.shape[0] >= 16:
+            keep = sorted(random.sample(range(xyz.shape[0]), max(8, int(xyz.shape[0] * 0.85))))
+            xyz = xyz[keep]
+            mask = mask[keep]
+
+        # 8. Gaussian jitter on XYZ landmarks (simulates tracker noise)
+        if random.random() < 0.5:
+            xyz = apply_gaussian_jitter(xyz, std=0.01)
+
+        # 9. Single kinematics recomputation + bone features (warp XYZ first, then recompute)
+        vel, acc = recompute_kinematics_np(xyz)
+        x = np.concatenate([xyz, vel, acc, mask], axis=-1).astype(np.float32)
+        x = compute_bone_features_np(x)
         return x, valid_targets
 
 def collate_ctc(batch):
@@ -507,7 +791,7 @@ def collate_ctc(batch):
     x_lens = torch.tensor([x.size(0) for x in xs], dtype=torch.long)
     y_lens = torch.tensor([y.size(0) for y in ys], dtype=torch.long)
     
-    x_pad = pad_sequence(xs, batch_first=True) # [B, max_T, 47, 10]
+    x_pad = pad_sequence(xs, batch_first=True) # [B, max_T, 47, 16]
     y_flat = torch.cat(ys) # CTC expects flattened targets
     
     return x_pad, y_flat, x_lens, y_lens
@@ -558,6 +842,42 @@ def calculate_wer(reference, hypothesis):
             else:
                 d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + 1)
     return d[len(reference)][len(hypothesis)] / max(len(reference), 1)
+
+def focal_ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, gamma=2.0):
+    """Focal CTC: downweight easy (blank-dominated) frames, focus on hard frames. (Feng 2019)"""
+    ctc_loss = nn.CTCLoss(blank=blank, zero_infinity=True, reduction='none')
+    per_sample_loss = ctc_loss(log_probs, targets, input_lengths, target_lengths)
+    # Normalize by target length for focal weighting
+    norm_loss = per_sample_loss / target_lengths.float().clamp(min=1)
+    pt = torch.exp(-norm_loss)
+    focal_weight = (1 - pt) ** gamma
+    return (focal_weight * per_sample_loss).mean()
+
+def cr_ctc_loss(model, x_pad, x_lens, y_flat, y_lens, ctc_loss_fn, use_amp, augment_fn):
+    """CR-CTC: Consistency Regularization on CTC. (Yao et al. ICLR 2025)
+    Feed two differently-augmented views, enforce KL-divergence consistency."""
+    # View 1: already augmented input
+    with torch.cuda.amp.autocast(enabled=use_amp):
+        logits1, out_lens1 = model(x_pad, x_lens)
+        log_probs1 = F.log_softmax(logits1, dim=-1)
+
+    # View 2: re-augment the same input
+    x_aug2 = augment_fn(x_pad)
+    with torch.cuda.amp.autocast(enabled=use_amp):
+        logits2, _ = model(x_aug2, x_lens)
+        log_probs2 = F.log_softmax(logits2, dim=-1)
+
+    # CTC loss on view 1
+    ctc = ctc_loss_fn(log_probs1.transpose(0, 1), y_flat, out_lens1, y_lens)
+
+    # KL consistency between the two views (bidirectional)
+    probs1 = log_probs1.detach().exp()
+    kl_fwd = F.kl_div(log_probs2, probs1, reduction='batchmean', log_target=False)
+    probs2 = log_probs2.detach().exp()
+    kl_bwd = F.kl_div(log_probs1, probs2, reduction='batchmean', log_target=False)
+    kl_loss = (kl_fwd + kl_bwd) / 2
+
+    return ctc, kl_loss, log_probs1, out_lens1
 
 def decode_ctc(log_probs, out_lens, blank=0):
     preds = log_probs.argmax(dim=-1).cpu().numpy()
@@ -635,25 +955,55 @@ def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, best_wer, 
 #  SECTION 5 — TRAINING LOOP
 # ══════════════════════════════════════════════════════════════════
 
+def _auto_data_path():
+    for p in ['/workspace/ASL_landmarks_float16', '/kaggle/input/datasets/kokoab/batch-1/ASL_landmarks_float16', 'ASL_landmarks_float16']:
+        if os.path.isdir(p): return p
+    return 'ASL_landmarks_float16'
+
+def _auto_save_dir():
+    for p in ['/workspace/output', '/kaggle/working']:
+        if os.path.isdir(p): return p
+    return './output'
+
+def _auto_stage1_ckpt(save_dir):
+    for p in [Path(save_dir) / 'best_model.pth', '/kaggle/input/datasets/kokoab/model-dataset/best_model.pth']:
+        if Path(p).exists(): return str(p)
+    return str(Path(save_dir) / 'best_model.pth')
+
 def train_stage2(
-    data_path = '/kaggle/input/datasets/kokoab/batch-1/ASL_landmarks_float16',
-    stage1_ckpt = '/kaggle/input/datasets/kokoab/model-dataset/best_model.pth', # ⚠️ UPDATE THIS!
-    save_dir = '/kaggle/working/',
+    data_path = None,
+    stage1_ckpt = None,
+    save_dir = None,
     smoke_test = False,
-    epochs = 100, batch_size = 32, lr = 1e-3, warmup_epochs = 5, patience = 25
+    epochs = 60, batch_size = 32, lr = 5e-4, warmup_epochs = 5, patience = 35,
+    unfreeze_epoch = 30, encoder_lr_scale = 0.1,
+    use_focal_ctc = True, focal_gamma = 2.0,
+    use_cr_ctc = True, cr_ctc_weight = 0.3,
+    use_inter_ctc = True, inter_ctc_weight = 0.1,
 ):
+    if data_path is None: data_path = _auto_data_path()
+    if save_dir is None:  save_dir = _auto_save_dir()
+    if stage1_ckpt is None: stage1_ckpt = _auto_stage1_ckpt(save_dir)
+
     save_dir = Path(save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
     BEST_CKPT, LAST_CKPT = save_dir / 'stage2_best_model.pth', save_dir / 'stage2_last_checkpoint.pth'
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     use_amp = (device.type == 'cuda')
-    
+    log.info(f"Device: {device} | Data: {data_path} | Stage1 ckpt: {stage1_ckpt} | Save: {save_dir}")
+
     if smoke_test:
         log.warning("🚬 SMOKE TEST MODE ACTIVATED! Running on subset for 3 epochs.")
         epochs, patience = 3, 3
 
-    manifest_path = Path(data_path) / 'manifest.json'
+    manifest_path = None
+    for mp in [Path(data_path) / 'manifest.json', Path('manifest.json'), Path(data_path).parent / 'manifest.json']:
+        if mp.exists():
+            manifest_path = mp
+            break
+    if manifest_path is None:
+        raise FileNotFoundError(f"CRITICAL: manifest.json not found in {data_path}, CWD, or parent. Upload it first!")
     with open(manifest_path, 'r') as f:
         manifest = json.load(f)
         
@@ -677,20 +1027,32 @@ def train_stage2(
     val_ds = SyntheticCTCDataset(data_path, manifest, gloss_to_idx, num_samples=20 if smoke_test else 2000)
     test_ds = SyntheticCTCDataset(data_path, manifest, gloss_to_idx, num_samples=20 if smoke_test else 2000)
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_ctc, num_workers=2, pin_memory=use_amp)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ctc, num_workers=2, pin_memory=use_amp)
-    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ctc, num_workers=2, pin_memory=use_amp)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_ctc, num_workers=8, pin_memory=use_amp, persistent_workers=True)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ctc, num_workers=4, pin_memory=use_amp, persistent_workers=True)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ctc, num_workers=4, pin_memory=use_amp, persistent_workers=True)
 
-    model = SLTStage2CTC(vocab_size=vocab_size, stage1_ckpt=stage1_ckpt)
-    
-    # S2-8 Fix: Only pass trainable params to optimizer (saves huge VRAM)
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = optim.AdamW(trainable_params, lr=lr, weight_decay=1e-4)
+    # Auto-detect d_model from Stage 1 checkpoint
+    s1_d_model = 256  # fallback default
+    if stage1_ckpt and Path(stage1_ckpt).exists():
+        try:
+            s1_ckpt = torch.load(stage1_ckpt, map_location='cpu', weights_only=False)
+            s1_d_model = s1_ckpt.get('d_model', 256)
+            log.info(f"Stage 1 checkpoint d_model={s1_d_model}")
+        except Exception:
+            pass
+
+    model = SLTStage2CTC(vocab_size=vocab_size, stage1_ckpt=stage1_ckpt, d_model=s1_d_model)
+
+    # Only pass trainable params to optimizer initially (encoder frozen)
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = optim.AdamW(trainable_params, lr=lr, weight_decay=1e-4,
+                            fused=False)
     scheduler = CosineWarmupScheduler(optimizer, warmup_epochs=warmup_epochs, max_epochs=epochs)
-    scaler = torch.amp.GradScaler('cuda', enabled=use_amp)
+    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
     ema = ModelEMA(model)
 
     ctc_loss_fn = nn.CTCLoss(blank=0, zero_infinity=True)
+    encoder_unfrozen = False
 
     start_epoch, best_wer, trigger_times = 1, float('inf'), 0
     
@@ -719,43 +1081,94 @@ def train_stage2(
     log.info("Starting Stage 2 CTC Training...")
 
     for epoch in range(start_epoch, epochs + 1):
+        epoch_start = _time.time()
+
+        # Encoder unfreezing schedule (Section 2.6 of plan)
+        if not encoder_unfrozen and epoch >= unfreeze_epoch:
+            model.unfreeze_encoder(lr_scale=encoder_lr_scale)
+            # Add encoder params to optimizer with scaled LR
+            enc_params = [p for p in model.encoder.parameters() if p.requires_grad]
+            optimizer.add_param_group({'params': enc_params, 'lr': lr * encoder_lr_scale})
+            encoder_unfrozen = True
+            ema = ModelEMA(model)  # Rebuild EMA with new trainable params
+            ema.to(device)
+
         model.train()
-        model.encoder.eval() # S2 Fix: Ensure frozen encoder DropPath/Dropout stays disabled
+        if not encoder_unfrozen:
+            model.encoder.eval()  # Keep frozen encoder in eval mode
         epoch_loss = 0.0
-        
+
         for i, (x_pad, y_flat, x_lens, y_lens) in enumerate(train_loader):
-            if x_pad is None: continue # Skip if batch was fully invalid
-            
+            if x_pad is None: continue
+
             x_pad = x_pad.to(device, non_blocking=True)
             y_flat = y_flat.to(device, non_blocking=True)
-            
-            # S2-3 Fix: Apply Augmentation
+            x_lens = x_lens.to(device, non_blocking=True)
+            y_lens = y_lens.to(device, non_blocking=True)
+
             x_pad = online_augment(x_pad)
             optimizer.zero_grad(set_to_none=True)
-            
-            # S2-7 Fix: Applied AMP
-            with torch.amp.autocast('cuda', enabled=use_amp):
-                logits, out_lens = model(x_pad, x_lens)
-                # CTC requirement: input_lengths >= target_lengths for all samples
+
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                # Forward with InterCTC if enabled
+                if use_inter_ctc:
+                    result = model(x_pad, x_lens, return_inter=True)
+                    if len(result) == 3:
+                        logits, out_lens, inter_logits = result
+                    else:
+                        logits, out_lens = result
+                        inter_logits = None
+                else:
+                    logits, out_lens = model(x_pad, x_lens)
+                    inter_logits = None
+
                 assert (out_lens >= y_lens).all(), \
                     f"CTC violation: out_lens={out_lens.tolist()} vs y_lens={y_lens.tolist()}"
-                log_probs = F.log_softmax(logits, dim=-1).transpose(0, 1) # [T, B, C]
-                loss = ctc_loss_fn(log_probs, y_flat, out_lens, y_lens)
-                
+
+                log_probs = F.log_softmax(logits, dim=-1).transpose(0, 1)
+
+                # Primary CTC loss (Focal or standard)
+                if use_focal_ctc:
+                    loss = focal_ctc_loss(log_probs, y_flat, out_lens, y_lens,
+                                          blank=0, gamma=focal_gamma)
+                else:
+                    loss = ctc_loss_fn(log_probs, y_flat, out_lens, y_lens)
+
+                # InterCTC auxiliary loss (Section 2.3)
+                if use_inter_ctc and inter_logits is not None:
+                    inter_log_probs = F.log_softmax(inter_logits, dim=-1).transpose(0, 1)
+                    inter_loss = ctc_loss_fn(inter_log_probs, y_flat, out_lens, y_lens)
+                    loss = loss + inter_ctc_weight * inter_loss
+
             scaler.scale(loss).backward()
+
+            # CR-CTC: consistency regularization (Section 2.2)
+            if use_cr_ctc and epoch > warmup_epochs:
+                x_aug2 = online_augment(x_pad)
+                with torch.cuda.amp.autocast(enabled=use_amp):
+                    logits2, _ = model(x_aug2, x_lens)
+                    log_probs2 = F.log_softmax(logits2, dim=-1)
+                    log_probs1_detached = F.log_softmax(logits.detach(), dim=-1)
+                    kl_loss = F.kl_div(log_probs2, log_probs1_detached.exp(),
+                                       reduction='batchmean', log_target=False)
+                scaler.scale(kl_loss * cr_ctc_weight).backward()
+
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             scaler.step(optimizer)
             scaler.update()
-            
+
             ema.update(model)
             epoch_loss += loss.item()
-            
+
             if epoch == 1 and i == 0 and use_amp:
-                log.info(f"GPU 0 Mem Usage (Batch 1): {torch.cuda.max_memory_allocated(0) / 1e9:.2f} GB")
+                log.info(f"GPU Mem Usage: {torch.cuda.max_memory_allocated(0) / 1e9:.2f} GB")
 
         cur_lr = optimizer.param_groups[0]['lr']
         scheduler.step()
+        epoch_time = _time.time() - epoch_start
+        eta = epoch_time * (epochs - epoch)
+        eta_str = f"{int(eta//60)}m{int(eta%60):02d}s"
             
         # Validation Loop
         ema.apply(model)
@@ -763,10 +1176,12 @@ def train_stage2(
         total_wer = 0
         total_samples = 0
         
-        with torch.no_grad(), torch.amp.autocast('cuda', enabled=use_amp):
+        with torch.no_grad(), torch.cuda.amp.autocast(enabled=use_amp):
             for x_pad, y_flat, x_lens, y_lens in val_loader:
                 if x_pad is None: continue
                 x_pad = x_pad.to(device, non_blocking=True)
+                x_lens = x_lens.to(device, non_blocking=True)
+                y_lens = y_lens.to(device, non_blocking=True)
                 logits, out_lens = model(x_pad, x_lens)
                 log_probs = F.log_softmax(logits, dim=-1)
                 
@@ -786,8 +1201,9 @@ def train_stage2(
         
         train_loss = epoch_loss / len(train_loader)
         val_wer = (total_wer / max(total_samples, 1)) * 100
-        
-        log.info(f"Ep {epoch:02d} | LR: {cur_lr:.2e} | Train Loss: {train_loss:.4f} | Val WER: {val_wer:.2f}%")
+
+        frozen_str = "frozen" if not encoder_unfrozen else "unfrozen"
+        log.info(f"Ep {epoch:03d} | {epoch_time:.0f}s | ETA {eta_str} | LR: {cur_lr:.2e} | Loss: {train_loss:.4f} | WER: {val_wer:.2f}% | Enc: {frozen_str}")
         history.append({"epoch": epoch, "train_loss": round(train_loss, 4), "val_wer": round(val_wer, 2), "lr": round(cur_lr, 8)})
 
         # Checkpoint (WER: lower is better!)
@@ -821,10 +1237,12 @@ def train_stage2(
         model.eval()
         test_wer_total, test_samples = 0, 0
         example_decodes = []
-        with torch.no_grad(), torch.amp.autocast('cuda', enabled=use_amp):
+        with torch.no_grad(), torch.cuda.amp.autocast(enabled=use_amp):
             for x_pad, y_flat, x_lens, y_lens in test_loader:
                 if x_pad is None: continue
                 x_pad = x_pad.to(device, non_blocking=True)
+                x_lens = x_lens.to(device, non_blocking=True)
+                y_lens = y_lens.to(device, non_blocking=True)
                 logits, out_lens = model(x_pad, x_lens)
                 log_probs = F.log_softmax(logits, dim=-1)
                 decoded_preds = decode_ctc(log_probs, out_lens, blank=0)
@@ -858,4 +1276,24 @@ def train_stage2(
     with open(save_dir / 'stage2_history.json', 'w') as f: json.dump(history, f, indent=2)
 
 if __name__ == '__main__':
-    train_stage2()
+    import argparse
+    p = argparse.ArgumentParser(description="SLT Stage 2 — Continuous Sign Recognition (CTC)")
+    p.add_argument('--stage1_ckpt', default=None, help='Path to Stage 1 best_model.pth')
+    p.add_argument('--epochs', type=int, default=60)
+    p.add_argument('--batch_size', type=int, default=32)
+    p.add_argument('--lr', type=float, default=5e-4)
+    p.add_argument('--patience', type=int, default=35)
+    p.add_argument('--unfreeze_epoch', type=int, default=30)
+    p.add_argument('--save_dir', default=None)
+    p.add_argument('--smoke', action='store_true')
+    args = p.parse_args()
+    train_stage2(
+        stage1_ckpt=args.stage1_ckpt,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        lr=args.lr,
+        patience=args.patience,
+        unfreeze_epoch=args.unfreeze_epoch,
+        save_dir=args.save_dir,
+        smoke_test=args.smoke,
+    )

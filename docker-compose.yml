@@ -1,0 +1,38 @@
+# SLT Pipeline — docker compose
+#
+# Step 1: Extract videos to .npy
+#   docker compose run extract /app/input/0062d3ea.mp4
+#   docker compose run extract /app/input/              (all videos)
+#
+# Step 2: Run inference on .npy files
+#   docker compose run inference /app/npy/HELLO_0062d3ea.npy
+#   docker compose run inference /app/npy/              (all .npy files)
+#
+# Or run both in sequence:
+#   docker compose run extract /app/input/ && docker compose run inference /app/npy/
+
+services:
+  extract:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    platform: linux/amd64
+    volumes:
+      - ./data/raw_videos/ASL VIDEOS/HELLO:/app/input
+      - ./output/npy:/app/output
+      - rtmlib-cache:/root/.cache/rtmlib
+    entrypoint: ["python", "/app/extract_rtmlib.py"]
+
+  inference:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    platform: linux/amd64
+    volumes:
+      - ./models:/app/models
+      - ./output/npy:/app/npy
+      - ./output:/app/output
+    entrypoint: ["python", "/app/run_inference.py"]
+
+volumes:
+  rtmlib-cache:

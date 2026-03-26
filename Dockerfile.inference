@@ -1,0 +1,61 @@
+# SLT Inference — .npy landmarks → Stage 2 CTC → Stage 3 T5 → English
+# No extraction, no MediaPipe, no mmpose. Just PyTorch + Transformers.
+#
+# Build:
+#   docker build --platform linux/amd64 -f Dockerfile.inference -t slt-inference .
+#
+# Run single .npy:
+#   docker run --platform linux/amd64 --rm \
+#     -v ./models:/app/models \
+#     -v ./output:/app/input \
+#     -v ./output:/app/output \
+#     slt-inference /app/input/HELLO_0062d3ea.npy
+#
+# Run all .npy files in a folder:
+#   docker run --platform linux/amd64 --rm \
+#     -v ./models:/app/models \
+#     -v ./output:/app/input \
+#     -v ./output:/app/output \
+#     slt-inference /app/input/
+
+FROM continuumio/miniconda3:24.7.1-0
+
+ENV OMP_NUM_THREADS=4 \
+    PYTHONUNBUFFERED=1 \
+    LD_LIBRARY_PATH=/opt/conda/lib
+
+# Minimal conda deps (no opencv, no mediapipe, no mmpose)
+RUN conda install -y -c conda-forge \
+    python=3.10 \
+    numpy=1.26.4 \
+    scipy=1.13.1 \
+    libstdcxx-ng>=12 \
+    && conda clean -afy
+
+# PyTorch CPU-only
+RUN pip install --no-cache-dir \
+    torch==2.2.0+cpu \
+    --extra-index-url https://download.pytorch.org/whl/cpu
+
+# Transformers for T5
+RUN pip install --no-cache-dir \
+    transformers==4.46.3 \
+    sentencepiece==0.2.0
+
+# Force numpy back
+RUN pip install --no-cache-dir numpy==1.26.4
+
+# Verify
+RUN python -c "\
+import numpy; print('numpy:', numpy.__version__); \
+import torch; print('torch:', torch.__version__); \
+import transformers; print('transformers:', transformers.__version__); \
+print('ALL CHECKS PASSED')"
+
+WORKDIR /app
+
+# Copy only what's needed for inference (model architecture definitions)
+COPY src/test_video_pipeline.py /app/src/test_video_pipeline.py
+COPY docker/run_inference.py /app/run_inference.py
+
+ENTRYPOINT ["python", "/app/run_inference.py"]

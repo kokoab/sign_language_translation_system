@@ -41,7 +41,7 @@ Project instructions for Claude. Read this before diving into code.
 | Mirror: swap hand indices (0–20 ↔ 21–41) with X-flip | Preserves hand identity |
 | CTC blank = idx 0; PAD ≠ blank | Avoid target alignment errors |
 | Transition injection: maintain clip/target alignment | CTC requires correct lengths |
-| MediaPipe confidence ≥ 0.80 train + inference | Align train/inference distribution |
+| Detection conf ≥ 0.70 / tracking ≥ 0.65 train + inference | Align train/inference distribution (RTMPose uses 0.30 internally) |
 
 ## File map
 
