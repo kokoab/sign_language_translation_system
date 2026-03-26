@@ -1,0 +1,64 @@
+# Native mmpose RTMW extraction — Python 3.10 + mmcv + mmpose
+# Build:  docker build -f docker/Dockerfile.mmpose -t slt-mmpose .
+# Run:    docker run --rm -v ./models:/app/models -v ./sample_videos:/app/input -v ./output:/app/output slt-mmpose python src/test_video_pipeline.py "sample_videos/HELLO_HOW_YOU_training.mp4"
+
+FROM python:3.10-slim-bullseye
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    OMP_NUM_THREADS=4 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 gcc g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Core Python deps
+RUN pip install --no-cache-dir \
+    numpy==1.26.4 scipy==1.13.1 opencv-python-headless==4.10.0.84
+
+# PyTorch CPU
+RUN pip install --no-cache-dir \
+    torch==2.2.0+cpu torchvision==0.17.0+cpu \
+    --extra-index-url https://download.pytorch.org/whl/cpu
+
+# mmcv + mmpose (Python 3.10 + old setuptools = works)
+RUN pip install --no-cache-dir setuptools==69.5.1 wheel
+RUN pip install --no-cache-dir mmengine==0.10.7
+RUN MMCV_WITH_OPS=0 pip install --no-cache-dir mmcv==2.1.0 --no-build-isolation
+RUN pip install --no-cache-dir mmdet==3.3.0 mmpose==1.3.2 --no-deps
+RUN pip install --no-cache-dir munkres json_tricks pycocotools xtcocotools
+
+# Patch mmdet version check
+RUN python -c "\
+import importlib.util; \
+spec = importlib.util.find_spec('mmdet'); \
+path = spec.origin; \
+content = open(path).read(); \
+content = content.replace(\"mmcv_maximum_version = '2.2.0'\", \"mmcv_maximum_version = '2.3.0'\"); \
+content = content.replace(\"mmcv_maximum_version = '2.1.0'\", \"mmcv_maximum_version = '2.3.0'\"); \
+open(path, 'w').write(content); \
+print('Patched mmdet')"
+
+# MediaPipe fallback
+RUN pip install --no-cache-dir --no-deps mediapipe==0.10.14 && \
+    pip install --no-cache-dir absl-py attrs flatbuffers "protobuf>=3.20,<5" sounddevice
+
+# Transformers for Stage 3
+RUN pip install --no-cache-dir transformers==4.46.3 sentencepiece==0.2.0
+
+# Force numpy back
+RUN pip install --no-cache-dir numpy==1.26.4
+
+# Verify
+RUN python -c "\
+import numpy, cv2, torch, mmcv, mmpose, transformers; \
+print('numpy:', numpy.__version__); \
+print('torch:', torch.__version__); \
+print('mmcv:', mmcv.__version__); \
+print('mmpose:', mmpose.__version__); \
+print('ALL PASSED')"
+
+WORKDIR /app
+COPY src/ /app/src/
+COPY docker/run_inference.py /app/docker/run_inference.py
+COPY models/hand_landmarker.task /app/models/hand_landmarker.task
