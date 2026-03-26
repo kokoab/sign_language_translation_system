@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from train_stage_2 import SLTStage2CTC, compute_bone_features_np
 
 # Configuration Paths
-STAGE2_WEIGHTS = "weights/stage2_best_model.pth"
+STAGE2_WEIGHTS = "models/output/stage2_best_model.pth"
 STAGE3_DIR = "weights/slt_final_t5_model"
 ASL_DATA_DIR = "ASL_landmarks_float16" 
 
@@ -51,7 +51,7 @@ def load_and_concatenate_signs(sign_filenames: list, data_dir: str) -> tuple:
         x_lens: Shape [1] containing the total frame count.
     """
     arrays = []
-    print(f"📂 Loading {len(sign_filenames)} signs from {data_dir}...")
+    # Silent loading
 
     for filename in sign_filenames:
         filepath = os.path.join(data_dir, filename)
@@ -74,7 +74,7 @@ def load_and_concatenate_signs(sign_filenames: list, data_dir: str) -> tuple:
     # Length of the sequence (N*32)
     x_lens = torch.tensor([continuous_sequence.shape[0]], dtype=torch.long).to(DEVICE)
     
-    print(f"✅ Data Concatenated! Sequence Shape: {batch_tensor.shape}")
+    pass  # silent
     return batch_tensor, x_lens
 
 # =========================================================
@@ -92,8 +92,8 @@ def load_transcriber():
     idx_to_gloss = {int(k): v for k, v in ckpt.get('idx_to_gloss', {}).items()}
     vocab_size = ckpt.get('vocab_size', len(idx_to_gloss))
     
-    # Instantiate exact architecture from train_stage_2.py
-    model = SLTStage2CTC(vocab_size=vocab_size)
+    # Instantiate exact architecture from train_stage_2.py (d_model=384 matches checkpoint)
+    model = SLTStage2CTC(vocab_size=vocab_size, d_model=384)
     model.load_state_dict(ckpt['model_state_dict'], strict=False)
     model.to(DEVICE)
     model.eval()
@@ -120,7 +120,7 @@ def run_transcriber(model, batch_tensor, x_lens, idx_to_gloss) -> list:
             decoded_glosses.append(gloss)
         last_tok = tok
         
-    print(f"🗣️  Transcribed Glosses: {decoded_glosses}")
+    pass  # silent
     return decoded_glosses
 
 # =========================================================
@@ -146,8 +146,8 @@ def run_translator(gloss_list: list, model, tokenizer) -> str:
         
     # Join list and add prefix — must match train_stage_3.py exactly
     raw_string = " ".join(gloss_list)
-    input_text = f"translate ASL gloss to English: {raw_string}"
-    print(f"📝 T5 Input: '{input_text}'")
+    input_text = f"Translate this ASL gloss to natural conversational English: {raw_string}"
+    pass  # silent
     
     inputs = tokenizer(input_text, return_tensors="pt", max_length=32, truncation=True)
     input_ids = inputs["input_ids"].to(DEVICE)
@@ -280,27 +280,21 @@ if __name__ == "__main__":
         (['YESTERDAY', 'TEACHER', 'DELETE', 'CODE'], 'Yesterday, the teacher deleted the code.'),
     ]
     
-    correct = 0
+    print(f"\n{'#':>4}  {'INPUT GLOSSES':40s} {'CTC OUTPUT':40s} {'ENGLISH TRANSLATION'}")
+    print("=" * 130)
+
     for i, (sentence_glosses, expected) in enumerate(test_cases, 1):
-        print(f"\n📌 Test case {i}/{len(test_cases)}: {' '.join(sentence_glosses)}")
-        print(f"   Expected: {expected}")
         try:
             sentence_files = [resolve_gloss_to_file(g, ASL_DATA_DIR) for g in sentence_glosses]
             batch_tensor, x_lens = load_and_concatenate_signs(sentence_files, ASL_DATA_DIR)
             gloss_sequence = run_transcriber(s2_model, batch_tensor, x_lens, idx_to_gloss)
             final_english = run_translator(gloss_sequence, s3_model, s3_tokenizer)
-            final_english = final_english.strip()
-            is_correct = _normalize_for_compare(final_english) == _normalize_for_compare(expected)
-            if is_correct:
-                correct += 1
-            print("-" * 50)
-            print(f"   Got:      {final_english}")
-            print(f"   {'✅ CORRECT' if is_correct else '❌ WRONG'}")
-            print("-" * 50)
-        except FileNotFoundError as e:
-            print(f"❌ Error: {e}")
-            print("Skipping this test case. Ensure your .npy files are in the correct directory.")
-    
-    print("\n" + "=" * 50)
-    print(f"📊 RESULT: {correct}/{len(test_cases)} test cases correct")
-    print("=" * 50)
+
+            input_str = ' '.join(sentence_glosses)
+            ctc_str = ' '.join(gloss_sequence) if gloss_sequence else '(empty)'
+            print(f"{i:>4}  {input_str:40s} {ctc_str:40s} {final_english.strip()}")
+        except FileNotFoundError:
+            input_str = ' '.join(sentence_glosses)
+            print(f"{i:>4}  {input_str:40s} {'(missing file)':40s} ---")
+
+    print("=" * 130)

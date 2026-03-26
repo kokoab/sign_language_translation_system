@@ -34,8 +34,8 @@ except ImportError:
 # =====================================================================
 # CONFIGURATION
 # =====================================================================
-STAGE2_CKPT = "weights/stage2_best_model.pth"
-STAGE3_DIR = "weights/slt_conversational_t5_model"  # Updated to conversational model
+STAGE2_CKPT = "models/output/stage2_best_model.pth"
+STAGE3_DIR = "weights/slt_final_t5_model"
 GLOSS_LM_PATH = "weights/gloss_bigram_lm.pkl"  # N-gram language model
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
@@ -426,13 +426,40 @@ def _ctc_beam_search(log_probs, beam_width=25, blank=0):
     results.sort(key=lambda x: -x[0])
     return results
 
+def _mirror_tta(x):
+    """Create mirrored version: swap left/right hands (0-20 <-> 21-41), flip X.
+    x: [B, T, 47, C] tensor. Returns mirrored copy."""
+    m = x.clone()
+    m[:, :, 0:21] = x[:, :, 21:42]
+    m[:, :, 21:42] = x[:, :, 0:21]
+    m[:, :, :42, 0] *= -1  # X coord
+    if m.shape[-1] > 3:
+        m[:, :, :42, 3] *= -1  # vel_x
+    if m.shape[-1] > 6:
+        m[:, :, :42, 6] *= -1  # acc_x
+    # Channel 9 = mask, don't flip
+    if m.shape[-1] > 10:
+        m[:, :, :42, 10] *= -1  # bone_dir_x
+    if m.shape[-1] > 13:
+        m[:, :, :42, 13] *= -1  # bone_motion_x
+    return m
+
+
 def _score_hypothesis(model, features_np, idx_to_gloss):
-    """Run Stage 2 on a feature array using CTC beam search with optional LM rescoring."""
+    """Run Stage 2 on a feature array using CTC beam search with optional LM rescoring.
+    Uses TTA (mirror averaging) on CTC log-probs."""
     t = torch.from_numpy(features_np).unsqueeze(0).float().to(DEVICE)
     lens = torch.tensor([t.shape[1]], dtype=torch.long).to(DEVICE)
     with torch.no_grad():
         logits, out_lens = model(t, lens)
-        log_probs = torch.log_softmax(logits[0], dim=-1).cpu().numpy()
+        log_probs_orig = torch.log_softmax(logits[0], dim=-1)
+        # Mirror TTA
+        t_mirror = _mirror_tta(t)
+        logits_m, _ = model(t_mirror, lens)
+        log_probs_mirror = torch.log_softmax(logits_m[0], dim=-1)
+        # Average in probability space, then back to log
+        avg_probs = (log_probs_orig.exp() + log_probs_mirror.exp()) / 2.0
+        log_probs = avg_probs.log().cpu().numpy()
         n_tokens = out_lens[0].item()
     beam_results = _ctc_beam_search(log_probs[:n_tokens], beam_width=25)
     decoded_beams = []
@@ -555,8 +582,9 @@ def main():
     ckpt = torch.load(STAGE2_CKPT, map_location=DEVICE, weights_only=False)
     idx_to_gloss = ckpt["idx_to_gloss"]
     vocab_size = ckpt["vocab_size"]
-    s2_model = SLTStage2CTC(vocab_size=vocab_size).to(DEVICE)
-    s2_model.load_state_dict(ckpt["model_state_dict"])
+    s2_d_model = ckpt.get("d_model", 384)
+    s2_model = SLTStage2CTC(vocab_size=vocab_size, d_model=s2_d_model).to(DEVICE)
+    s2_model.load_state_dict(ckpt["model_state_dict"], strict=False)
 
     s3_tokenizer = AutoTokenizer.from_pretrained(STAGE3_DIR)
     s3_model = AutoModelForSeq2SeqLM.from_pretrained(STAGE3_DIR).to(DEVICE)

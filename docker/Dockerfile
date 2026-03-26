@@ -19,7 +19,7 @@ RUN conda install -y -c conda-forge scipy=1.13.1 ffmpeg
 RUN conda install -y -c conda-forge opencv=4.10.0 && conda clean -afy
 
 # rtmlib — runs RTMW via ONNX, no mmcv/mmpose/mmdet needed
-RUN pip install --no-cache-dir rtmlib onnxruntime
+RUN pip install --no-cache-dir rtmlib==0.0.15 onnxruntime==1.20.1
 
 # PyTorch CPU (for Stage 1 + Stage 2 inference)
 RUN pip install --no-cache-dir \

@@ -35,7 +35,7 @@ import mediapipe as mp
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STAGE1_CKPT  = os.path.join(PROJECT_ROOT, "models", "output_joint", "best_model.pth")
 STAGE2_CKPT  = os.path.join(PROJECT_ROOT, "models", "output", "stage2_best_model.pth")
-STAGE3_DIR  = os.path.join(PROJECT_ROOT, "models", "output", "slt_conversational_t5_model")
+STAGE3_DIR  = os.path.join(PROJECT_ROOT, "weights", "slt_final_t5_model")
 MANIFEST    = os.path.join(PROJECT_ROOT, "models", "manifest.json")
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available()
@@ -218,52 +218,59 @@ class DSGCNEncoder(nn.Module):
 
 
 class MultiScaleTCN(nn.Module):
-    def __init__(self, d_model):
+    def __init__(self, d_model, out_tokens=4):
         super().__init__()
         self.branches = nn.ModuleList([
-            nn.Sequential(nn.Conv1d(d_model, d_model, k, padding=k//2, groups=d_model),
-                          nn.BatchNorm1d(d_model))
-            for k in [3, 5, 9]
+            nn.Sequential(
+                nn.Conv1d(d_model, d_model, k, padding=k//2, groups=d_model),
+                nn.GroupNorm(8, d_model), nn.GELU()
+            ) for k in [3, 5, 9]
         ])
         self.fuse = nn.Sequential(nn.Linear(d_model * 3, d_model), nn.LayerNorm(d_model), nn.GELU())
+        self.pool = nn.AdaptiveAvgPool1d(out_tokens)
 
-    def forward(self, x):
-        B, C, T = x.shape
-        outs = [branch(x) for branch in self.branches]
-        cat = torch.cat(outs, dim=1).permute(0, 2, 1)
-        return self.fuse(cat).permute(0, 2, 1)
+    def forward(self, x):  # x: [clips, d_model, 32]
+        outs = [b(x) for b in self.branches]
+        merged = torch.cat(outs, dim=1).permute(0, 2, 1)  # [clips, 32, 3*d]
+        fused = self.fuse(merged).permute(0, 2, 1)         # [clips, d, 32]
+        return self.pool(fused)                              # [clips, d, 4]
 
 
 class SequenceTransformer(nn.Module):
-    def __init__(self, d_model=384, nhead=8, num_layers=4, dim_ff=1536, dropout=0.1, max_len=512):
+    def __init__(self, d_model=384, nhead=8, num_layers=4, dropout=0.3, max_len=512):
         super().__init__()
-        self.pos_enc = nn.Parameter(torch.randn(1, max_len, d_model) * 0.02)
-        layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead,
-                                            dim_feedforward=dim_ff, dropout=dropout,
-                                            batch_first=True, norm_first=True)
-        self.layers = nn.TransformerEncoder(layer, num_layers=num_layers)
+        self.pos_enc = nn.Parameter(torch.zeros(1, max_len, d_model))
+        self.layers = nn.ModuleList([
+            nn.TransformerEncoderLayer(
+                d_model=d_model, nhead=nhead, dim_feedforward=d_model * 4,
+                dropout=dropout, activation='gelu', batch_first=True, norm_first=True)
+            for _ in range(num_layers)])
         self.norm = nn.LayerNorm(d_model)
 
-    def forward(self, x, src_key_padding_mask=None):
-        T = x.size(1)
-        x = x + self.pos_enc[:, :T]
-        x = self.layers(x, src_key_padding_mask=src_key_padding_mask)
+    def forward(self, x, padding_mask=None):
+        x = x + self.pos_enc[:, :x.size(1)]
+        for layer in self.layers:
+            x = layer(x, src_key_padding_mask=padding_mask)
         return self.norm(x)
 
 
 class SLTStage2CTC(nn.Module):
-    def __init__(self, vocab_size=311, d_model=384):
+    def __init__(self, vocab_size=311, d_model=384, seq_layers=4, dropout=0.3):
         super().__init__()
-        self.encoder = DSGCNEncoder(in_channels=16, d_model=d_model)
+        self.d_model = d_model
+        self.vocab_size = vocab_size
+        self.encoder = DSGCNEncoder(in_channels=16, d_model=d_model, num_transformer_layers=4)
         for p in self.encoder.parameters():
             p.requires_grad = False
-        self.temporal_pool = MultiScaleTCN(d_model)
-        self.seq_transformer = SequenceTransformer(d_model=d_model)
+        self.temporal_pool = MultiScaleTCN(d_model, out_tokens=4)
+        self.seq_transformer = SequenceTransformer(
+            d_model=d_model, nhead=8, num_layers=seq_layers, dropout=dropout)
         self.classifier = nn.Linear(d_model, vocab_size)
         self.inter_ctc_proj = nn.Linear(d_model, vocab_size)
 
     def forward(self, x, x_lens):
         B = x.size(0)
+        V, C = x.shape[2], x.shape[3]
         all_clips = []
         clip_counts = []
         for b in range(B):
@@ -271,32 +278,30 @@ class SLTStage2CTC(nn.Module):
             nc = valid.size(0) // 32
             rem = valid.size(0) % 32
             if rem > 0:
-                pad = torch.zeros(32 - rem, valid.size(1), valid.size(2), device=valid.device)
+                pad = torch.zeros(32 - rem, V, C, device=valid.device)
                 valid = torch.cat([valid, pad], dim=0)
                 nc += 1
-            clips = valid.view(nc, 32, valid.size(1), valid.size(2))
+            clips = valid.view(nc, 32, V, C)
             all_clips.append(clips)
             clip_counts.append(nc)
         all_clips_cat = torch.cat(all_clips, dim=0)
         with torch.no_grad():
-            enc_out = self.encoder(all_clips_cat)
-        enc_out = enc_out.permute(0, 2, 1)
-        pooled = self.temporal_pool(enc_out)
-        pooled = pooled.permute(0, 2, 1)
+            enc_out = self.encoder(all_clips_cat)       # [total_clips, 32, d_model]
+        enc_out = enc_out.permute(0, 2, 1)              # [total_clips, d_model, 32]
+        pooled = self.temporal_pool(enc_out)              # [total_clips, d_model, 4]
+        pooled = pooled.permute(0, 2, 1)                 # [total_clips, 4, d_model]
         out_seqs = []
         out_lens = []
         idx = 0
         for nc in clip_counts:
-            clip_tokens = pooled[idx:idx+nc]
-            T_per_clip = clip_tokens.size(1)
-            seq = clip_tokens.reshape(nc * T_per_clip, -1)
+            seq = pooled[idx:idx+nc].reshape(nc * 4, -1)  # [nc*4, d_model]
             out_seqs.append(seq)
-            out_lens.append(nc * T_per_clip)
+            out_lens.append(nc * 4)
             idx += nc
         padded = pad_sequence(out_seqs, batch_first=True)
         max_len = padded.size(1)
         mask = torch.arange(max_len, device=padded.device).unsqueeze(0) >= torch.tensor(out_lens, device=padded.device).unsqueeze(1)
-        transformer_out = self.seq_transformer(padded, src_key_padding_mask=mask)
+        transformer_out = self.seq_transformer(padded, padding_mask=mask)
         logits = self.classifier(transformer_out)
         return logits, torch.tensor(out_lens, device=x.device)
 
@@ -581,9 +586,11 @@ def ctc_greedy_decode(log_probs, idx_to_gloss, blank=0):
 class ClassifierHead(nn.Module):
     def __init__(self, d_model=256, num_classes=29, dropout=0.4):
         super().__init__()
+        self.frame_attn = nn.Sequential(nn.Linear(d_model, d_model // 4), nn.GELU(), nn.Linear(d_model // 4, 1))
         self.net = nn.Sequential(nn.LayerNorm(d_model), nn.Linear(d_model, d_model * 2), nn.GELU(), nn.Dropout(dropout), nn.Linear(d_model * 2, d_model), nn.GELU(), nn.Dropout(dropout * 0.6), nn.Linear(d_model, num_classes))
     def forward(self, x, labels=None):
-        return self.net(x.mean(dim=1))
+        attn = F.softmax(self.frame_attn(x).squeeze(-1), dim=1)
+        return self.net((x * attn.unsqueeze(-1)).sum(dim=1))
 
 
 class SLTStage1(nn.Module):

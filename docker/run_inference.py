@@ -27,7 +27,7 @@ _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_SCRIPT_DIR)
 STAGE1_CKPT = os.environ.get("STAGE1_CKPT", os.path.join(_PROJECT_ROOT, "models", "output_joint", "best_model.pth"))
 STAGE2_CKPT = os.environ.get("STAGE2_CKPT", os.path.join(_PROJECT_ROOT, "models", "output", "stage2_best_model.pth"))
-STAGE3_DIR = os.environ.get("STAGE3_DIR", os.path.join(_PROJECT_ROOT, "models", "output", "slt_conversational_t5_model"))
+STAGE3_DIR = os.environ.get("STAGE3_DIR", os.path.join(_PROJECT_ROOT, "weights", "slt_final_t5_model"))
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", os.path.join(_PROJECT_ROOT, "output"))
 DEVICE = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
@@ -84,10 +84,11 @@ class DropPath(nn.Module):
 class ClassifierHead(nn.Module):
     def __init__(self, d_model=256, num_classes=29, dropout=0.4):
         super().__init__()
-        self.norm = nn.LayerNorm(d_model)
+        self.frame_attn = nn.Sequential(nn.Linear(d_model, d_model // 4), nn.GELU(), nn.Linear(d_model // 4, 1))
         self.net = nn.Sequential(nn.LayerNorm(d_model), nn.Linear(d_model, d_model * 2), nn.GELU(), nn.Dropout(dropout), nn.Linear(d_model * 2, d_model), nn.GELU(), nn.Dropout(dropout * 0.6), nn.Linear(d_model, num_classes))
     def forward(self, x, labels=None):
-        return self.net(x.mean(dim=1))
+        attn = F.softmax(self.frame_attn(x).squeeze(-1), dim=1)
+        return self.net((x * attn.unsqueeze(-1)).sum(dim=1))
 
 
 class SLTStage1(nn.Module):
@@ -400,7 +401,8 @@ def load_models():
     ckpt2 = torch.load(STAGE2_CKPT, map_location=DEVICE, weights_only=False)
     idx_to_gloss = ckpt2["idx_to_gloss"]
     vocab_size = ckpt2["vocab_size"]
-    s2_model = SLTStage2CTC(vocab_size=vocab_size, d_model=384).to(DEVICE)
+    s2_d_model = ckpt2.get("d_model", 384)
+    s2_model = SLTStage2CTC(vocab_size=vocab_size, d_model=s2_d_model).to(DEVICE)
     s2_model.load_state_dict(ckpt2["model_state_dict"], strict=False)
     s2_model.eval()
     print(f"  Loaded ({vocab_size} classes)")
@@ -420,15 +422,21 @@ def load_models():
 
 
 def _run_stage2_ctc(data, s2_model, idx_to_gloss):
-    """Run Stage 2 CTC on [N*32, 47, 16] data. Returns (glosses, confidence)."""
+    """Run Stage 2 CTC on [N*32, 47, 16] data with TTA. Returns (glosses, confidence)."""
     x = torch.from_numpy(data).unsqueeze(0).float().to(DEVICE)
     lens = torch.tensor([x.shape[1]], dtype=torch.long).to(DEVICE)
     with torch.no_grad():
         logits, out_lens = s2_model(x, lens)
-        log_probs = torch.log_softmax(logits[0], dim=-1).cpu().numpy()
+        log_probs_orig = torch.log_softmax(logits[0], dim=-1)
+        # Mirror TTA
+        x_mirror = _mirror_tta(x)
+        logits_m, _ = s2_model(x_mirror, lens)
+        log_probs_mirror = torch.log_softmax(logits_m[0], dim=-1)
+        # Average in probability space
+        avg_probs = (log_probs_orig.exp() + log_probs_mirror.exp()) / 2.0
+        log_probs = avg_probs.log().cpu().numpy()
         n_tokens = out_lens[0].item()
     glosses = ctc_greedy_decode(log_probs[:n_tokens], idx_to_gloss)
-    # Confidence: mean of max log-prob at non-blank positions
     if glosses:
         max_probs = log_probs[:n_tokens].max(axis=-1)
         conf = float(np.exp(np.mean(max_probs)))
@@ -437,12 +445,40 @@ def _run_stage2_ctc(data, s2_model, idx_to_gloss):
     return glosses, conf
 
 
+def _mirror_tta(x):
+    """Create mirrored version: swap left/right hands (0-20 <-> 21-41), flip X.
+    x: [B, T, 47, C] tensor. Returns mirrored copy."""
+    m = x.clone()
+    # Swap left and right hand nodes
+    m[:, :, 0:21] = x[:, :, 21:42]
+    m[:, :, 21:42] = x[:, :, 0:21]
+    # Flip X coordinate (channel 0) for hands
+    m[:, :, :42, 0] *= -1
+    # Flip X velocity (channel 3) and X acceleration (channel 6) if present
+    if m.shape[-1] > 3:
+        m[:, :, :42, 3] *= -1  # vel_x
+    if m.shape[-1] > 6:
+        m[:, :, :42, 6] *= -1  # acc_x
+    # Flip bone direction X (channel 10) and bone motion X (channel 13) if present
+    if m.shape[-1] > 10:
+        m[:, :, :42, 10] *= -1  # bone_dir_x
+    if m.shape[-1] > 13:
+        m[:, :, :42, 13] *= -1  # bone_motion_x
+    return m
+
+
 def _run_stage1(data, s1_model, s1_idx_to_label):
-    """Run Stage 1 on [32, 47, 16] data. Returns (gloss, confidence, top5)."""
+    """Run Stage 1 on [32, 47, 16] data with TTA (mirror averaging).
+    Returns (gloss, confidence, top5)."""
     x = torch.from_numpy(data[:32]).unsqueeze(0).float().to(DEVICE)
     with torch.no_grad():
-        logits = s1_model(x)
-        probs = torch.softmax(logits, dim=-1)
+        # Original
+        probs_orig = torch.softmax(s1_model(x), dim=-1)
+        # Mirror TTA
+        x_mirror = _mirror_tta(x)
+        probs_mirror = torch.softmax(s1_model(x_mirror), dim=-1)
+        # Average
+        probs = (probs_orig + probs_mirror) / 2.0
         topk = torch.topk(probs, 5, dim=-1)
     top5 = []
     for prob, idx in zip(topk.values[0], topk.indices[0]):
@@ -520,8 +556,9 @@ def _sliding_window_stage1(raw_xyz, l_ever, r_ever, face_ever,
 
         x = torch.from_numpy(clip_16ch).unsqueeze(0).float().to(DEVICE)
         with torch.no_grad():
-            logits = s1_model(x)
-            probs = torch.softmax(logits, dim=-1)
+            probs_orig = torch.softmax(s1_model(x), dim=-1)
+            probs_mirror = torch.softmax(s1_model(_mirror_tta(x)), dim=-1)
+            probs = (probs_orig + probs_mirror) / 2.0
             conf, idx = probs.max(dim=-1)
             conf = conf.item()
             label = s1_idx_to_label.get(str(idx.item()), s1_idx_to_label.get(idx.item(), "UNK"))

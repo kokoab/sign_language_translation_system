@@ -18,7 +18,7 @@ services:
       dockerfile: docker/Dockerfile
     platform: linux/amd64
     volumes:
-      - ./data/raw_videos/ASL VIDEOS/HELLO:/app/input
+      - "./data/raw_videos/ASL VIDEOS/HELLO:/app/input"
       - ./output/npy:/app/output
       - rtmlib-cache:/root/.cache/rtmlib
     entrypoint: ["python", "/app/extract_rtmlib.py"]
@@ -30,6 +30,7 @@ services:
     platform: linux/amd64
     volumes:
       - ./models:/app/models
+      - ./weights:/app/weights
       - ./output/npy:/app/npy
       - ./output:/app/output
     entrypoint: ["python", "/app/run_inference.py"]

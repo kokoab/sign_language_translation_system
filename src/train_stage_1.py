@@ -693,9 +693,9 @@ _FINGER_CHAINS = [
 ]
 
 
-def online_augment(x, rotation_deg=10.0, scale_lo=0.85, scale_hi=1.15, noise_std=0.003,
-                   speed_warp_prob=0.5, min_speed=0.75, max_speed=1.25,
-                   signer_norm_prob=0.3, temporal_mask_prob=0.3, temporal_mask_frames=4):
+def online_augment(x, rotation_deg=8.0, scale_lo=0.88, scale_hi=1.12, noise_std=0.002,
+                   speed_warp_prob=0.3, min_speed=0.8, max_speed=1.2,
+                   signer_norm_prob=0.2, temporal_mask_prob=0.15, temporal_mask_frames=3):
     """
     Enhanced augmentation with temporal speed warping, signer normalization,
     rotation, scale, and noise. Operates on 16-channel bone-augmented tensors.
@@ -786,26 +786,19 @@ def apply_mixup(x, y, alpha=0.1, cutmix_prob=0.5):
     return x_mix, y, y[idx], lam
 
 class CosineWarmupScheduler(optim.lr_scheduler._LRScheduler):
-    """Cosine annealing with linear warmup and warm restarts (T_0=50, T_mult=2)."""
-    def __init__(self, optimizer, warmup_epochs, max_epochs, min_lr_ratio=0.01, T_0=50, T_mult=2, last_epoch=-1):
+    """Cosine annealing with linear warmup. NO warm restarts — smooth single decay."""
+    def __init__(self, optimizer, warmup_epochs, max_epochs, min_lr_ratio=0.01, last_epoch=-1, **kwargs):
         self.warmup_epochs = warmup_epochs
         self.max_epochs    = max_epochs
         self.min_lr_ratio  = min_lr_ratio
-        self.T_0           = T_0
-        self.T_mult        = T_mult
+        # Accept but ignore T_0, T_mult for backward compatibility
         super().__init__(optimizer, last_epoch)
     def get_lr(self):
         e = self.last_epoch
         if e < self.warmup_epochs:
             scale = (e + 1) / self.warmup_epochs
         else:
-            # Determine which restart cycle we're in
-            t = e - self.warmup_epochs
-            T_cur, T_i = t, self.T_0
-            while T_cur >= T_i:
-                T_cur -= T_i
-                T_i = int(T_i * self.T_mult)
-            progress = T_cur / T_i
+            progress = (e - self.warmup_epochs) / max(self.max_epochs - self.warmup_epochs, 1)
             scale = self.min_lr_ratio + 0.5 * (1 - self.min_lr_ratio) * (1 + math.cos(math.pi * progress))
         return [base_lr * scale for base_lr in self.base_lrs]
 
@@ -873,9 +866,11 @@ def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_acc, best_acc, 
     }
 
 def _auto_data_path():
-    for p in ['/workspace/ASL_landmarks_float16', '/kaggle/input/datasets/kokoab/batch-1/ASL_landmarks_float16', 'ASL_landmarks_float16']:
+    for p in ['/workspace/ASL_landmarks_rtmlib', '/workspace/ASL_landmarks_float16',
+              '/kaggle/input/datasets/kokoab/batch-1/ASL_landmarks_float16',
+              'ASL_landmarks_rtmlib', 'ASL_landmarks_float16']:
         if os.path.isdir(p): return p
-    return 'ASL_landmarks_float16'
+    return 'ASL_landmarks_rtmlib'
 
 def _auto_save_dir():
     for p in ['/workspace/output', '/kaggle/working']:
@@ -901,14 +896,14 @@ def train(
     use_balanced_softmax = False,
     use_arcface = False,
 
-    epochs = 300, batch_size = 256, accum_steps = 2, lr = 7e-4, weight_decay = 0.01,
-    warmup_epochs = 5, label_smoothing = 0.10, grad_clip = 5.0, patience = 50,
-    val_every = 3,
-    focal_gamma = 1.0,
+    epochs = 150, batch_size = 256, accum_steps = 4, lr = 3e-4, weight_decay = 0.01,
+    warmup_epochs = 10, label_smoothing = 0.05, grad_clip = 5.0, patience = 25,
+    val_every = 1,
+    focal_gamma = 0.0,
     sampler_temperature = 0.5, in_channels = 16, d_model = 384, nhead = 8,
-    num_transformer_layers = 6, dropout = 0.10, head_dropout = 0.30,
-    mixup_alpha = 0.15,
-    cutmix_prob = 0.5,
+    num_transformer_layers = 6, dropout = 0.10, head_dropout = 0.45,
+    mixup_alpha = 0.1,
+    cutmix_prob = 0.15,
     curriculum_learning = False,
     curriculum_phase1_epochs = 50,
     curriculum_phase2_epochs = 50,
@@ -1067,7 +1062,7 @@ def train(
         log.info(f"Using CosineWarmupScheduler (aux stream, {epochs} epochs)")
     else:
         scheduler = CosineWarmupScheduler(optimizer, warmup_epochs=warmup_epochs, max_epochs=epochs)
-        log.info(f"Using CosineWarmupScheduler with warm restarts ({epochs} epochs)")
+        log.info(f"Using CosineWarmupScheduler with smooth cosine decay ({epochs} epochs, warmup={warmup_epochs})")
     scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
     # 4. Resume from checkpoint (before compile — clean keys)
@@ -1340,12 +1335,14 @@ if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description="SLT Stage 1 — Multi-Stream Training")
     p.add_argument('--stream', default='joint', choices=['joint', 'bone', 'velocity', 'bone_motion', 'angle', 'angle_motion'])
+    p.add_argument('--data_path', default=None, help='Path to .npy landmark directory (overrides auto-detect)')
     p.add_argument('--d_model', type=int, default=384)
     p.add_argument('--num_layers', type=int, default=6)
-    p.add_argument('--epochs', type=int, default=300)
-    p.add_argument('--patience', type=int, default=50)
-    p.add_argument('--batch_size', type=int, default=128)
-    p.add_argument('--lr', type=float, default=7e-4)
+    p.add_argument('--epochs', type=int, default=150)
+    p.add_argument('--patience', type=int, default=25)
+    p.add_argument('--batch_size', type=int, default=256)
+    p.add_argument('--lr', type=float, default=3e-4)
+    p.add_argument('--accum_steps', type=int, default=4)
     p.add_argument('--save_dir', default=None)
     p.add_argument('--balanced_softmax', action='store_true', help='Use Balanced Softmax loss')
     p.add_argument('--arcface', action='store_true', help='Use ArcFace head with gradual warmup')
@@ -1353,12 +1350,14 @@ if __name__ == "__main__":
     args = p.parse_args()
     train(
         stream_name=args.stream,
+        data_path=args.data_path,
         d_model=args.d_model,
         num_transformer_layers=args.num_layers,
         epochs=args.epochs,
         patience=args.patience,
         batch_size=args.batch_size,
         lr=args.lr,
+        accum_steps=args.accum_steps,
         save_dir=args.save_dir,
         use_balanced_softmax=args.balanced_softmax,
         use_arcface=args.arcface,

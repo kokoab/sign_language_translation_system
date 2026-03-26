@@ -74,13 +74,13 @@ _DIALOGUE_SEARCH = [
 
 if os.path.isdir("/workspace"):
     OUTPUT_DIR = "/workspace/output/asl_flan_t5_results"
-    SAVE_PATH = "/workspace/output/slt_conversational_t5_model"
+    SAVE_PATH = "/workspace/output/slt_final_t5_model"
 elif os.path.isdir("/kaggle/working"):
     OUTPUT_DIR = "/kaggle/working/asl_flan_t5_results"
-    SAVE_PATH = "/kaggle/working/slt_conversational_t5_model"
+    SAVE_PATH = "/kaggle/working/slt_final_t5_model"
 else:
     OUTPUT_DIR = "./asl_flan_t5_results"
-    SAVE_PATH = "./slt_conversational_t5_model"
+    SAVE_PATH = "./slt_final_t5_model"
 
 # ══════════════════════════════════════════════════════════════════
 #  NOISY GLOSS AUGMENTATION (robustness to Stage 2 CTC errors)

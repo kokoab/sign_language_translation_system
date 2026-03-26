@@ -939,7 +939,7 @@ class ModelEMA:
             if p.requires_grad:
                 p.data.copy_(self.backup[n])
 
-def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, best_wer, trigger_times, gloss_to_idx, idx_to_gloss, vocab_size):
+def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, best_wer, trigger_times, gloss_to_idx, idx_to_gloss, vocab_size, d_model=384):
     unwrapped = model.module if hasattr(model, 'module') else model
     return {
         'model_state_dict':       unwrapped.state_dict(),
@@ -948,7 +948,7 @@ def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, best_wer, 
         'ema_shadow':             ema.shadow if ema else None,
         'epoch': epoch, 'best_wer': best_wer, 'trigger_times': trigger_times,
         'gloss_to_idx': gloss_to_idx, 'idx_to_gloss': idx_to_gloss, 'vocab_size': vocab_size,
-        'val_wer': val_wer, 'stage': 2,
+        'd_model': d_model, 'val_wer': val_wer, 'stage': 2,
     }
 
 # ══════════════════════════════════════════════════════════════════
@@ -956,19 +956,26 @@ def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, best_wer, 
 # ══════════════════════════════════════════════════════════════════
 
 def _auto_data_path():
-    for p in ['/workspace/ASL_landmarks_float16', '/kaggle/input/datasets/kokoab/batch-1/ASL_landmarks_float16', 'ASL_landmarks_float16']:
+    for p in ['/workspace/ASL_landmarks_rtmlib', '/workspace/ASL_landmarks_float16',
+              '/kaggle/input/datasets/kokoab/batch-1/ASL_landmarks_float16',
+              'ASL_landmarks_rtmlib', 'ASL_landmarks_float16']:
         if os.path.isdir(p): return p
-    return 'ASL_landmarks_float16'
+    return 'ASL_landmarks_rtmlib'
 
 def _auto_save_dir():
-    for p in ['/workspace/output', '/kaggle/working']:
+    for p in ['/workspace/output_stage2', '/kaggle/working']:
         if os.path.isdir(p): return p
-    return './output'
+    return './output_stage2'
 
 def _auto_stage1_ckpt(save_dir):
-    for p in [Path(save_dir) / 'best_model.pth', '/kaggle/input/datasets/kokoab/model-dataset/best_model.pth']:
+    """Find Stage 1 checkpoint. Checks common locations (NOT save_dir, which is Stage 2's dir)."""
+    for p in ['/workspace/output/best_model.pth',
+              '/workspace/output_joint/best_model.pth',
+              'models/output_rtmlib_joint/best_model.pth',
+              'models/output_joint/best_model.pth',
+              '/kaggle/input/datasets/kokoab/model-dataset/best_model.pth']:
         if Path(p).exists(): return str(p)
-    return str(Path(save_dir) / 'best_model.pth')
+    return 'models/output_joint/best_model.pth'
 
 def train_stage2(
     data_path = None,
@@ -1032,11 +1039,11 @@ def train_stage2(
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ctc, num_workers=4, pin_memory=use_amp, persistent_workers=True)
 
     # Auto-detect d_model from Stage 1 checkpoint
-    s1_d_model = 256  # fallback default
+    s1_d_model = 384  # fallback default (matches trained Stage 1)
     if stage1_ckpt and Path(stage1_ckpt).exists():
         try:
             s1_ckpt = torch.load(stage1_ckpt, map_location='cpu', weights_only=False)
-            s1_d_model = s1_ckpt.get('d_model', 256)
+            s1_d_model = s1_ckpt.get('d_model', 384)
             log.info(f"Stage 1 checkpoint d_model={s1_d_model}")
         except Exception:
             pass
@@ -1209,7 +1216,7 @@ def train_stage2(
         # Checkpoint (WER: lower is better!)
         should_save_last = (epoch % 5 == 0 or epoch == epochs)
         if val_wer < best_wer or should_save_last:
-            ckpt = make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, min(val_wer, best_wer), trigger_times, gloss_to_idx, idx_to_gloss, vocab_size)
+            ckpt = make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, min(val_wer, best_wer), trigger_times, gloss_to_idx, idx_to_gloss, vocab_size, d_model=s1_d_model)
             if should_save_last:
                 torch.save(ckpt, LAST_CKPT)
             if val_wer < best_wer:
@@ -1279,6 +1286,7 @@ if __name__ == '__main__':
     import argparse
     p = argparse.ArgumentParser(description="SLT Stage 2 — Continuous Sign Recognition (CTC)")
     p.add_argument('--stage1_ckpt', default=None, help='Path to Stage 1 best_model.pth')
+    p.add_argument('--data_path', default=None, help='Path to .npy landmark directory (overrides auto-detect)')
     p.add_argument('--epochs', type=int, default=60)
     p.add_argument('--batch_size', type=int, default=32)
     p.add_argument('--lr', type=float, default=5e-4)
@@ -1289,6 +1297,7 @@ if __name__ == '__main__':
     args = p.parse_args()
     train_stage2(
         stage1_ckpt=args.stage1_ckpt,
+        data_path=args.data_path,
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.lr,
