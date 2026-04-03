@@ -71,17 +71,17 @@ def extract_video(video_path, wholebody, cfg):
         indices = [int(i * step) for i in range(max_process)]
         frames = [frames[i] for i in indices]
 
-    processed_count = len(frames)
-
     l_seq, r_seq, face_seq = [], [], []
     l_valid, r_valid, face_valid = [], [], []
 
     for i, bgr in enumerate(frames):
-        fi = indices[i] if total_frames > max_process else i
+        fi = indices[i]
         h, w = bgr.shape[:2]
 
         try:
-            kps, scs = wholebody(bgr)
+            # Skip YOLOX detection — use full-frame bbox (single person ASL videos)
+            full_bbox = np.array([[0, 0, w, h, 1.0]], dtype=np.float32)
+            kps, scs = wholebody.pose_model(bgr, bboxes=full_bbox)
         except Exception:
             continue
 

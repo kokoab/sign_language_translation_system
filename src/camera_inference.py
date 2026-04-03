@@ -44,7 +44,7 @@ L_WRIST = 0
 R_WRIST = 21
 L_MIDDLE_MCP = 9
 R_MIDDLE_MCP = 30
-NUM_NODES = 47  # 42 hand + 5 face
+NUM_NODES = 61  # 42 hand + 5 face
 TARGET_FRAMES = 32
 MIN_RAW_FRAMES = 8  # Aligned with extract.py v7.0
 

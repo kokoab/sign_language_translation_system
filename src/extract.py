@@ -70,6 +70,15 @@ LABEL_ALIASES = {
     "ME": "I",
     "HE_SHE": "HE",
     "SHE": "HE",
+    # Merge HIS/HER into HIS_HER
+    "HIS": "HIS_HER",
+    "HER": "HIS_HER",
+    # Merge EXCUSE into EXCUSE ME
+    "EXCUSE": "EXCUSE ME",
+    # Merge RIGHT into RIGHT (ADJECTIVE)
+    "RIGHT": "RIGHT (ADJECTIVE)",
+    # Merge TODAY into NOW
+    "TODAY": "NOW",
 }
 
 # ─────────────────────────────────────────────
@@ -78,7 +87,7 @@ LABEL_ALIASES = {
 # 21-41: Right Hand (21 points)
 # 42: Nose, 43: Chin, 44: Forehead, 45: Left Ear, 46: Right Ear
 # ─────────────────────────────────────────────
-NUM_NODES = 47
+NUM_NODES = 61
 L_WRIST = 0; R_WRIST = 21
 L_MIDDLE_MCP = 9; R_MIDDLE_MCP = 30
 

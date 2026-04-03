@@ -55,6 +55,8 @@ _EDGES_HANDS = _EDGES_SINGLE + [(u+21, v+21) for u, v in _EDGES_SINGLE]
 
 # Face nodes: 42=Nose, 43=Chin, 44=Forehead, 45=L_Ear, 46=R_Ear
 NOSE_NODE = 42; CHIN_NODE = 43; FOREHEAD_NODE = 44; L_EAR_NODE = 45; R_EAR_NODE = 46
+L_MOUTH_NODE = 47; R_MOUTH_NODE = 48; UPPER_LIP_NODE = 49; LOWER_LIP_NODE = 50
+L_SHOULDER_NODE = 57; R_SHOULDER_NODE = 58; L_ELBOW_NODE = 59; R_ELBOW_NODE = 60
 _EDGES_FACE = [
     (NOSE_NODE, CHIN_NODE), (NOSE_NODE, FOREHEAD_NODE),
     (NOSE_NODE, L_EAR_NODE), (NOSE_NODE, R_EAR_NODE),
@@ -69,7 +71,7 @@ _EDGES_HAND_FACE = [
     (29, NOSE_NODE), (29, FOREHEAD_NODE), (29, CHIN_NODE),
 ]
 _EDGES = _EDGES_HANDS + _EDGES_FACE + _EDGES_HAND_FACE
-NUM_NODES = 47
+NUM_NODES = 61
 
 def build_adjacency_matrices(num_nodes: int = NUM_NODES) -> torch.Tensor:
     def _norm(M):
@@ -129,7 +131,7 @@ _MIDDLE_MCP = 9; _MIDDLE_PIP = 10; _MIDDLE_TIP = 12; _RING_MCP = 13; _RING_PIP =
 _PINKY_MCP = 17; _PINKY_PIP = 18; _PINKY_TIP = 20
 # 12 per hand x 2 = 24, + 10 hand-to-face features = 34 (base)
 # + 30 joint angles + 6 palm orientation + 6 finger spread = 76 total
-N_GEO_FEATURES = 76
+N_GEO_FEATURES = 114
 
 # Phase 4A: Joint angle triplets (joint at middle vertex)
 _JOINT_TRIPLETS = [
@@ -150,14 +152,22 @@ _BONE_PAIRS = [
 ]
 
 def compute_bone_features_np(x_np):
-    """Numpy version for dataset __getitem__. x: [T, 47, 10] -> [T, 47, 16]"""
+    """Numpy version for dataset __getitem__. x: [T, N, 10] -> [T, N, 16] where N=47 or 61.
+    Must match train_stage_1.py's version exactly for consistent train/inference."""
+    N = x_np.shape[-2]
     xyz = x_np[..., :3]
     bone = np.zeros_like(xyz)
     for p, c in _BONE_PAIRS:
         bone[..., c, :] = xyz[..., c, :] - xyz[..., p, :]
         bone[..., c+21, :] = xyz[..., c+21, :] - xyz[..., p+21, :]
-    for fn in [43, 44, 45, 46]:
+    # Face bones: all face nodes relative to nose (node 42)
+    face_end = min(N, 57) if N > 42 else min(N, 47)
+    for fn in range(43, face_end):
         bone[..., fn, :] = xyz[..., fn, :] - xyz[..., 42, :]
+    # Body bones: elbows relative to shoulders
+    if N > 60:
+        bone[..., 59, :] = xyz[..., 59, :] - xyz[..., 57, :]  # L elbow - L shoulder
+        bone[..., 60, :] = xyz[..., 60, :] - xyz[..., 58, :]  # R elbow - R shoulder
     bone_motion = np.zeros_like(bone)
     T = xyz.shape[0]
     if T > 2:
@@ -256,8 +266,117 @@ class DSGCNEncoder(nn.Module):
                 cos_s = (v1 * v2).sum(-1) / (v1.norm(dim=-1) * v2.norm(dim=-1) + 1e-6)
                 spread_feats.append(torch.acos(cos_s.clamp(-1 + 1e-6, 1 - 1e-6)))
 
-        # 34 base + 30 angles + 6 palm + 6 spread = 76 total
-        return torch.stack(get_hand_features(0) + get_hand_features(21) + face_feats + angle_feats + palm_feats + spread_feats, dim=-1)
+        # Wrist orientation: palm normal dot product with canonical directions
+        orient_feats = []
+        up = torch.tensor([0.0, 1.0, 0.0], device=xyz.device)
+        forward = torch.tensor([0.0, 0.0, 1.0], device=xyz.device)
+        for base in [0, 21]:
+            wrist = xyz[:, :, base, :]
+            v1 = xyz[:, :, base + 5, :] - wrist
+            v2 = xyz[:, :, base + 17, :] - wrist
+            normal = torch.cross(v1, v2, dim=-1)
+            normal = normal / (normal.norm(dim=-1, keepdim=True) + 1e-6)
+            orient_feats.append((normal * up).sum(-1))
+            orient_feats.append((normal * forward).sum(-1))
+
+        # Wrist trajectory: velocity direction of each wrist
+        traj_feats = []
+        for base in [0, 21]:
+            wrist_xyz = xyz[:, :, base, :]
+            vel = torch.zeros_like(wrist_xyz)
+            vel[:, 1:-1] = (wrist_xyz[:, 2:] - wrist_xyz[:, :-2]) / 2.0
+            vel[:, 0] = vel[:, 1]; vel[:, -1] = vel[:, -2]
+            speed = vel.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            vel_dir = vel / speed
+            for i in range(3):
+                traj_feats.append(vel_dir[..., i])
+
+        # Path curvature
+        curve_feats = []
+        for base in [0, 21]:
+            wrist_xyz = xyz[:, :, base, :]
+            vel = torch.zeros_like(wrist_xyz)
+            vel[:, 1:-1] = (wrist_xyz[:, 2:] - wrist_xyz[:, :-2]) / 2.0
+            vel[:, 0] = vel[:, 1]; vel[:, -1] = vel[:, -2]
+            vel_norm = vel / (vel.norm(dim=-1, keepdim=True) + 1e-6)
+            dot = (vel_norm[:, :-1] * vel_norm[:, 1:]).sum(-1)
+            curvature = torch.acos(dot.clamp(-1 + 1e-6, 1 - 1e-6))
+            curvature = F.pad(curvature, (0, 1), value=0.0)
+            curve_feats.append(curvature)
+
+        # Inter-hand features
+        inter_feats = []
+        l_wrist = xyz[:, :, 0, :]; r_wrist = xyz[:, :, 21, :]
+        inter_feats.append(d(l_wrist, r_wrist))
+        rel = r_wrist - l_wrist
+        rel_norm = rel / (rel.norm(dim=-1, keepdim=True) + 1e-6)
+        for i in range(2):
+            inter_feats.append(rel_norm[..., i])
+
+        # Wrist-to-face approach velocity
+        approach_feats = []
+        for base in [0, 21]:
+            wrist_xyz = xyz[:, :, base, :]
+            nose_xyz = xyz[:, :, NOSE_NODE, :]
+            dist_to_face = (wrist_xyz - nose_xyz).norm(dim=-1)
+            approach_vel = torch.zeros_like(dist_to_face)
+            approach_vel[:, 1:-1] = (dist_to_face[:, 2:] - dist_to_face[:, :-2]) / 2.0
+            approach_vel[:, 0] = approach_vel[:, 1]; approach_vel[:, -1] = approach_vel[:, -2]
+            approach_feats.append(approach_vel)
+
+        # Finger crossing
+        cross_feats = []
+        for base in [0, 21]:
+            cross_feats.append(xyz[:,:,base+_INDEX_TIP,0] - xyz[:,:,base+_MIDDLE_TIP,0])
+            cross_feats.append(xyz[:,:,base+_MIDDLE_TIP,0] - xyz[:,:,base+_RING_TIP,0])
+        # Hand symmetry
+        sym_feats = []
+        lv = torch.zeros_like(xyz[:,:,0,:]); lv[:,1:-1]=(xyz[:,2:,0,:]-xyz[:,:-2,0,:])/2.0; lv[:,0]=lv[:,1]; lv[:,-1]=lv[:,-2]
+        rv = torch.zeros_like(xyz[:,:,21,:]); rv[:,1:-1]=(xyz[:,2:,21,:]-xyz[:,:-2,21,:])/2.0; rv[:,0]=rv[:,1]; rv[:,-1]=rv[:,-2]
+        ld = lv/(lv.norm(dim=-1,keepdim=True)+1e-6); rd = rv/(rv.norm(dim=-1,keepdim=True)+1e-6)
+        sym_feats.append((ld*rd).sum(-1))
+        # Speed per hand
+        speed_feats = []
+        for base in [0, 21]:
+            ww = xyz[:,:,base,:]; v = torch.zeros_like(ww); v[:,1:-1]=(ww[:,2:]-ww[:,:-2])/2.0; v[:,0]=v[:,1]; v[:,-1]=v[:,-2]
+            speed_feats.append(v.norm(dim=-1))
+        # Acceleration profile per hand
+        accel_feats = []
+        for base in [0, 21]:
+            ww = xyz[:,:,base,:]; v = torch.zeros_like(ww); v[:,1:-1]=(ww[:,2:]-ww[:,:-2])/2.0; v[:,0]=v[:,1]; v[:,-1]=v[:,-2]
+            a = torch.zeros_like(v); a[:,1:-1]=(v[:,2:]-v[:,:-2])/2.0; a[:,0]=a[:,1]; a[:,-1]=a[:,-2]
+            accel_feats.append(a.norm(dim=-1))
+        # Contact detection
+        contact_feats = []
+        hd = (xyz[:,:,0,:]-xyz[:,:,21,:]).norm(dim=-1)
+        contact_feats.append(torch.sigmoid(5.0*(0.05-hd)))
+
+        # Body-relative features (must match train_stage_1.py exactly)
+        body_feats = []
+        l_shoulder = xyz[:, :, L_SHOULDER_NODE, :]
+        r_shoulder = xyz[:, :, R_SHOULDER_NODE, :]
+        shoulder_mid = (l_shoulder + r_shoulder) / 2.0
+        shoulder_width = d(l_shoulder, r_shoulder)
+        for base in [0, 21]:
+            wrist = xyz[:, :, base, :]
+            hand_height = (wrist[:, :, 1] - shoulder_mid[:, :, 1]) / (shoulder_width + 1e-6)
+            body_feats.append(hand_height)
+            hand_lateral = (wrist[:, :, 0] - shoulder_mid[:, :, 0]) / (shoulder_width + 1e-6)
+            body_feats.append(hand_lateral)
+            if base == 0:
+                body_feats.append(d(wrist, l_shoulder))
+            else:
+                body_feats.append(d(wrist, r_shoulder))
+            if base == 0:
+                body_feats.append(d(wrist, xyz[:, :, L_ELBOW_NODE, :]))
+            else:
+                body_feats.append(d(wrist, xyz[:, :, R_ELBOW_NODE, :]))
+        body_feats.append(shoulder_width)
+        mouth_mid = (xyz[:, :, UPPER_LIP_NODE, :] + xyz[:, :, LOWER_LIP_NODE, :]) / 2.0
+        for base in [0, 21]:
+            body_feats.append(d(xyz[:, :, base, :], mouth_mid))
+        # 103 + 11 body = 114 total
+        return torch.stack(get_hand_features(0) + get_hand_features(21) + face_feats + angle_feats + palm_feats + spread_feats + orient_feats + traj_feats + curve_feats + inter_feats + approach_feats + cross_feats + sym_feats + speed_feats + accel_feats + contact_feats + body_feats, dim=-1)
 
     def forward(self, x):
         xyz = x[:, :, :, :3]
@@ -329,12 +448,31 @@ class SLTStage2CTC(nn.Module):
         self.d_model = d_model
         self.vocab_size = vocab_size
 
-        self.encoder = DSGCNEncoder(in_channels=16, d_model=d_model)
+        # Detect model type from checkpoint
+        model_type = None
+        if stage1_ckpt and Path(stage1_ckpt).exists():
+            ckpt = torch.load(stage1_ckpt, map_location='cpu', weights_only=False)
+            model_type = ckpt.get('model_type', None)
+
+        if model_type and ('v14' in model_type or 'v15' in model_type):
+            from model_v14 import DSGCNEncoderV14, compute_angle_features
+            self.encoder = DSGCNEncoderV14(in_channels=16, d_model=d_model, num_tcn_blocks=4)
+            self._compute_angle_features = compute_angle_features
+            self._is_v14 = True
+            log.info(f"Using v14/v15 encoder — DS-GCN-TCN angle-primary (d_model={d_model})")
+        elif model_type and ('v12' in model_type or 'v13' in model_type):
+            from model_v12 import DSGCNEncoderV12
+            self.encoder = DSGCNEncoderV12(in_channels=16, d_model=d_model, num_tcn_blocks=4)
+            log.info(f"Using v12 encoder — DS-GCN-TCN (d_model={d_model})")
+        elif model_type and 'v11' in model_type:
+            from model_v11 import DSGCNEncoderV11
+            self.encoder = DSGCNEncoderV11(in_channels=16, d_model=d_model, num_transformer_layers=4)
+            log.info(f"Using v11 encoder (d_model={d_model})")
+        else:
+            self.encoder = DSGCNEncoder(in_channels=16, d_model=d_model)
 
         if stage1_ckpt and Path(stage1_ckpt).exists():
             log.info(f"Loading pre-trained Stage 1 weights from {stage1_ckpt}")
-            ckpt = torch.load(stage1_ckpt, map_location='cpu', weights_only=False)
-            # Handle both direct encoder keys and _orig_mod prefixed keys
             enc_state = {}
             for k, v in ckpt['model_state_dict'].items():
                 k_clean = k.replace('_orig_mod.', '')
@@ -381,11 +519,18 @@ class SLTStage2CTC(nn.Module):
         # ONE batched encoder call instead of B separate calls
         all_clips_batch = torch.cat(all_clips, dim=0)  # [total_clips, 32, V, C]
         encoder_frozen = not any(p.requires_grad for p in self.encoder.parameters())
+
+        # v14: compute angle features for the encoder
+        enc_kwargs = {}
+        if getattr(self, '_is_v14', False):
+            angle_feats, angle_vel, _ = self._compute_angle_features(all_clips_batch)
+            enc_kwargs = {'angle_features': angle_feats, 'angle_vel': angle_vel}
+
         if encoder_frozen:
             with torch.no_grad():
-                enc_out = self.encoder(all_clips_batch)
+                enc_out = self.encoder(all_clips_batch, **enc_kwargs)
         else:
-            enc_out = self.encoder(all_clips_batch)
+            enc_out = self.encoder(all_clips_batch, **enc_kwargs)
 
         # ONE batched temporal pool call
         enc_out = enc_out.permute(0, 2, 1)       # [total_clips, d_model, 32]
@@ -626,11 +771,12 @@ class SyntheticCTCDataset(Dataset):
         for f in unique_files:
             try:
                 arr = np.load(self.data_path / f).astype(np.float32)
-                if arr.shape == (32, 47, 10):
+                if arr.shape[0] == 32 and arr.shape[2] == 10 and arr.shape[1] in (47, 61):
                     self._file_cache[f] = arr
             except Exception:
                 pass
-        log.info(f"  Cached {len(self._file_cache)} files (~{len(self._file_cache) * 32 * 47 * 10 * 4 / 1e9:.1f} GB RAM)")
+        n_nodes = 61 if any(v.shape[1] == 61 for v in self._file_cache.values()) else 47
+        log.info(f"  Cached {len(self._file_cache)} files ({n_nodes} nodes, ~{len(self._file_cache) * 32 * n_nodes * 10 * 4 / 1e9:.1f} GB RAM)")
 
     def _create_transition_frames(self, prev_clip, next_clip):
         """Create realistic transition frames using minimum-jerk trajectory.
@@ -754,7 +900,8 @@ class SyntheticCTCDataset(Dataset):
 
         # Fallback if all files are skipped
         if len(arrays) == 0:
-            return np.zeros((32, 47, 16), dtype=np.float32), []
+            n_nodes = 61 if self._file_cache and next(iter(self._file_cache.values())).shape[1] == 61 else 47
+            return np.zeros((32, n_nodes, 16), dtype=np.float32), []
 
         x = np.concatenate(arrays, axis=0)  # [T_total, 47, 10]
 
@@ -781,6 +928,66 @@ class SyntheticCTCDataset(Dataset):
         x = np.concatenate([xyz, vel, acc, mask], axis=-1).astype(np.float32)
         x = compute_bone_features_np(x)
         return x, valid_targets
+
+class PregenContinuousCTCDataset(Dataset):
+    """Pre-generated continuous sequences extracted with extract_frames_continuous.
+    Format matches inference exactly. Each .npy is [N*32, 61, 10].
+    Manifest maps filename → gloss string like 'HELLO HOW YOU'."""
+
+    def __init__(self, data_path, manifest, gloss_to_idx):
+        self.data_path = Path(data_path)
+        self.gloss_to_idx = gloss_to_idx
+        self.samples = []
+
+        for fname, gloss_str in manifest.items():
+            glosses = gloss_str.split()
+            target = [gloss_to_idx[g] for g in glosses if g in gloss_to_idx]
+            if target and len(target) == len(glosses):
+                self.samples.append((fname, target))
+
+        log.info(f"PregenContinuousCTCDataset: {len(self.samples)} samples from {data_path}")
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        fname, target_glosses = self.samples[idx]
+        arr = np.load(self.data_path / fname).astype(np.float32)
+        arr = compute_bone_features_np(arr)
+        return arr, target_glosses
+
+
+class RealPhraseCTCDataset(Dataset):
+    """Dataset for real continuous signing phrase videos.
+    Each .npy file is [N*32, 61, 10] — multiple 32-frame clips concatenated.
+    Manifest maps filename → gloss string like 'GOOD MORNING'."""
+
+    def __init__(self, data_path, manifest, gloss_to_idx, augment=True):
+        self.data_path = Path(data_path)
+        self.gloss_to_idx = gloss_to_idx
+        self.augment = augment
+        self.samples = []
+
+        for fname, gloss_str in manifest.items():
+            glosses = gloss_str.split()
+            target = [gloss_to_idx[g] for g in glosses if g in gloss_to_idx]
+            if target:
+                self.samples.append((fname, target))
+
+        log.info(f"RealPhraseCTCDataset: {len(self.samples)} samples from {data_path}")
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        fname, target_glosses = self.samples[idx]
+        arr = np.load(self.data_path / fname).astype(np.float32)  # [N*32, 61, 10]
+
+        # Add bone features
+        arr = compute_bone_features_np(arr)  # [N*32, 61, 16]
+
+        return arr, target_glosses
+
 
 def collate_ctc(batch):
     xs = [torch.from_numpy(b[0]) for b in batch if len(b[1]) > 0]
@@ -987,6 +1194,8 @@ def train_stage2(
     use_focal_ctc = True, focal_gamma = 2.0,
     use_cr_ctc = True, cr_ctc_weight = 0.3,
     use_inter_ctc = True, inter_ctc_weight = 0.1,
+    phrase_data = None,
+    continuous_data = None,
 ):
     if data_path is None: data_path = _auto_data_path()
     if save_dir is None:  save_dir = _auto_save_dir()
@@ -1030,9 +1239,77 @@ def train_stage2(
             confused_glosses = json.load(f)
         log.info(f"Loaded {len(confused_glosses)} confused glosses for weighted sampling")
 
-    train_ds = SyntheticCTCDataset(data_path, manifest, gloss_to_idx, num_samples=100 if smoke_test else 15000, confused_glosses=confused_glosses)
-    val_ds = SyntheticCTCDataset(data_path, manifest, gloss_to_idx, num_samples=20 if smoke_test else 2000)
-    test_ds = SyntheticCTCDataset(data_path, manifest, gloss_to_idx, num_samples=20 if smoke_test else 2000)
+    # Mix old synthetic (clean CTC alignment) + new continuous (inference format)
+    old_synth = SyntheticCTCDataset(data_path, manifest, gloss_to_idx,
+                                     num_samples=50 if smoke_test else 10000,
+                                     confused_glosses=confused_glosses)
+
+    if continuous_data and os.path.isdir(continuous_data):
+        cont_manifest_path = Path(continuous_data) / 'manifest.json'
+        with open(cont_manifest_path) as f:
+            cont_manifest = json.load(f)
+        cont_items = list(cont_manifest.items())
+        random.shuffle(cont_items)
+        n = len(cont_items)
+        n_train = int(n * 0.80)
+        n_val = int(n * 0.10)
+        train_cont = dict(cont_items[:n_train])
+        val_cont = dict(cont_items[n_train:n_train+n_val])
+        test_cont = dict(cont_items[n_train+n_val:])
+        new_cont = PregenContinuousCTCDataset(continuous_data, train_cont, gloss_to_idx)
+        from torch.utils.data import ConcatDataset
+        train_ds = ConcatDataset([old_synth, new_cont])
+        log.info(f"Mixed training: {len(old_synth)} old synthetic + {len(new_cont)} continuous = {len(train_ds)}")
+    else:
+        train_ds = old_synth
+        val_cont, test_cont = None, None
+
+    # Mix in real phrase data if provided
+    if phrase_data and os.path.isdir(phrase_data):
+        phrase_manifest_path = Path(phrase_data) / 'manifest.json'
+        if phrase_manifest_path.exists():
+            with open(phrase_manifest_path) as f:
+                phrase_manifest = json.load(f)
+            # Split phrases: 70% train, 15% val, 15% test
+            phrase_items = list(phrase_manifest.items())
+            random.shuffle(phrase_items)
+            n = len(phrase_items)
+            n_train = int(n * 0.7)
+            n_val = int(n * 0.15)
+            train_phrases = dict(phrase_items[:n_train])
+            val_phrases = dict(phrase_items[n_train:n_train+n_val])
+            test_phrases = dict(phrase_items[n_train+n_val:])
+
+            phrase_train_ds = RealPhraseCTCDataset(phrase_data, train_phrases, gloss_to_idx)
+            phrase_val_ds = RealPhraseCTCDataset(phrase_data, val_phrases, gloss_to_idx, augment=False)
+            phrase_test_ds = RealPhraseCTCDataset(phrase_data, test_phrases, gloss_to_idx, augment=False)
+
+            from torch.utils.data import ConcatDataset
+            train_ds = ConcatDataset([train_ds] + [phrase_train_ds] * 3)
+            log.info(f"Mixed training: {len(train_ds)} total (continuous + 3x real phrases)")
+            log.info(f"Real phrases: {len(train_phrases)} train, {len(val_phrases)} val, {len(test_phrases)} test")
+        else:
+            log.warning(f"No manifest.json in {phrase_data}")
+            phrase_val_ds, phrase_test_ds = None, None
+    else:
+        phrase_val_ds, phrase_test_ds = None, None
+
+    # Val/test: use continuous splits if available, else old synthetic
+    if continuous_data and val_cont:
+        val_ds_synth = PregenContinuousCTCDataset(continuous_data, val_cont, gloss_to_idx)
+        test_ds_synth = PregenContinuousCTCDataset(continuous_data, test_cont, gloss_to_idx)
+    else:
+        val_ds_synth = SyntheticCTCDataset(data_path, manifest, gloss_to_idx, num_samples=20 if smoke_test else 2000)
+        test_ds_synth = SyntheticCTCDataset(data_path, manifest, gloss_to_idx, num_samples=20 if smoke_test else 2000)
+
+    # Combine synthetic + real for val/test
+    if phrase_val_ds is not None:
+        from torch.utils.data import ConcatDataset
+        val_ds = ConcatDataset([val_ds_synth, phrase_val_ds])
+        test_ds = ConcatDataset([test_ds_synth, phrase_test_ds])
+    else:
+        val_ds = val_ds_synth
+        test_ds = test_ds_synth
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_ctc, num_workers=8, pin_memory=use_amp, persistent_workers=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ctc, num_workers=4, pin_memory=use_amp, persistent_workers=True)
@@ -1096,6 +1373,8 @@ def train_stage2(
             # Add encoder params to optimizer with scaled LR
             enc_params = [p for p in model.encoder.parameters() if p.requires_grad]
             optimizer.add_param_group({'params': enc_params, 'lr': lr * encoder_lr_scale})
+            # Rebuild scheduler to match new number of param groups
+            scheduler = CosineWarmupScheduler(optimizer, warmup_epochs=0, max_epochs=epochs - epoch)
             encoder_unfrozen = True
             ema = ModelEMA(model)  # Rebuild EMA with new trainable params
             ema.to(device)
@@ -1182,36 +1461,58 @@ def train_stage2(
         model.eval()
         total_wer = 0
         total_samples = 0
-        
+        seq_correct = 0
+        val_loss_total = 0
+        val_loss_count = 0
+
         with torch.no_grad(), torch.cuda.amp.autocast(enabled=use_amp):
             for x_pad, y_flat, x_lens, y_lens in val_loader:
                 if x_pad is None: continue
                 x_pad = x_pad.to(device, non_blocking=True)
                 x_lens = x_lens.to(device, non_blocking=True)
                 y_lens = y_lens.to(device, non_blocking=True)
+                y_flat = y_flat.to(device, non_blocking=True)
                 logits, out_lens = model(x_pad, x_lens)
                 log_probs = F.log_softmax(logits, dim=-1)
-                
+
+                # CTC loss for val
+                ctc_loss = nn.CTCLoss(blank=0, zero_infinity=True)(
+                    log_probs.transpose(0, 1), y_flat.cpu(), out_lens.cpu(), y_lens.cpu())
+                val_loss_total += ctc_loss.item()
+                val_loss_count += 1
+
                 decoded_preds = decode_ctc(log_probs, out_lens, blank=0)
-                
+
                 targets = []
-                idx = 0
+                idx_t = 0
                 for length in y_lens:
-                    targets.append(y_flat[idx:idx+length].cpu().tolist())
-                    idx += length
-                    
+                    targets.append(y_flat[idx_t:idx_t+length].cpu().tolist())
+                    idx_t += length
+
                 for ref, hyp in zip(targets, decoded_preds):
-                    total_wer += calculate_wer(ref, hyp)
+                    wer = calculate_wer(ref, hyp)
+                    total_wer += wer
                     total_samples += 1
-                    
+                    if ref == hyp:
+                        seq_correct += 1
+
         ema.restore(model)
-        
+
         train_loss = epoch_loss / len(train_loader)
         val_wer = (total_wer / max(total_samples, 1)) * 100
+        val_loss = val_loss_total / max(val_loss_count, 1)
+        seq_acc = (seq_correct / max(total_samples, 1)) * 100
 
         frozen_str = "frozen" if not encoder_unfrozen else "unfrozen"
-        log.info(f"Ep {epoch:03d} | {epoch_time:.0f}s | ETA {eta_str} | LR: {cur_lr:.2e} | Loss: {train_loss:.4f} | WER: {val_wer:.2f}% | Enc: {frozen_str}")
-        history.append({"epoch": epoch, "train_loss": round(train_loss, 4), "val_wer": round(val_wer, 2), "lr": round(cur_lr, 8)})
+        log.info(f"Ep {epoch:03d} | {epoch_time:.0f}s | ETA {eta_str} | LR: {cur_lr:.2e} | Loss: {train_loss:.4f} | Val: {val_loss:.4f} | WER: {val_wer:.2f}% | SeqAcc: {seq_acc:.1f}% | Enc: {frozen_str}")
+        history.append({
+            "epoch": epoch,
+            "train_loss": round(train_loss, 4),
+            "val_loss": round(val_loss, 4),
+            "val_wer": round(val_wer, 2),
+            "seq_accuracy": round(seq_acc, 2),
+            "lr": round(cur_lr, 8),
+        })
 
         # Checkpoint (WER: lower is better!)
         should_save_last = (epoch % 5 == 0 or epoch == epochs)
@@ -1294,6 +1595,9 @@ if __name__ == '__main__':
     p.add_argument('--unfreeze_epoch', type=int, default=30)
     p.add_argument('--save_dir', default=None)
     p.add_argument('--smoke', action='store_true')
+    p.add_argument('--no_cr_ctc', action='store_true', help='Disable CR-CTC (saves ~50%% GPU memory)')
+    p.add_argument('--phrase_data', default=None, help='Path to real phrase data (ASL_phrases_extracted)')
+    p.add_argument('--continuous_data', default=None, help='Path to pre-generated continuous data (ASL_continuous_synthetic)')
     args = p.parse_args()
     train_stage2(
         stage1_ckpt=args.stage1_ckpt,
@@ -1305,4 +1609,7 @@ if __name__ == '__main__':
         unfreeze_epoch=args.unfreeze_epoch,
         save_dir=args.save_dir,
         smoke_test=args.smoke,
+        use_cr_ctc=not args.no_cr_ctc,
+        phrase_data=args.phrase_data,
+        continuous_data=args.continuous_data,
     )

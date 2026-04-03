@@ -50,14 +50,49 @@ _EDGES_SINGLE = [
 # Replicate for right hand (offset +21)
 _EDGES_HANDS = _EDGES_SINGLE + [(u+21, v+21) for u, v in _EDGES_SINGLE]
 
-# Face node indices: 42=Nose, 43=Chin, 44=Forehead, 45=L_Ear, 46=R_Ear
+# Face node indices (15 face points):
+# 42=Nose, 43=Chin, 44=Forehead, 45=L_Ear, 46=R_Ear (original 5)
+# 47=L_Mouth, 48=R_Mouth, 49=Upper_Lip, 50=Lower_Lip (mouth)
+# 51=L_Eyebrow_In, 52=L_Eyebrow_Out, 53=R_Eyebrow_In, 54=R_Eyebrow_Out (eyebrows)
+# 55=L_Eye, 56=R_Eye (eyes)
 NOSE_NODE = 42; CHIN_NODE = 43; FOREHEAD_NODE = 44; L_EAR_NODE = 45; R_EAR_NODE = 46
+L_MOUTH_NODE = 47; R_MOUTH_NODE = 48; UPPER_LIP_NODE = 49; LOWER_LIP_NODE = 50
+L_EYEBROW_IN_NODE = 51; L_EYEBROW_OUT_NODE = 52; R_EYEBROW_IN_NODE = 53; R_EYEBROW_OUT_NODE = 54
+L_EYE_NODE = 55; R_EYE_NODE = 56
 
-# Face internal edges
+# Body node indices (4 body points):
+# 57=L_Shoulder, 58=R_Shoulder, 59=L_Elbow, 60=R_Elbow
+L_SHOULDER_NODE = 57; R_SHOULDER_NODE = 58; L_ELBOW_NODE = 59; R_ELBOW_NODE = 60
+
+# Face range for masking
+FACE_START = 42; FACE_END = 57  # nodes 42-56 (15 face nodes)
+BODY_START = 57; BODY_END = 61  # nodes 57-60 (4 body nodes)
+
+# Face internal edges (15 nodes)
 _EDGES_FACE = [
     (NOSE_NODE, CHIN_NODE), (NOSE_NODE, FOREHEAD_NODE),
     (NOSE_NODE, L_EAR_NODE), (NOSE_NODE, R_EAR_NODE),
     (CHIN_NODE, FOREHEAD_NODE),
+    # Mouth edges
+    (L_MOUTH_NODE, R_MOUTH_NODE), (L_MOUTH_NODE, UPPER_LIP_NODE),
+    (R_MOUTH_NODE, UPPER_LIP_NODE), (UPPER_LIP_NODE, LOWER_LIP_NODE),
+    (LOWER_LIP_NODE, CHIN_NODE), (UPPER_LIP_NODE, NOSE_NODE),
+    # Eyebrow edges
+    (L_EYEBROW_IN_NODE, L_EYEBROW_OUT_NODE), (R_EYEBROW_IN_NODE, R_EYEBROW_OUT_NODE),
+    (L_EYEBROW_IN_NODE, FOREHEAD_NODE), (R_EYEBROW_IN_NODE, FOREHEAD_NODE),
+    # Eye edges
+    (L_EYE_NODE, L_EYEBROW_IN_NODE), (L_EYE_NODE, L_EYEBROW_OUT_NODE),
+    (R_EYE_NODE, R_EYEBROW_IN_NODE), (R_EYE_NODE, R_EYEBROW_OUT_NODE),
+    (L_EYE_NODE, NOSE_NODE), (R_EYE_NODE, NOSE_NODE),
+]
+
+# Body edges (arm chain: shoulder → elbow → hand wrist)
+_EDGES_BODY = [
+    (L_SHOULDER_NODE, R_SHOULDER_NODE),  # shoulder to shoulder
+    (L_SHOULDER_NODE, L_ELBOW_NODE),     # left arm chain
+    (L_ELBOW_NODE, 0),                    # left elbow → left hand wrist (node 0)
+    (R_SHOULDER_NODE, R_ELBOW_NODE),     # right arm chain
+    (R_ELBOW_NODE, 21),                   # right elbow → right hand wrist (node 21)
 ]
 
 # Wrist-to-face edges (spatial context for hand-face interaction)
@@ -69,12 +104,21 @@ _EDGES_HAND_FACE = [
     (8, NOSE_NODE), (8, FOREHEAD_NODE), (8, CHIN_NODE),    # L_INDEX_TIP
     (25, NOSE_NODE), (25, FOREHEAD_NODE), (25, CHIN_NODE),  # R_THUMB_TIP
     (29, NOSE_NODE), (29, FOREHEAD_NODE), (29, CHIN_NODE),  # R_INDEX_TIP
+    # Fingertips to mouth (for signs like EAT, DRINK)
+    (4, UPPER_LIP_NODE), (8, UPPER_LIP_NODE),     # L hand → lip
+    (25, UPPER_LIP_NODE), (29, UPPER_LIP_NODE),   # R hand → lip
 ]
 
-_EDGES = _EDGES_HANDS + _EDGES_FACE + _EDGES_HAND_FACE
+# Hand-to-body edges (spatial context for sign location)
+_EDGES_HAND_BODY = [
+    (0, L_SHOULDER_NODE), (0, L_ELBOW_NODE),      # L_wrist → L_shoulder/elbow
+    (21, R_SHOULDER_NODE), (21, R_ELBOW_NODE),     # R_wrist → R_shoulder/elbow
+]
 
-# 47 Nodes total (21 Left + 21 Right + 5 Face)
-NUM_NODES = 47
+_EDGES = _EDGES_HANDS + _EDGES_FACE + _EDGES_BODY + _EDGES_HAND_FACE + _EDGES_HAND_BODY
+
+# 61 Nodes total (21 Left + 21 Right + 15 Face + 4 Body)
+NUM_NODES = 61
 
 def build_adjacency_matrices(num_nodes: int = NUM_NODES) -> torch.Tensor:
     def _norm(M):
@@ -113,7 +157,7 @@ class DSGCNBlock(nn.Module):
         # Phase 1B: Drop-Graph regularization
         if self.training and self.node_drop_rate > 0:
             node_mask = (torch.rand(B, 1, N, 1, device=x.device) > self.node_drop_rate).float()
-            for gs, ge in [(0, 21), (21, 42), (42, 47)]:
+            for gs, ge in [(0, 21), (21, 42), (FACE_START, FACE_END), (BODY_START, BODY_END)]:
                 if node_mask[:, :, gs:ge, :].sum() < 1:
                     node_mask[:, :, gs, :] = 1.0
             x = x * node_mask
@@ -138,7 +182,7 @@ _PINKY_MCP  = 17; _PINKY_PIP  = 18; _PINKY_TIP  = 20
 
 # 12 per hand x 2 = 24, + 10 hand-to-face features = 34 (base)
 # + 30 joint angles + 6 palm orientation + 6 finger spread = 76 total
-N_GEO_FEATURES = 76
+N_GEO_FEATURES = 114
 
 # Phase 4A: Joint angle triplets (joint at middle vertex)
 _JOINT_TRIPLETS = [
@@ -160,7 +204,7 @@ _BONE_PAIRS = [
 
 def compute_bone_features(x):
     """Append bone direction (3ch) + bone-motion (3ch) to input tensor.
-    x: [B, T, 47, 10] or [T, 47, 10] -> [..., 16]
+    x: [B, T, N, 10] or [T, N, 10] -> [..., 16] where N=47 or 61
     Bone vectors are translation-invariant hand structure.
     Bone-motion vectors capture how the hand structure changes over time.
     """
@@ -168,14 +212,20 @@ def compute_bone_features(x):
     if x.ndim == 3:
         x = x.unsqueeze(0)
         squeeze = True
+    N = x.shape[2]
     xyz = x[..., :3]
     bone = torch.zeros_like(xyz)
     for p, c in _BONE_PAIRS:
         bone[..., c, :] = xyz[..., c, :] - xyz[..., p, :]
         bone[..., c+21, :] = xyz[..., c+21, :] - xyz[..., p+21, :]
     # Face bones: relative to nose (node 42)
-    for fn in [43, 44, 45, 46]:
+    face_end = min(N, FACE_END) if N > 42 else min(N, 47)
+    for fn in range(43, face_end):
         bone[..., fn, :] = xyz[..., fn, :] - xyz[..., 42, :]
+    # Body bones: shoulder→elbow, elbow→wrist
+    if N > 60:
+        bone[..., L_ELBOW_NODE, :] = xyz[..., L_ELBOW_NODE, :] - xyz[..., L_SHOULDER_NODE, :]
+        bone[..., R_ELBOW_NODE, :] = xyz[..., R_ELBOW_NODE, :] - xyz[..., R_SHOULDER_NODE, :]
     # Bone-motion: central difference of bone vectors across time
     bone_motion = torch.zeros_like(bone)
     bone_motion[:, 1:-1] = (bone[:, 2:] - bone[:, :-2]) / 2.0
@@ -187,14 +237,19 @@ def compute_bone_features(x):
     return result
 
 def compute_bone_features_np(x_np):
-    """Numpy version for dataset __getitem__. x: [T, 47, 10] -> [T, 47, 16]"""
+    """Numpy version for dataset __getitem__. x: [T, N, 10] -> [T, N, 16] where N=47 or 61"""
+    N = x_np.shape[1]
     xyz = x_np[..., :3]
     bone = np.zeros_like(xyz)
     for p, c in _BONE_PAIRS:
         bone[..., c, :] = xyz[..., c, :] - xyz[..., p, :]
         bone[..., c+21, :] = xyz[..., c+21, :] - xyz[..., p+21, :]
-    for fn in [43, 44, 45, 46]:
+    face_end = min(N, FACE_END) if N > 42 else min(N, 47)
+    for fn in range(43, face_end):
         bone[..., fn, :] = xyz[..., fn, :] - xyz[..., 42, :]
+    if N > 60:
+        bone[..., L_ELBOW_NODE, :] = xyz[..., L_ELBOW_NODE, :] - xyz[..., L_SHOULDER_NODE, :]
+        bone[..., R_ELBOW_NODE, :] = xyz[..., R_ELBOW_NODE, :] - xyz[..., R_SHOULDER_NODE, :]
     bone_motion = np.zeros_like(bone)
     T = xyz.shape[0]
     if T > 2:
@@ -249,7 +304,7 @@ class DSGCNEncoder(nn.Module):
     @staticmethod
     def _geo_dist(a, b): return torch.sqrt(((a - b) ** 2).sum(dim=-1) + 1e-6)
 
-    def _compute_geo_features(self, xyz, face_mask=None):
+    def _compute_geo_features(self, xyz, face_mask=None, body_mask=None):
         d = self._geo_dist
 
         def get_hand_features(base):
@@ -311,8 +366,187 @@ class DSGCNEncoder(nn.Module):
                 cos_s = (v1 * v2).sum(-1) / (v1.norm(dim=-1) * v2.norm(dim=-1) + 1e-6)
                 spread_feats.append(torch.acos(cos_s.clamp(-1 + 1e-6, 1 - 1e-6)))
 
-        # 34 base + 30 angles + 6 palm + 6 spread = 76 total
-        return torch.stack(feats_hand1 + feats_hand2 + face_feats + angle_feats + palm_feats + spread_feats, dim=-1)
+        # Wrist orientation: palm normal dot product with canonical directions
+        # Tells model if palm faces up/down/forward/sideways
+        orient_feats = []
+        up = torch.tensor([0.0, 1.0, 0.0], device=xyz.device)
+        forward = torch.tensor([0.0, 0.0, 1.0], device=xyz.device)
+        for base in [0, 21]:
+            wrist = xyz[:, :, base, :]
+            v1 = xyz[:, :, base + 5, :] - wrist
+            v2 = xyz[:, :, base + 17, :] - wrist
+            normal = torch.cross(v1, v2, dim=-1)
+            normal = normal / (normal.norm(dim=-1, keepdim=True) + 1e-6)
+            orient_feats.append((normal * up).sum(-1))       # palm-up/down
+            orient_feats.append((normal * forward).sum(-1))  # palm-forward/backward
+
+        # Wrist trajectory: velocity direction + speed of each wrist
+        traj_feats = []
+        for base in [0, 21]:
+            wrist_xyz = xyz[:, :, base, :]  # [B, T, 3]
+            # Velocity via central difference
+            vel = torch.zeros_like(wrist_xyz)
+            vel[:, 1:-1] = (wrist_xyz[:, 2:] - wrist_xyz[:, :-2]) / 2.0
+            vel[:, 0] = vel[:, 1]
+            vel[:, -1] = vel[:, -2]
+            speed = vel.norm(dim=-1, keepdim=True).clamp(min=1e-6)  # [B, T, 1]
+            vel_dir = vel / speed  # [B, T, 3] normalized direction
+            for i in range(3):
+                traj_feats.append(vel_dir[..., i])  # velocity direction x, y, z
+
+        # Path curvature: angle between consecutive velocity vectors
+        # High curvature = sharp turns, low = straight motion
+        curve_feats = []
+        for base in [0, 21]:
+            wrist_xyz = xyz[:, :, base, :]
+            vel = torch.zeros_like(wrist_xyz)
+            vel[:, 1:-1] = (wrist_xyz[:, 2:] - wrist_xyz[:, :-2]) / 2.0
+            vel[:, 0] = vel[:, 1]
+            vel[:, -1] = vel[:, -2]
+            vel_norm = vel / (vel.norm(dim=-1, keepdim=True) + 1e-6)
+            # Dot product between consecutive normalized velocities
+            dot = (vel_norm[:, :-1] * vel_norm[:, 1:]).sum(-1)  # [B, T-1]
+            curvature = torch.acos(dot.clamp(-1 + 1e-6, 1 - 1e-6))  # [B, T-1]
+            # Pad to match T
+            curvature = F.pad(curvature, (0, 1), value=0.0)  # [B, T]
+            curve_feats.append(curvature)
+
+        # Inter-hand features: relative position and distance
+        inter_feats = []
+        l_wrist = xyz[:, :, 0, :]
+        r_wrist = xyz[:, :, 21, :]
+        inter_dist = d(l_wrist, r_wrist)  # [B, T]
+        inter_feats.append(inter_dist)
+        # Relative direction (which hand is above/left/in front)
+        rel = r_wrist - l_wrist
+        rel_norm = rel / (rel.norm(dim=-1, keepdim=True) + 1e-6)
+        for i in range(2):  # x and y relative direction
+            inter_feats.append(rel_norm[..., i])
+
+        # 34 base + 30 angles + 6 palm + 6 spread + 4 orient + 6 traj + 2 curve + 3 inter = 91
+        # Wait: 4 orient + 6 traj + 2 curve + 3 inter = 15... let me recount
+        # Actually: orient=4, traj=6, curve=2, inter=3 → 15 new + 76 old... that's not 93
+        # Let me add 2 more: wrist-to-face approach velocity
+        approach_feats = []
+        for base in [0, 21]:
+            wrist_xyz = xyz[:, :, base, :]
+            nose_xyz = xyz[:, :, NOSE_NODE, :]
+            dist_to_face = (wrist_xyz - nose_xyz).norm(dim=-1)  # [B, T]
+            # Rate of change: negative = approaching, positive = retreating
+            approach_vel = torch.zeros_like(dist_to_face)
+            approach_vel[:, 1:-1] = (dist_to_face[:, 2:] - dist_to_face[:, :-2]) / 2.0
+            approach_vel[:, 0] = approach_vel[:, 1]
+            approach_vel[:, -1] = approach_vel[:, -2]
+            approach_feats.append(approach_vel)
+
+        # Finger crossing: X-position difference between adjacent fingertips
+        # Positive = index is right of middle (normal), negative = crossed
+        cross_feats = []
+        for base in [0, 21]:
+            # Index-middle crossing (distinguishes R vs U, etc.)
+            cross_feats.append(
+                xyz[:, :, base + _INDEX_TIP, 0] - xyz[:, :, base + _MIDDLE_TIP, 0]
+            )
+            # We already have this as one feature in get_hand_features, but add
+            # middle-ring crossing too for M vs N distinction
+            cross_feats.append(
+                xyz[:, :, base + _MIDDLE_TIP, 0] - xyz[:, :, base + _RING_TIP, 0]
+            )
+
+        # Hand symmetry: correlation between left and right hand motion
+        # Symmetric signs (ALSO, SAME) have high correlation, asymmetric (HELP) have low
+        sym_feats = []
+        l_vel = torch.zeros_like(xyz[:, :, 0, :])
+        l_vel[:, 1:-1] = (xyz[:, 2:, 0, :] - xyz[:, :-2, 0, :]) / 2.0
+        l_vel[:, 0] = l_vel[:, 1]; l_vel[:, -1] = l_vel[:, -2]
+        r_vel = torch.zeros_like(xyz[:, :, 21, :])
+        r_vel[:, 1:-1] = (xyz[:, 2:, 21, :] - xyz[:, :-2, 21, :]) / 2.0
+        r_vel[:, 0] = r_vel[:, 1]; r_vel[:, -1] = r_vel[:, -2]
+        # Per-frame dot product of normalized velocities (1 = same direction, -1 = opposite)
+        l_dir = l_vel / (l_vel.norm(dim=-1, keepdim=True) + 1e-6)
+        r_dir = r_vel / (r_vel.norm(dim=-1, keepdim=True) + 1e-6)
+        sym_feats.append((l_dir * r_dir).sum(-1))  # [B, T]
+
+        # Velocity magnitude (speed) per hand — fast vs slow signing
+        speed_feats = []
+        for base in [0, 21]:
+            wrist_xyz = xyz[:, :, base, :]
+            vel = torch.zeros_like(wrist_xyz)
+            vel[:, 1:-1] = (wrist_xyz[:, 2:] - wrist_xyz[:, :-2]) / 2.0
+            vel[:, 0] = vel[:, 1]; vel[:, -1] = vel[:, -2]
+            speed_feats.append(vel.norm(dim=-1))  # [B, T]
+
+        # Acceleration profile per hand — captures sign dynamics
+        # (starting fast and slowing down vs constant speed)
+        accel_feats = []
+        for base in [0, 21]:
+            wrist_xyz = xyz[:, :, base, :]
+            vel = torch.zeros_like(wrist_xyz)
+            vel[:, 1:-1] = (wrist_xyz[:, 2:] - wrist_xyz[:, :-2]) / 2.0
+            vel[:, 0] = vel[:, 1]; vel[:, -1] = vel[:, -2]
+            acc = torch.zeros_like(vel)
+            acc[:, 1:-1] = (vel[:, 2:] - vel[:, :-2]) / 2.0
+            acc[:, 0] = acc[:, 1]; acc[:, -1] = acc[:, -2]
+            accel_feats.append(acc.norm(dim=-1))  # [B, T]
+
+        # Contact detection — when both hands are very close (touching)
+        # Important for signs like MEET, WITH, TOGETHER
+        contact_feats = []
+        hand_dist = (xyz[:, :, 0, :] - xyz[:, :, 21, :]).norm(dim=-1)  # [B, T]
+        # Sigmoid: smooth contact flag, approaches 1 when hands are close
+        contact = torch.sigmoid(5.0 * (0.05 - hand_dist))  # [B, T]
+        contact_feats.append(contact)
+
+        # Body-relative features: hand position relative to shoulders
+        # This is the KEY missing feature — tells model WHERE the sign is produced
+        body_feats = []
+        # Shoulder midpoint (body center reference)
+        l_shoulder = xyz[:, :, L_SHOULDER_NODE, :]
+        r_shoulder = xyz[:, :, R_SHOULDER_NODE, :]
+        shoulder_mid = (l_shoulder + r_shoulder) / 2.0  # [B, T, 3]
+        shoulder_width = d(l_shoulder, r_shoulder)  # [B, T] — body scale reference
+
+        for base in [0, 21]:  # both hands
+            wrist = xyz[:, :, base, :]
+            # Hand height relative to shoulders (positive = above, negative = below)
+            # Normalized by shoulder width for scale invariance
+            hand_height = (wrist[:, :, 1] - shoulder_mid[:, :, 1]) / (shoulder_width + 1e-6)
+            body_feats.append(hand_height)
+
+            # Hand horizontal position relative to body center
+            hand_lateral = (wrist[:, :, 0] - shoulder_mid[:, :, 0]) / (shoulder_width + 1e-6)
+            body_feats.append(hand_lateral)
+
+            # Distance from hand to same-side shoulder
+            if base == 0:
+                body_feats.append(d(wrist, l_shoulder))
+            else:
+                body_feats.append(d(wrist, r_shoulder))
+
+            # Distance from hand to same-side elbow
+            if base == 0:
+                body_feats.append(d(wrist, xyz[:, :, L_ELBOW_NODE, :]))
+            else:
+                body_feats.append(d(wrist, xyz[:, :, R_ELBOW_NODE, :]))
+
+        # Shoulder width as scale reference (1 feature)
+        body_feats.append(shoulder_width)
+
+        # Hand-to-mouth distance (critical for EAT, DRINK, etc.)
+        mouth_mid = (xyz[:, :, UPPER_LIP_NODE, :] + xyz[:, :, LOWER_LIP_NODE, :]) / 2.0
+        for base in [0, 21]:
+            body_feats.append(d(xyz[:, :, base, :], mouth_mid))
+
+        # Gate body features when body is not detected
+        if body_mask is not None:
+            body_gate = body_mask[:, :, 0, 0]  # [B, T] — 1.0 if body detected
+            body_feats = [f * body_gate for f in body_feats]
+
+        # body_feats: 4 per hand (height, lateral, shoulder_dist, elbow_dist) × 2 = 8
+        #           + 1 shoulder_width + 2 hand-to-mouth = 11 new features
+        # Total: 103 + 11 = 114
+
+        return torch.stack(feats_hand1 + feats_hand2 + face_feats + angle_feats + palm_feats + spread_feats + orient_feats + traj_feats + curve_feats + inter_feats + approach_feats + cross_feats + sym_feats + speed_feats + accel_feats + contact_feats + body_feats, dim=-1)
 
     def forward(self, x, full_x=None):
         C = x.shape[-1]
@@ -320,10 +554,10 @@ class DSGCNEncoder(nn.Module):
         # For auxiliary streams (4-ch): mask is last channel, no XYZ for geo features
         if C >= 10:
             xyz = x[:, :, :, :3]
-            face_mask = x[:, :, 42:47, 9:10]
+            face_mask = x[:, :, FACE_START:FACE_END, 9:10]
             has_geo = True
         else:
-            face_mask = x[:, :, 42:47, -1:]  # mask is always last channel in subset
+            face_mask = x[:, :, FACE_START:FACE_END, -1:]  # mask is always last channel in subset
             has_geo = False
             # If full_x provided (for geo features), use it
             if full_x is not None:
@@ -331,13 +565,17 @@ class DSGCNEncoder(nn.Module):
                 has_geo = True
 
         h = self.input_proj(self.input_norm(x))
-        # Gate face node features by mask before GCN aggregation
-        h[:, :, 42:47, :] = h[:, :, 42:47, :] * face_mask
+        # Gate face and body node features by mask before GCN aggregation
+        h[:, :, FACE_START:FACE_END, :] = h[:, :, FACE_START:FACE_END, :] * face_mask
+        if C >= 10:
+            body_mask = x[:, :, BODY_START:BODY_END, 9:10]
+            h[:, :, BODY_START:BODY_END, :] = h[:, :, BODY_START:BODY_END, :] * body_mask
         h = self.gcn3(self.gcn2(self.gcn1(h, self.A), self.A), self.A)
         attn = F.softmax(self.node_attn(h).squeeze(-1), dim=2)
         h = (h * attn.unsqueeze(-1)).sum(dim=2)
         if has_geo:
-            h = self.geo_proj(torch.cat([h, self.geo_norm(self._compute_geo_features(xyz, face_mask))], dim=-1)) + self.pos_enc
+            body_mask_geo = x[:, :, BODY_START:BODY_END, 9:10] if C >= 10 else None
+            h = self.geo_proj(torch.cat([h, self.geo_norm(self._compute_geo_features(xyz, face_mask, body_mask_geo))], dim=-1)) + self.pos_enc
         else:
             # No geo features: project with zeros as placeholder
             geo_zeros = torch.zeros(h.shape[0], h.shape[1], N_GEO_FEATURES, device=h.device)
@@ -426,11 +664,18 @@ class SLTStage1(nn.Module):
         else:
             self.head = ClassifierHead(d_model=d_model, num_classes=num_classes, dropout=head_dropout)
         self.use_arcface = use_arcface
-    def forward(self, x, labels=None):
+    def forward(self, x, labels=None, return_embeddings=False):
         enc = self.encoder(x)
         if self.use_arcface:
-            return self.head(enc, labels=labels)
-        return self.head(enc)
+            logits = self.head(enc, labels=labels)
+        else:
+            logits = self.head(enc)
+        if return_embeddings:
+            # Pool encoder output for contrastive loss (same as head's frame_attn)
+            attn = F.softmax(self.head.frame_attn(enc).squeeze(-1), dim=1)
+            embeddings = (enc * attn.unsqueeze(-1)).sum(dim=1)  # [B, d_model]
+            return logits, embeddings
+        return logits
 
 # ══════════════════════════════════════════════════════════════════
 #  SECTION 2 — DATASET, LOADER, & EMA
@@ -481,8 +726,8 @@ class SignDataset(Dataset):
                 
             arr = np.load(data_path / fname).astype(np.float32)
 
-            # Accept ONLY (32, 47, 10)
-            if arr.shape != (32, 47, 10):
+            # Accept (32, 47, 10) or (32, 61, 10)
+            if arr.shape not in [(32, 47, 10), (32, 61, 10)]:
                 continue
 
             # Quality filters — skip obviously broken files
@@ -502,12 +747,25 @@ class SignDataset(Dataset):
             filename_list.append(fname)
 
         if len(data_list) == 0:
-            raise ValueError("CRITICAL: Every file was skipped! Ensure your .npy files are (32, 47, 10).")
+            raise ValueError("CRITICAL: Every file was skipped! Ensure your .npy files are (32, 47, 10) or (32, 61, 10).")
 
         raw_data = torch.from_numpy(np.stack(data_list))
         self.targets   = torch.tensor(target_list, dtype=torch.long)
         self.filenames = filename_list
         log.info(f"  {len(self.targets)} samples loaded | {skipped_manifest} skipped (manifest) | {skipped_quality} skipped (quality)")
+
+        # Recompute velocity/acceleration with central difference for consistency
+        # (extraction uses savgol, training augmentation uses central diff — this aligns them)
+        log.info("  Recomputing velocity/acceleration for train-val consistency...")
+        for i in range(len(raw_data)):
+            xyz = raw_data[i, :, :, :3]  # [32, N, 3]
+            vel, acc = torch.zeros_like(xyz), torch.zeros_like(xyz)
+            vel[1:-1] = (xyz[2:] - xyz[:-2]) / 2.0
+            vel[0] = vel[1]; vel[-1] = vel[-2]
+            acc[1:-1] = (vel[2:] - vel[:-2]) / 2.0
+            acc[0] = acc[1]; acc[-1] = acc[-2]
+            raw_data[i, :, :, 3:6] = vel
+            raw_data[i, :, :, 6:9] = acc
 
         # Precompute bone features once (avoids recomputing every epoch)
         log.info("  Precomputing bone features (one-time cost)...")
@@ -693,9 +951,10 @@ _FINGER_CHAINS = [
 ]
 
 
-def online_augment(x, rotation_deg=8.0, scale_lo=0.88, scale_hi=1.12, noise_std=0.002,
+def online_augment(x, rotation_deg=8.0, scale_lo=0.6, scale_hi=1.4, noise_std=0.002,
                    speed_warp_prob=0.3, min_speed=0.8, max_speed=1.2,
-                   signer_norm_prob=0.2, temporal_mask_prob=0.15, temporal_mask_frames=3):
+                   signer_norm_prob=0.2, temporal_mask_prob=0.15, temporal_mask_frames=3,
+                   translate_std=0.15):
     """
     Enhanced augmentation with temporal speed warping, signer normalization,
     rotation, scale, and noise. Operates on 16-channel bone-augmented tensors.
@@ -747,6 +1006,12 @@ def online_augment(x, rotation_deg=8.0, scale_lo=0.88, scale_hi=1.12, noise_std=
     scale = scale_lo + torch.rand(B, 1, 1, 1, device=device) * (scale_hi - scale_lo)
     xyz = xyz * scale + torch.randn_like(xyz) * noise_std
 
+    # Step 4b: Random translation — shift entire skeleton in XYZ space
+    # Simulates different person positions in frame (webcam generalization)
+    if translate_std > 0:
+        shift = torch.randn(B, 1, 1, 3, device=device) * translate_std
+        xyz = xyz + shift
+
     # Step 5: Temporal masking — zero out random contiguous frames
     if random.random() < temporal_mask_prob:
         n_mask = random.randint(2, temporal_mask_frames)
@@ -766,6 +1031,32 @@ def balanced_softmax_loss(logits, targets, log_prior, label_smoothing=0.10):
     """Balanced Softmax: adjusts logits by log class prior before CE. (Ren et al. 2020)"""
     adjusted = logits + log_prior.unsqueeze(0)
     return F.cross_entropy(adjusted, targets, label_smoothing=label_smoothing)
+
+def supcon_loss(embeddings, labels, temperature=0.07):
+    """Supervised Contrastive Loss (Khosla et al., NeurIPS 2020).
+    Pulls same-class embeddings together, pushes different-class apart.
+    embeddings: [B, D] normalized feature vectors
+    labels: [B] integer class labels
+    """
+    embeddings = F.normalize(embeddings, dim=1)
+    B = embeddings.shape[0]
+    # Similarity matrix [B, B]
+    sim = torch.matmul(embeddings, embeddings.T) / temperature
+    # Mask: 1 where same class (excluding self)
+    labels = labels.unsqueeze(1)
+    mask_pos = (labels == labels.T).float()
+    mask_pos.fill_diagonal_(0)  # exclude self
+    # For numerical stability
+    logits_max, _ = sim.max(dim=1, keepdim=True)
+    sim = sim - logits_max.detach()
+    # Denominator: sum over all negatives + positives (excluding self)
+    mask_self = torch.ones_like(sim) - torch.eye(B, device=sim.device)
+    exp_sim = torch.exp(sim) * mask_self
+    log_prob = sim - torch.log(exp_sim.sum(dim=1, keepdim=True) + 1e-6)
+    # Average over positive pairs
+    n_pos = mask_pos.sum(dim=1).clamp(min=1)
+    loss = -(mask_pos * log_prob).sum(dim=1) / n_pos
+    return loss.mean()
 
 def apply_mixup(x, y, alpha=0.1, cutmix_prob=0.5):
     if alpha <= 0: return x, y, y, 1.0
@@ -813,7 +1104,7 @@ def evaluate(model, loader, device, use_amp, stream_name='joint', stream_channel
         # Stream-specific input transform (same as training but no augmentation)
         if is_angle and geo_encoder is not None:
             xyz = x[..., :3]
-            face_mask = x[:, :, 42:47, 9:10]
+            face_mask = x[:, :, FACE_START:FACE_END, 9:10]
             geo = geo_encoder._compute_geo_features(xyz, face_mask)
             angles = geo[..., 34:]
             mask_scalar = x[:, :, :42, 9].max(dim=2).values.unsqueeze(-1)
@@ -896,12 +1187,12 @@ def train(
     use_balanced_softmax = False,
     use_arcface = False,
 
-    epochs = 150, batch_size = 256, accum_steps = 4, lr = 3e-4, weight_decay = 0.01,
-    warmup_epochs = 10, label_smoothing = 0.05, grad_clip = 5.0, patience = 25,
+    epochs = 300, batch_size = 256, accum_steps = 2, lr = 5e-4, weight_decay = 0.01,
+    warmup_epochs = 5, label_smoothing = 0.10, grad_clip = 5.0, patience = 50,
     val_every = 1,
-    focal_gamma = 0.0,
+    focal_gamma = 1.0,
     sampler_temperature = 0.5, in_channels = 16, d_model = 384, nhead = 8,
-    num_transformer_layers = 6, dropout = 0.10, head_dropout = 0.45,
+    num_transformer_layers = 6, dropout = 0.10, head_dropout = 0.30,
     mixup_alpha = 0.1,
     cutmix_prob = 0.15,
     curriculum_learning = False,
@@ -1154,7 +1445,7 @@ def train(
             if is_angle_stream:
                 with torch.no_grad():
                     xyz = x[..., :3]
-                    face_mask = x[:, :, 42:47, 9:10]
+                    face_mask = x[:, :, FACE_START:FACE_END, 9:10]
                     geo = _geo_encoder._compute_geo_features(xyz, face_mask)  # [B, T, 76]
                     angles = geo[..., 34:]  # [B, T, 42] — angles + palm + spread
                     mask_scalar = x[:, :, :42, 9].max(dim=2).values.unsqueeze(-1)  # [B, T, 1]
@@ -1177,7 +1468,7 @@ def train(
                 else:
                     logits = model(x)
 
-                # Loss computation
+                # Classification loss
                 if use_balanced_softmax and log_prior is not None:
                     loss_a = balanced_softmax_loss(logits, y_a, log_prior, label_smoothing=label_smoothing)
                     loss_b = balanced_softmax_loss(logits, y_b, log_prior, label_smoothing=label_smoothing)
@@ -1286,7 +1577,7 @@ def train(
                 x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
                 # Apply same stream transform as evaluate()
                 if is_angle_stream and _geo_encoder is not None:
-                    xyz = x[..., :3]; fm = x[:, :, 42:47, 9:10]
+                    xyz = x[..., :3]; fm = x[:, :, FACE_START:FACE_END, 9:10]
                     geo = _geo_encoder._compute_geo_features(xyz, fm)
                     ang = geo[..., 34:]; ms = x[:, :, :42, 9].max(dim=2).values.unsqueeze(-1)
                     x = torch.cat([ang, ms], dim=-1)
@@ -1338,11 +1629,11 @@ if __name__ == "__main__":
     p.add_argument('--data_path', default=None, help='Path to .npy landmark directory (overrides auto-detect)')
     p.add_argument('--d_model', type=int, default=384)
     p.add_argument('--num_layers', type=int, default=6)
-    p.add_argument('--epochs', type=int, default=150)
-    p.add_argument('--patience', type=int, default=25)
+    p.add_argument('--epochs', type=int, default=300)
+    p.add_argument('--patience', type=int, default=50)
     p.add_argument('--batch_size', type=int, default=256)
-    p.add_argument('--lr', type=float, default=3e-4)
-    p.add_argument('--accum_steps', type=int, default=4)
+    p.add_argument('--lr', type=float, default=5e-4)
+    p.add_argument('--accum_steps', type=int, default=2)
     p.add_argument('--save_dir', default=None)
     p.add_argument('--balanced_softmax', action='store_true', help='Use Balanced Softmax loss')
     p.add_argument('--arcface', action='store_true', help='Use ArcFace head with gradual warmup')

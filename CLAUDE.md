@@ -79,11 +79,15 @@ class ClassifierHead(nn.Module):
 - N_GEO_FEATURES = 76 (fingertip distances, curl ratios, angles, palm normals, spreads, face distances)
 
 ### Extraction
-- **NEW**: Training data will be extracted with rtmlib ONNX RTMW-l (`extract_batch_rtmlib.py`) — closes domain gap
-- Batch extraction supports `--workers 4` for multiprocessing (spawn context for CUDA safety)
-- Docker inference uses rtmlib ONNX RTMW-l (same extractor as training)
+- **Training data** extracted with `extract_batch_fast.py` — direct ONNX batch GPU inference (bypasses rtmlib's frame-by-frame loop)
+- **How it works**: YOLOX runs once per video (first frame) to get person bbox, then RTMW processes all frames in batches of 32-128 on GPU
+- **Verified**: 0.012 pixel difference from rtmlib — identical output, just 10-20x faster
+- **Speed optimization**: Run multiple processes on different class ranges (symlinked dirs) for parallel extraction. 4-6 processes fully utilizes GPU + CPU. `--resume` prevents duplicates.
+- `extract_batch_rtmlib.py` also exists (uses rtmlib directly with multiprocessing) but is slower
+- Docker/Mac inference uses rtmlib ONNX RTMW-l (same model, same weights — fine for single-video inference)
 - COCO-WholeBody 133 keypoints: Body 0-16, Feet 17-22, Face 23-90, LHand 91-111, RHand 112-132
 - Face indices used: nose=23+30, chin=23+8, forehead=23+27, left_ear=23+0, right_ear=23+16
+- **onnxruntime GPU setup**: Needs `nvidia-cudnn-cu12` + `LD_LIBRARY_PATH` set to cudnn lib dir. Without this, CUDA silently falls back to CPU.
 
 ### Test-Time Augmentation (TTA)
 - Mirror averaging: run original + hand-swapped (0-20 ↔ 21-41, X-flipped) → average softmax

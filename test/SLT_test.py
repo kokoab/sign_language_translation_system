@@ -42,7 +42,7 @@ _EDGES_HAND_FACE = [
     (29, NOSE_NODE), (29, FOREHEAD_NODE), (29, CHIN_NODE),
 ]
 _EDGES = _EDGES_HANDS + _EDGES_FACE + _EDGES_HAND_FACE
-NUM_NODES = 47
+NUM_NODES = 61
 
 _THUMB_MCP = 2; _THUMB_IP = 3; _THUMB_TIP = 4
 _INDEX_MCP = 5; _INDEX_PIP = 6; _INDEX_TIP = 8
@@ -52,7 +52,7 @@ _PINKY_MCP = 17; _PINKY_PIP = 18; _PINKY_TIP = 20
 
 # 12 per hand x 2 = 24, + 10 hand-to-face = 34 (base)
 # + 30 joint angles + 6 palm orientation + 6 finger spread = 76 total
-N_GEO_FEATURES = 76
+N_GEO_FEATURES = 114
 
 # Phase 4A: Joint angle triplets (joint at middle vertex)
 _JOINT_TRIPLETS = [

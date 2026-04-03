@@ -85,7 +85,7 @@ _MIDDLE_MCP=9; _MIDDLE_PIP=10; _MIDDLE_TIP=12
 _RING_MCP=13; _RING_PIP=14; _RING_TIP=16
 _PINKY_MCP=17; _PINKY_PIP=18; _PINKY_TIP=20
 NOSE_NODE=42; CHIN_NODE=43; FOREHEAD_NODE=44
-N_GEO_FEATURES = 76
+N_GEO_FEATURES = 114
 
 
 class DropPath(nn.Module):
@@ -200,7 +200,64 @@ class DSGCNEncoder(nn.Module):
                 v2 = xyz[:,:,base+_SPREAD[i+1],:] - wrist
                 cos_s = (v1*v2).sum(-1) / (v1.norm(dim=-1)*v2.norm(dim=-1) + 1e-6)
                 spread_feats.append(torch.acos(cos_s.clamp(-1+1e-6, 1-1e-6)))
-        return torch.stack(f1 + f2 + face_f + angle_feats + palm_feats + spread_feats, dim=-1)
+        # Wrist orientation
+        orient_feats = []
+        up = torch.tensor([0.0, 1.0, 0.0], device=xyz.device)
+        fwd = torch.tensor([0.0, 0.0, 1.0], device=xyz.device)
+        for base in [0, 21]:
+            w = xyz[:,:,base,:]; v1 = xyz[:,:,base+5,:]-w; v2 = xyz[:,:,base+17,:]-w
+            n = torch.cross(v1, v2, dim=-1); n = n/(n.norm(dim=-1,keepdim=True)+1e-6)
+            orient_feats.append((n*up).sum(-1)); orient_feats.append((n*fwd).sum(-1))
+        # Wrist trajectory
+        traj_feats = []
+        for base in [0, 21]:
+            ww = xyz[:,:,base,:]; vel = torch.zeros_like(ww)
+            vel[:,1:-1] = (ww[:,2:]-ww[:,:-2])/2.0; vel[:,0]=vel[:,1]; vel[:,-1]=vel[:,-2]
+            sp = vel.norm(dim=-1,keepdim=True).clamp(min=1e-6); vd = vel/sp
+            for i in range(3): traj_feats.append(vd[...,i])
+        # Path curvature
+        curve_feats = []
+        for base in [0, 21]:
+            ww = xyz[:,:,base,:]; vel = torch.zeros_like(ww)
+            vel[:,1:-1] = (ww[:,2:]-ww[:,:-2])/2.0; vel[:,0]=vel[:,1]; vel[:,-1]=vel[:,-2]
+            vn = vel/(vel.norm(dim=-1,keepdim=True)+1e-6)
+            dot = (vn[:,:-1]*vn[:,1:]).sum(-1)
+            curve_feats.append(F.pad(torch.acos(dot.clamp(-1+1e-6,1-1e-6)), (0,1), value=0.0))
+        # Inter-hand
+        inter_feats = [d(xyz[:,:,0,:],xyz[:,:,21,:])]
+        rel = xyz[:,:,21,:]-xyz[:,:,0,:]; rn = rel/(rel.norm(dim=-1,keepdim=True)+1e-6)
+        inter_feats.append(rn[...,0]); inter_feats.append(rn[...,1])
+        # Approach velocity
+        approach_feats = []
+        for base in [0, 21]:
+            ww = xyz[:,:,base,:]; dist = (ww-xyz[:,:,NOSE_NODE,:]).norm(dim=-1)
+            av = torch.zeros_like(dist); av[:,1:-1]=(dist[:,2:]-dist[:,:-2])/2.0; av[:,0]=av[:,1]; av[:,-1]=av[:,-2]
+            approach_feats.append(av)
+        # Finger crossing
+        cross_feats = []
+        for base in [0, 21]:
+            cross_feats.append(xyz[:,:,base+_INDEX_TIP,0]-xyz[:,:,base+_MIDDLE_TIP,0])
+            cross_feats.append(xyz[:,:,base+_MIDDLE_TIP,0]-xyz[:,:,base+_RING_TIP,0])
+        # Hand symmetry
+        lv = torch.zeros_like(xyz[:,:,0,:]); lv[:,1:-1]=(xyz[:,2:,0,:]-xyz[:,:-2,0,:])/2.0; lv[:,0]=lv[:,1]; lv[:,-1]=lv[:,-2]
+        rv = torch.zeros_like(xyz[:,:,21,:]); rv[:,1:-1]=(xyz[:,2:,21,:]-xyz[:,:-2,21,:])/2.0; rv[:,0]=rv[:,1]; rv[:,-1]=rv[:,-2]
+        ld = lv/(lv.norm(dim=-1,keepdim=True)+1e-6); rd = rv/(rv.norm(dim=-1,keepdim=True)+1e-6)
+        sym_feats = [(ld*rd).sum(-1)]
+        # Speed per hand
+        speed_feats = []
+        for base in [0, 21]:
+            ww = xyz[:,:,base,:]; v = torch.zeros_like(ww); v[:,1:-1]=(ww[:,2:]-ww[:,:-2])/2.0; v[:,0]=v[:,1]; v[:,-1]=v[:,-2]
+            speed_feats.append(v.norm(dim=-1))
+        # Acceleration per hand
+        accel_feats = []
+        for base in [0, 21]:
+            ww = xyz[:,:,base,:]; v = torch.zeros_like(ww); v[:,1:-1]=(ww[:,2:]-ww[:,:-2])/2.0; v[:,0]=v[:,1]; v[:,-1]=v[:,-2]
+            a = torch.zeros_like(v); a[:,1:-1]=(v[:,2:]-v[:,:-2])/2.0; a[:,0]=a[:,1]; a[:,-1]=a[:,-2]
+            accel_feats.append(a.norm(dim=-1))
+        # Contact detection
+        hd = (xyz[:,:,0,:]-xyz[:,:,21,:]).norm(dim=-1)
+        contact_feats = [torch.sigmoid(5.0*(0.05-hd))]
+        return torch.stack(f1 + f2 + face_f + angle_feats + palm_feats + spread_feats + orient_feats + traj_feats + curve_feats + inter_feats + approach_feats + cross_feats + sym_feats + speed_feats + accel_feats + contact_feats, dim=-1)
 
     def forward(self, x):
         xyz = x[:,:,:,:3]
@@ -691,16 +748,31 @@ def main():
     if os.path.exists(STAGE1_CKPT):
         ckpt1 = torch.load(STAGE1_CKPT, map_location=DEVICE, weights_only=False)
         s1_idx_to_label = ckpt1["idx_to_label"]
-        s1_model = SLTStage1(
-            num_classes=ckpt1["num_classes"],
-            in_channels=ckpt1.get("in_channels", 16),
-            d_model=ckpt1.get("d_model", 384),
-            nhead=ckpt1.get("nhead", 8),
-            num_transformer_layers=ckpt1.get("num_transformer_layers", 6),
-        ).to(DEVICE)
-        s1_model.load_state_dict(ckpt1["model_state_dict"], strict=False)
+        model_type = ckpt1.get("model_type", "")
+        if "v11" in str(model_type):
+            # v11 architecture
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+            from model_v11 import SLTStage1V11
+            s1_model = SLTStage1V11(
+                num_classes=ckpt1["num_classes"],
+                d_model=ckpt1.get("d_model", 384),
+            ).to(DEVICE)
+            if ckpt1.get("ema_shadow"):
+                s1_model.load_state_dict(ckpt1["ema_shadow"], strict=False)
+            else:
+                s1_model.load_state_dict(ckpt1["model_state_dict"], strict=False)
+            print(f"   Loaded v11 ({ckpt1['num_classes']} classes, d_model={ckpt1.get('d_model', 384)})")
+        else:
+            s1_model = SLTStage1(
+                num_classes=ckpt1["num_classes"],
+                in_channels=ckpt1.get("in_channels", 16),
+                d_model=ckpt1.get("d_model", 384),
+                nhead=ckpt1.get("nhead", 8),
+                num_transformer_layers=ckpt1.get("num_transformer_layers", 6),
+            ).to(DEVICE)
+            s1_model.load_state_dict(ckpt1["model_state_dict"], strict=False)
+            print(f"   Loaded ({ckpt1['num_classes']} classes, d_model={ckpt1.get('d_model', 384)})")
         s1_model.eval()
-        print(f"   Loaded ({ckpt1['num_classes']} classes, d_model={ckpt1.get('d_model', 384)})")
     else:
         print(f"   Not found (Stage 1 disabled)")
 
