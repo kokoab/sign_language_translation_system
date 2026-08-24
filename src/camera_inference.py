@@ -583,7 +583,8 @@ def main():
     idx_to_gloss = ckpt["idx_to_gloss"]
     vocab_size = ckpt["vocab_size"]
     s2_d_model = ckpt.get("d_model", 384)
-    s2_model = SLTStage2CTC(vocab_size=vocab_size, d_model=s2_d_model).to(DEVICE)
+    s2_enc_type = ckpt.get("encoder_type", None)
+    s2_model = SLTStage2CTC(vocab_size=vocab_size, d_model=s2_d_model, encoder_type=s2_enc_type).to(DEVICE)
     s2_model.load_state_dict(ckpt["model_state_dict"], strict=False)
 
     s3_tokenizer = AutoTokenizer.from_pretrained(STAGE3_DIR)

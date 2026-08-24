@@ -2,6 +2,16 @@
 
 Project instructions for Claude. Read this before diving into code.
 
+## Current repo organization
+
+The active implementation is now the v16 Squeezeformer pipeline under `active/v16/`.
+
+- Use `active/v16/model_v16.py`, `extract_v16.py`, `inference_v16.py`, `train_stage_1_v16.py`, and `train_stage_2_v16_fixed.py` for current work.
+- `src_v16/*.py` are compatibility wrappers that forward to `active/v16/` while preserving existing script imports and data/checkpoint paths.
+- `src/` is the older DS-GCN/Transformer pipeline. Treat it as legacy unless the task explicitly targets legacy tests, desktop demos, or Stage 3 utilities that still live there.
+- Historical markdown notes now live under `docs/md_files/`; `md files/` is a compatibility symlink.
+- See `CURRENT_PIPELINE.md` before making cleanup, inference, or training changes.
+
 ## Efficiency router (always)
 
 1. Ask up to 3 clarifying questions if requirements are ambiguous.

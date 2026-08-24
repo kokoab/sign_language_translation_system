@@ -1,0 +1,40 @@
+{
+  "split": "local_train_only_review_diagnostic",
+  "score_normalization": "per_sample_zscore",
+  "samples": 1021,
+  "members": [
+    {
+      "name": "orientation",
+      "path": "artifacts/reports/local_citizen100_quality_audit/orientation_augmentation_only_v1_external_diagnostic/logits.npz",
+      "sha256": "33dcdca9d4386b1640913b6144e7d5e3ae1bc18775ec7facd1b33802acc92f33",
+      "normalized_weight": 0.75
+    },
+    {
+      "name": "hand_rgb",
+      "path": "artifacts/reports/local_citizen100_quality_audit/multimodal_teacher_reaudit/hand/logits.npz",
+      "sha256": "97ac35adb734f4b54e2b90ba399dc42f9c24a3bd8f7f860ca516ba21e2db3a92",
+      "normalized_weight": 0.25
+    }
+  ],
+  "baseline": {
+    "top1": 67.58080313418218,
+    "top1_correct": 690,
+    "top5": 88.44270323212537,
+    "macro_f1": 53.801995365889034
+  },
+  "ensemble": {
+    "top1": 72.2820763956905,
+    "top1_correct": 738,
+    "top5": 91.28305582761999,
+    "macro_f1": 56.948961822898056
+  },
+  "paired_vs_first_member": {
+    "both_correct": 687,
+    "baseline_only": 3,
+    "ensemble_only": 51,
+    "both_wrong": 280
+  },
+  "weight_selection_split": "citizen_val",
+  "independent_confirmation_required": true,
+  "test_evaluated": false
+}

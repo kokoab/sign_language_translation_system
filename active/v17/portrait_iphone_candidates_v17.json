@@ -1,0 +1,165 @@
+{
+  "format": "slt_v17_portrait_iphone_frozen_candidates",
+  "version": 1,
+  "repository_root": "../..",
+  "selection_locked": true,
+  "allow_recalibration": false,
+  "independent_confirmation_required": true,
+  "test_evaluated": false,
+  "score_normalization": "per_sample_zscore",
+  "candidates": [
+    {
+      "id": "compact_landmark_partwise",
+      "role": "compact_standalone_landmark_winner",
+      "path": "artifacts/generated/kaggle_stage1_partwise_kokoab_pull_v1/stage1_v17_partwise_v2/best_model.pth",
+      "sha256": "5c40b13336b4692d5f7e1e70a9ba430aa2b35ef4e12946952e15fe1f9e54924b",
+      "citizen_validation_correct": 366,
+      "citizen_validation_total": 378,
+      "semlex_validation_correct": 853,
+      "semlex_validation_total": 978
+    },
+    {
+      "id": "teacher_landmark_flat",
+      "role": "frozen_four_stream_teacher_landmark_member",
+      "path": "artifacts/models/stage1_v17_citizen_semlex_full_clean_balanced/best_model.pth",
+      "sha256": "23d5b7f1b343a6b5246e4afe03c0ab99067d3dac6e355024b5c53e5c31013f8e"
+    },
+    {
+      "id": "teacher_hand_multisource",
+      "role": "frozen_four_stream_teacher_hand_member",
+      "path": "artifacts/models/stage1_v17_hand_mobileclip2_multisource_balanced/best_model.pth",
+      "sha256": "ec16d1b14a2346fecd993d92b3c92b4965cd1204132f64514d86c109570e6d84"
+    },
+    {
+      "id": "teacher_mouth_auto_avsr",
+      "role": "frozen_four_stream_teacher_mouth_member",
+      "path": "artifacts/models/stage1_v17_visual_speech_auto_avsr_mouth_frozen/best_model.pth",
+      "sha256": "e3e1b12c48206dd005119551cced65502c421bc426f2350643afbed646ecd8bd"
+    },
+    {
+      "id": "teacher_lower_face_auto_avsr",
+      "role": "frozen_four_stream_teacher_lower_face_member",
+      "path": "artifacts/models/stage1_v17_visual_speech_auto_avsr_lower_face_frozen/best_model.pth",
+      "sha256": "4c0b8f1dbf14c2faf8020a6f795d5dc2af64d1cf708f3a805907882b8b84669e"
+    },
+    {
+      "id": "diagnostic_mouth_lower_learned",
+      "role": "frozen_visual_speech_diagnostic_only",
+      "path": "artifacts/models/stage1_v17_visual_speech_auto_avsr_mouth_lower_learned/best_model.pth",
+      "sha256": "8afb5dc699623451fd989615727ebc9b5b1a945175183f20f8819ebfe3142666"
+    }
+  ],
+  "fusions": {
+    "landmark_hand_75_25": {
+      "members": {
+        "teacher_landmark_flat": 0.75,
+        "teacher_hand_multisource": 0.25
+      },
+      "weight_selection_split": "citizen_val",
+      "recalibration_allowed": false
+    },
+    "four_stream_teacher_30_15_35_20": {
+      "members": {
+        "teacher_landmark_flat": 0.3,
+        "teacher_mouth_auto_avsr": 0.15,
+        "teacher_lower_face_auto_avsr": 0.35,
+        "teacher_hand_multisource": 0.2
+      },
+      "citizen_validation_correct": 370,
+      "citizen_validation_total": 378,
+      "semlex_validation_correct": 882,
+      "semlex_validation_total": 978,
+      "weight_selection_split": "citizen_val",
+      "recalibration_allowed": false
+    },
+    "partwise_teacher_substitution_fixed": {
+      "members": {
+        "compact_landmark_partwise": 0.3,
+        "teacher_mouth_auto_avsr": 0.15,
+        "teacher_lower_face_auto_avsr": 0.35,
+        "teacher_hand_multisource": 0.2
+      },
+      "weight_selection_split": "citizen_val_prior_fixed",
+      "recalibration_allowed": false
+    }
+  },
+  "runtime_sources": [
+    {
+      "path": "active/v17/model_v17.py",
+      "sha256": "4da7b32c0a0f847a05f7582c027ad47bfe70124a346998163c781c37705167b6"
+    },
+    {
+      "path": "active/v17/extract_v17.py",
+      "sha256": "d049ae34d732fa504ad8702a91d3409dcf1debd8415bc5dea588d7f243138f47"
+    },
+    {
+      "path": "active/v17/schema_v17.py",
+      "sha256": "b25e07e757f9e2c1a1b4177693460590f06909be4a49957580a3a2c2c6ec987e"
+    },
+    {
+      "path": "active/v17/model_hand_mobileclip2_v17.py",
+      "sha256": "bda45cb86fdf525d4d6ff5c039e997f42e659792cde068216e3fde7302e8acd3"
+    },
+    {
+      "path": "active/v17/extract_hand_rgb_v17.py",
+      "sha256": "9c744d9904ecc5c9063d3c4ab7516dc16a6bbb10c300eb405c36392c935a9203"
+    },
+    {
+      "path": "active/v17/extract_hand_mobileclip2_v17.py",
+      "sha256": "019eb76c22f66d4c02ab24f4014792a6a2fc17ea79dfad7ca069f4c5911ebd9f"
+    },
+    {
+      "path": "active/v17/extract_mobileclip2_v17.py",
+      "sha256": "c42cd522ecee352b43f903f409140c11ee6bfd481f4ba71ce13392ec8c5efd55"
+    },
+    {
+      "path": "active/v17/schema_hand_rgb_v17.py",
+      "sha256": "b4f649bb0ae1fb11fa31fd406993b0f886045313846e3a5aa86241b90e3e45ba"
+    },
+    {
+      "path": "active/v17/schema_hand_mobileclip2_v17.py",
+      "sha256": "2c722e7f4c3ee99a0233b72c2d2ed39e7a2461dbfdee4e72cd6cfcafc1a43846"
+    },
+    {
+      "path": "active/v17/schema_mobileclip2_v17.py",
+      "sha256": "d1c283bb08bed7c9d9d1b73c9e18577ebed39c8d7bfb2f92891ad3167ea554a9"
+    },
+    {
+      "path": "active/v17/model_visual_speech_v17.py",
+      "sha256": "e0b9e93e1842d0311f353150ea4a1eb14b91d7c5546ff84d8fb514062343915b"
+    },
+    {
+      "path": "active/v17/extract_visual_speech_v17.py",
+      "sha256": "c7f893a927b3d5b74a569c01c6b10cf6cb25c6be8ce3df38dcc81317b242a436"
+    },
+    {
+      "path": "active/v17/schema_visual_speech_v17.py",
+      "sha256": "e3070872ce2d203781058250a3959e159f99862ae5499cd6ec6d6b97df56fb1b"
+    },
+    {
+      "path": "active/v17/evaluate_multimodal_ensemble_v17.py",
+      "sha256": "db753af59e71ad6302f852711e75f2e0f83b34fbf4971ac3824413155198afcd"
+    }
+  ],
+  "external_assets": [
+    {
+      "id": "mobileclip2_s0_dfndr2b",
+      "sha256": "ab91a1a0c4330d6b1913e24d5035dfdea15423316aaec649610c6b1c6ddd0e95",
+      "policy": "verify_exact_hash_after_cache_or_redownload"
+    }
+  ],
+  "evidence_artifacts": [
+    {
+      "path": "artifacts/reports/stage1_v17_landmark_hand_multisource_validation/result.json",
+      "sha256": "99410e5741299ac11d53b0b3ed3e5be595b94214300080bf0a4b777b328261f1"
+    },
+    {
+      "path": "artifacts/reports/stage1_v17_multimodal_teacher_97_88_validation/result.json",
+      "sha256": "9d67e525eccafb0b5a34b67427d3242f6fd9872f2b8d4d13266d8559960db061"
+    },
+    {
+      "path": "artifacts/reports/stage1_v17_partwise_multimodal_teacher_fixed_validation/result.json",
+      "sha256": "e9d08c13d049fae4bd5297b3bdcc832cf62e5a76c127b9c8e561e64c012bce6b"
+    }
+  ]
+}

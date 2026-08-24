@@ -1,0 +1,82 @@
+{
+  "format": "slt_v17_local_deep_clean_hand_replay_predeclaration_v1",
+  "status": "locked_before_hand_optimization",
+  "seed": 1701,
+  "initial_checkpoint": {
+    "path": "artifacts/models/stage1_v17_hand_mobileclip2_multisource_balanced/best_model.pth",
+    "sha256": "ec16d1b14a2346fecd993d92b3c92b4965cd1204132f64514d86c109570e6d84",
+    "citizen_validation_correct": 305,
+    "citizen_validation_total": 378
+  },
+  "training_sources": {
+    "citizen": {
+      "clips": 1475,
+      "margin": 0.34,
+      "manifest": "active/v17/citizen100_manifest.json",
+      "manifest_sha256": "3a665bda8d2b916c504406be815e601eeb55badfe62afcec42c7869885eab7cf"
+    },
+    "semlex": {
+      "clips": 1388,
+      "margin": 0.33,
+      "manifest": "data/local/semlex_citizen100_train_audit/full_clean_train_candidates.json",
+      "manifest_sha256": "09f22aeff491ac16a498cbf5be02eb9867ddb0b16c139b1e302571d2bd51883a"
+    },
+    "local_deep_clean": {
+      "clips": 13381,
+      "classes": 94,
+      "margin": 0.33,
+      "manifest": "data/local/local_deep_clean_v17/train_final_manifest.json",
+      "manifest_sha256": "17124e03b59dc3b2fa6031af19e86875eeff75698e62ee2bc531dbc19f2621c7"
+    }
+  },
+  "validation": {
+    "primary": "citizen_official_validation",
+    "primary_samples": 378,
+    "secondary": "local_validation_nonsigner_disjoint_user_approved",
+    "secondary_samples": 2896,
+    "secondary_manifest": "data/local/local_deep_clean_v17/val_final_manifest.json",
+    "secondary_manifest_sha256": "ab28c5d754133e140cbbcc5a3a8ceaffd083efddc1ebd143f70441786d6dd122",
+    "checkpoint_selection": "maximum_citizen_top1_then_maximum_local_top1_only_on_exact_citizen_tie"
+  },
+  "optimization": {
+    "maximum_epochs": 100,
+    "patience": 20,
+    "peak_learning_rate": 0.00005,
+    "warmup_epochs": 4,
+    "batch_size": 64,
+    "feature_cache": false,
+    "sampler": "class_and_source_balanced_with_replacement",
+    "mps_memory_fraction": 0.12
+  },
+  "frozen_experts": {
+    "mouth_rgb": {
+      "path": "artifacts/models/stage1_v17_visual_speech_auto_avsr_mouth_frozen/best_model.pth",
+      "sha256": "e3e1b12c48206dd005119551cced65502c421bc426f2350643afbed646ecd8bd"
+    },
+    "lower_face_rgb": {
+      "path": "artifacts/models/stage1_v17_visual_speech_auto_avsr_lower_face_frozen/best_model.pth",
+      "sha256": "4c0b8f1dbf14c2faf8020a6f795d5dc2af64d1cf708f3a805907882b8b84669e"
+    }
+  },
+  "landmark_candidate": {
+    "path": "artifacts/models/stage1_v17_local_deep_clean_mouth_masked_replay_ft_v1/best_promotion_gate_model.pth",
+    "sha256": "12a74a18d71712abf525350e8120e26694d24a62234b4c268639220a37da47a1"
+  },
+  "fixed_fusions": {
+    "local_landmark_hand": {
+      "score_normalization": "per_sample_zscore",
+      "landmark_weight": 0.75,
+      "hand_weight": 0.25
+    },
+    "citizen_semlex_four_stream": {
+      "score_normalization": "per_sample_zscore",
+      "landmark_weight": 0.3,
+      "mouth_weight": 0.15,
+      "lower_face_weight": 0.35,
+      "hand_weight": 0.2
+    }
+  },
+  "citizen_test_accessed": false,
+  "semlex_test_accessed": false,
+  "local_test_accessed": false
+}

@@ -1,0 +1,175 @@
+{
+  "format": "stage2_general_ctc_selector_experiment_v17",
+  "version": 1,
+  "created_at": "2026-08-22T02:10:43.622777+00:00",
+  "design": {
+    "phrase_identity_used": false,
+    "rule": "replace calibrated-primary greedy sequence with specialist greedy sequence only for a different, same-length, >=2-token hypothesis whose weighted full-CTC log-probability advantage clears a frozen margin",
+    "selection_data": "train roles only",
+    "validation_scored_after_selection": true,
+    "blend_weight": 0.1,
+    "blank_bias": 0.3,
+    "candidate_mode": "nonshortening_one",
+    "normalization": "none",
+    "primary_score_weight": 0.0,
+    "specialist_score_weight": 1.0,
+    "margin": 13.163669632507323,
+    "eligible_rows": 117,
+    "selected_rows": 0
+  },
+  "search_audit": {
+    "configurations": 7497,
+    "feasible_configurations": 63
+  },
+  "primary": "artifacts/models/stage2_v17_multivoice_transfer_context_adapted_v3/model.pth",
+  "primary_sha256": "f2ea9d99796e71b7355657a5bbcf791bdfedddec07adb54a053d9eba4292164b",
+  "specialist": "artifacts/models/stage2_v17_signer_voice_ctc_pilot_v1/best_model.pth",
+  "specialist_sha256": "9001d9a098bf26d33cbea755eb10388c0769ea4004f5c03a1016281cee59d955",
+  "train": {
+    "rows": 1550,
+    "base_metrics": {
+      "domains": {
+        "asllrp_contiguous": {
+          "edits": 0,
+          "tokens": 92,
+          "exact": 44,
+          "samples": 44,
+          "wer": 0.0,
+          "sequence_accuracy": 1.0
+        },
+        "asllrp_segmented_train": {
+          "edits": 9,
+          "tokens": 1116,
+          "exact": 1107,
+          "samples": 1116,
+          "wer": 0.008064516129032258,
+          "sequence_accuracy": 0.9919354838709677
+        },
+        "local_phrases": {
+          "edits": 3,
+          "tokens": 1042,
+          "exact": 387,
+          "samples": 390,
+          "wer": 0.0028790786948176585,
+          "sequence_accuracy": 0.9923076923076923
+        }
+      },
+      "equal_domain_mean_wer": 0.0036478649412833054,
+      "worst_domain_wer": 0.008064516129032258,
+      "total_edits": 12,
+      "total_tokens": 2250
+    },
+    "selected_metrics": {
+      "domains": {
+        "asllrp_contiguous": {
+          "edits": 0,
+          "tokens": 92,
+          "exact": 44,
+          "samples": 44,
+          "wer": 0.0,
+          "sequence_accuracy": 1.0
+        },
+        "asllrp_segmented_train": {
+          "edits": 9,
+          "tokens": 1116,
+          "exact": 1107,
+          "samples": 1116,
+          "wer": 0.008064516129032258,
+          "sequence_accuracy": 0.9919354838709677
+        },
+        "local_phrases": {
+          "edits": 3,
+          "tokens": 1042,
+          "exact": 387,
+          "samples": 390,
+          "wer": 0.0028790786948176585,
+          "sequence_accuracy": 0.9923076923076923
+        }
+      },
+      "equal_domain_mean_wer": 0.0036478649412833054,
+      "worst_domain_wer": 0.008064516129032258,
+      "total_edits": 12,
+      "total_tokens": 2250
+    },
+    "changes": []
+  },
+  "validation": {
+    "rows": 363,
+    "base_metrics": {
+      "domains": {
+        "asllrp_contiguous": {
+          "edits": 11,
+          "tokens": 24,
+          "exact": 2,
+          "samples": 12,
+          "wer": 0.4583333333333333,
+          "sequence_accuracy": 0.16666666666666666
+        },
+        "asllrp_segmented_validation": {
+          "edits": 43,
+          "tokens": 254,
+          "exact": 213,
+          "samples": 254,
+          "wer": 0.16929133858267717,
+          "sequence_accuracy": 0.8385826771653543
+        },
+        "local_phrases": {
+          "edits": 6,
+          "tokens": 259,
+          "exact": 92,
+          "samples": 97,
+          "wer": 0.023166023166023165,
+          "sequence_accuracy": 0.9484536082474226
+        }
+      },
+      "equal_domain_mean_wer": 0.21693023169401118,
+      "worst_domain_wer": 0.4583333333333333,
+      "total_edits": 60,
+      "total_tokens": 537
+    },
+    "selected_metrics": {
+      "domains": {
+        "asllrp_contiguous": {
+          "edits": 11,
+          "tokens": 24,
+          "exact": 2,
+          "samples": 12,
+          "wer": 0.4583333333333333,
+          "sequence_accuracy": 0.16666666666666666
+        },
+        "asllrp_segmented_validation": {
+          "edits": 43,
+          "tokens": 254,
+          "exact": 213,
+          "samples": 254,
+          "wer": 0.16929133858267717,
+          "sequence_accuracy": 0.8385826771653543
+        },
+        "local_phrases": {
+          "edits": 6,
+          "tokens": 259,
+          "exact": 92,
+          "samples": 97,
+          "wer": 0.023166023166023165,
+          "sequence_accuracy": 0.9484536082474226
+        }
+      },
+      "equal_domain_mean_wer": 0.21693023169401118,
+      "worst_domain_wer": 0.4583333333333333,
+      "total_edits": 60,
+      "total_tokens": 537
+    },
+    "changes": []
+  },
+  "limitations": [
+    "The base 90/10 logit blend and blank bias came from prior development exploration.",
+    "These are development validations, not an independent signer/capture set.",
+    "Recognition accuracy does not establish visually natural coarticulation."
+  ],
+  "test_evaluated": false,
+  "citizen_test_accessed": false,
+  "semlex_test_accessed": false,
+  "local_test_accessed": false,
+  "two_m_flores_devtest_accessed": false,
+  "consumed_rit_test_accessed": false
+}

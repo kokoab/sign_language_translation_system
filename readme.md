@@ -1,140 +1,56 @@
-    # Sign Language Translator (SLT) – Transformer + GCN Hybrid
-**Documentation – 001**  
-**Date:** February 17, 2026  
-**Status:** Optimization & Feature Refinement Phase
+# SLT - Sign Language Translator
 
----
+This repo is now organized around the **v16 Squeezeformer pipeline** for ASL landmark recognition and continuous gloss decoding.
 
-## 1. Brief Description
+The older DS-GCN/MediaPipe code is still preserved because some tests, scripts, and historical experiments depend on it, but new work should start from the v16 paths below.
 
-This project focuses on **real-time American Sign Language (ASL) alphabet recognition** using a hybrid deep-learning architecture. The system combines:
+## Current Pipeline
 
-- **MediaPipe** – Hand landmark extraction  
-- **Graph Convolutional Network (GCN)** – Spatial relationship modeling between hand joints  
-- **Transformer Encoder** – Temporal sequence modeling across video frames  
+| Stage | Current path | Purpose |
+| --- | --- | --- |
+| Stage 0 | `active/v16/extract_v16.py` | Apple Vision-style landmark extraction and v16 feature formatting |
+| Stage 1 | `active/v16/train_stage_1_v16.py` | Isolated sign classification with Squeezeformer |
+| Stage 2 | `active/v16/train_stage_2_v16_fixed.py` | Continuous recognition with CTC and anti-template-memorization fixes |
+| Inference | `active/v16/inference_v16.py` | Unified video inference with trimming, sliding windows, TTA, and CTC beam search |
+| Compatibility | `src_v16/*.py` | Thin wrappers for existing scripts and mobile export tools |
 
-**Goal:** Low-latency, high-accuracy inference suitable for edge devices.
+See `CURRENT_PIPELINE.md` for commands and cleanup notes.
 
----
+## Legacy Areas
 
-## 2. Key Transitions & Refinements
+- `src/` keeps the older DS-GCN/Transformer implementation and desktop/demo utilities.
+- `legacy/copies/` contains duplicate `* copy.py` files moved out of the active tree.
+- `docs/archive/` is for older planning and review notes that may describe pre-v16 architecture.
+- `artifacts/` is for generated metrics, reports, charts, and exported outputs.
+- Large local datasets live under `data/local/`; root dataset names are compatibility symlinks.
+- Model assets live under `artifacts/model_assets/`; `models` and `weights` are compatibility symlinks.
+- Batch extraction implementations live under `scripts/extraction/`; root extractor files are compatibility wrappers.
 
-### A. Sequence Length & Transformer Weight
+## Quick Commands
 
-**Reason for Change:**  
-The original **60-frame window (~2 seconds)** caused noticeable input lag and high computational cost. The Transformer was also over-parameterized for real-time deployment.
+```bash
+# v16 inference through the canonical path
+KMP_DUPLICATE_LIB_OK=TRUE python active/v16/inference_v16.py path/to/video.mp4
 
-#### Before (60 Frames)
-```python
-self.pos_encoder = nn.Parameter(torch.randn(1, 60, self.d_model))
-# Heavy Transformer feedforward
-dim_feedforward = 2048
-num_layers = 6
+# v16 inference through the compatibility path
+KMP_DUPLICATE_LIB_OK=TRUE python src_v16/inference_v16.py path/to/video.mp4
+
+# v16 Stage 1 training
+python active/v16/train_stage_1_v16.py \
+  --data_path src_v16/ASL_landmarks_v16 \
+  --save_dir models/output_v16_d384_aug \
+  --manifest models/manifest_v16.json
+
+# v16 Stage 2 training
+python active/v16/train_stage_2_v16_fixed.py \
+  --data_path src_v16/ASL_landmarks_v16 \
+  --phrase_data src_v16/ASL_phrases_v16 \
+  --stage1_ckpt src_v16/output_v16_d384/best_model.pth \
+  --manifest models/manifest_v16.json
 ```
 
-#### After (30 Frames)
-```python
-self.pos_encoder = nn.Parameter(torch.randn(1, 30, self.d_model))
-# Light Transformer feedforward
-dim_feedforward = 1024
-num_layers = 4
-```
+## Notes
 
-**Remarks:**  
-Cutting the sequence length in half reduced the computational cost of self-attention by approximately **4×**, since attention complexity is **O(n²)**.
-
----
-
-### B. Bone-Length Normalization
-
-**Reason for Change:**  
-Global normalization failed when the user moved farther from the camera. Hand size variations altered joint distances and confused the model.
-
-#### Before (Global Max)
-```python
-norm = np.max(np.linalg.norm(input_data, axis=2))
-input_data /= norm
-```
-
-#### After (Reference Bone Scaling)
-```python
-# Scale by distance from Wrist (0) to Middle Finger MCP (9)
-ref_dist = np.mean(np.linalg.norm(input_data[:, 9, :], axis=-1))
-if ref_dist > 0:
-    input_data /= ref_dist
-```
-
-**Remarks:**  
-Using a **reference bone** keeps perceived hand size consistent regardless of webcam distance.
-
----
-
-### C. Resolving R / V / K & S / T / M / N Confusion
-
-**Reason for Change:**  
-Several ASL letters share very similar global 3D coordinates. Standard GCN layers struggled to distinguish small inter-finger gaps.
-
-#### Before (Simple Distances)
-```python
-f1 = dist(data[:, :, 4], data[:, :, 8])  # Thumb–Index only
-```
-
-#### After (Enhanced Geometric Features)
-```python
-# Specific finger-to-finger checks
-f2 = dist(data[:, :, 8], data[:, :, 12])  # Index–Middle (V vs R)
-f5 = dist(data[:, :, 4], data[:, :, 12])  # Thumb–Middle (K)
-f7 = dist(data[:, :, 4], data[:, :, 20])  # Thumb–Pinky (S)
-```
-
-**Remarks:**  
-Adding **targeted geometric features** forces the model to focus on precise inter-finger gaps that define visually similar letters.
-
----
-
-### D. Stability Logic & Variable Scoping
-
-**Reason for Change:**  
-Two inference-loop issues were identified:
-
-- **NameError:** Variables were defined inside conditionals, causing crashes when no hand was detected.  
-- **Prediction Flicker:** Rapid label switching prevented stable sentence formation.
-
-#### Before (Unstable)
-```python
-if len(sequence) == WINDOW_SIZE:
-    current_char = labels[idx]  # Variable created here
-# Crash occurs here if hand is missing
-```
-
-#### After (Stability Buffer)
-```python
-current_char = "Waiting..."  # Initialization
-
-stability_buffer.append(current_char)
-if all(x == current_char for x in stability_buffer[-3:]):
-    sentence.append(current_char)  # Confirmed only after 3 frames
-```
-
-**Remarks:**  
-A **3-frame confirmation buffer (~0.09s)** provides a debouncing effect similar to a physical keyboard.
-
----
-
-## 3. Errors Encountered & Fixes
-
-| Error | Cause | Fix |
-|------|------|-----|
-| `NameError: name 'current_conf' is not defined` | Variable initialized inside a conditional block | Initialize variables at the start of the `while` loop |
-| Inconsistent Shape Error | Training used 60 frames while testing used 30 | Synchronize `pos_encoder` and `WINDOW_SIZE` to 30 |
-| R / U Confusion | Crossing fingers resembled joined fingers mathematically | Added Index–Middle distance (`f2`) geometric feature |
-
----
-
-## 4. Final Remarks
-
-- **Current Training Accuracy:** 99.9%  
-- **Standard Sequence Window:** 30 Frames  
-- **Immediate Next Step:** Dataset diversification (different hand sizes, lighting conditions, and camera distances) to maintain cross-user accuracy and real-world robustness.
-
----
+- Prefer `active/v16/` for code changes.
+- Prefer `src_v16/` only when maintaining older scripts that already import it.
+- Prefer canonical storage folders for new outputs: `data/local/`, `artifacts/generated/`, and `artifacts/reports/`.

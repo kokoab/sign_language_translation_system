@@ -443,14 +443,16 @@ class SequenceTransformer(nn.Module):
 
 
 class SLTStage2CTC(nn.Module):
-    def __init__(self, vocab_size, stage1_ckpt=None, d_model=256, seq_layers=4, dropout=0.3):
+    def __init__(self, vocab_size, stage1_ckpt=None, d_model=256, seq_layers=4, dropout=0.3,
+                 encoder_type=None):
         super().__init__()
         self.d_model = d_model
         self.vocab_size = vocab_size
 
-        # Detect model type from checkpoint
-        model_type = None
-        if stage1_ckpt and Path(stage1_ckpt).exists():
+        # Detect model type from checkpoint or explicit parameter
+        model_type = encoder_type
+        ckpt = None
+        if not model_type and stage1_ckpt and Path(stage1_ckpt).exists():
             ckpt = torch.load(stage1_ckpt, map_location='cpu', weights_only=False)
             model_type = ckpt.get('model_type', None)
 
@@ -472,13 +474,20 @@ class SLTStage2CTC(nn.Module):
             self.encoder = DSGCNEncoder(in_channels=16, d_model=d_model)
 
         if stage1_ckpt and Path(stage1_ckpt).exists():
+            if ckpt is None:
+                ckpt = torch.load(stage1_ckpt, map_location='cpu', weights_only=False)
             log.info(f"Loading pre-trained Stage 1 weights from {stage1_ckpt}")
             enc_state = {}
             for k, v in ckpt['model_state_dict'].items():
                 k_clean = k.replace('_orig_mod.', '')
                 if k_clean.startswith('encoder.'):
                     enc_state[k_clean.replace('encoder.', '')] = v
-            self.encoder.load_state_dict(enc_state, strict=False)
+            missing, unexpected = self.encoder.load_state_dict(enc_state, strict=False)
+            if missing:
+                log.warning(f"Missing encoder keys: {len(missing)} — {missing[:5]}")
+            if unexpected:
+                log.warning(f"Unexpected encoder keys: {len(unexpected)} — {unexpected[:5]}")
+            log.info(f"Loaded {len(enc_state) - len(unexpected)}/{len(enc_state)} encoder weights")
 
         # Initially freeze encoder (will be unfrozen after epoch 30)
         for param in self.encoder.parameters():
@@ -1146,7 +1155,7 @@ class ModelEMA:
             if p.requires_grad:
                 p.data.copy_(self.backup[n])
 
-def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, best_wer, trigger_times, gloss_to_idx, idx_to_gloss, vocab_size, d_model=384):
+def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, best_wer, trigger_times, gloss_to_idx, idx_to_gloss, vocab_size, d_model=384, encoder_type=None):
     unwrapped = model.module if hasattr(model, 'module') else model
     return {
         'model_state_dict':       unwrapped.state_dict(),
@@ -1156,6 +1165,7 @@ def make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, best_wer, 
         'epoch': epoch, 'best_wer': best_wer, 'trigger_times': trigger_times,
         'gloss_to_idx': gloss_to_idx, 'idx_to_gloss': idx_to_gloss, 'vocab_size': vocab_size,
         'd_model': d_model, 'val_wer': val_wer, 'stage': 2,
+        'encoder_type': encoder_type,
     }
 
 # ══════════════════════════════════════════════════════════════════
@@ -1315,13 +1325,15 @@ def train_stage2(
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ctc, num_workers=4, pin_memory=use_amp, persistent_workers=True)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_ctc, num_workers=4, pin_memory=use_amp, persistent_workers=True)
 
-    # Auto-detect d_model from Stage 1 checkpoint
+    # Auto-detect d_model and encoder_type from Stage 1 checkpoint
     s1_d_model = 384  # fallback default (matches trained Stage 1)
+    s1_encoder_type = None
     if stage1_ckpt and Path(stage1_ckpt).exists():
         try:
             s1_ckpt = torch.load(stage1_ckpt, map_location='cpu', weights_only=False)
             s1_d_model = s1_ckpt.get('d_model', 384)
-            log.info(f"Stage 1 checkpoint d_model={s1_d_model}")
+            s1_encoder_type = s1_ckpt.get('model_type', None)
+            log.info(f"Stage 1 checkpoint d_model={s1_d_model}, model_type={s1_encoder_type}")
         except Exception:
             pass
 
@@ -1517,7 +1529,7 @@ def train_stage2(
         # Checkpoint (WER: lower is better!)
         should_save_last = (epoch % 5 == 0 or epoch == epochs)
         if val_wer < best_wer or should_save_last:
-            ckpt = make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, min(val_wer, best_wer), trigger_times, gloss_to_idx, idx_to_gloss, vocab_size, d_model=s1_d_model)
+            ckpt = make_checkpoint(model, optimizer, scheduler, ema, epoch, val_wer, min(val_wer, best_wer), trigger_times, gloss_to_idx, idx_to_gloss, vocab_size, d_model=s1_d_model, encoder_type=s1_encoder_type)
             if should_save_last:
                 torch.save(ckpt, LAST_CKPT)
             if val_wer < best_wer:
