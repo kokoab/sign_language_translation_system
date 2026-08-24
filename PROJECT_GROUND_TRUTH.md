@@ -1,12 +1,28 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-08-24 21:19 PST (+0800, Asia/Manila)
+**Last updated:** 2026-08-24 21:21 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-08-24 21:21 PST — v17 source and evidence published to GitHub
+
+The full eligible reorganization, v17 source, iOS projects, tests, documentation,
+manifests, and compact reports were committed as
+`090d3149db4f0387bdcf55b6d5e1924b8413c0f2` (`Add v17 mobile SLT pipeline and
+evidence`) and pushed successfully to
+`https://github.com/kokoab/sign_language_translation_system.git`, branch `master`.
+The push was a fast-forward from `2a6b743` and local `master` was configured to track
+`origin/master`. The separate repository-default `main` branch was not merged,
+rewritten, or otherwise modified.
+
+The commit author is the user's configured
+`kokoab <francis.batiancela@intechsive.com>` and contains no co-author trailer. The
+GitHub publication excludes the large/local paths documented in `.gitignore`; those
+assets remain present on this Mac for iPhone builds and experiments.
 
 ## 2026-08-24 21:19 PST — physical-iPhone deployment guide and GitHub hygiene
 
