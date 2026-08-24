@@ -1,5 +1,5 @@
 """
-SLT Sign Language Classifier — GUI App (Modern UI)
+ATLAS — ASL Translation and Language Assistive System
 Browse a video OR record from camera -> classify -> skeleton animation.
 Uses Apple Vision Framework for extraction (same pipeline as training).
 
@@ -30,16 +30,29 @@ from model_v14 import SLTStage1V14
 from extract_apple_vision import extract_one_video, extract_phrase_video, extract_frames_isolated, extract_frames_continuous
 from camera_inference import _ctc_beam_search, _mirror_tta
 
-CKPT_PATH = "models/output_v15_clean/best_model.pth"
-STAGE2_CKPT_PATH = "models/output_stage2_v15_reextracted/stage2_best_model.pth"
-for p in [CKPT_PATH, "models/output_v14/best_model.pth"]:
+# Resolve paths — check app bundle (PyInstaller) first, then project root
+def _resolve_path(rel_path):
+    # PyInstaller bundle: files are in sys._MEIPASS
+    if hasattr(sys, '_MEIPASS'):
+        p = os.path.join(sys._MEIPASS, rel_path)
+        if os.path.exists(p):
+            return p
+    # Project root (running from source)
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    p = os.path.join(project_root, rel_path)
     if os.path.exists(p):
-        CKPT_PATH = p
-        break
-for p in [STAGE2_CKPT_PATH, "models/output_stage2_v13/stage2_best_model.pth"]:
-    if os.path.exists(p):
-        STAGE2_CKPT_PATH = p
-        break
+        return p
+    # Current working directory
+    if os.path.exists(rel_path):
+        return rel_path
+    return rel_path
+
+CKPT_PATH = _resolve_path("models/output_v15_clean/best_model.pth")
+STAGE2_CKPT_PATH = _resolve_path("models/output_stage2_v15_reextracted/stage2_best_model.pth")
+if not os.path.exists(CKPT_PATH):
+    CKPT_PATH = _resolve_path("models/output_v14/best_model.pth")
+if not os.path.exists(STAGE2_CKPT_PATH):
+    STAGE2_CKPT_PATH = _resolve_path("models/output_stage2_v13/stage2_best_model.pth")
 
 _HAND_EDGES = [
     (0,1),(1,2),(2,3),(3,4),(0,5),(5,6),(6,7),(7,8),
@@ -429,7 +442,7 @@ class SignClassifierApp:
         ctk.set_default_color_theme("dark-blue")
 
         self.root = ctk.CTk()
-        self.root.title("SLT  —  Sign Language Translator")
+        self.root.title("ATLAS  —  ASL Translation and Language Assistive System")
         self.root.geometry("1400x800")
         self.root.minsize(1100, 650)
         self.root.configure(fg_color=COLORS["bg_dark"])
@@ -471,7 +484,7 @@ class SignClassifierApp:
 
         title_row = ctk.CTkFrame(hdr, fg_color="transparent")
         title_row.pack(fill="x")
-        ctk.CTkLabel(title_row, text="Sign Language",
+        ctk.CTkLabel(title_row, text="ATLAS",
                      font=ctk.CTkFont(size=20, weight="bold"),
                      text_color=COLORS["text_primary"]).pack(side="left")
         ver_pill = ctk.CTkFrame(title_row, fg_color="transparent",
@@ -479,13 +492,13 @@ class SignClassifierApp:
                                border_color=COLORS["border"], height=22)
         ver_pill.pack(side="right")
         ver_pill.pack_propagate(False)
-        self.version_label = ctk.CTkLabel(ver_pill, text="DS-GCN-TCN v15",
+        self.version_label = ctk.CTkLabel(ver_pill, text="DS-GCN-TCN v15 | RTMW-XL",
                      font=ctk.CTkFont(size=10),
                      text_color=COLORS["text_muted"],
                      fg_color="transparent")
         self.version_label.pack(padx=8, pady=2)
 
-        ctk.CTkLabel(hdr, text="Classifier",
+        ctk.CTkLabel(hdr, text="ASL Translator",
                      font=ctk.CTkFont(size=14),
                      text_color=COLORS["text_secondary"]).pack(anchor="w")
 
@@ -735,7 +748,7 @@ class SignClassifierApp:
                 self.device = torch.device('cpu')
                 ckpt = torch.load(CKPT_PATH, map_location=self.device, weights_only=False)
                 model_type = ckpt.get('model_type', '')
-                self.root.after(0, lambda: self.version_label.configure(text="DS-GCN-TCN v15"))
+                self.root.after(0, lambda: self.version_label.configure(text="DS-GCN-TCN v15 | RTMW-XL"))
                 self.model = SLTStage1V14(
                     num_classes=ckpt['num_classes'],
                     d_model=ckpt.get('d_model', 384),
@@ -755,10 +768,12 @@ class SignClassifierApp:
                     ckpt2 = torch.load(STAGE2_CKPT_PATH, map_location=self.device, weights_only=False)
                     s2_d_model = ckpt2.get('d_model', 384)
                     s2_vocab = ckpt2['vocab_size']
+                    s2_enc_type = ckpt2.get('encoder_type', None)
                     self.stage2_model = SLTStage2CTC(
                         vocab_size=s2_vocab,
                         stage1_ckpt=None,
                         d_model=s2_d_model,
+                        encoder_type=s2_enc_type,
                     ).to(self.device)
                     s2_sd = {k.replace('_orig_mod.', ''): v for k, v in ckpt2['model_state_dict'].items()}
                     self.stage2_model.load_state_dict(s2_sd, strict=False)
@@ -770,10 +785,10 @@ class SignClassifierApp:
                 self.t5_tokenizer = None
                 # Try multiple paths for T5 weights
                 t5_candidates = [
+                    _resolve_path("weights/slt_final_t5_model"),
                     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                  "weights", "slt_final_t5_model"),
                     "weights/slt_final_t5_model",
-                    os.path.join(os.getcwd(), "weights", "slt_final_t5_model"),
                 ]
                 t5_dir = None
                 for cand in t5_candidates:
@@ -1082,7 +1097,7 @@ class SignClassifierApp:
         def _update():
             self._stop_progress()
             self.browse_btn.configure(state="normal")
-            self._set_status(f"Done in {elapsed:.1f}s (.npy direct)")
+            self._set_status(f"Inference: {elapsed:.1f}s (pre-extracted)")
             for i, (label, conf) in enumerate(predictions):
                 name_lbl, bar_fill, bar_bg, conf_lbl = self.pred_rows[i]
                 name_lbl.configure(text=label)
@@ -1113,7 +1128,8 @@ class SignClassifierApp:
     def _process_frames(self, frames):
         t0 = time.time()
 
-        # Extract directly from frames (no temp file — avoids codec re-encoding artifacts)
+        # Stage 0: Extraction (RTMW-XL pose estimation)
+        t_extract = time.time()
         predictions = []
         stage2_glosses = None
 
@@ -1121,6 +1137,8 @@ class SignClassifierApp:
             result = extract_frames_continuous(frames)
         else:
             result = extract_frames_isolated(frames)
+
+        extract_time = time.time() - t_extract
 
         if result is None:
             self.root.after(0, lambda: self._set_status("Extraction failed — no hands detected"))
@@ -1131,6 +1149,7 @@ class SignClassifierApp:
         # Store raw XYZ result for skeleton playback [T, 61, 10]
         self._extracted_result = result.astype(np.float32)
 
+        t_infer = time.time()
         result_16ch = compute_bone_features_np(result.astype(np.float32))
         x = torch.from_numpy(result_16ch).unsqueeze(0).to(self.device)
 
@@ -1156,9 +1175,159 @@ class SignClassifierApp:
                 except Exception:
                     stage2_glosses = None
 
-            # Show CTC glosses as predictions (one per detected sign)
+            # Post-process CTC glosses with motion-based disambiguation
             if stage2_glosses:
-                for i, g in enumerate(stage2_glosses.split()):
+                data_f32 = result.astype(np.float32)
+                ctc_words = stage2_glosses.split()
+                n_clips = data_f32.shape[0] // 32
+                fixed_words = []
+                for wi, word in enumerate(ctc_words):
+                    seg_idx = min(int(wi / max(len(ctc_words), 1) * n_clips), n_clips - 1)
+                    seg = data_f32[seg_idx*32:(seg_idx+1)*32]
+                    lh_m = seg[:, 0, 9].mean()
+                    rh_m = seg[:, 21, 9].mean()
+                    wr = 0 if lh_m > rh_m else 21
+                    ns = 42
+                    end_f = min(seg.shape[0]-2, 28)
+                    yt = seg[end_f, wr, 1] - seg[4, wr, 1]
+                    fd_m = np.linalg.norm(seg[seg.shape[0]//2, wr, :3] - seg[seg.shape[0]//2, ns, :3])
+                    fd_e = np.linalg.norm(seg[end_f, wr, :3] - seg[end_f, ns, :3])
+                    fr = fd_e / (fd_m + 1e-6)
+
+                    # Compute all features for this segment
+                    hh = seg[:, wr, 1].mean() - seg[:, ns, 1].mean()
+                    motion = np.abs(np.diff(seg[:, wr, :3], axis=0)).sum()
+                    x_osc = np.abs(np.diff(seg[:, wr, 0])).sum()
+                    y_osc = np.abs(np.diff(seg[:, wr, 1])).sum()
+
+                    if word in ('SIX', 'W'):
+                        if motion > 0.4 and hh > 1.4:
+                            word = 'SIX'
+                        elif motion < 0.3:
+                            word = 'W'
+                    elif word in ('O', 'ZERO'):
+                        if hh > 1.0:
+                            word = 'ZERO'
+                        else:
+                            word = 'O'
+                    elif word in ('SCHOOL', 'COOK'):
+                        if yt > 0.1:
+                            word = 'COOK'
+                        else:
+                            word = 'SCHOOL'
+                    elif word in ('YES', 'S'):
+                        if y_osc > 0.5 and motion > 0.5:
+                            word = 'YES'
+                        elif motion < 0.4:
+                            word = 'S'
+                    elif word in ('NO', 'Z'):
+                        if yt < -0.2 and x_osc < 0.5:
+                            word = 'NO'
+                        elif x_osc > 0.7 and yt > 0.2:
+                            word = 'Z'
+                    elif word in ('PLEASE', 'SORRY'):
+                        tips = [wr+4, wr+8, wr+12, wr+16, wr+20]
+                        openness = np.mean([np.linalg.norm(
+                            seg[:, t, :3] - seg[:, wr, :3], axis=-1).mean() for t in tips])
+                        if openness > 1.5:
+                            word = 'PLEASE'
+                        else:
+                            word = 'SORRY'
+                    elif word in ('FATHER', 'MOTHER'):
+                        if hh < 1.0:
+                            word = 'FATHER'
+                        else:
+                            word = 'MOTHER'
+                    fixed_words.append(word)
+
+                # Deduplicate consecutive
+                deduped = []
+                for w in fixed_words:
+                    if not deduped or deduped[-1] != w:
+                        deduped.append(w)
+                stage2_glosses = " ".join(deduped)
+
+                # Fingerspelling refinement: check per-clip Stage 1 for letter runs
+                LETTERS = set('A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'.split())
+                n_clips_fs = data_f32.shape[0] // 32
+                clip_labels_fs = []
+                with torch.no_grad():
+                    for ci in range(n_clips_fs):
+                        clip = torch.from_numpy(result_16ch[ci*32:(ci+1)*32]).float().unsqueeze(0).to(self.device)
+                        lo = self.model(clip)
+                        if isinstance(lo, tuple): lo = lo[0]
+                        p = torch.softmax(lo, dim=-1)
+                        t1p, t1i = p.max(dim=-1)
+                        clip_labels_fs.append(self.idx_to_label[str(t1i.item())])
+
+                # Find letter-heavy runs (3+ letters in a window of 8 clips)
+                fs_runs = []
+                fi = 0
+                while fi < len(clip_labels_fs):
+                    if clip_labels_fs[fi] in LETTERS:
+                        fj = fi
+                        letter_count = 0
+                        while fj < min(fi + 8, len(clip_labels_fs)):
+                            if clip_labels_fs[fj] in LETTERS:
+                                letter_count += 1
+                            fj += 1
+                        if letter_count >= 3:
+                            end = fj
+                            while end > fi and clip_labels_fs[end-1] not in LETTERS:
+                                end -= 1
+                            fs_runs.append((fi, end))
+                            fi = end
+                        else:
+                            fi += 1
+                    else:
+                        fi += 1
+
+                if fs_runs:
+                    # Rebuild glosses: keep CTC for non-FS parts, refine FS parts with 14-frame
+                    n_glosses_fs = len(deduped)
+                    rebuilt = []
+                    first_fs = fs_runs[0][0]
+                    g_cut = int(first_fs / max(n_clips_fs, 1) * n_glosses_fs)
+                    rebuilt.extend(deduped[:g_cut])
+
+                    for ri, (cs, ce) in enumerate(fs_runs):
+                        f_start = cs * 28
+                        f_end = min(ce * 28 + 14, len(frames))
+                        sub = frames[f_start:f_end]
+                        refined = []
+                        for s in range(0, len(sub) - 14 + 1, 14):
+                            seg = sub[s:s+14]
+                            iso = extract_frames_isolated(seg)
+                            if iso is None: continue
+                            dd = compute_bone_features_np(iso.astype(np.float32))
+                            xc = torch.from_numpy(dd).float().unsqueeze(0).to(self.device)
+                            with torch.no_grad():
+                                lo = self.model(xc)
+                                if isinstance(lo, tuple): lo = lo[0]
+                                p = torch.softmax(lo, dim=-1)
+                                t1p, t1i = p.max(dim=-1)
+                            lbl = self.idx_to_label[str(t1i.item())]
+                            if lbl in LETTERS:
+                                refined.append(lbl)
+                        dd_letters = []
+                        for l in refined:
+                            if not dd_letters or dd_letters[-1] != l:
+                                dd_letters.append(l)
+                        if dd_letters:
+                            rebuilt.append(''.join(dd_letters))
+
+                        if ri + 1 < len(fs_runs):
+                            ncs = fs_runs[ri+1][0]
+                            gs = int(ce / max(n_clips_fs, 1) * n_glosses_fs)
+                            ge = int(ncs / max(n_clips_fs, 1) * n_glosses_fs)
+                            rebuilt.extend(deduped[gs:ge])
+                        else:
+                            gs = int(ce / max(n_clips_fs, 1) * n_glosses_fs)
+                            rebuilt.extend(deduped[gs:])
+
+                    stage2_glosses = " ".join(rebuilt)
+
+                for g in stage2_glosses.split():
                     predictions.append((g, 100.0))
             else:
                 # Fallback: per-clip Stage 1
@@ -1190,7 +1359,8 @@ class SignClassifierApp:
                           for p, i in zip(top5_probs, top5_idx)]
 
         # Disambiguate confused signs using motion features when confidence is low
-        if predictions and not self.use_continuous:
+        # Works in both isolated and continuous (per-clip fallback) modes
+        if predictions:
             top_label = predictions[0][0]
             top_conf = predictions[0][1]
             top5_labels = set(p[0] for p in predictions[:5])
@@ -1212,18 +1382,16 @@ class SignClassifierApp:
                 hand_height = data_f32[:, wrist, 1].mean() - data_f32[:, nose, 1].mean()
                 face_ratio = face_dist_end / (face_dist_mid + 1e-6)
 
+                # X/Y oscillation: how much the wrist moves left-right / up-down
+                x_vals = data_f32[:, wrist, 0]
+                x_osc = np.abs(np.diff(x_vals)).sum()
+                y_vals = data_f32[:, wrist, 1]
+                y_osc = np.abs(np.diff(y_vals)).sum()
+
                 new_label = top_label
 
-                # GOOD vs THANKYOU: y_trajectory separates them
-                if top_label in ('GOOD', 'THANKYOU', 'HAPPY', 'FEEL') or \
-                   top5_labels & {'GOOD', 'THANKYOU'}:
-                    if y_traj < -0.3:
-                        new_label = 'GOOD'       # hand moves down
-                    elif face_ratio > 1.10:
-                        new_label = 'THANKYOU'    # hand moves away from face
-
                 # SIX vs W: motion and height
-                elif top_label in ('SIX', 'W') or top5_labels & {'SIX', 'W'}:
+                if top_label in ('SIX', 'W') or top5_labels & {'SIX', 'W'}:
                     if motion > 0.4 and hand_height > 1.4:
                         new_label = 'SIX'
                     elif motion < 0.3:
@@ -1242,6 +1410,48 @@ class SignClassifierApp:
                         new_label = 'COOK'
                     else:
                         new_label = 'SCHOOL'
+
+                # YES vs S: bobbing fist vs static fist
+                elif top_label in ('YES', 'S') or top5_labels & {'YES', 'S'}:
+                    if y_osc > 0.5 and motion > 0.5:
+                        new_label = 'YES'        # fist bobs up and down
+                    elif motion < 0.4:
+                        new_label = 'S'           # static held fist
+
+                # NO vs Z: side shake vs Z-trace
+                elif top_label in ('NO', 'Z') or top5_labels & {'NO', 'Z'}:
+                    if y_traj < -0.2 and x_osc < 0.5:
+                        new_label = 'NO'          # index finger shakes side-to-side, slight downward
+                    elif x_osc > 0.7 and y_traj > 0.2:
+                        new_label = 'Z'           # traces Z shape (high x movement + upward)
+
+                # PLEASE vs SORRY: open flat hand vs closed fist
+                elif top_label in ('PLEASE', 'SORRY') or top5_labels & {'PLEASE', 'SORRY'}:
+                    tips = [wrist+4, wrist+8, wrist+12, wrist+16, wrist+20]
+                    openness = np.mean([np.linalg.norm(
+                        data_f32[:, t, :3] - data_f32[:, wrist, :3], axis=-1).mean() for t in tips])
+                    if openness > 1.5:
+                        new_label = 'PLEASE'      # open flat hand on chest
+                    else:
+                        new_label = 'SORRY'       # closed fist rubbing chest
+
+                # FATHER vs MOTHER: forehead vs chin
+                elif top_label in ('FATHER', 'MOTHER') or top5_labels & {'FATHER', 'MOTHER'}:
+                    if hand_height < 1.0:
+                        new_label = 'FATHER'      # thumb taps forehead (hand near top of face)
+                    else:
+                        new_label = 'MOTHER'      # thumb taps chin (hand lower on face)
+
+                # I vs YOU vs HE_SHE: pointing direction relative to body
+                elif top_label in ('I', 'YOU', 'HE_SHE', 'HE', 'HIS_HER', 'THEIR') or \
+                     top5_labels & {'I', 'YOU'}:
+                    idx_tip = wrist + 8
+                    body_dist = np.linalg.norm(
+                        data_f32[:, idx_tip, :3] - data_f32[:, nose, :3], axis=-1).mean()
+                    if body_dist < 2.0 and hand_height < 1.5:
+                        new_label = 'I'           # pointing to self (close to body, low)
+                    elif body_dist > 2.0 and hand_height > 1.5:
+                        new_label = 'YOU'         # pointing outward (far from body, higher)
 
                 if new_label != top_label:
                     predictions[0] = (new_label, top_conf)
@@ -1266,7 +1476,8 @@ class SignClassifierApp:
         def _update():
             self._stop_progress()
             self.browse_btn.configure(state="normal")
-            self._set_status(f"Done in {elapsed:.1f}s (Apple Vision)")
+            infer_time = time.time() - t_infer
+            self._set_status(f"Extract: {extract_time:.1f}s | Inference: {infer_time:.1f}s | Total: {elapsed:.1f}s")
 
             for i, (label, conf) in enumerate(predictions[:len(self.pred_rows)]):
                 name_lbl, bar_fill, _, conf_lbl = self.pred_rows[i]
@@ -1483,9 +1694,23 @@ class SignClassifierApp:
 
 
 if __name__ == "__main__":
+    # Prevent multiple instances using a lock file
+    import fcntl
+    _lock_path = os.path.join(os.path.expanduser('~'), '.atlas_lock')
+    _lock_file = open(_lock_path, 'w')
+    try:
+        fcntl.flock(_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except (IOError, OSError):
+        print("ATLAS is already running.")
+        sys.exit(0)
+
     if not os.path.exists(CKPT_PATH):
         print(f"Checkpoint not found: {CKPT_PATH}")
-        print(f"Download: scp -P 56060 root@47.186.29.91:/workspace/output_v12/best_model.pth {CKPT_PATH}")
         sys.exit(1)
     app = SignClassifierApp()
     app.run()
+
+    # Release lock on exit
+    fcntl.flock(_lock_file, fcntl.LOCK_UN)
+    _lock_file.close()
+    os.remove(_lock_path)

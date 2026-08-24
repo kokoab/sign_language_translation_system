@@ -1,0 +1,60 @@
+{
+  "format": "stage3_v17_reference_gloss_baseline",
+  "version": 1,
+  "scope": "Stage-3-only reference-gloss-to-English evaluation",
+  "model_dir": "artifacts/models/stage3_v17_reference_replay_v1",
+  "model_safetensors_sha256": "25a0deb4599da88de613d70fad1ad94ca138d0c0ef6ba50efba96650e593cb82",
+  "tokenizer_json_sha256": "a41ac0617ccfc0bd180cbf7c9860fec4135a1097f218315e1cb95738b5852453",
+  "prompt": "Translate this ASL gloss to natural conversational English: {gloss}",
+  "generation": {
+    "num_beams": 4,
+    "max_input_length": 192,
+    "max_new_tokens": 96
+  },
+  "elapsed_seconds": 55.768385625,
+  "overall": {
+    "rows": 321,
+    "sacrebleu": 3.2378112029083486,
+    "chrf2_plus_plus": 18.31746949798195,
+    "mean_rouge_l_f1": 0.3014344721282992,
+    "normalized_exact_match": 2,
+    "normalized_exact_match_rate": 0.006230529595015576
+  },
+  "by_source": {
+    "2m_flores_dev": {
+      "rows": 155,
+      "sacrebleu": 0.8543718622238706,
+      "chrf2_plus_plus": 12.51810070279994,
+      "mean_rouge_l_f1": 0.15637087199417848,
+      "normalized_exact_match": 0,
+      "normalized_exact_match_rate": 0.0
+    },
+    "ncslgr": {
+      "rows": 166,
+      "sacrebleu": 8.809579925787586,
+      "chrf2_plus_plus": 36.0068963290113,
+      "mean_rouge_l_f1": 0.43688542406076036,
+      "normalized_exact_match": 2,
+      "normalized_exact_match_rate": 0.012048192771084338
+    }
+  },
+  "source_manifests": {
+    "ncslgr": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/data/local/ncslgr_continuous_v17_source/manifest.json",
+      "sha256": "c03ff8a5b13c7fa7da9b7ac211ab15b66719768a152c4b0d66b96529b6660744",
+      "role": "train"
+    },
+    "2m_flores_dev": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/data/local/dataset_metadata/2m_flores_asl/dev_selected_v17.json",
+      "sha256": "92ed45d9b52c3d34146233356563363d7a8517540a6fd9df9b32bd451f27da4c",
+      "reserved_devtest_accessed": false,
+      "role": "validation"
+    }
+  },
+  "test_split_accessed": false,
+  "limitations": [
+    "Inputs are human reference glosses, not Stage-2 predictions.",
+    "Both sources have a single English reference, so valid paraphrases are under-rewarded.",
+    "The checkpoint has no trustworthy retained training history; its legacy history file is simulated."
+  ]
+}

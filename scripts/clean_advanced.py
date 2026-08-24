@@ -23,8 +23,8 @@ sys.modules['mediapipe.solutions'] = _fake.solutions
 
 
 def compute_sample_stats(arr):
-    """Compute quality metrics for a single [32, N, 10] sample (N=47 or 61)."""
-    xyz = arr[:, :42, :3]  # hands only, XYZ (same indices for both formats)
+    """Compute quality metrics for a single [32, N, C] sample."""
+    xyz = arr[:, :42, :min(arr.shape[-1], 3)]  # hands only, XY or XYZ
 
     # 1. Hand motion — total movement across frames
     hand_motion = np.abs(np.diff(xyz, axis=0)).sum()
@@ -70,17 +70,18 @@ def compute_sample_stats(arr):
 
 def main():
     parser = argparse.ArgumentParser(description="Advanced data cleaning")
-    parser.add_argument("--data_path", default="ASL_landmarks_rtmlib")
-    parser.add_argument("--output", default="ASL_landmarks_rtmlib/manifest_deep_cleaned.json")
+    parser.add_argument("--data_path", default="src_v16/ASL_landmarks_v16")
+    parser.add_argument("--manifest", default="src_v16/manifest_v16_files_cleaned.json",
+                        help="Input manifest (filename→class JSON)")
+    parser.add_argument("--output", default="src_v16/manifest_v16_files_deep_cleaned.json")
     parser.add_argument("--z_threshold", type=float, default=3.0, help="Z-score threshold for outlier detection")
     parser.add_argument("--jitter_pct", type=float, default=2.0, help="Percent of most jittery samples to remove")
     args = parser.parse_args()
 
     # Load manifest
-    manifest_path = os.path.join(args.data_path, 'manifest.json')
-    with open(manifest_path) as f:
+    with open(args.manifest) as f:
         manifest = json.load(f)
-    print(f"Manifest: {len(manifest)} entries")
+    print(f"Manifest: {len(manifest)} entries (from {args.manifest})")
 
     # Compute stats for all samples
     print("Computing per-sample quality metrics...")
@@ -95,7 +96,7 @@ def main():
             continue
         try:
             arr = np.load(fpath).astype(np.float32)
-            if arr.shape not in [(32, 47, 10), (32, 61, 10)]:
+            if arr.ndim != 3 or arr.shape[0] != 32 or arr.shape[1] < 42:
                 continue
         except:
             continue

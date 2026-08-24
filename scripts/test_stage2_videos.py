@@ -60,12 +60,13 @@ def load_models():
     model1.eval()
     model1.set_epoch(200)
 
-    # Stage 2 — don't pass stage1_ckpt to avoid v14 encoder auto-detection
-    # The checkpoint was trained with train_stage_2.py's own DSGCNEncoder (3 GCN layers)
+    # Stage 2 — use encoder_type from checkpoint to create correct architecture
     ckpt2 = torch.load(STAGE2_CKPT, map_location=DEVICE, weights_only=False)
     s2_vocab = ckpt2['vocab_size']
     s2_d_model = ckpt2.get('d_model', 384)
-    model2 = SLTStage2CTC(vocab_size=s2_vocab, stage1_ckpt=None, d_model=s2_d_model).to(DEVICE)
+    s2_enc_type = ckpt2.get('encoder_type', None)
+    model2 = SLTStage2CTC(vocab_size=s2_vocab, stage1_ckpt=None, d_model=s2_d_model,
+                           encoder_type=s2_enc_type).to(DEVICE)
     sd2 = {k.replace('_orig_mod.', ''): v for k, v in ckpt2['model_state_dict'].items()}
     model2.load_state_dict(sd2, strict=False)
     model2.eval()

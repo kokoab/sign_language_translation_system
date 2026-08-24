@@ -1,0 +1,185 @@
+{
+  "format": "transition_multivoice_package_v17",
+  "version": 1,
+  "created_at": "2026-08-22T07:45:32.090351+00:00",
+  "purpose": "generalizable landmark-space transition voice: deterministic mean, bounded stochastic variation, and context-conditioned elapsed span",
+  "voice_coverage": {
+    "controlled_how2sign_signers": 6,
+    "youtube_asl_channel_voice_proxies": 127,
+    "total_sources_or_proxies": 133,
+    "important_boundary": "YouTube channels are acquisition-level voice proxies, not identity-verified unique signers"
+  },
+  "components": {
+    "deterministic_mean": {
+      "checkpoint": "artifacts/models/transition_inpainter_multicorpus_v17_allvoices_final/model.pth",
+      "sha256": "eba3bbd5086c04f099e4466ac211a7b69322a0dd1f29d680a3134982a4cc7e2a",
+      "parameters": 2021489,
+      "result": "artifacts/models/transition_inpainter_multicorpus_v17_allvoices_final/result.json"
+    },
+    "stochastic_residual": {
+      "checkpoint": "artifacts/models/transition_residual_diffusion_multicorpus_v17_allvoices_final/model.pth",
+      "sha256": "0618f7d6976219a6d3180eb24dffdd2570e79bef4437107e23fc348561f1f5d5",
+      "parameters": 2181161,
+      "mean_checkpoint_sha256": "eba3bbd5086c04f099e4466ac211a7b69322a0dd1f29d680a3134982a4cc7e2a",
+      "recommended_temperatures": [
+        0.1,
+        0.2
+      ],
+      "result": "artifacts/models/transition_residual_diffusion_multicorpus_v17_allvoices_final/result.json"
+    },
+    "timing": {
+      "checkpoint": "artifacts/models/transition_span_multicorpus_v17_allvoices_final/model.pth",
+      "sha256": "b752ecf1bebbb6e82ccc803e86beee40adf771fd56750da3811363b0f3c1c555",
+      "parameters": 439433,
+      "span_frames": [
+        4,
+        12
+      ],
+      "result": "artifacts/models/transition_span_multicorpus_v17_allvoices_final/result.json"
+    }
+  },
+  "held_out_evidence": {
+    "motion_report": "artifacts/reports/transition_inpainter_multicorpus_loso_summary_v17.json",
+    "motion_report_sha256": "a1df378f741fe758298a57c00329c356c52d29cdb1bfe09f32d029a55a659084",
+    "motion": {
+      "how2sign_signer_heldout": {
+        "baseline": {
+          "evaluation_windows": 4686,
+          "relative_reconstruction_improvement": 0.18125859946143305,
+          "windows_improved_fraction": 0.6897140418267179,
+          "discriminator_balanced_accuracy": 0.6148100725565514,
+          "discriminator_roc_auc": 0.6539059022032343
+        },
+        "adapted": {
+          "evaluation_windows": 4686,
+          "relative_reconstruction_improvement": 0.20201193738545878,
+          "windows_improved_fraction": 0.6982501067008109,
+          "discriminator_balanced_accuracy": 0.611288945795988,
+          "discriminator_roc_auc": 0.6481969069452201
+        },
+        "delta_adapted_minus_baseline": {
+          "relative_reconstruction_improvement": 0.020753337924025728,
+          "windows_improved_fraction": 0.008536064874092975,
+          "discriminator_balanced_accuracy": -0.0035211267605633756,
+          "discriminator_roc_auc": -0.00570899525801416
+        }
+      },
+      "youtube_asl_channel_heldout": {
+        "baseline": {
+          "evaluation_windows": 576,
+          "relative_reconstruction_improvement": 0.08722332588129827,
+          "windows_improved_fraction": 0.6822916666666666,
+          "discriminator_balanced_accuracy": 0.5520833333333334,
+          "discriminator_roc_auc": 0.5805392795138888
+        },
+        "adapted": {
+          "evaluation_windows": 576,
+          "relative_reconstruction_improvement": 0.10949522264925991,
+          "windows_improved_fraction": 0.7170138888888888,
+          "discriminator_balanced_accuracy": 0.5538194444444444,
+          "discriminator_roc_auc": 0.5700412326388888
+        },
+        "delta_adapted_minus_baseline": {
+          "relative_reconstruction_improvement": 0.022271896767961638,
+          "windows_improved_fraction": 0.03472222222222221,
+          "discriminator_balanced_accuracy": 0.0017361111111110494,
+          "discriminator_roc_auc": -0.010498046875
+        }
+      }
+    },
+    "timing_report": "artifacts/reports/transition_span_loso_summary_v17.json",
+    "timing_report_sha256": "e2a71e66575a55d939dd2989d9008b485e92c91b84fcd23c66d64f316fcb780b",
+    "timing": {
+      "how2sign": {
+        "learned": {
+          "examples": 42174,
+          "accuracy": 0.9238867640139148,
+          "mae_frames": 0.17207283937824214,
+          "within_one_frame": 0.9618485323191198,
+          "macro_f1": 0.9245081060459701
+        },
+        "endpoint_only_ablation": {
+          "examples": 42174,
+          "accuracy": 0.11025750464384138,
+          "mae_frames": 2.87900123980836,
+          "within_one_frame": 0.32671788365373844,
+          "macro_f1": 0.04878513808244374
+        },
+        "kinematic_distance_over_speed": {
+          "examples": 42174,
+          "accuracy": 0.12064304903016047,
+          "mae_frames": 3.732299592624197,
+          "within_one_frame": 0.24889742666668632,
+          "macro_f1": 0.05121124999380108
+        },
+        "fixed_eight_frames": {
+          "examples": 42174,
+          "accuracy": 0.1111111119389534,
+          "mae_frames": 2.222222328186035,
+          "within_one_frame": 0.3333333432674408,
+          "macro_f1": 0.022222222553359136
+        },
+        "learned_relative_mae_improvement_vs_fixed": 0.9225672259720735,
+        "learned_relative_mae_improvement_vs_kinematic": 0.9538962950031412,
+        "style_context_mae_gain_vs_endpoint_only": 2.706928400430118
+      },
+      "youtube_asl": {
+        "learned": {
+          "examples": 5184,
+          "accuracy": 0.8715277711550394,
+          "mae_frames": 0.32581018408139545,
+          "within_one_frame": 0.9168595671653748,
+          "macro_f1": 0.8765567894335147
+        },
+        "endpoint_only_ablation": {
+          "examples": 5184,
+          "accuracy": 0.10995370397965114,
+          "mae_frames": 2.8466435273488364,
+          "within_one_frame": 0.32619598507881165,
+          "macro_f1": 0.06525079019505668
+        },
+        "kinematic_distance_over_speed": {
+          "examples": 5184,
+          "accuracy": 0.1197916641831398,
+          "mae_frames": 3.6267361640930176,
+          "within_one_frame": 0.25289350748062134,
+          "macro_f1": 0.055809868292676076
+        },
+        "fixed_eight_frames": {
+          "examples": 5184,
+          "accuracy": 0.1111111119389534,
+          "mae_frames": 2.222222328186035,
+          "within_one_frame": 0.3333333432674408,
+          "macro_f1": 0.022222222553359136
+        },
+        "learned_relative_mae_improvement_vs_fixed": 0.8533854241544998,
+        "learned_relative_mae_improvement_vs_kinematic": 0.910164354576679,
+        "style_context_mae_gain_vs_endpoint_only": 2.520833343267441
+      }
+    }
+  },
+  "cold_reload": {
+    "report": "artifacts/reports/transition_multivoice_package_cold_reload_v17.json",
+    "sha256": "734576a216e69d4737c8effa01053a8d1e40aafafe2d260f9f1a468b7b84aed3",
+    "passed": true
+  },
+  "research_basis": [
+    {
+      "title": "Sign-D2C: Discrete to Continuous transition generation",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Tang_Discrete_to_Continuous_Generating_Smooth_Transition_Poses_from_Sign_Language_CVPR_2025_paper.pdf"
+    },
+    {
+      "title": "Signing at Scale: learned co-articulation and signer evaluation",
+      "url": "https://openaccess.thecvf.com/content/CVPR2022/html/Saunders_Signing_at_Scale_Learning_to_Co-Articulate_Signs_for_Large-Scale_Photo-Realistic_CVPR_2022_paper.html"
+    }
+  ],
+  "claim_boundary": "This is held-out reconstruction/discriminator/timing evidence in landmark space. It does not yet prove semantic prosody, RGB realism, or Deaf-signer-rated human naturalness.",
+  "test_evaluated": false,
+  "citizen_test_accessed": false,
+  "semlex_test_accessed": false,
+  "local_test_accessed": false,
+  "how2sign_validation_accessed": false,
+  "how2sign_test_accessed": false,
+  "two_m_flores_devtest_accessed": false,
+  "consumed_rit_test_accessed": false
+}

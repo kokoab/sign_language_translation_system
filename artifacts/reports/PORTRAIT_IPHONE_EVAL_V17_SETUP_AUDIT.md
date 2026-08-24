@@ -1,0 +1,22 @@
+{
+  "candidate_manifest_sha256": "cd0f2be27cabd1b9d9eedc15d4b74cfcd01c09f552e2efba491678ca55323ee9",
+  "errors": [],
+  "format": "slt_v17_portrait_iphone_pack_audit",
+  "ledger_sha256": "9e9ae8b86357a0ec25920b333aa84f807f00a69e6fbed7fcf3309dad0d44e5d4",
+  "media": [],
+  "media_full_decode_count": 0,
+  "media_full_decode_passed": false,
+  "model_inference_accessed": false,
+  "oov_plans": 100,
+  "pack_dir": "data/local/portrait_iphone_eval_v17",
+  "pass": true,
+  "phase": "setup",
+  "ready_for_first_inference": false,
+  "rows": 1100,
+  "status_counts": {
+    "pending": 1100
+  },
+  "target_plans": 1000,
+  "test_splits_accessed": false,
+  "warnings": []
+}
