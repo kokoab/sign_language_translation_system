@@ -359,21 +359,34 @@ def add_targeted_lip_evidence(
     proposal: str,
     minimum_confidence: float,
 ) -> dict[str, object]:
-    """Resolve a proposed GOOD/THANKYOU inside that closed pair only."""
+    """Use lips only to break a GOOD/THANKYOU disagreement between two models."""
     if proposal not in {"GOOD", "THANKYOU"}:
         return result
     diagnostics = dict(result.get("diagnostics", {}))
+    full_candidate = str(result.get("candidate_gloss", "UNKNOWN"))
+    eligible = (
+        bool(result.get("accepted"))
+        and full_candidate in {"GOOD", "THANKYOU"}
+        and full_candidate != proposal
+    )
     prediction = None if disambiguator is None else disambiguator.predict([
         getattr(item, "lip_points", None) for item in observations
     ])
-    selected = proposal
-    source = "landmark_proposal"
-    if prediction is not None and float(prediction["confidence"]) >= minimum_confidence:
+    selected = full_candidate
+    source = "model_consensus" if full_candidate == proposal else "full_verifier"
+    if (
+        eligible
+        and prediction is not None
+        and float(prediction["confidence"]) >= minimum_confidence
+    ):
         selected = str(prediction["label"])
         source = "media_pipe_lip_markers"
     diagnostics.update({
         "mouth_pixels_used": False,
         "targeted_lip_verifier": "closed_good_thankyou_pair",
+        "targeted_lip_eligible": eligible,
+        "targeted_lip_landmark_proposal": proposal,
+        "targeted_lip_full_candidate": full_candidate,
         "targeted_lip_selected": selected,
         "targeted_lip_source": source,
         "targeted_lip_prediction": prediction,
@@ -586,6 +599,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "no_hand_release_seconds": args.no_hand_release_seconds,
         "capture_policy": "latest-frame webcam; sequential saved video",
         "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+        "auxiliary_detection_schedule": (
+            "every_processed_frame" if args.dense_model_auxiliary
+            else "training_sparse_every_eighth_frame_with_display_hold"
+        ),
         "auxiliary_model_schedule": (
             "every_processed_frame" if args.dense_model_auxiliary
             else "training_sparse_every_eighth_frame"
@@ -1113,8 +1130,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 latest_lips = lip_tracker.detect(detection_frame)
                 detection = detector.detect(
                     detection_frame,
-                    include_body=True,
-                    include_face=True,
+                    include_body=body_frame,
+                    include_face=feature_frame,
                     include_hands=True,
                 )
                 assigned = assign_hands(detection.hands, previous_wrists)
@@ -1296,9 +1313,9 @@ def parser() -> argparse.ArgumentParser:
         processing_fps=20.0,
         detection_image_side=640,
     )
-    value.add_argument("--candidate-minimum-seconds", type=float, default=0.62)
+    value.add_argument("--candidate-minimum-seconds", type=float, default=0.50)
     value.add_argument("--candidate-maximum-seconds", type=float, default=2.5)
-    value.add_argument("--probe-interval-seconds", type=float, default=0.14)
+    value.add_argument("--probe-interval-seconds", type=float, default=0.12)
     value.add_argument("--stability-hits", type=int, default=2)
     value.add_argument("--release-hits", type=int, default=1)
     value.add_argument("--commit-score", type=float, default=0.45)
@@ -1318,7 +1335,14 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument(
         "--lip-marker-minimum-confidence", type=float, default=0.999,
     )
-    value.add_argument("--no-lip-marker-verifier", action="store_true")
+    lips = value.add_mutually_exclusive_group()
+    lips.add_argument(
+        "--lip-marker-verifier", dest="no_lip_marker_verifier",
+        action="store_false",
+        help="opt in to the experimental consensus-only GOOD/THANKYOU tie-break",
+    )
+    lips.add_argument("--no-lip-marker-verifier", action="store_true")
+    value.set_defaults(no_lip_marker_verifier=True)
     stage2 = value.add_mutually_exclusive_group()
     stage2.add_argument(
         "--stage2-arbiter", dest="no_stage2_arbiter", action="store_false"

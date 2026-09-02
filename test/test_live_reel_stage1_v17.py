@@ -82,6 +82,8 @@ class StableGlossLockTest(unittest.TestCase):
         self.assertEqual(args.lip_marker_minimum_confidence, 0.999)
         self.assertEqual(args.processing_fps, 20.0)
         self.assertEqual(args.detection_image_side, 640)
+        self.assertEqual(args.candidate_minimum_seconds, 0.50)
+        self.assertEqual(args.probe_interval_seconds, 0.12)
         self.assertEqual(args.start_frames, 1)
         self.assertEqual(args.stability_hits, 2)
         self.assertEqual(args.release_hits, 1)
@@ -90,6 +92,10 @@ class StableGlossLockTest(unittest.TestCase):
         self.assertEqual(args.commit_hits, 1)
         self.assertEqual(args.instant_commit_score, 0.80)
         self.assertTrue(args.no_stage2_arbiter)
+        self.assertTrue(args.no_lip_marker_verifier)
+        self.assertFalse(
+            parser().parse_args(["--lip-marker-verifier"]).no_lip_marker_verifier
+        )
         self.assertFalse(args.dense_model_auxiliary)
 
     def test_large_reel_controls_match_their_drawn_area(self) -> None:
@@ -169,42 +175,59 @@ class StableGlossLockTest(unittest.TestCase):
         self.assertEqual(result["mode"], "reel-cascade-landmark")
         self.assertEqual(result["latency_ms"]["hand_image_encoding"], 0.0)
 
-    def test_lips_resolve_only_the_closed_good_thankyou_pair(self) -> None:
+    def test_lips_resolve_only_a_closed_pair_model_disagreement(self) -> None:
         base = {
             "accepted": True,
-            "gloss": "GOODBYE",
-            "candidate_gloss": "GOODBYE",
+            "gloss": "GOOD",
+            "candidate_gloss": "GOOD",
             "diagnostics": {},
-            "top3": [],
+            "top3": [{"gloss": "GOOD", "model_score": 0.6}],
         }
         selected = add_targeted_lip_evidence(
-            FixedLipModel("GOOD", 0.9), [], base, "THANKYOU", 0.6
+            FixedLipModel("THANKYOU", 0.9), [], base, "THANKYOU", 0.6
         )
-        self.assertEqual(selected["gloss"], "GOOD")
+        self.assertEqual(selected["gloss"], "THANKYOU")
         self.assertEqual(
             selected["diagnostics"]["targeted_lip_source"],
             "media_pipe_lip_markers",
         )
+        unrelated = {**base, "gloss": "GOODBYE", "candidate_gloss": "GOODBYE"}
         untouched = add_targeted_lip_evidence(
-            FixedLipModel("GOOD", 0.9), [], base, "HELLO", 0.6
+            FixedLipModel("GOOD", 0.9), [], unrelated, "HELLO", 0.6
         )
         self.assertEqual(untouched["gloss"], "GOODBYE")
 
-    def test_weak_lip_result_keeps_the_landmark_proposal(self) -> None:
+    def test_agreeing_models_cannot_be_overridden_by_lips(self) -> None:
         base = {
             "accepted": True,
-            "gloss": "GOODBYE",
-            "candidate_gloss": "GOODBYE",
+            "gloss": "GOOD",
+            "candidate_gloss": "GOOD",
             "diagnostics": {},
-            "top3": [],
+            "top3": [{"gloss": "GOOD", "model_score": 0.6}],
         }
         selected = add_targeted_lip_evidence(
-            FixedLipModel("THANKYOU", 0.51), [], base, "GOOD", 0.6
+            FixedLipModel("THANKYOU", 1.0), [], base, "GOOD", 0.6
         )
         self.assertEqual(selected["gloss"], "GOOD")
         self.assertEqual(
             selected["diagnostics"]["targeted_lip_source"],
-            "landmark_proposal",
+            "model_consensus",
+        )
+
+    def test_weak_lip_result_keeps_the_full_verifier(self) -> None:
+        base = {
+            "accepted": True,
+            "gloss": "THANKYOU",
+            "candidate_gloss": "THANKYOU",
+            "diagnostics": {},
+            "top3": [{"gloss": "THANKYOU", "model_score": 0.6}],
+        }
+        selected = add_targeted_lip_evidence(
+            FixedLipModel("GOOD", 0.51), [], base, "GOOD", 0.6
+        )
+        self.assertEqual(selected["gloss"], "THANKYOU")
+        self.assertEqual(
+            selected["diagnostics"]["targeted_lip_source"], "full_verifier"
         )
 
     def test_ambiguous_pair_uses_only_grounded_following_context(self) -> None:

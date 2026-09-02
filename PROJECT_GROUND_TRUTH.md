@@ -1,12 +1,50 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 20:46 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 21:21 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-02 21:21 PST — Reel delay reduced and unsafe lip override disabled
+
+Read-only diagnosis of the user's completed Reel session at
+`artifacts/reports/live_reel_stage1_v17/20260902_205147_630595/history.json` confirmed
+that the reported delay was real. Across 422.75 seconds, extraction completed 6,674
+landmark observations (15.79 FPS), down from the preceding optimized session's 18.96
+FPS, and discarded 4,638 of 12,180 total captured frames as stale. The 150 activity
+candidates split evenly into 75 commits and 75 failures; 48 timed out. Successful
+candidates required 1.00 seconds median / 1.88 seconds p90 from detected activity,
+while failures occupied 2.37 seconds median. The cheap proposal itself remained fast
+at 17.81 ms median, but full verification rose to 337.32 ms median and the proposal
+and verifier disagreed 61/159 times.
+
+The every-frame Apple face/body experiment caused avoidable contention. The Reel path
+now detects Apple face/body on the training-matched every-eighth-frame schedule and
+holds the last valid points continuously for display. Hands and MediaPipe lip markers
+remain live. The optional `--dense-model-auxiliary` experiment remains available;
+the isolated path is unchanged.
+
+The 27-example GOOD/THANKYOU lip specialist was unsafe on this signer. Of 19 targeted
+evaluations, it disagreed with the landmark proposal 11 times and with the original
+full-verifier top class 15 times, commonly at essentially 1.0 confidence. The previous
+0.999 threshold therefore did not calibrate it. Lip-based classification is now off by
+default; `--lip-marker-verifier` explicitly enables it. Even then, lips may only break
+a disagreement where both the landmark proposal and accepted full verifier already
+select GOOD/THANKYOU. It cannot override agreement, a rejected verifier, or an
+unrelated class. The raw model candidates are preserved in diagnostics.
+
+A development-only timing sweep used five existing local phrase recordings with
+unchanged confidence/margin gates and no Stage 2 or lip verifier. The old 0.62/0.14
+second candidate/probe defaults scored 1/5 exact with five token edits and 1.07-second
+median committed candidate duration. The selected 0.50/0.12 preset scored 3/5 exact
+with four edits and 0.67 seconds median. A more aggressive 0.45/0.10 preset also scored
+3/5 and four edits but added a false STOP, so it was rejected. This is fitted local
+development evidence, not independent accuracy. The compact report is
+`artifacts/reports/live_reel_stability_sweep_v1/README.md`; generated histories/videos
+remain local. Thirty-nine focused tests, compilation, and `git diff --check` pass.
 
 ## 2026-09-02 20:46 PST — always-visible auxiliaries separated from the trained model schedule
 
