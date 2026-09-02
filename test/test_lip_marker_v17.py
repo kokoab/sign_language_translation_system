@@ -21,7 +21,6 @@ class LipMarkerFeaturesTest(unittest.TestCase):
         ), axis=1).astype(np.float32)
         rendered = draw_lip_markers(frame, points, mirror=False)
         self.assertGreater(np.count_nonzero(np.all(rendered == 255, axis=2)), 0)
-        self.assertGreater(np.count_nonzero(np.all(rendered == 0, axis=2)), 0)
 
     def test_shape_and_position_invariance(self) -> None:
         rng = np.random.default_rng(17)

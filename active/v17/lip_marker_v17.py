@@ -48,7 +48,7 @@ def draw_lip_markers(
     boundary = len(OUTER_LIP)
     for contour in (pixels[:boundary], pixels[boundary:]):
         for first, second in zip(contour, contour[1:] + contour[:1]):
-            cv2.line(frame, first, second, (0, 0, 0), 2, cv2.LINE_AA)
+            cv2.line(frame, first, second, (255, 255, 255), 1, cv2.LINE_AA)
     for point in pixels:
         cv2.circle(frame, point, 2, (255, 255, 255), -1, cv2.LINE_AA)
     return frame

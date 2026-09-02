@@ -29,6 +29,7 @@ if str(REPO) not in sys.path:
 
 from active.v17.extract_v17 import (
     AppleVisionDetector,
+    FrameDetection,
     assign_hands,
     limit_image_side,
     orient_frame,
@@ -40,13 +41,13 @@ from active.v17.lip_marker_v17 import (
 )
 from active.v17.schema_v17 import V17Config
 from scripts.live_isolated_v17 import (
+    BODY_CONNECTIONS,
+    HAND_CONNECTIONS,
     IsolatedClassifier,
     LiveSpeaker,
     ObservedFrame,
     SessionRecorder,
     atomic_json,
-    clicked_control,
-    draw_detection,
     make_naturalizer,
     landmarks_from_observations,
     observation_quality,
@@ -388,6 +389,87 @@ def add_targeted_lip_evidence(
     }
 
 
+def reel_control_button_rects(
+    width: int, height: int
+) -> dict[str, tuple[int, int, int, int]]:
+    del width
+    top = max(224, height - 64)
+    return {
+        "reset": (14, top, 154, top + 48),
+        "finish": (166, top, 326, top + 48),
+    }
+
+
+def clicked_reel_control(x: int, y: int, width: int, height: int) -> str | None:
+    for action, (left, top, right, bottom) in reel_control_button_rects(
+        width, height
+    ).items():
+        if left <= x <= right and top <= y <= bottom:
+            return action
+    return None
+
+
+def persistent_auxiliary_detection(
+    detection: FrameDetection,
+    body: tuple[np.ndarray, np.ndarray] | None,
+    face: tuple[np.ndarray, np.ndarray] | None,
+) -> tuple[FrameDetection, tuple[np.ndarray, np.ndarray] | None,
+           tuple[np.ndarray, np.ndarray] | None]:
+    """Keep the last valid face/body visible without changing model observations."""
+    if (detection.body_confidence > 0).any():
+        body = (detection.body_xy.copy(), detection.body_confidence.copy())
+    if (detection.face_confidence > 0).any():
+        face = (detection.face_xy.copy(), detection.face_confidence.copy())
+    visible = FrameDetection(
+        detection.hands,
+        detection.body_xy if body is None else body[0],
+        detection.body_confidence if body is None else body[1],
+        detection.face_xy if face is None else face[0],
+        detection.face_confidence if face is None else face[1],
+    )
+    return visible, body, face
+
+
+def draw_reel_detection(
+    frame: np.ndarray, item: ObservedFrame | None, *, mirror: bool
+) -> np.ndarray:
+    """Draw thin white hand/body bones and white joints for the reel view."""
+    output = cv2.flip(frame, 1) if mirror else frame.copy()
+    if item is None:
+        return output
+    height, width = output.shape[:2]
+
+    def pixel(point: np.ndarray) -> tuple[int, int]:
+        x = int(round(point[0] * width))
+        if mirror:
+            x = width - 1 - x
+        return x, int(round(point[1] * height))
+
+    def skeleton(xy: np.ndarray, confidence: np.ndarray, connections) -> None:
+        for start, end in connections:
+            if confidence[start] > 0 and confidence[end] > 0:
+                cv2.line(
+                    output, pixel(xy[start]), pixel(xy[end]),
+                    (255, 255, 255), 1, cv2.LINE_AA,
+                )
+        for point, score in zip(xy, confidence):
+            if score > 0:
+                cv2.circle(output, pixel(point), 2, (255, 255, 255), -1,
+                           cv2.LINE_AA)
+
+    for hand in item.detection.hands:
+        skeleton(hand.xy, hand.confidence, HAND_CONNECTIONS)
+    skeleton(
+        item.detection.body_xy, item.detection.body_confidence, BODY_CONNECTIONS
+    )
+    for point, confidence in zip(
+        item.detection.face_xy, item.detection.face_confidence
+    ):
+        if confidence > 0:
+            cv2.circle(output, pixel(point), 2, (255, 255, 255), -1, cv2.LINE_AA)
+    return output
+
+
 def draw_hud(
     frame: np.ndarray,
     latest: ObservedFrame | None,
@@ -456,15 +538,17 @@ def draw_hud(
             frame, status[:max_chars], (14, panel_top + 59),
             cv2.FONT_HERSHEY_SIMPLEX, 0.57, (225, 225, 225), 1, cv2.LINE_AA,
         )
-    for action, (left, top, right, bottom) in {
-        "reset": (14, height - 54, 134, height - 16),
-        "finish": (146, height - 54, 286, height - 16),
-    }.items():
+    for action, (left, top, right, bottom) in reel_control_button_rects(
+        width, height
+    ).items():
         color = (55, 55, 155) if action == "reset" else (35, 145, 70)
+        if action == "finish" and finish_pending:
+            color = (80, 100, 45)
         cv2.rectangle(frame, (left, top), (right, bottom), color, -1)
         cv2.rectangle(frame, (left, top), (right, bottom), (245, 245, 245), 1)
+        label = "WORKING" if action == "finish" and finish_pending else action.upper()
         cv2.putText(
-            frame, action.upper(), (left + 18, top + 27),
+            frame, label, (left + 18, top + 31),
             cv2.FONT_HERSHEY_SIMPLEX, 0.56, (255, 255, 255), 1, cv2.LINE_AA,
         )
     return frame
@@ -501,7 +585,11 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "transition_overlap_seconds": args.transition_overlap_seconds,
         "no_hand_release_seconds": args.no_hand_release_seconds,
         "capture_policy": "latest-frame webcam; sequential saved video",
-        "live_face_display": "MediaPipe lips on every processed display frame",
+        "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+        "auxiliary_model_schedule": (
+            "every_processed_frame" if args.dense_model_auxiliary
+            else "training_sparse_every_eighth_frame"
+        ),
         "lip_marker_model": None if lip_disambiguator is None else str(
             lip_disambiguator.path
         ),
@@ -570,6 +658,9 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     activity_hits = 0
     no_hand_since: float | None = None
     latest: ObservedFrame | None = None
+    display_latest: ObservedFrame | None = None
+    display_body: tuple[np.ndarray, np.ndarray] | None = None
+    display_face: tuple[np.ndarray, np.ndarray] | None = None
     latest_lips: np.ndarray | None = None
     latest_result: dict[str, object] | None = None
     next_process = next_probe = 0.0
@@ -580,6 +671,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     display_times: deque[float] = deque(maxlen=30)
     ui_actions: deque[tuple[str, float]] = deque()
     display_size = [1280, 720]
+    last_button_seconds = {"reset": float("-inf"), "finish": float("-inf")}
     warm_logged = False
 
     if not args.no_display:
@@ -588,9 +680,14 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         def on_mouse(event, x, y, _flags, _parameter):
             if event != cv2.EVENT_LBUTTONUP:
                 return
-            action = clicked_control(x, y, display_size[0], display_size[1])
-            if action is not None:
-                ui_actions.append((action, time.perf_counter() - wall_started))
+            action = clicked_reel_control(x, y, display_size[0], display_size[1])
+            seconds = time.perf_counter() - wall_started
+            if (
+                action is not None
+                and seconds - last_button_seconds[action] >= 0.25
+            ):
+                last_button_seconds[action] = seconds
+                ui_actions.append((action, seconds))
 
         cv2.setMouseCallback(WINDOW_NAME, on_mouse)
 
@@ -680,7 +777,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             result = future.result()
             ignored = future_epoch != epoch
             proposal = None if ignored else lock.update(result)
-            latest_result = result
+            if not ignored:
+                latest_result = result
             if proposal is not None and future_clip is not None:
                 future_result = result
                 future_proposal = proposal
@@ -762,7 +860,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         })
         results.append(result)
         recorder.add(result)
-        latest_result = result
+        if not ignored:
+            latest_result = result
         if args.verbose_predictions:
             print(json.dumps(result, indent=2))
         elif emitted is not None:
@@ -886,22 +985,28 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                     "utterance_id": f"reel-{len(recorder.data['utterances']) + 1:04d}",
                     "requested_utc": utc_now(),
                     "glosses": finished,
+                    "epoch": epoch,
                 }
                 naturalizer_future = language_executor.submit(
                     naturalizer.rephrase, finished
                 )
         if naturalizer_future is not None and naturalizer_future.done():
             value = naturalizer_future.result()
+            visible = naturalizer_context is not None and (
+                naturalizer_context.get("epoch") == epoch
+            )
             utterance = {
-                **(naturalizer_context or {}), **value, "completed_utc": utc_now()
+                **(naturalizer_context or {}), **value, "completed_utc": utc_now(),
+                "displayed_and_spoken": visible,
             }
             recorder.add_utterance(utterance)
-            sentence = str(value["sentence"])
-            pending_speech.append({
-                "text": sentence,
-                "kind": "finished_sentence",
-                "reference": utterance.get("utterance_id"),
-            })
+            if visible:
+                sentence = str(value["sentence"])
+                pending_speech.append({
+                    "text": sentence,
+                    "kind": "finished_sentence",
+                    "reference": utterance.get("utterance_id"),
+                })
             naturalizer_future = None
             naturalizer_context = None
 
@@ -921,6 +1026,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         nonlocal epoch, sentence, finish_requested, pending_pair
         nonlocal activity_first_seconds, activity_last_seconds, ctc_hypothesis
         nonlocal ctc_context_hypothesis, ctc_context_positions
+        nonlocal latest_result
         epoch += 1
         cleared = list(glosses)
         glosses.clear()
@@ -939,7 +1045,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         ctc_results.clear()
         activity_first_seconds = None
         activity_last_seconds = None
-        sentence = ""
+        latest_result = None
+        sentence = "Display reset."
         finish_requested = False
         pending_speech.clear()
         if speaker is not None:
@@ -950,10 +1057,16 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         })
 
     def request_finish(seconds: float, source_name: str) -> None:
-        nonlocal finish_requested
-        if finish_requested:
+        nonlocal finish_requested, sentence
+        if finish_requested or naturalizer_future is not None:
+            sentence = "Finish already in progress."
+            recorder.add_event({
+                "type": "finish_ignored_already_pending",
+                "source": source_name, "seconds": seconds,
+            })
             return
         finish_requested = True
+        sentence = "Finishing..."
         if sequence_arbiter is not None:
             tail = ctc_buffer.finish()
             if tail is not None:
@@ -991,22 +1104,45 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             if not finish_requested and seconds + 1e-6 >= next_process:
                 detection_frame = limit_image_side(canonical, args.detection_image_side)
                 frame = limit_image_side(canonical, args.maximum_image_side)
-                feature_frame = processed % V17Config().face_interval == 0
+                feature_frame = args.dense_model_auxiliary or (
+                    processed % V17Config().face_interval == 0
+                )
+                body_frame = args.dense_model_auxiliary or (
+                    processed % V17Config().body_interval == 0
+                )
                 latest_lips = lip_tracker.detect(detection_frame)
                 detection = detector.detect(
                     detection_frame,
-                    include_body=processed % V17Config().body_interval == 0,
-                    include_face=feature_frame,
+                    include_body=True,
+                    include_face=True,
                     include_hands=True,
                 )
                 assigned = assign_hands(detection.hands, previous_wrists)
+                model_detection = FrameDetection(
+                    detection.hands,
+                    detection.body_xy if body_frame else np.zeros_like(
+                        detection.body_xy
+                    ),
+                    detection.body_confidence if body_frame else np.zeros_like(
+                        detection.body_confidence
+                    ),
+                    detection.face_xy,
+                    detection.face_confidence,
+                )
                 latest = ObservedFrame(
-                    frame, detection, assigned, seconds,
+                    frame, model_detection, assigned, seconds,
                     wrist_motion(assigned, previous_wrists),
                     *observation_quality(detection),
                     face_for_features=feature_frame,
                 )
                 latest.lip_points = latest_lips
+                visible_detection, display_body, display_face = (
+                    persistent_auxiliary_detection(
+                        detection, display_body, display_face
+                    )
+                )
+                display_latest = copy.copy(latest)
+                display_latest.detection = visible_detection
                 observations.append(latest)
                 if sequence_arbiter is not None:
                     ctc_window = ctc_buffer.add(latest)
@@ -1067,8 +1203,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                     (len(display_times) - 1) / (display_times[-1] - display_times[0])
                     if len(display_times) > 1 else 0.0
                 )
-                shown = draw_detection(
-                    canonical, latest, mirror=not args.no_mirror_display
+                shown = draw_reel_detection(
+                    canonical, display_latest, mirror=not args.no_mirror_display,
                 )
                 shown = draw_lip_markers(
                     shown, latest_lips, mirror=not args.no_mirror_display
@@ -1180,7 +1316,7 @@ def parser() -> argparse.ArgumentParser:
         "--lip-marker-model", type=Path, default=DEFAULT_LIP_MARKER_MODEL,
     )
     value.add_argument(
-        "--lip-marker-minimum-confidence", type=float, default=0.85,
+        "--lip-marker-minimum-confidence", type=float, default=0.999,
     )
     value.add_argument("--no-lip-marker-verifier", action="store_true")
     stage2 = value.add_mutually_exclusive_group()
@@ -1190,6 +1326,10 @@ def parser() -> argparse.ArgumentParser:
     stage2.add_argument("--no-stage2-arbiter", action="store_true")
     value.set_defaults(no_stage2_arbiter=True)
     value.add_argument("--verbose-predictions", action="store_true")
+    value.add_argument(
+        "--dense-model-auxiliary", action="store_true",
+        help="experimentally feed every-frame face/body points into Stage 1",
+    )
     value.add_argument(
         "--stage2-minimum-phrase-seconds", type=float, default=1.6,
     )

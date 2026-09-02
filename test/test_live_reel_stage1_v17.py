@@ -11,7 +11,10 @@ from scripts.live_reel_stage1_v17 import (
     StableGlossLock,
     VerifiedCommitLock,
     add_targeted_lip_evidence,
+    clicked_reel_control,
+    draw_reel_detection,
     parser,
+    persistent_auxiliary_detection,
     resolve_good_thankyou_context,
     select_finished_sequence,
 )
@@ -76,6 +79,7 @@ class StableGlossLockTest(unittest.TestCase):
         self.assertIn("unified_phrase_activity_adapt_reel", str(args.unified_checkpoint))
         self.assertIn("live_reel_stage1_v17", str(args.output_root))
         self.assertIn("phrase_crops", str(args.lip_marker_model))
+        self.assertEqual(args.lip_marker_minimum_confidence, 0.999)
         self.assertEqual(args.processing_fps, 20.0)
         self.assertEqual(args.detection_image_side, 640)
         self.assertEqual(args.start_frames, 1)
@@ -86,6 +90,49 @@ class StableGlossLockTest(unittest.TestCase):
         self.assertEqual(args.commit_hits, 1)
         self.assertEqual(args.instant_commit_score, 0.80)
         self.assertTrue(args.no_stage2_arbiter)
+        self.assertFalse(args.dense_model_auxiliary)
+
+    def test_large_reel_controls_match_their_drawn_area(self) -> None:
+        self.assertEqual(clicked_reel_control(20, 680, 1280, 720), "reset")
+        self.assertEqual(clicked_reel_control(200, 680, 1280, 720), "finish")
+        self.assertIsNone(clicked_reel_control(500, 680, 1280, 720))
+
+    def test_auxiliary_display_cache_does_not_modify_model_detection(self) -> None:
+        from active.v17.extract_v17 import FrameDetection
+
+        first = FrameDetection(
+            [], np.ones((4, 2), np.float32), np.ones(4, np.float32),
+            np.ones((15, 2), np.float32), np.ones(15, np.float32),
+        )
+        visible, body, face = persistent_auxiliary_detection(first, None, None)
+        self.assertEqual(float(visible.body_confidence.sum()), 4.0)
+        missing = FrameDetection(
+            [], np.zeros((4, 2), np.float32), np.zeros(4, np.float32),
+            np.zeros((15, 2), np.float32), np.zeros(15, np.float32),
+        )
+        visible, _, _ = persistent_auxiliary_detection(missing, body, face)
+        self.assertEqual(float(visible.body_confidence.sum()), 4.0)
+        self.assertEqual(float(visible.face_confidence.sum()), 15.0)
+        self.assertEqual(float(missing.body_confidence.sum()), 0.0)
+
+    def test_reel_overlay_uses_thin_white_bones(self) -> None:
+        from active.v17.extract_v17 import FrameDetection, HandDetection
+
+        frame = np.full((100, 100, 3), 64, np.uint8)
+        hand = HandDetection(
+            xy=np.zeros((21, 2), np.float32),
+            confidence=np.zeros(21, np.float32), chirality="right", score=1.0,
+        )
+        hand.xy[0], hand.xy[1] = (0.2, 0.5), (0.4, 0.5)
+        hand.confidence[:2] = 1
+        detection = FrameDetection(
+            [hand], np.zeros((4, 2), np.float32), np.zeros(4, np.float32),
+            np.zeros((15, 2), np.float32), np.zeros(15, np.float32),
+        )
+        item = SimpleNamespace(detection=detection)
+        output = draw_reel_detection(frame, item, mirror=False)
+        self.assertTrue(np.all(output[50, 30] > 200))
+        self.assertTrue(np.array_equal(output[48, 30], (64, 64, 64)))
 
     def test_weak_proposal_does_not_run_visual_fallback(self) -> None:
         class Orientation:

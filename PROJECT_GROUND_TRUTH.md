@@ -1,12 +1,56 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 20:09 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 20:46 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-02 20:46 PST — always-visible auxiliaries separated from the trained model schedule
+
+The newest completed webcam session,
+`artifacts/reports/live_reel_stage1_v17/20260902_201143_747409/`, confirms the optimized
+path is substantially smoother: it completed 5,007 landmark observations over 264.09
+seconds (18.96 FPS against the 20 FPS target) while committing the familiar live
+sequence HELLO HOW YOU exactly. Its button log also disproves a total click-handler
+failure: it recorded 45 RESET and two FINISH actions. The apparent lock came from no
+visible acknowledgement on an empty RESET, FINISH waiting for an in-flight verifier,
+and rapid repeated clicks submitting a second empty action.
+
+Face/body detection was benchmarked and evaluated before promotion. On 230 recorded
+640-pixel frames, Apple hand-only detection cost 3.80 ms median / 6.12 ms p90, while
+hands plus face and body every frame cost 13.65/16.46 ms; MediaPipe's separate 40-point
+lip pass remains about 3.11 ms median. On 29 official Citizen validation clips from the
+targeted YOU, SICK, FATHER, MOTHER, GOOD, THANKYOU, HUNGRY, and HELLO classes, feeding
+training-sparse versus every-frame Apple face/body landmarks produced zero changed
+predictions and the same 26/29 accuracy. No test split was accessed.
+
+The local phrase experiment found a stricter boundary: dense model auxiliaries kept
+HELLO HOW YOU exact but changed GOOD MORNING to THANKYOU EASY, whereas always-on
+detection with the trained sparse model schedule restored exact GOOD MORNING and kept
+HELLO HOW YOU exact. The default is therefore now intentionally split: Apple face/body
+detection and the last valid overlay remain visible on every processed frame, but the
+Stage-1 tensor receives face/body evidence every eighth frame, matching training.
+`--dense-model-auxiliary` retains the experimental dense-input path. Sparse training
+frames are boundedly interpolated during feature construction; they do not become
+literal discontinuous jumps inside the final resampled tensor.
+
+The reel overlay now uses thin one-pixel white bones and two-pixel white joints for
+hands/body, plus thin white lip contours. RESET and FINISH use one shared enlarged
+geometry for drawing and hit-testing, debounce rapid duplicate clicks, show immediate
+`Display reset.` / `WORKING` feedback, and ignore old naturalizer output after RESET.
+An already-running FINISH receives explicit feedback rather than silently queuing an
+empty second utterance. An overconfident 0.9977 wrong lip-only GOOD->THANKYOU override
+was also exposed by the phrase replay, so the tiny 27-example lip specialist now needs
+0.999 confidence to override matching hand/body evidence; the observed genuine
+THANKYOU correction at 0.99999999 remains eligible. Full results are under
+`artifacts/reports/live_reel_auxiliary_every_frame_v1/`,
+`live_reel_dense_auxiliary_v1/`, and
+`live_reel_always_display_sparse_model_v1/`. Thirty-eight focused tests pass,
+compilation and `git diff --check` pass, and the original isolated behavior is
+unchanged.
 
 ## 2026-09-02 20:09 PST — reel proposal and verifier decoupled from the display loop
 
