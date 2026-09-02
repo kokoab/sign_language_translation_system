@@ -1,12 +1,228 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 11:08 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 14:18 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-02 14:18 PST — Stage-2 cascade is fast and safe for provisional/final routing, not hard early lock
+
+The separate landmark Stage-2 preview retraining completed in 320.66 seconds on MPS.
+The selected seed 9811 epoch 6 checkpoint is
+`artifacts/models/stage2_v17_landmark_cascade_preview_v1/best_model.pth` (SHA-256
+`b4cce35376858d774652f39665e985fde12f408e9db54cf383c8fcce4ed6d484`). It has
+[ASLLRP contiguous phrase, local phrase, held-out ASLLRP segmented] validation edit
+counts [18, 17, 47], so it is weaker than the full selector and is not a replacement.
+
+A new validation-only cascade sweep selected minimum greedy nonblank emission
+probability 0.978. It used the landmark preview for 3/12 ASLLRP phrase rows, 101/254
+held-out ASLLRP contextual rows, and 29/97 local phrase rows. Relative to the accepted
+full selector, per-domain edits changed 9->9, 43->42, and 6->6. Thus it provides 133/363
+(36.6%) fast coverage without an observed domain regression on the selection data.
+This same-validation selection is optimistic and must be confirmed on new independent
+portrait recordings before promotion.
+
+The combined landmark encoder and CTC preview was exported to the new
+`artifacts/coreml/Stage2LandmarkCascadePreviewV17FP32.mlpackage`. Across 109 permitted
+phrase validation archives Core ML had zero decode mismatches versus PyTorch, maximum
+absolute logit difference 1.62e-5, and measured 11.56 ms median / 18.13 ms p90 after
+warm-up on this Mac. The FP32 package is 39.90 MiB. This proves that a reel-like
+provisional label can be computed quickly after landmark extraction.
+
+Hard early locking remains unproven. Partial-window probes at 8/16/24/28/32 model
+frames showed a false lock even at 0.999 confidence. Requiring the same strict
+hypothesis extension across four consecutive probes removed observed false locks but
+locked only 11 tokens in 9/109 rows and zero complete phrases before their final probe.
+Accordingly, the supported architecture is immediate **provisional** landmark output
+followed by permanent-chip/full-Stage-2 confirmation. It is not safe to speak or
+permanently append every high-confidence partial prediction.
+
+The genuine multi-gloss training cache contains only 44 unique sequences, 50 unique
+directed bigrams, and 46/100 glosses in any multi-gloss sequence. Only six local phrase
+identities have repeated coverage; most of the 38 ASLLRP multi-gloss sequences have a
+single example. The 1,116 ASLLRP segmented train spans add contextual isolated evidence,
+not 1,116 genuine transitions. Additional phrases are not needed to fix the current
+timebase or demonstrate familiar phrases, but they are needed for useful hard-lock
+coverage, unseen combinations, and research generalization. The existing 20-30 phrase,
+10 train + 2 validation + 1 sealed native signer plan with three genuine performances
+per phrase is a meaningful next pilot if it maximizes new bigrams and low-motion
+pronoun/confusion transitions; it is not enough for a general 100-gloss continuous-ASL
+claim. Simultaneous cameras are correlated views, not independent performances.
+
+New source files are `train_stage_2_landmark_cascade_v17.py`,
+`evaluate_stage_2_landmark_cascade_v17.py`,
+`export_stage2_landmark_cascade_coreml_v17.py`, and
+`evaluate_stage_2_early_lock_v17.py`. Existing isolated and motion-valley source files
+were not edited for this experiment. Seven focused live Stage-2 tests pass and
+`git diff --check` passes. Full findings are in
+`artifacts/reports/stage2_v17_landmark_cascade_preview_v1/README.md`. No sealed or test
+split was accessed.
+
+## 2026-09-02 14:02 PST — motion-valley YOU errors are boundary-dependent; landmark CTC retraining started
+
+The user's latest motion-valley session is
+`artifacts/reports/live_motion_valley_v17/20260902_133345_224087/history.json`.
+Read-only inspection confirms the classifier can recognize YOU, but the wrist-motion
+boundary produces inconsistent pieces of repeated attempts. In the concentrated
+318-336 second interval, clips labeled NEED, YOU, HE, NEED, NEED, THEY, NEED, NEED,
+NEED, YES, YOU, YES ranged from 7 to 17 motion-trimmed observations. Elsewhere YOU
+was correctly accepted many times, including high-confidence clips. Across all
+post-250-second candidates in the confusion family there were 29 YOU, 12 NEED, 9
+TELL, 8 THEY, and 2 UNDERSTAND clips; median motion-trimmed lengths varied from 13
+frames for YOU to 19 for UNDERSTAND. This disproves a simple missing-YOU-class
+explanation and supports the user's cutoff diagnosis. Low-motion lexical signs and
+low-motion inter-sign transitions are structurally ambiguous under this trigger, so
+further global threshold tuning is not the selected path.
+
+A new, separate `active/v17/train_stage_2_landmark_cascade_v17.py` experiment was
+added without modifying the isolated or motion-valley scripts. It trains a Stage-2
+CTC preview from the landmark-token slice of the existing approved caches, reconstructs
+the 612-D contract as 256 landmark tokens + 256 zero hand features + 100 frozen
+landmark logits, and distills the accepted full multimodal selector while applying
+supervised CTC. A 24-sample smoke completed on MPS and improved validation in one
+epoch. The first full run reached a best [ASLLRP phrase, local phrase, ASLLRP
+contextual] edit vector of [17, 17, 48] at epoch 5, then encountered a non-finite MPS
+CTC batch before packaging. The new script now uses the project's existing bounded
+non-finite-batch discard policy and the safer 5e-6 learning rate; this failed partial
+run is not a promoted artifact. No test or sealed split was accessed.
+
+## 2026-09-02 12:27 PST — elapsed-time Stage 2 stays 5/5 exact at live-like 15 FPS
+
+The separate `scripts/live_stage2_ctc_v17.py` experiment now partitions model input
+by 1.067 seconds of source time rather than by 32 successful detector calls. Webcam
+capture is drained on a background thread and stale frames are discarded, so slow
+feature work cannot build a seconds-long camera backlog. The fixed eight-window stop
+was replaced by a rolling eight-window CTC context: emissions leaving the context are
+locked into a prefix while the recent context remains revisable. Apple Vision face
+features are now computed only at the trained every-eighth-observation interval;
+MediaPipe FaceMesh supplies display-only moving lip landmarks on each processed frame.
+It never enters model features. Seven focused unit tests pass, including elapsed-time
+partitioning, CTC emission positions, rolling-prefix behavior, CTC score parity, and
+stable-prefix speech.
+
+Five genuine familiar-domain phrases were replayed at only 15 extracted observations
+per second, close to the webcam's measured 14.47 FPS. All remained exact: GOOD MORNING,
+HELLO HOW YOU, MY NAME, THANKYOU FRIEND, and TOMORROW SCHOOL GO. Most full model
+windows contained 16 observed frames spanning one second and were resampled to 32,
+instead of incorrectly spanning about two seconds. This confirms the timebase repair
+for familiar recordings; it is not independent signer/generalization evidence.
+
+The 16 accepted updates still had variable post-landmark cost: 488.70 ms median,
+949.41 ms p90, and a 2045.51 ms maximum in this sequential replay. MobileCLIP hand
+embedding remained dominant. Therefore time normalization addresses inability to sign
+at a natural pace, while a separately trained landmark-first Stage-2 preview/gate is
+still needed to target reel-like immediate feedback. Evidence is under
+`artifacts/reports/live_stage2_ctc_v17_timebase15_eval_v1/`. No sealed or test split
+was accessed.
+
+## 2026-09-02 12:18 PST — reference reel is an isolated-lock UX, not evidence of streaming CTC
+
+The user supplied the local 720x1280, 30 FPS, 17.62-second copy of the previously
+linked Instagram reel at `/Users/frnzlo/Downloads/What if AI could bridge the gap
+between sign language and spoken EnglishThis prototype uses Medi.mp4`. Frame-level
+inspection shows a MediaPipe-style hand overlay, a transient single-word label, and a
+separate row of committed word chips. The visible sequence is TECHNOLOGY, USE,
+IMPROVE, LIFE, WAR, NOT; transient labels change during motion, but a word is appended
+only after it persists. A deliberately separate FINISH sign then advances the UI from
+Hand Tracking/Emotion Detection to LLM Interpretation and Voice Output and produces
+“Let's use technology to improve lives, not war.” The reel itself does not expose its
+source, weights, timing thresholds, evaluation set, or accuracy and therefore is not
+evidence of a continuous CTC architecture.
+
+Its useful target behavior is a fast isolated-sign lock/debounce loop with rolling
+gloss chips and an explicit utterance terminator—not frame-by-frame translation and
+not necessarily Stage 2. This matches the project's cascade/isolated direction more
+closely than the first Stage-2 live prototype. The current Stage-2 experiment can
+still offer coarticulation-aware correction, but must first fix its observed timebase
+and eight-window ceiling. No dataset or sealed evaluation set was accessed.
+
+## 2026-09-02 11:51 PST — first webcam Stage-2 session exposes a live-timebase mismatch
+
+The user's first real webcam run of `live_stage2_ctc_v17.py` is preserved at
+`artifacts/reports/live_stage2_ctc_v17/20260902_114604_186832/`. No code was changed
+in response; this entry records the read-only diagnosis. The Stage-2 experiment does
+not use the isolated path's landmark-first cascade. Every accepted Stage-2 window
+encodes all valid crops among 16 temporal samples x left/right/union views, then runs
+the frozen multimodal encoder and both CTC heads. In this session MobileCLIP hand
+embedding measured 151.43 ms median, 378.61 ms p90, and 465.93 ms maximum. The full
+post-landmark update measured 179.04/411.07/497.58 ms median/p90/max. The isolated
+cascade can skip hand embedding when its landmark evidence is strong; the current
+Stage-2 graph has no equivalent pre-hand decision point.
+
+More importantly, the requested 30 processed FPS was not achieved. Across 44 full
+windows, the median 32-frame wall-time span was 2.143 seconds (p90 2.583), equivalent
+to only 14.47 processed FPS. The selected Stage-2 training/replay contract uses
+32 source frames, and the exact local HELLO HOW YOU reference is 30 FPS / 3.567
+seconds. Therefore the successful offline replay fed about 1.067 seconds per full
+window, while the webcam fed about twice as much real motion into the same 32-frame
+tensor. Signing more slowly compounds this mismatch rather than helping: a lexical
+sign can occupy multiple CTC windows and be emitted twice.
+
+After the final reset, the webcam hypothesis evolved HELLO -> HELLO HOW -> HELLO HOW
+HOW -> HELLO HOW HOW YOU. FINISH received `HELLO HOW HOW YOU`; tiny Stage 3 rendered
+`Hello, how are you?`, but the recognition buffer itself was not exact. Stable-prefix
+speech adds another full update before speaking a new prefix, so at the measured rate
+it adds roughly 2.1-2.6 seconds. YOU was delayed further by an intervening rejected
+zero-hand window. Nine accepted windows in the full session had at most ten detected
+hand frames, and eight had hand presence below 0.2; these sparse windows can consume
+context or preserve unstable hypotheses. The user reset eleven times.
+
+The fixed eight-window checkpoint limit is also a hard UX ceiling: once eight accepted
+windows are stored, the prototype clears incoming frame buffers and stops extracting
+until RESET or FINISH. This is unsuitable for an open-ended conversational live loop.
+The priority is now timebase correction and streaming-state design, not threshold
+tuning: decouple capture from expensive extraction, form model windows by elapsed time
+at the training-equivalent rate, avoid making slower signing the workaround, and then
+measure whether a display-only lightweight lip tracker can retain continuous mouth
+motion while Apple Vision face features remain sampled at their trained interval. A
+Stage-2 cascade cannot be enabled by toggling the existing isolated cascade; it would
+require a separately validated landmark-only preview/gate or a conditional Stage-2
+encoder. No sealed test or held-out dataset was accessed.
+
+## 2026-09-02 11:42 PST — separate live v17 Stage-2 CTC experiment passes familiar phrases
+
+The accepted v17 phrase-agnostic general CTC selector was found in the existing logs
+and connected to a new, separate `scripts/live_stage2_ctc_v17.py` path. The working
+`live_isolated_v17.py`, failed fixed-overlap experiment, and motion-valley experiment
+remain unchanged. The new path uses the parity-validated Core ML frozen multimodal
+encoder and primary/specialist CTC heads, then mirrors the saved general selector's
+90/10 blend, +0.30 blank calibration, and exact specialist CTC path-score rule in
+NumPy. It processes non-overlapping 32-source-frame windows, matching Stage-2 training,
+and supports at most the checkpoint's eight-window context. It does not use beam search
+or the stride-8 overlap previously shown to degrade accuracy.
+
+The live camera continues extracting and drawing face landmarks every processed frame,
+while only every eighth face sample enters model features to match the v17 training
+contract. The UI updates the current greedy CTC hypothesis after each completed window.
+Only the prefix surviving a following update is eligible for immediate gloss speech;
+FINISH closes a 4-31-frame tail, naturalizes the latest full hypothesis, clears queued
+gloss speech, and speaks the finished sentence. RESET clears only current visible
+state while keeping JSON/video evidence. The frozen encoder and both CTC heads run in
+Core ML; no large PyTorch research graph is loaded in the live path.
+
+Five genuine, vocabulary-covered local development/reference recordings were replayed
+through the full path. All five final hypotheses were exact: GOOD MORNING, HELLO HOW
+YOU, MY NAME, THANKYOU FRIEND, and TOMORROW SCHOOL GO. This is familiar-domain
+execution/development evidence, not independent accuracy: those phrases are inside the
+model's established local development domain. Across 16 accepted updates, median/p90/
+maximum post-landmark latency was 235.77/291.89/351.34 ms. The CTC selector itself took
+roughly 3-5 ms; MobileCLIP hand-image embedding dominated. At 30 processed FPS the
+first full-window update still requires about 1.07 seconds of signing context before
+that inference cost. GOOD MORNING first displayed an unstable THANKYOU, then revised
+to GOOD and finally GOOD MORNING; stable-prefix speech correctly withheld the unstable
+first guess.
+
+A separate EOF-FINISH smoke on MY NAME logged one completed utterance and rendered
+`My name.` through the deterministic literal path. Four focused tests cover exact
+NumPy/PyTorch CTC-score parity, repeat collapse, stable-prefix speech, and isolated
+defaults. Full evidence is under
+`artifacts/reports/live_stage2_ctc_v17_local_phrase_eval_v1/` and the FINISH smoke is
+under `artifacts/reports/live_stage2_ctc_v17_finish_smoke_v1/`. No sealed test,
+Citizen test, SemLex test, local test, 2M-Flores devtest, or consumed RIT row was
+accessed.
 
 ## 2026-09-02 11:08 PST — motion-valley live trigger made more responsive
 
