@@ -1,12 +1,45 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 19:46 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 20:09 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-02 20:09 PST — reel proposal and verifier decoupled from the display loop
+
+The user's no-Stage-2 session at
+`artifacts/reports/live_reel_stage1_v17/20260902_195337_949818/` confirmed a second,
+more direct latency bug. Of 112 proposals in about 107 seconds, 83 fell through the
+supposed landmark cascade into a full MobileCLIP classification; 65 stable proposals
+then ran the same full classifier again synchronously on the UI thread. Proposals used
+24.60 seconds and the second verifier passes used 18.21 seconds. The final candidate
+contained only 21 observations across 1.91 seconds (10.49 observed FPS), and its
+synchronous verifier froze the UI for 777 ms. Disabling Stage 2 therefore could not
+fix the remaining lag.
+
+`scripts/live_reel_stage1_v17.py` now keeps every provisional probe landmark-only and
+schedules the full visual/hand verifier asynchronously only after two consistent cheap
+proposals. The expensive verifier never runs inside the capture/display callback. One
+verified hit now commits, replacing two repeated visual passes after the new two-hit
+landmark stability gate. The default extraction rate is 20 FPS at a 640-pixel detector
+input so the newest-frame display can refresh independently; full Stage 2 is now
+opt-in with `--stage2-arbiter`. Lip landmarks remain enabled. Full nested JSON printing
+is opt-in with `--verbose-predictions`, while complete structured results are still
+written to the session history. Adjacent identical commits are suppressed to prevent
+a transient proposal from turning one held sign into duplicate spoken glosses.
+
+In a 16-second live-camera smoke with no person deliberately signing, the 13 landmark
+proposals measured 14.3 ms median and 30.0 ms maximum with zero hand-image encoding,
+versus 235.9 ms median and 501.4 ms maximum for the prior no-Stage-2 session. The smoke
+was terminated externally and therefore has no valid display-FPS footer; the user must
+confirm perceived camera smoothness in the actual window. Normal-speed saved-video
+replays retained exact GOOD MORNING. HELLO HOW YOU produced the intended four commits
+`HELLO HOW HOW YOU`; the new adjacent-duplicate guard collapses the duplicate HOW.
+Twenty-two focused reel/lip/Stage-2 tests pass, compilation and `git diff --check`
+pass. No original isolated source/model, sealed split, or Citizen test was touched.
 
 ## 2026-09-02 19:46 PST — first real reel-path session exposes duplicated visual inference
 

@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import numpy as np
 
 from scripts.live_reel_stage1_v17 import (
+    ReelCascadeClassifier,
     StableGlossLock,
     VerifiedCommitLock,
     add_targeted_lip_evidence,
@@ -71,13 +76,51 @@ class StableGlossLockTest(unittest.TestCase):
         self.assertIn("unified_phrase_activity_adapt_reel", str(args.unified_checkpoint))
         self.assertIn("live_reel_stage1_v17", str(args.output_root))
         self.assertIn("phrase_crops", str(args.lip_marker_model))
+        self.assertEqual(args.processing_fps, 20.0)
+        self.assertEqual(args.detection_image_side, 640)
         self.assertEqual(args.start_frames, 1)
+        self.assertEqual(args.stability_hits, 2)
         self.assertEqual(args.release_hits, 1)
         self.assertEqual(args.transition_overlap_seconds, 0.0)
         self.assertEqual(args.commit_score, 0.45)
-        self.assertEqual(args.commit_hits, 2)
+        self.assertEqual(args.commit_hits, 1)
         self.assertEqual(args.instant_commit_score, 0.80)
-        self.assertFalse(args.no_stage2_arbiter)
+        self.assertTrue(args.no_stage2_arbiter)
+
+    def test_weak_proposal_does_not_run_visual_fallback(self) -> None:
+        class Orientation:
+            def predict(self, _provider):
+                logits = np.zeros((1, 100), np.float32)
+                logits[0, 7] = 4.0
+                return {"var_5535": logits}
+
+        class Full:
+            def classify(self, _observations):
+                raise AssertionError("visual fallback ran inside the proposal")
+
+        classifier = ReelCascadeClassifier.__new__(ReelCascadeClassifier)
+        classifier.orientation = Orientation()
+        classifier.full = Full()
+        classifier.labels = [f"GLOSS_{index}" for index in range(100)]
+        classifier.args = SimpleNamespace(
+            quiet_motion=0.006,
+            minimum_score=0.25,
+            minimum_margin=0.08,
+            maximum_accept_seconds=2.5,
+            cascade_score=0.55,
+        )
+        observations = [SimpleNamespace(seconds=0.0), SimpleNamespace(seconds=1.0)]
+        with patch(
+            "scripts.live_reel_stage1_v17.trim_to_motion",
+            return_value=(observations, {}),
+        ), patch(
+            "scripts.live_reel_stage1_v17.landmarks_from_observations",
+            return_value=(np.zeros((32, 61, 5), np.float32), {}),
+        ):
+            result = classifier.classify(observations)
+        self.assertEqual(result["candidate_gloss"], "GLOSS_7")
+        self.assertEqual(result["mode"], "reel-cascade-landmark")
+        self.assertEqual(result["latency_ms"]["hand_image_encoding"], 0.0)
 
     def test_lips_resolve_only_the_closed_good_thankyou_pair(self) -> None:
         base = {

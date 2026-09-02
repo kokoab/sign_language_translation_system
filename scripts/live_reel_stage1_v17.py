@@ -115,14 +115,37 @@ class ReelCascadeClassifier:
         }
 
     def classify(self, observations: list[ObservedFrame]) -> dict[str, object]:
-        """Use the landmark model first, then the full verifier on weak evidence."""
+        """Return a landmark-only proposal; visual verification is scheduled later."""
         started = time.perf_counter()
         original = observations
         trimmed, motion = trim_to_motion(observations, self.args.quiet_motion)
         try:
             features, diagnostics = landmarks_from_observations(trimmed, V17Config())
-        except ValueError:
-            return self.full.classify(original)
+        except ValueError as error:
+            elapsed = 1000.0 * (time.perf_counter() - started)
+            return {
+                "gloss": "UNKNOWN",
+                "candidate_gloss": None,
+                "model_score": 0.0,
+                "margin": 0.0,
+                "gate_score": 0.0,
+                "gate_margin": 0.0,
+                "top3": [],
+                "accepted": False,
+                "rejection_reasons": [str(error)],
+                "mode": "reel-cascade-landmark",
+                "frames": len(original),
+                "motion_trimmed_frames": len(trimmed),
+                "start_seconds": original[0].seconds,
+                "end_seconds": original[-1].seconds,
+                "diagnostics": motion,
+                "latency_ms": {
+                    "tensor_extraction": elapsed,
+                    "hand_image_encoding": 0.0,
+                    "classification": 0.0,
+                    "total": elapsed,
+                },
+            }
         raw = np.asarray(
             self.orientation.predict({"landmarks": features[None]})["var_5535"]
         ).reshape(len(self.labels))
@@ -130,17 +153,6 @@ class ReelCascadeClassifier:
         probability /= probability.sum()
         order = np.argsort(probability)[::-1][:3]
         score = float(probability[order[0]])
-        if score < self.args.cascade_score:
-            result = self.full.classify(original)
-            result["mode"] = "reel-cascade-full-fallback"
-            result["diagnostics"].update({
-                "cascade_primary_score": score,
-                "cascade_primary_gloss": self.labels[int(order[0])],
-                "cascade_score_threshold": self.args.cascade_score,
-                "cascade_fallback_used": True,
-            })
-            return result
-
         top3 = [
             {"gloss": self.labels[int(index)], "model_score": float(probability[index])}
             for index in order
@@ -527,7 +539,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     language_executor = ThreadPoolExecutor(max_workers=1)
     warm_future = language_executor.submit(naturalizer.warm)
     future: Future | None = None
+    future_kind: str | None = None
     future_clip: list[ObservedFrame] | None = None
+    future_result: dict[str, object] | None = None
+    future_proposal: str | None = None
     future_epoch = epoch = 0
     naturalizer_future: Future | None = None
     naturalizer_context: dict[str, object] | None = None
@@ -591,7 +606,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         next_probe = retained[-1].seconds if retained else 0.0
 
     def submit() -> None:
-        nonlocal future, future_clip, future_epoch, next_probe
+        nonlocal future, future_kind, future_clip, future_result
+        nonlocal future_proposal, future_epoch, next_probe
         if future is not None or not active or finish_requested:
             return
         clip = list(observations)
@@ -602,6 +618,9 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             return
         future_epoch = epoch
         future_clip = clip
+        future_result = None
+        future_proposal = None
+        future_kind = "proposal"
         future = classifier_executor.submit(classifier.classify, clip)
         next_probe = clip[-1].seconds + args.probe_interval_seconds
 
@@ -653,16 +672,32 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         submit_ctc()
 
     def collect(wait: bool = False) -> None:
-        nonlocal future, future_clip, latest_result, pending_pair
+        nonlocal future, future_kind, future_clip, future_result
+        nonlocal future_proposal, latest_result, pending_pair
         if future is None or (not wait and not future.done()):
             return
-        result = future.result()
-        ignored = future_epoch != epoch
-        proposal = None if ignored else lock.update(result)
+        if future_kind == "proposal":
+            result = future.result()
+            ignored = future_epoch != epoch
+            proposal = None if ignored else lock.update(result)
+            latest_result = result
+            if proposal is not None and future_clip is not None:
+                future_result = result
+                future_proposal = proposal
+                future_kind = "verification"
+                future = classifier_executor.submit(classifier.verify, future_clip)
+                return
+            verifier = None
+        else:
+            verifier = future.result()
+            if future_result is None:
+                raise RuntimeError("verification completed without a proposal")
+            result = future_result
+            ignored = future_epoch != epoch
+            proposal = None if ignored else future_proposal
+
         emitted = None
-        verifier = None
         if proposal is not None and future_clip is not None:
-            verifier = classifier.verify(future_clip)
             verifier = add_targeted_lip_evidence(
                 lip_disambiguator, future_clip, verifier, proposal,
                 args.lip_marker_minimum_confidence,
@@ -706,6 +741,16 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                     )
                 lock.candidate = None
                 lock.hits = 0
+        if (
+            emitted is not None
+            and pending_pair is None
+            and glosses
+            and glosses[-1] == emitted
+        ):
+            recorder.add_event({
+                "type": "adjacent_duplicate_suppressed", "gloss": emitted,
+            })
+            emitted = None
         result.update({
             "reel_epoch": future_epoch,
             "ignored_after_reset": ignored,
@@ -718,9 +763,19 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         results.append(result)
         recorder.add(result)
         latest_result = result
-        print(json.dumps(result, indent=2))
+        if args.verbose_predictions:
+            print(json.dumps(result, indent=2))
+        elif emitted is not None:
+            print(json.dumps({
+                "committed_gloss": emitted,
+                "proposal": proposal,
+                "score": verifier.get("commit_score") if verifier else None,
+            }))
         future = None
+        future_kind = None
         future_clip = None
+        future_result = None
+        future_proposal = None
         if emitted is not None:
             lip_source = verifier.get("diagnostics", {}).get("targeted_lip_source")
             if emitted in {"GOOD", "THANKYOU"} and lip_source != "media_pipe_lip_markers":
@@ -1046,7 +1101,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             else:
                 service_speech()
 
-        if future is not None:
+        while future is not None:
             collect(wait=True)
         if args.finish_at_eof:
             request_finish(frame_index / source_fps, "video_eof")
@@ -1102,14 +1157,16 @@ def parser() -> argparse.ArgumentParser:
         unified_checkpoint=DEFAULT_UNIFIED_PHRASE_ADAPTED,
         stage1_coreml=DEFAULT_UNIFIED_PHRASE_ADAPTED_COREML,
         cascade_score=0.55,
+        processing_fps=20.0,
+        detection_image_side=640,
     )
     value.add_argument("--candidate-minimum-seconds", type=float, default=0.62)
     value.add_argument("--candidate-maximum-seconds", type=float, default=2.5)
     value.add_argument("--probe-interval-seconds", type=float, default=0.14)
-    value.add_argument("--stability-hits", type=int, default=1)
+    value.add_argument("--stability-hits", type=int, default=2)
     value.add_argument("--release-hits", type=int, default=1)
     value.add_argument("--commit-score", type=float, default=0.45)
-    value.add_argument("--commit-hits", type=int, default=2)
+    value.add_argument("--commit-hits", type=int, default=1)
     value.add_argument("--instant-commit-score", type=float, default=0.80)
     value.add_argument("--start-frames", type=int, default=1)
     value.add_argument("--preroll-seconds", type=float, default=0.20)
@@ -1126,7 +1183,13 @@ def parser() -> argparse.ArgumentParser:
         "--lip-marker-minimum-confidence", type=float, default=0.85,
     )
     value.add_argument("--no-lip-marker-verifier", action="store_true")
-    value.add_argument("--no-stage2-arbiter", action="store_true")
+    stage2 = value.add_mutually_exclusive_group()
+    stage2.add_argument(
+        "--stage2-arbiter", dest="no_stage2_arbiter", action="store_false"
+    )
+    stage2.add_argument("--no-stage2-arbiter", action="store_true")
+    value.set_defaults(no_stage2_arbiter=True)
+    value.add_argument("--verbose-predictions", action="store_true")
     value.add_argument(
         "--stage2-minimum-phrase-seconds", type=float, default=1.6,
     )
