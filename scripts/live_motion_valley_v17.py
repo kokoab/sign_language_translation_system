@@ -22,8 +22,9 @@ def parser():
     value = isolated_parser()
     value.description = __doc__
     value.set_defaults(
-        quiet_motion=0.008,
-        quiet_seconds=0.16,
+        mode="cascade",
+        quiet_motion=0.010,
+        quiet_seconds=0.12,
         output_root=REPO / "artifacts/reports/live_motion_valley_v17",
         end_on_low_motion=True,
         segment_video=True,

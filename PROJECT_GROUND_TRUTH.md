@@ -1,12 +1,24 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 11:00 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 11:08 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-02 11:08 PST — motion-valley live trigger made more responsive
+
+After the user's first real live motion-valley session, the experimental defaults were
+changed from hybrid, motion ≤0.008 for 0.16 seconds to cascade, motion ≤0.010 for 0.12
+seconds. The latest session had six clips lasting 1.38–3.12 seconds and 238–489 ms
+classification latency; it accepted HELLO twice and HOW once. The higher motion cutoff
+is less vulnerable to small wrist jitter, the shorter hold saves one processed frame,
+and cascade can skip expensive hand-image encoding when landmark evidence is strong.
+Uncertain signs still use the unified fallback. This explicitly trades some boundary
+precision for faster response and may split internal holds; the neutral/pause path is
+unchanged. The user must validate the new live behavior before any accuracy claim.
 
 ## 2026-09-02 11:00 PST — low-motion/non-neutral boundaries are cleaner but still fail accuracy
 
