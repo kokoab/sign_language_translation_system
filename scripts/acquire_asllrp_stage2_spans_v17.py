@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Acquire and crop exact contiguous Citizen100 phrase spans from ASLLRP utterances."""
+"""Acquire and crop manifest-declared ASLLRP spans from parent utterances."""
 
 from __future__ import annotations
 
@@ -238,6 +238,7 @@ def main() -> None:
         default=Path("data/local/asllrp_contiguous_phrases_v17"),
     )
     parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--crop-workers", type=int, default=4)
     parser.add_argument("--timeout", type=int, default=90)
     parser.add_argument("--retries", type=int, default=4)
     args = parser.parse_args()
@@ -261,28 +262,38 @@ def main() -> None:
                 failures.append({"source": key[0], "filename": key[1], "error": str(exc)})
     completed: list[dict[str, Any]] = []
     if not failures:
-        for row in spans:
-            key = (row["source"], row["utterance_video_filename"])
-            try:
-                completed.append(crop_span(row, parents[key], args.output_root / "spans"))
-            except Exception as exc:
-                failures.append(
-                    {
+        indexed: dict[int, dict[str, Any]] = {}
+        with ThreadPoolExecutor(max_workers=args.crop_workers) as pool:
+            futures = {
+                pool.submit(
+                    crop_span, row,
+                    parents[(row["source"], row["utterance_video_filename"])],
+                    args.output_root / "spans",
+                ): index
+                for index, row in enumerate(spans)
+            }
+            for future in as_completed(futures):
+                index = futures[future]
+                row = spans[index]
+                try:
+                    indexed[index] = future.result()
+                except Exception as exc:
+                    failures.append({
                         "source": row["source"],
                         "filename": row["utterance_video_filename"],
                         "error": str(exc),
-                    }
-                )
-                break
+                    })
+        if not failures:
+            completed = [indexed[index] for index in range(len(spans))]
     manifest = {
-        "format": "slt_v17_asllrp_contiguous_target_spans",
+        "format": "slt_v17_asllrp_declared_spans",
         "version": 1,
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "source_span_csv": str(args.spans),
         "source_span_csv_sha256": sha256_file(args.spans),
         "variant_and_crop_contract": (
-            "official ASL-LEX exact variants; every non-target visible annotation breaks a span; "
-            "manual first/last sign bounds plus five context frames"
+            "exact labels, manual annotation bounds, context, and split policy are pinned by "
+            "the hash-verified source span CSV"
         ),
         "expected_parent_videos": len(unique_parents),
         "verified_parent_videos": len(parents),

@@ -17,6 +17,7 @@ from active.v17.model_stage2_v17 import (
     Stage2TemporalHeadV17,
     Stage2V17Config,
     warm_start_dual_stage2,
+    warm_start_stage2_with_other,
 )
 from active.v17.export_stage2_coreml_v17 import ManualMaskedMHA
 from active.v17.train_stage_2_v17 import (
@@ -109,6 +110,37 @@ class Stage2ModelTests(unittest.TestCase):
         self.assertEqual(tuple(logits.shape), (3, 40, 101))
         self.assertEqual(lengths.tolist(), [40, 24, 8])
         self.assertEqual(model.config.blank_index, 0)
+
+    def test_ctc_head_optionally_adds_other_without_changing_temporal_contract(self):
+        model = Stage2TemporalHeadV17(Stage2V17Config(num_classes=101))
+        logits, lengths = model(
+            torch.randn(2, 2, 32, FROZEN_TEMPORAL_FEATURE_DIM),
+            torch.ones(2, 2, dtype=torch.bool),
+        )
+        self.assertEqual(tuple(logits.shape), (2, 16, 102))
+        self.assertEqual(lengths.tolist(), [16, 16])
+
+    def test_other_warm_start_preserves_all_locked_logits(self):
+        torch.manual_seed(20)
+        source = Stage2TemporalHeadV17(Stage2V17Config(dropout=0.0)).eval()
+        checkpoint = {
+            "format": "slt_stage2_ctc_v17",
+            "model_config": source.config.to_dict(),
+            "model_state_dict": source.state_dict(),
+        }
+        extended = Stage2TemporalHeadV17(
+            Stage2V17Config(num_classes=101, dropout=0.0)
+        ).eval()
+        warm_start_stage2_with_other(extended, checkpoint)
+        value = torch.randn(2, 2, 32, FROZEN_TEMPORAL_FEATURE_DIM)
+        mask = torch.ones(2, 2, dtype=torch.bool)
+        with torch.inference_mode():
+            old_logits, _ = source(value, mask)
+            new_logits, _ = extended(value, mask)
+        torch.testing.assert_close(new_logits[..., :101], old_logits, rtol=0, atol=0)
+        self.assertTrue(torch.equal(
+            extended.ctc_head.weight[101], source.ctc_head.weight[1:].mean(dim=0)
+        ))
 
     def test_dual_head_warm_start_extends_positions_and_preserves_locked_logits(self):
         torch.manual_seed(19)

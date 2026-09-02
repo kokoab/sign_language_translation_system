@@ -1,0 +1,140 @@
+{
+  "format": "slt_live_isolated_v17_session",
+  "version": 2,
+  "prototype_scope": "low-motion-delimited isolated Stage-1; not continuous Stage-2",
+  "started_utc": "2026-09-02T02:51:18.336136+00:00",
+  "source": "data/raw_videos/PHRASES/PLEASE_HELP_ME/6e8dea31.mp4",
+  "mode": "hybrid",
+  "score_semantics": "uncalibrated softmax over model/fused scores",
+  "config": {
+    "processing_fps": 30.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": true,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true
+  },
+  "models": {
+    "unified_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_unified_multimodal_student_v1/best_model.pth",
+      "sha256": "1caeadf4b3ca620aa9fef00b35c012b39d7c093f67da1ee2f6987d2c2297906b"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "stage1_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1UnifiedMultimodalV17FP32.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "orientation_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1OrientationV17.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "landmark_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_citizen_semlex_full_clean_balanced/best_model.pth",
+      "sha256": "23d5b7f1b343a6b5246e4afe03c0ab99067d3dac6e355024b5c53e5c31013f8e"
+    },
+    "mouth_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_visual_speech_auto_avsr_mouth_frozen/best_model.pth",
+      "sha256": "e3e1b12c48206dd005119551cced65502c421bc426f2350643afbed646ecd8bd"
+    },
+    "lower_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_visual_speech_auto_avsr_lower_face_frozen/best_model.pth",
+      "sha256": "4c0b8f1dbf14c2faf8020a6f795d5dc2af64d1cf708f3a805907882b8b84669e"
+    }
+  },
+  "video": "artifacts/reports/live_motion_valley_v17_local_phrase_eval_v1/runs/PLEASE_HELP_ME/20260902_105118_333492/session_lowres.mp4",
+  "predictions": [
+    {
+      "gloss": "UNKNOWN",
+      "candidate_gloss": "HELP",
+      "model_score": 0.2947385609149933,
+      "margin": 0.16093221306800842,
+      "gate_score": 0.19417938590049744,
+      "gate_margin": 0.09181567281484604,
+      "top3": [
+        {
+          "gloss": "HELP",
+          "model_score": 0.2947385609149933
+        },
+        {
+          "gloss": "EASY",
+          "model_score": 0.13380634784698486
+        },
+        {
+          "gloss": "STOP",
+          "model_score": 0.0985165387392044
+        }
+      ],
+      "accepted": false,
+      "rejection_reasons": [
+        "low_score",
+        "clip_too_long"
+      ],
+      "mode": "hybrid",
+      "frames": 89,
+      "motion_trimmed_frames": 80,
+      "start_seconds": 1.0,
+      "end_seconds": 3.933333333333333,
+      "diagnostics": {
+        "normalization_scale": 0.34104838967323303,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.9125,
+        "source_frames": 80,
+        "trim_start": 0,
+        "trim_end_exclusive": 80,
+        "hand_frame_fraction": 0.9875,
+        "face_presence_fraction": 0.90625,
+        "body_presence_fraction": 0.7734375,
+        "motion_trim_start": 7,
+        "motion_trim_end_exclusive": 87,
+        "motion_trim_fallback": false,
+        "live_auxiliary_interval": 8,
+        "raw_clip_seconds": 2.933333333333333,
+        "motion_trimmed_seconds": 2.6333333333333333,
+        "observed_processing_fps": 30.000000000000004,
+        "mouth_pixels_used": false,
+        "visual_tie_break": false,
+        "landmark_tie_break": false,
+        "fast_top3": [
+          "HELP",
+          "EASY",
+          "STOP"
+        ],
+        "fast_gate_score": 0.19417938590049744,
+        "fast_gate_margin": 0.09181567281484604
+      },
+      "latency_ms": {
+        "tensor_extraction": 84.35841699999713,
+        "hand_image_encoding": 276.7518750000022,
+        "classification": 30.86316699999969,
+        "total": 391.973458999999
+      },
+      "buffer_epoch": 0,
+      "display_epoch": 0,
+      "included_in_active_buffer": false
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-02T02:51:18.600062+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    }
+  ],
+  "utterances": [],
+  "test_accessed": false,
+  "finished_utc": "2026-09-02T02:51:24.593021+00:00"
+}

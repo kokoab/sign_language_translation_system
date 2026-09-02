@@ -117,8 +117,10 @@ class Stage2V17Config:
     dropout: float = 0.15
 
     def validate(self) -> None:
-        if self.num_classes != 100 or self.blank_index != 0:
-            raise ValueError("the locked Stage-2 vocabulary is 100 signs plus blank=0")
+        if self.num_classes not in (100, 101) or self.blank_index != 0:
+            raise ValueError(
+                "Stage-2 supports the locked 100 signs, optionally plus OTHER, and blank=0"
+            )
         if self.input_dim != FROZEN_TEMPORAL_FEATURE_DIM:
             raise ValueError("frozen temporal feature dimension changed")
         if self.tokens_per_window != 8 or self.max_windows < 1:
@@ -201,6 +203,161 @@ class Stage2TemporalHeadV17(nn.Module):
     @property
     def parameter_count(self) -> int:
         return sum(parameter.numel() for parameter in self.parameters())
+
+
+class Stage2IdentityAnchoredHeadV17(nn.Module):
+    """CTC boundary model whose class identities remain anchored to Stage 1."""
+
+    def __init__(self, config: Stage2V17Config | None = None):
+        super().__init__()
+        self.config = config or Stage2V17Config()
+        self.config.validate()
+        if self.config.num_classes != 100:
+            raise ValueError("identity-anchored head is defined only for the locked 100 signs")
+        hidden = 128
+        self.context = nn.Sequential(
+            nn.LayerNorm(self.config.input_dim),
+            nn.Linear(self.config.input_dim, hidden),
+            nn.GELU(),
+        )
+        self.temporal = nn.Sequential(
+            nn.Conv1d(hidden, hidden, kernel_size=5, padding=2),
+            nn.GELU(),
+        )
+        self.blank_head = nn.Linear(hidden, 1)
+        self.class_residual = nn.Linear(hidden, self.config.num_classes)
+        nn.init.zeros_(self.class_residual.weight)
+        nn.init.zeros_(self.class_residual.bias)
+        self.log_stage1_scale = nn.Parameter(torch.tensor(0.7))
+        self.residual_scale = 0.25
+
+    def forward(
+        self, frozen_features: torch.Tensor, window_mask: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        if frozen_features.ndim != 4 or tuple(frozen_features.shape[2:]) != (
+            32, self.config.input_dim
+        ):
+            raise ValueError(f"unexpected frozen features {tuple(frozen_features.shape)}")
+        batch, windows = frozen_features.shape[:2]
+        if windows > self.config.max_windows or tuple(window_mask.shape) != (batch, windows):
+            raise ValueError("invalid window mask or too many windows")
+        frame_mask = window_mask.unsqueeze(-1).expand(batch, windows, 32).reshape(batch, -1)
+        value = frozen_features.reshape(batch, windows * 32, self.config.input_dim)
+        stage1 = value[..., -self.config.num_classes:]
+        stage1 = (stage1 - stage1.mean(dim=-1, keepdim=True)) / stage1.std(
+            dim=-1, keepdim=True, unbiased=False
+        ).clamp_min(1e-6)
+        context = self.context(value)
+        context = self.temporal(context.transpose(1, 2)).transpose(1, 2)
+        context = F.avg_pool1d(
+            context.transpose(1, 2), kernel_size=4, stride=4
+        ).transpose(1, 2)
+        stage1 = F.avg_pool1d(
+            stage1.transpose(1, 2), kernel_size=4, stride=4
+        ).transpose(1, 2)
+        token_mask = frame_mask[:, ::4]
+        classes = (
+            self.log_stage1_scale.exp() * stage1
+            + self.residual_scale * self.class_residual(context)
+        )
+        logits = torch.cat((self.blank_head(context), classes), dim=-1)
+        logits = logits * token_mask.unsqueeze(-1)
+        lengths = window_mask.sum(dim=1).to(torch.long) * self.config.tokens_per_window
+        return logits, lengths
+
+    @property
+    def parameter_count(self) -> int:
+        return sum(parameter.numel() for parameter in self.parameters())
+
+
+class Stage2IsolatedCorrectionV17(nn.Module):
+    """Correct whole-clip Stage-1 logits with frozen temporal statistics."""
+
+    def __init__(
+        self,
+        *,
+        scaler_mean: torch.Tensor,
+        scaler_scale: torch.Tensor,
+        coefficients: torch.Tensor,
+        intercept: torch.Tensor,
+        blend_weight: float,
+    ):
+        super().__init__()
+        summary_dim = FROZEN_TEMPORAL_FEATURE_DIM * 6
+        if not 0.0 <= blend_weight <= 1.0:
+            raise ValueError("isolated correction blend must be in [0,1]")
+        values = {
+            "scaler_mean": torch.as_tensor(scaler_mean, dtype=torch.float32),
+            "scaler_scale": torch.as_tensor(scaler_scale, dtype=torch.float32),
+            "coefficients": torch.as_tensor(coefficients, dtype=torch.float32),
+            "intercept": torch.as_tensor(intercept, dtype=torch.float32),
+        }
+        if tuple(values["scaler_mean"].shape) != (summary_dim,):
+            raise ValueError("isolated correction scaler mean changed")
+        if tuple(values["scaler_scale"].shape) != (summary_dim,):
+            raise ValueError("isolated correction scaler scale changed")
+        if tuple(values["coefficients"].shape) != (100, summary_dim):
+            raise ValueError("isolated correction coefficients changed")
+        if tuple(values["intercept"].shape) != (100,):
+            raise ValueError("isolated correction intercept changed")
+        for name, value in values.items():
+            self.register_buffer(name, value)
+        self.blend_weight = float(blend_weight)
+
+    @staticmethod
+    def per_sample_zscore(value: torch.Tensor) -> torch.Tensor:
+        centered = value - value.mean(dim=-1, keepdim=True)
+        return centered / centered.std(
+            dim=-1, keepdim=True, unbiased=False
+        ).clamp_min(1e-6)
+
+    def forward(
+        self, frozen_features: torch.Tensor, stage1_logits: torch.Tensor
+    ) -> torch.Tensor:
+        if frozen_features.ndim == 4:
+            if frozen_features.shape[1] != 1:
+                raise ValueError("isolated correction accepts one activity-aligned window")
+            frozen_features = frozen_features[:, 0]
+        if frozen_features.ndim != 3 or tuple(frozen_features.shape[1:]) != (
+            32, FROZEN_TEMPORAL_FEATURE_DIM
+        ):
+            raise ValueError("invalid isolated frozen features")
+        if tuple(stage1_logits.shape) != (len(frozen_features), 100):
+            raise ValueError("invalid Stage-1 logits for isolated correction")
+        summary = torch.cat((
+            frozen_features.mean(dim=1),
+            frozen_features.std(dim=1, unbiased=False),
+            frozen_features.amax(dim=1),
+            frozen_features[:, 0],
+            frozen_features[:, -1],
+            frozen_features[:, -1] - frozen_features[:, 0],
+        ), dim=-1)
+        standardized = (summary - self.scaler_mean) / self.scaler_scale.clamp_min(1e-6)
+        correction = F.linear(standardized, self.coefficients, self.intercept)
+        return (
+            (1.0 - self.blend_weight) * self.per_sample_zscore(stage1_logits)
+            + self.blend_weight * self.per_sample_zscore(correction)
+        )
+
+    @property
+    def parameter_count(self) -> int:
+        return sum(value.numel() for value in self.buffers())
+
+
+def load_stage2_isolated_correction(
+    path: str | Path,
+) -> tuple[Stage2IsolatedCorrectionV17, dict[str, object]]:
+    checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+    if checkpoint.get("format") != "slt_stage2_isolated_correction_v17":
+        raise ValueError(f"{path}: not an isolated correction v17 checkpoint")
+    model = Stage2IsolatedCorrectionV17(
+        scaler_mean=checkpoint["scaler_mean"],
+        scaler_scale=checkpoint["scaler_scale"],
+        coefficients=checkpoint["coefficients"],
+        intercept=checkpoint["intercept"],
+        blend_weight=float(checkpoint["blend_weight"]),
+    )
+    return model, checkpoint
 
 
 class Stage2ContextAdapterV17(nn.Module):
@@ -310,6 +467,10 @@ class Stage2ContextAdapterV17(nn.Module):
     @property
     def parameter_count(self) -> int:
         return self.base.parameter_count
+
+    @property
+    def config(self) -> Stage2V17Config:
+        return self.base.config
 
 
 def load_stage2_context_adapted(
@@ -705,6 +866,38 @@ def warm_start_dual_stage2(
         model.auxiliary_ctc_head.bias[0].copy_(model.locked.ctc_head.bias[0])
         model.auxiliary_ctc_head.weight[1:101].copy_(model.locked.ctc_head.weight[1:101])
         model.auxiliary_ctc_head.bias[1:101].copy_(model.locked.ctc_head.bias[1:101])
+
+
+def warm_start_stage2_with_other(
+    model: Stage2TemporalHeadV17, checkpoint: dict[str, object]
+) -> None:
+    """Extend a locked 100-gloss CTC model with one explicit OTHER class."""
+    if model.config.num_classes != 101:
+        raise ValueError("target model must contain 100 locked glosses plus OTHER")
+    if checkpoint.get("format") != "slt_stage2_ctc_v17":
+        raise ValueError("warm-start checkpoint is not v17 Stage 2")
+    source_config = Stage2V17Config(**checkpoint["model_config"])
+    if source_config.num_classes != 100:
+        raise ValueError("source model must use the locked 100-gloss vocabulary")
+    source = checkpoint["model_state_dict"]
+    target = model.state_dict()
+    for name, value in source.items():
+        if name in {"ctc_head.weight", "ctc_head.bias"}:
+            continue
+        if name not in target or target[name].shape != value.shape:
+            raise ValueError(f"warm-start shape mismatch: {name}")
+        target[name].copy_(value)
+    source_weight = source["ctc_head.weight"]
+    source_bias = source["ctc_head.bias"]
+    if source_weight.shape != (101, model.config.dim) or source_bias.shape != (101,):
+        raise ValueError("source CTC head shape changed")
+    target["ctc_head.weight"][:101].copy_(source_weight)
+    target["ctc_head.bias"][:101].copy_(source_bias)
+    # A neutral class-average initialization avoids initially treating OTHER as
+    # blank or as any one locked sign while leaving all old logits bit-identical.
+    target["ctc_head.weight"][101].copy_(source_weight[1:].mean(dim=0))
+    target["ctc_head.bias"][101].copy_(source_bias[1:].mean())
+    model.load_state_dict(target, strict=True)
 
 
 class UnifiedMultimodalStage2V17(nn.Module):

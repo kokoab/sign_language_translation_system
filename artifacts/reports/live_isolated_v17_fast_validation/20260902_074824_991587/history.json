@@ -1,0 +1,79 @@
+{
+  "format": "slt_live_isolated_v17_session",
+  "version": 1,
+  "prototype_scope": "pause-delimited isolated Stage-1; not continuous Stage-2",
+  "started_utc": "2026-09-01T23:48:24.992008+00:00",
+  "source": "data/local/citizen100_v17/raw/val/HELLO/020030442376253177-HELLO.mp4",
+  "mode": "fast",
+  "score_semantics": "uncalibrated softmax over model/fused scores",
+  "config": {
+    "processing_fps": 15.0,
+    "maximum_image_side": 720,
+    "record_width": 640,
+    "minimum_score": 0.0,
+    "minimum_margin": 0.0
+  },
+  "models": {
+    "unified_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_unified_multimodal_student_v1/best_model.pth",
+      "sha256": "1caeadf4b3ca620aa9fef00b35c012b39d7c093f67da1ee2f6987d2c2297906b"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "stage1_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1UnifiedMultimodalV17FP32.mlpackage",
+      "sha256": "mlpackage"
+    }
+  },
+  "video": "artifacts/reports/live_isolated_v17_fast_validation/20260902_074824_991587/session_lowres.mp4",
+  "predictions": [
+    {
+      "gloss": "HELLO",
+      "model_score": 0.7462117671966553,
+      "margin": 0.7288338728249073,
+      "top3": [
+        {
+          "gloss": "HELLO",
+          "model_score": 0.7462117671966553
+        },
+        {
+          "gloss": "FATHER",
+          "model_score": 0.01737789437174797
+        },
+        {
+          "gloss": "MAN",
+          "model_score": 0.013502898626029491
+        }
+      ],
+      "accepted": true,
+      "mode": "fast",
+      "frames": 23,
+      "start_seconds": 0.0,
+      "end_seconds": 1.4708571428571429,
+      "diagnostics": {
+        "normalization_scale": 0.1626177430152893,
+        "normalization_scale_source": "palm_length",
+        "shoulder_coverage": 0.0,
+        "source_frames": 23,
+        "trim_start": 0,
+        "trim_end_exclusive": 16,
+        "hand_frame_fraction": 0.75,
+        "face_presence_fraction": 0.5625,
+        "body_presence_fraction": 0.0,
+        "mouth_pixels_used": false
+      },
+      "latency_ms": {
+        "tensor_extraction": 93.9207080000024,
+        "hand_image_encoding": 147.13495799999876,
+        "classification": 11.359500000001077,
+        "total": 252.41516600000224
+      },
+      "expected_gloss": "HELLO",
+      "correct": true
+    }
+  ],
+  "test_accessed": false,
+  "finished_utc": "2026-09-01T23:48:26.355673+00:00"
+}

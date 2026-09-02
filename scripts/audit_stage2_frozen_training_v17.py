@@ -46,6 +46,12 @@ def run(args: argparse.Namespace):
             errors.append("invalid real window mask")
         if not np.array_equal(target_indices, frozen_targets):
             errors.append("target mismatch")
+        if (
+            target_indices.size == 0
+            or np.any(target_indices < 0)
+            or np.any(target_indices > args.maximum_class_index)
+        ):
+            errors.append("target class index outside declared range")
         if not np.isfinite(features).all():
             errors.append("non-finite features")
         for key in ("source_item_id", "source", "role", "video_sha256", "window_count"):
@@ -62,14 +68,22 @@ def run(args: argparse.Namespace):
         pool_metadata = json.loads(str(pool["metadata_json"]))
     plan = json.loads(args.synthetic_plan.read_text())
     synthetic_errors = []
-    if pool_features.shape != (1475, 32, 612) or not np.isfinite(pool_features).all():
+    if (
+        pool_features.ndim != 3
+        or pool_features.shape[1:] != (32, 612)
+        or not np.isfinite(pool_features).all()
+    ):
         synthetic_errors.append(f"invalid pool features {pool_features.shape}")
     if sorted(set(pool_targets.tolist())) != list(range(100)):
         synthetic_errors.append("pool lacks locked classes")
     if plan["pool_sha256"] != sha256(args.synthetic_pool):
         synthetic_errors.append("plan/pool hash mismatch")
-    if pool_metadata.get("source_split") != "citizen_official_train_only":
-        synthetic_errors.append("pool source is not Citizen train-only")
+    if pool_metadata.get("source_split") not in {
+        "citizen_official_train_only",
+        "citizen_asllrp_train_only_replay",
+        "citizen_semlex_asllrp_train_only_replay",
+    }:
+        synthetic_errors.append("pool source is not an approved train-only replay split")
     for row in plan["rows"]:
         indices = np.asarray(row["pool_indices"], dtype=np.int64)
         targets = np.asarray(row["target_indices"], dtype=np.int64)
@@ -110,6 +124,7 @@ def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--crop-root", type=Path, default=Path("data/local/stage2_v17_multimodal"))
     parser.add_argument("--cache-root", type=Path, default=Path("data/local/stage2_v17_frozen_features"))
+    parser.add_argument("--maximum-class-index", type=int, default=99)
     parser.add_argument(
         "--synthetic-pool", type=Path,
         default=Path("data/local/stage2_v17_synthetic/citizen_train_isolated_pool.npz"),

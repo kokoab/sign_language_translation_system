@@ -51,10 +51,24 @@ EXTERNAL_ROLE = "external_evaluation_reserved"
 
 
 def window_ranges(
-    frame_count: int, window_size: int = 32, minimum_tail_frames: int = 4
+    frame_count: int,
+    window_size: int = 32,
+    minimum_tail_frames: int = 4,
+    window_stride: int | None = None,
 ) -> list[tuple[int, int]]:
     if frame_count < minimum_tail_frames:
         return []
+    stride = window_size if window_stride is None else window_stride
+    if stride < 1 or stride > window_size:
+        raise ValueError("window stride must be in [1, window_size]")
+    if stride < window_size:
+        if frame_count <= window_size:
+            return [(0, frame_count)]
+        starts = list(range(0, frame_count - window_size + 1, stride))
+        final_start = frame_count - window_size
+        if starts[-1] != final_start:
+            starts.append(final_start)
+        return [(start, start + window_size) for start in starts]
     ranges = []
     for start in range(0, frame_count, window_size):
         end = min(frame_count, start + window_size)
@@ -142,6 +156,7 @@ def extract_row(
     stage2_config: Stage2FeatureV17Config,
     hand_config: HandRGBV17Config,
     manifest_sha256: str,
+    window_stride: int | None = None,
 ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
     video_path = Path(row["video_path"])
     frames, video_metadata = read_video_frames(
@@ -155,7 +170,8 @@ def extract_row(
     if correction:
         frames = [rotate_frame_clockwise(frame, correction) for frame in frames]
     ranges = window_ranges(
-        len(frames), stage2_config.window_source_frames, stage2_config.minimum_tail_frames
+        len(frames), stage2_config.window_source_frames,
+        stage2_config.minimum_tail_frames, window_stride,
     )
     if not ranges:
         raise RuntimeError(f"{video_path}: fewer than four usable source frames")
@@ -219,6 +235,7 @@ def extract_row(
         "zero_lip_nodes": bool(row.get("zero_lip_nodes", False)),
         "lip_supervision": row.get("lip_supervision"),
         "window_count": len(ranges),
+        "window_stride": window_stride or stage2_config.window_source_frames,
         "sampled_source_frames": len(frames),
         "dropped_tail_frames": len(frames) - ranges[-1][1],
         "vision_coarse_rotation_clockwise": correction,
@@ -254,9 +271,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         rows = [row for row in rows if row["role"] == args.role]
     if args.source:
         rows = [row for row in rows if row["source"] == args.source]
+    stop = args.file_stop or len(rows)
+    if args.file_start < 0 or stop <= args.file_start or stop > len(rows):
+        raise ValueError(f"invalid shard [{args.file_start}, {stop}) for {len(rows)} rows")
+    rows = rows[args.file_start:stop]
     if args.limit:
         rows = rows[: args.limit]
-    stage2_config = Stage2FeatureV17Config(maximum_source_frames=args.maximum_source_frames)
+    stage2_config = Stage2FeatureV17Config(
+        window_source_frames=args.window_source_frames,
+        window_stride=args.window_stride or None,
+        maximum_source_frames=args.maximum_source_frames,
+    )
     declared_too_long = [
         row["source_item_id"] for row in rows
         if int(row.get("frame_count", 0)) > stage2_config.maximum_source_frames
@@ -292,7 +317,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         try:
             arrays, metadata = extract_row(
                 row, landmark_detector, hand_detector, stage2_config, hand_config,
-                manifest_sha,
+                manifest_sha, stage2_config.window_stride,
             )
             save_archive(destination, arrays, metadata)
             written += 1
@@ -312,6 +337,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "manifest_sha256": manifest_sha,
         "output_root": args.output_root.as_posix(),
         "selected_rows": len(rows),
+        "file_start": args.file_start,
+        "file_stop": stop,
         "written": written,
         "skipped": skipped,
         "failed": failed,
@@ -346,7 +373,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--source", choices=("local_phrases", "asllrp_contiguous", "two_m_flores_asl")
     )
     parser.add_argument("--maximum-source-frames", type=int, default=256)
+    parser.add_argument("--window-source-frames", type=int, default=32)
+    parser.add_argument(
+        "--window-stride", type=int, default=0,
+        help="Source-frame stride; use less than 32 for overlapping online windows",
+    )
     parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--file-start", type=int, default=0)
+    parser.add_argument("--file-stop", type=int, default=0)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument(
         "--external-evaluation", action="store_true",

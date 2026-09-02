@@ -1,12 +1,2023 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-08-24 21:21 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 11:00 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-02 11:00 PST — low-motion/non-neutral boundaries are cleaner but still fail accuracy
+
+A second separate path, `scripts/live_motion_valley_v17.py`, now closes a sign after a
+short low-motion hold at the current hand position rather than requiring return to a
+neutral pose. The original neutral/pause path and the overlapping-window experiment
+remain available unchanged by default. The motion path keeps the same extractor,
+Stage-1 classifier/gates, display, RESET/FINISH, tiny Stage 3, speech, history, and
+low-resolution recording. Saved-video segmentation waits for each classification, so
+offline frames are not dropped while Core ML is busy.
+
+The initial motion ≤0.006 for 0.12 seconds configuration produced 15 clips and nine
+accepted glosses across all nine local development/reference phrases. It scored 1/9
+exact overall and 1/5 among fully vocabulary-covered phrases; only MY_NAME was exact.
+Median/p90 classification latency was 448.01/529.23 ms. Compared with fixed overlap,
+it reduced spurious insertions and recovered more meaningful components, but often
+merged neighboring signs.
+
+The nine phrase recordings were then used as intended for weak boundary calibration.
+A motion-only sweep found that motion ≤0.008 for 0.16 seconds matches the expected sign
+count in all five fully vocabulary-covered phrases. Reclassification of those same five
+fitted development videos still scored only 1/5 exact: GOOD_MORNING -> `EAT MORNING`;
+HELLO_HOW_YOU -> `HOW NEED`; MY_NAME -> `MY NAME`; THANKYOU_FRIEND -> `NAME`;
+TOMORROW_SCHOOL_GO -> `TOMORROW GO`. Twelve clips were formed, nine accepted, with
+360.94 ms median and 490.77 ms p90 latency. Better endpoint counts did not solve the
+continuous/local classifier-domain errors. This fitted diagnostic is not independent
+accuracy evidence.
+
+Therefore phrase data is not needed merely to run a webcam loop, but remains essential
+for threshold fitting, transition/domain learning, and honest continuous evaluation.
+The existing 780 local recordings should be retained. Their phrase prompts can support
+weak sequence training, but missing signer identity, five OOV prompt glosses, and absent
+frame boundaries limit claims. Do not delete the phrase corpus, promote either new live
+path, or lower gates to make the numbers look better. Full evidence is under
+`artifacts/reports/live_motion_valley_v17_local_phrase_eval_v1/` and
+`artifacts/reports/live_motion_valley_v17_local_phrase_tuned_v1/`.
+
+## 2026-09-02 10:46 PST — no-pause path fails the nine-local-phrase accuracy gate
+
+The unchanged 1.2-second/0.2-second-stride streaming experiment was evaluated on all
+nine project-owned representative phrase recordings from the genuine local-motion
+reference report. These are development/train-source diagnostics, not a new
+signer-disjoint test. Citizen validation/test, SemLex test, and the local test partition
+were not accessed.
+
+All nine runs completed and wrote independent history/video evidence. Across 97 windows,
+69 passed the existing Stage-1 gates. Median classification latency was 548.88 ms and
+p90 was 1,334.46 ms. No stale-window backlog accumulated. Nevertheless, exact sequence
+accuracy was 0/9 overall and 0/5 among the phrases entirely covered by the locked 100.
+Outputs were: GOOD_MORNING -> `EAT MORNING`; HELLO_HOW_YOU -> `HELLO HOW`;
+I_WANT_FOOD -> `UNDERSTAND WANT`; MY_NAME -> `NAME`; PLEASE_HELP_ME ->
+`STOP HELP I`; SORRY_I_LATE -> `SORRY`; THANKYOU_FRIEND -> `BAD NAME DOCTOR`;
+TOMORROW_SCHOOL_GO -> `TOMORROW LESS`; YESTERDAY_TEACHER_MEET -> `ANSWER`.
+
+Four prompts are structurally impossible to recover fully with the current vocabulary:
+FOOD, ME, LATE, TEACHER, and MEET are absent class labels. More importantly, even the
+five fully covered prompts fail because fixed windows include partial signs/transitions
+and short signs may not survive the two-window agreement gate. The mechanics pass but
+the accuracy gate fails. Do not replace the working pause-delimited prototype or simply
+accept every window; the next serious no-pause experiment needs a learned boundary or
+framewise/Stage-2 sequence model. Full evidence is under
+`artifacts/reports/live_streaming_v17_local_phrase_eval_v1/`.
+
+## 2026-09-02 10:36 PST — separate no-pause overlapping-window live experiment added
+
+The working pause-delimited path in `scripts/live_isolated_v17.py` remains intact. A
+separate `scripts/live_streaming_v17.py` experiment now continuously extracts Apple
+Vision landmarks, classifies the newest 1.2-second window at most every 0.2 seconds,
+and never queues stale windows. It defaults to the fast cascade, keeps landmark/lip
+sampling aligned with Stage-1 training, preserves the white-point/black-bone display,
+records low-resolution video and full JSON evidence, and retains RESET, FINISH, local
+tiny Stage 3, and native speech. It does not require a neutral pose or explicit pause.
+
+Two consecutive accepted windows must agree before a gloss enters the visible buffer.
+The same prediction run emits once; a different stable label or two rejected windows
+rearms it. This suppresses overlap duplicates but deliberately cannot distinguish two
+adjacent repetitions of the same sign. The approach is overlapping-window isolated
+Stage 1, not CTC Stage 2, so windows can still contain transition motion or pieces of
+neighboring signs and no continuous-accuracy claim is justified yet.
+
+Four focused stabilizer/default tests and direct CLI/compile checks pass. An end-to-end
+smoke used only the quarantined Citizen training clip
+`6226330398612929-W.H.A.T.mp4`; Citizen validation/test were not accessed. It processed
+six windows, emitted one stabilized gloss, wrote history/video, and measured roughly
+341–406 ms per fallback classification without building a backlog. It stabilized as
+TELL rather than the quarantined folder label WHAT. This is successful execution and
+latency evidence, not accuracy evidence; the next meaningful check is a labeled live
+session of naturally connected locked-100 signs.
+
+## 2026-09-02 10:25 PST — tiny Stage 3 fine-tuned, long-buffer gate passed, and promoted to live FINISH
+
+The 15.58M-parameter `visheratin/t5-efficient-tiny-grammar-correction` checkpoint at
+revision `a98f126664317cf2e68d33234c7072fdd6b289f3` was fine-tuned for one MPS epoch and
+saved at `artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1/` (59 MiB
+`model.safetensors`, SHA-256
+`c0875815d47d9242bae9d19bd1040f85647550a5b2f24c482bdb9b2f4525a5b0`). Six epochs
+were originally scheduled, but epoch 1 already reached 100% normalized exact accuracy
+on the controlled long validation slice; the later epoch was interrupted rather than
+wasting compute. Checkpoint selection used validation only. The fixed synthetic test
+split was then accessed exactly once by `evaluate_stage3_tiny_v17.py`; Citizen test and
+2M-Flores devtest were not accessed.
+
+The earlier Stage-3 CSVs were explicitly audited. `slt_stage3_dataset_final.csv`
+(SHA-256 `90009c48075e1871664a6fe6d4ce9e59bea96ca66390fc3708d63583cac4156f`)
+contains 15,843 unique synthetic pairs and 1,537 sequences of at least five glosses,
+but only 742 rows are entirely within the locked 100 and only 11 of those are long.
+It was used as broad rule-generated grammar supervision, never described as genuine
+ASL. `slt_dialogue_dataset.csv` (SHA-256
+`87f5287615b47f59af4157137316c91457ba2fb7424e4d32fe77438372b74f0b`)
+contains 11,245 rows but only 35 unique pairs, 11,210 duplicates, and no five-gloss
+examples; it was audited and excluded. Reviewed templates override conflicting CSV
+targets. An additional 143 deterministic, locked-100 compositions of 5–12 glosses were
+split by exact sequence into 82 train, 35 validation, and 26 test rows. The final
+16,003-sequence manifest has zero exact-gloss overlap across splits. Weighted training
+contains 14,599 rows; the held validation/test sets contain 1,578/1,596 sequences.
+
+The promoted epoch-1 checkpoint scored 93.98% normalized exact overall on validation,
+95.76% on validation sequences of 5+ glosses, and 100% on the 35 controlled long rows.
+On the one-time synthetic test it scored 93.36% overall, 94.0% on the locked-100 slice,
+91.90% across all 210 sequences of 5+ glosses, and 100% across the 26 unseen controlled
+locked-100 long combinations. The two non-exact locked-100 long outputs differed only
+by natural article choice (`to school` versus the CSV's `to the school`). Other
+out-of-vocabulary synthetic failures include genuine semantic/fingerspelling errors,
+so this remains a bounded synthetic/reviewed renderer, not a general ASL translator or
+linguistic ground truth. Full manifests, predictions, metrics, hashes, and the passed
+predeclared promotion gate are in
+`artifacts/reports/stage3_v17_t5_efficient_tiny_locked100_v1/`.
+
+The live prototype now defaults FINISH to this local tiny checkpoint, keeps exact
+reviewed templates as the fastest safe route, and uses literal rendering if model
+loading/generation fails. `--naturalizer ollama` retains the previous 1B comparison;
+`--naturalizer literal` disables learned generation. The tiny model loads
+asynchronously. A real single nine-gloss benchmark reproduced its reference exactly
+and measured 137.96 ms median warm CPU generation versus 1,678.02 ms on MPS. MPS is
+therefore correct for training but wrong for token-by-token live decoding on this Mac;
+live Stage 3 defaults to CPU and leaves MPS/Core ML capacity to Stage 1. Sixteen focused
+live/data tests, both Python compile checks, CLI help, and `git diff --check` passed.
+
+## 2026-09-02 09:54 PST — 15.6M T5 is the lightweight naturalizer candidate, but needs in-domain tuning
+
+Three Hugging Face encoder-decoder candidates were pinned, cached outside the repo, and
+measured on the Mac using only existing reviewed Stage-3 templates and handcrafted
+in-vocabulary combinations. No Citizen validation/test data or new video data was
+accessed. `visheratin/t5-efficient-tiny-grammar-correction` at revision
+`a98f126664317cf2e68d33234c7072fdd6b289f3` is the clear deployment candidate: 15.58M
+parameters, 62.3 MB FP32 weights, and 32.16 ms median greedy inference over the first
+14-phrase probe. On all 36 reviewed Stage-3 templates it reproduced 23/36 references
+after case/punctuation normalization at 43.73 ms median. It handled `I NEED WATER`,
+`I FEEL SICK`, `HELLO HOW YOU`, and `WHERE HOSPITAL`, but also hallucinated content
+(`HELLO` -> `Hello everyone!`), changed intent (`GOODBYE` -> `Good night!`), and missed
+important ASL order/negation/question cases. It is therefore not safe to replace the
+current naturalizer unchanged.
+
+`HamdanXI/t5_small_aslg_pc12` revision
+`b35e3323732c7244236189674bdc0728f37b31e8` is directly trained gloss-to-English and
+has 60.5M parameters/242 MB weights, but measured 115.78 ms median and failed badly on
+unseen combinations (`FATHER SICK` and `MOTHER FEEL GOOD`). Its reported high in-domain
+BLEU is not persuasive for this project because ASLG-PC12 was created by rule-transforming
+Project Gutenberg English rather than from genuine ASL, and published work explicitly
+warns that it is unreliable for SLT. The model card says Apache-2.0 while ASLG-PC12 is
+reported as CC BY-NC 4.0, so downstream licensing also needs care.
+
+`jbochi/coedit-small` revision `6ce9822b4ff6e4af86b70f979c890e9e41f04366`
+has 77M parameters/approximately 296 MB cached and measured 63.48 ms median after its
+first warm call. It fixes ordinary English but frequently leaves gloss order unnatural
+or duplicates meaning, so it is a weaker starting point than T5-efficient-tiny for this
+bounded task. The three research downloads currently occupy approximately 789 MB in the
+user Hugging Face cache; they were not added to git or the repository and have not been
+deleted.
+
+Recommended next experiment: retain exact reviewed templates as the instantaneous
+fail-closed path, then fine-tune the 15.58M T5-efficient-tiny checkpoint on genuinely
+reviewed, locked-100 gloss-to-English pairs and evaluate on held-out phrase combinations.
+Do not train on its own generated sentences or claim that generic grammar correction is
+ASL translation. A successful checkpoint can be converted to Core ML or quantized ONNX;
+the base architecture is about 31 MB FP16, 15 MB INT8, or 7.5 MB INT4 before packaging.
+This is substantially smaller and faster than the 1B Ollama model, but accuracy—not raw
+latency—is the gate for replacing it.
+
+## 2026-09-02 09:46 PST — explicit RESET/FINISH utterance UX and local Ollama rephrasing implemented
+
+The live laptop prototype now implements the preferred endpoint-delimited path:
+isolated Stage-1 predictions accumulate in a visible bottom gloss buffer; `RESET`/`R`
+clears all visible utterance state without deleting predictions, video, or events; and
+`FINISH`/`F` waits for an in-flight classifier, closes a genuinely active sign if one
+exists, consumes the accepted non-UNKNOWN gloss buffer, and sends that one utterance to
+the installed `llama3.2:1b`. A reset epoch prevents an old classifier or Ollama result
+from reappearing or speaking after RESET, although the result remains in the audit log.
+This is still pause/endpoint-delimited Stage 1 plus text rendering, not continuous
+recognition and not a replacement accuracy claim for Stage 2.
+
+Ollama uses the local `/api/generate` endpoint on a separate single-worker queue and is
+warmed asynchronously with a 30-minute keep-alive. The prompt requests one short
+meaning-preserving sentence and JSON containing the exact input gloss audit. The result
+is accepted only when `used_glosses` exactly matches the input sequence and the sentence
+is nonempty/bounded; API, JSON, or gloss-audit failure uses the existing reviewed
+Stage-3 template when available and otherwise literal gloss-preserving English. This
+guard detects dropped/reordered/replaced glosses but cannot prove that arbitrary natural
+language is semantically faithful, so all prompt/response/fallback evidence is retained
+and LLM output must not be treated as linguistic ground truth.
+
+Native macOS speech is now queued rather than stop/restarted: each accepted gloss is
+spoken after its HUD update and the finished sentence is queued behind those glosses.
+The finished gloss sequence remains visible while its final sentence is displayed or
+spoken. `history.json` format version 2 records predictions across resets, buffer/display
+epochs, reset/finish events, raw utterance glosses, prompt, raw model response, fallback
+decision, model latency, final sentence, and speech queue/start times. The low-resolution
+session video behavior is unchanged.
+
+A real local `llama3.2:1b` integration probe returned `I feel sick.` for
+`[I, FEEL, SICK]` with an exact gloss audit. Cold asynchronous warm-up was 5.11 seconds
+and the subsequent generation was 2.47 seconds on this Mac; that generation is outside
+the camera/extractor thread. Eleven focused live-script tests pass, including control
+hit-testing and accepted/rejected Ollama audits. A no-display/no-speech/no-Ollama replay
+of a quarantined Citizen training clip completed end to end and wrote the version-2
+history/video; its rejected WHAT prediction is smoke evidence only, not accuracy
+evidence. No Citizen validation or sealed test data was accessed in this change.
+
+## 2026-09-02 09:20 PST — live SICK/FATHER confusion is a one-hand variant and local coverage gap
+
+The latest live session `20260902_090932_943567` contains 47 predictions, including a
+long user-described SICK/FATHER/MOTHER/FEEL comparison sequence. Exact intended labels
+were not stored per event, so the session must not be silently relabeled for training.
+The observed outputs nevertheless form a coherent learned confusion: SICK, FATHER,
+WHY, KNOW, and THINK repeatedly occupy the top candidates. One early attempt was
+accepted as SICK; later attempts variously put SICK first but reject it, or rank FATHER
+or WHY above it. Hand/face coverage is generally present and the cascade calls the
+unified fallback on the ambiguous clips, so this is not merely a missing-hand or
+boundary failure.
+
+The training-cache audit explains the domain failure. Current Citizen train/validation
+support for SICK, FATHER, MOTHER, and FEEL is respectively 14/4, 14/3, 14/3, and 15/4,
+and the unified head gets all fourteen focused Citizen validation clips correct.
+SemLex train/validation support is 23/18, 10/6, 14/6, and 16/12, with only one SICK
+validation error. In contrast, the local cache has **zero SICK** train or validation
+examples but 85/18 FATHER, 135/26 MOTHER, and 153/27 FEEL. Moreover, 92.9% of Citizen
+and 92.0% of SemLex SICK landmark archives show both hands, whereas the user's SICK is
+the one-handed reduction and the FATHER/MOTHER/FEEL training examples are overwhelmingly
+one-handed. This is a domain/lexical-reduction coverage gap, not a class-index mismatch.
+
+Three already-downloaded PopSign SICK audit clips are genuinely one-handed. The
+landmark primary predicts two as SICK with scores 0.829 and 0.889 and misses one as
+SLEEP at 0.268. They are useful reviewed supplement candidates, but three clips alone
+are not enough for durable adaptation and do not change PopSign's non-primary status.
+The current Citizen-only mouth and lower-face teachers are also not safe fixes for this
+set: mouth validation is SICK 1/4, FATHER 2/3, MOTHER 3/3, FEEL 1/4; lower-face is
+SICK 0/4, FATHER 2/3, MOTHER 1/3, FEEL 1/4. Do not activate them on this confusion
+without retraining and a focused gate.
+
+The live cascade itself demonstrates the intended UX advantage but also a transfer
+gap. Across 44 cascade predictions, 28 (63.6%) invoked the unified fallback versus
+11.4% on Citizen validation. Primary-only median post-clip work was 21.75 ms, fallback
+median was 276.65 ms, and actual within-clip processing cadence was 14.69 FPS median.
+The preferred prototype architecture is therefore pause/endpoint-delimited Stage 1 ->
+token accumulation -> explicit FINISH -> Stage 3/speech, with Stage 2 retained as an
+optional research/continuous-sign path rather than the default UX. This remains a
+controlled-signing interface: without separable endpoints it cannot decode fully
+coarticulated continuous signing.
+
+Retraining is warranted, beginning with reviewed one-handed SICK plus balanced hard
+negatives FATHER, MOTHER, FEEL, WHY, KNOW, and THINK, while retaining two-handed SICK.
+Handshape and hand-to-face location are the primary signal. Detailed Apple Vision lip/
+face motion should be a separate supplementary expert, promoted only if it improves the
+focused confusion gate without reducing all-class signer-disjoint validation. The
+current landmark augmentation mirrors, rotates, scales, warps time, and drops a few
+random nodes, but it never models the complete one-hand SICK reduction. A targeted
+label-preserving augmentation can use the existing two-handed SICK clips: retain the
+hand closest to the face and mask the lower/stomach hand on only a subset of repeats,
+while keeping the unmodified two-hand form in training. This provides substantially
+more one-hand evidence than the three real PopSign candidates without fabricating
+handshape or motion. Before
+using new live captures for supervision, the collector must save intended gloss, exact
+v17 tensors, hand crops, detailed lip landmarks, and event boundaries; the current
+low-resolution session MP4 is reference evidence, not safe training input. Full numeric
+evidence is recorded in
+`artifacts/reports/live_isolated_v17_sick_confusion_audit_v1/report.json`. No sealed
+test split was accessed.
+
+## 2026-09-02 09:05 PST — default/cascade live A/B mode added as clickable controls
+
+The laptop isolated-sign UI now exposes two clickable controls without replacing the
+default. `DEFAULT` retains the existing unified-first hybrid. `CASCADE` runs the
+13.29-MiB `Stage1OrientationV17` landmark model first and invokes the unified
+landmark+hand model only when the primary softmax score is below the validation-selected
+0.70 threshold. Existing targeted GOOD/THANKYOU real-pixel visual reranking remains
+available, as does the YOU/NEED landmark reranker after a unified fallback. The selected
+mode is snapshotted at classification submission, so clicking during an in-flight
+classification safely changes the next sign. `--mode cascade` starts directly in the
+experimental mode, while the ordinary command still starts in `hybrid`/`DEFAULT`.
+
+The cascade avoids hand-crop extraction and MobileCLIP2 encoding on confident primary
+clips rather than merely running both models and choosing afterward. A real saved
+Citizen validation THANKYOU replay produced the correct accepted gloss with primary
+score 0.9039, no unified fallback, zero hand-image encoding, and the expected targeted
+GOOD/THANKYOU visual reranker. Forcing the threshold to 1.0 on the same clip exercised
+the fallback and remained correct, with `cascade_fallback_used=true` and 219.34 ms of
+hand-image encoding. The ordinary-threshold and forced-fallback histories are under
+`artifacts/reports/live_isolated_v17_cascade_smoke/20260902_090447_087648/` and
+`artifacts/reports/live_isolated_v17_cascade_smoke/20260902_090521_494952/`.
+A second ordinary-threshold Citizen validation replay recognized HELLO correctly with
+primary score 0.9129, no hand or visual fallback, 16.23 ms classifier work, and 25.38 ms
+total post-clip processing. Its history is under
+`artifacts/reports/live_isolated_v17_cascade_smoke/20260902_090730_513829/`. These
+single-clip timings are implementation smoke evidence, not an end-to-end live latency
+distribution or accuracy estimate.
+
+MediaPipe Face Mesh was not added. Apple Vision already exposes fuller outer/inner-lip
+regions, but the locked v17 schema intentionally samples four mouth anchors among its
+15 face nodes. Adding more Apple or MediaPipe points to the classifier would change the
+input schema and require training a new face-motion branch; untrained extra points do
+not improve accuracy. For the present prototype, every-frame Apple lip anchors provide
+continuous non-RGB tracking/display while the already-trained genuine mouth/lower-face
+pixel teachers provide targeted supplementary evidence. The previously mentioned
+"fresh signer-disjoint" set means only a small untouched portrait laptop-camera
+transfer gate, not another large training collection; the existing signer-disjoint
+corpora remain the basis for model fitting and offline validation.
+Eight live-prototype tests plus all seventeen extractor tests pass (25 total), including
+button hit-testing. Both cascade primary-only and forced-fallback saved-video paths pass;
+Python compilation, report JSON parsing, CLI help, and `git diff --check` pass.
+
+## 2026-09-02 08:56 PST — cascade measured; continuous lip landmarks enabled without changing Stage 1 inputs
+
+A Citizen validation-only cascade study measured the lightweight landmark/orientation
+model at 362/378 (95.77%) and the unified landmark+hand model at 364/378 (96.30%). A
+landmark-primary score threshold of 0.70 invoked the unified fallback for 43/378 clips
+(11.38%) and matched the unified model's 364/378 result; the existing targeted
+GOOD/THANKYOU visual reranker raised the simulated result to 366/378 (96.83%). The
+two-model oracle ceiling was 367/378 (97.09%). The threshold was selected on the same
+validation split and some primary errors are high-confidence, so the cascade was not
+made the default. It first needs a fresh portrait, signer-disjoint development gate.
+No Citizen test or other sealed split was accessed.
+
+An extraction benchmark on 90 frames of one Citizen validation video, with a
+same-aspect maximum side of 720 pixels and body every eight frames, measured hands plus
+sparse face at 8.06 ms median / 22.60 ms p90 and hands plus face every frame at 18.44 ms
+median / 26.70 ms p90. The latter stays below the 33.33 ms per-frame 30-FPS budget on
+this Mac; it is not an iPhone or sustained-thermal claim.
+
+The live prototype now requests genuine face landmarks on every processed frame, so
+lip movement remains continuously visible without requiring RGB display. A new
+`face_for_features` observation flag keeps only every eighth face sample in Stage 1's
+landmark tensor, preserving the sparse training-time input contract while allowing the
+UI and quality tracking to use all intervening face/lip observations. Real RGB remains
+available only to the targeted visual tie-break when invoked. The measurement and
+decision record is
+`artifacts/reports/live_isolated_v17_fast_cascade_validation_v1/report.json`.
+Seven live-prototype tests plus all seventeen v17 extractor tests pass (24 total),
+including the new regression test that every detected face can reach display while
+only scheduled faces reach Stage 1. Python compilation and `git diff --check` pass.
+
+## 2026-09-02 08:47 PST — reel architecture reviewed; fast cascade recommended, not implemented
+
+The referenced Instagram reel `DXJ0G8ADPc1` publicly describes MediaPipe tracking 21
+points per hand and 468 face points, sign recognition/token accumulation, a local LLM
+for emotional/contextual English rewriting, and ElevenLabs speech. It publishes no
+vocabulary size, signer-disjoint split, held-out recognition accuracy, WER, end-to-end
+latency, or sustained-device measurements. Its apparent demo accuracy/speed must not be
+treated as benchmark evidence; it may be a small scripted vocabulary and signer-specific
+demonstration. The LLM and speech layers do not improve the upstream gloss recognizer.
+
+The comparable prototype does not require replacing v17. The recommended next accuracy/
+speed experiment is a cascade: `Stage1OrientationV17` landmark Core ML as the immediate
+primary, followed only for low-score/low-margin or predeclared hard-confusion cases by
+the unified hand-RGB model and targeted face/landmark specialists. The existing primary
+package is 13.29 MiB, has 95.77% Citizen validation top-1, exact 378/378 Core ML/PyTorch
+top-1 parity, and a recorded 16.31 ms median / 21.67 ms p90 classifier-only latency on
+this Mac. The unified student has 96.30% Citizen validation top-1 but adds the 43 MiB
+MobileCLIP image encoder and per-crop work. A new local probe observed 8.68 ms median /
+12.94 ms p90 for the orientation package, but the canonical recorded benchmark remains
+the reported figure. Neither figure includes camera extraction, boundary time, or
+iPhone thermals. No sealed test split was accessed.
+
+A separate explicit FINISH gesture is viable later as a control channel: it commits the
+accumulated gloss buffer to Stage 3/LLM and speech, and should not be part of the 100
+lexical outputs. It only marks utterance end; it does not segment adjacent signs inside
+a continuous phrase. Without pauses or per-sign commit gestures, Stage 2/online temporal
+segmentation is still required. Per the user's priority, no finish gesture, LLM, cloud
+voice, or cascade code was added in this discussion turn; recognition accuracy and
+camera-to-gloss latency remain the next gate.
+
+## 2026-09-02 08:39 PST — YOU/NEED specialist, live scheduling, synchronized speech
+
+The newest live history `20260902_082833_471330` contains seven accepted events. Two
+intended YOU attempts were strongly classified NEED with YOU second (NEED 0.960 versus
+YOU 0.007, then NEED 0.935 versus YOU 0.022), while another performance was strongly
+YOU (0.953 versus NEED 0.007). The recorded frames show the difficult domain case: the
+straight index points nearly into the camera, so 2-D foreshortening resembles NEED's
+bent-index silhouette. This is not a label-map error.
+
+That session also revealed the nominal 30-FPS loop was only observing about 12-13 FPS.
+When the loop was even slightly late, its deadline advanced a full interval from the
+current time and systematically skipped the next camera frame. The deadline now catches
+up without adding that extra interval. Apple Vision is also paused while the post-clip
+Core ML classifier owns the hardware; previously concurrent Vision submissions caused
+hand-encoder latency to spike from the roughly 0.2-0.4-second offline range to 1.2-2.3
+seconds, with total live classification reaching 2.65 seconds. New histories record
+the actually observed processing FPS. A fresh interactive session is still required to
+measure sustained live FPS and confirm the contention fix on the camera.
+
+Default hybrid inference now invokes the existing selected landmark-only Stage-1 model
+only when unified Stage 1's top two are exactly YOU and NEED, using it to rerank only
+that pair. This specialist is appropriate for the user's straight-index distinction and
+keeps all other classes unchanged. The landmark checkpoint and the final targeted rule
+both retain 4/4 YOU and 3/3 NEED on Citizen validation. This seven-clip check is a small
+development gate, not a new accuracy estimate; no sealed test data was accessed. A raw
+YOU saved-video smoke remains correct and accepted at 29.289 observed FPS with 351.9 ms
+post-clip classification.
+
+Speech no longer launches a new `say` process before the HUD is painted. One native
+`NSSpeechSynthesizer` is retained in memory; the accepted word is drawn, `waitKey`
+commits that frame, and the same result then starts speech. Any older utterance is
+stopped rather than queued. The main overlay now draws black hand/body bones and white
+hand/body/face landmark points. Six live-prototype tests, including an exact pixel-color
+rendering check, plus all seventeen extractor tests pass (23 total); Python compilation,
+the native speech API probe, and `git diff --check` also pass.
+
+## 2026-09-02 08:26 PST — live/Stage-1 mismatch fixed; fast-first hybrid gated
+
+The user's first live sessions exposed systematic `THANKYOU` predictions for intended
+GOOD/HUNGRY and a head scratch accepted as HOME. The principal implementation mismatch
+was concrete: body/face requests were scheduled on the global camera frame counter and
+then filtered a second time by each clip's unrelated local frame index. Seven of eight
+recorded live clips consequently had zero shoulder coverage, while only 19.0% of 378
+Citizen validation archives have zero shoulder coverage. The second filter is removed;
+any globally scheduled auxiliary detection is retained. A regression test now proves a
+body frame at a nonzero clip offset survives and selects shoulder-width normalization.
+
+Live defaults now restore the training-side temporal/image contract where practical:
+30 processed FPS, fixed body/face interval 8, 1280-pixel real RGB crop frames, and a
+same-aspect 720-pixel Vision detection copy. Face detection is no longer run on every
+frame. Clips are trimmed to their moving interval before the 32-frame resample, and the
+neutral close delay is 0.20 seconds instead of 0.55 seconds. The 720-pixel detector was
+retained because replaying the 640-pixel reference recordings lost the hand detections;
+speed is obtained from sparse auxiliary requests and fast-first classification, not by
+sacrificing the primary hand signal.
+
+Default mode is now `hybrid`: selected unified landmark+hand Core ML runs first. Frozen
+real-pixel mouth/lower-face teachers run only when the fast model's top two are exactly
+GOOD and THANKYOU, and only rerank that pair. HUNGRY and all other classes remain
+hand/body-led. On the existing Citizen validation logits, the unified model got 9/11
+GOOD/THANKYOU/HUNGRY clips correct (GOOD 4/4, THANKYOU 1/3, HUNGRY 4/4); the targeted
+tie-break corrected both THANKYOU errors while retaining GOOD 4/4 and HUNGRY 4/4.
+This 11-clip development check is not a new accuracy estimate. No sealed test data was
+accessed.
+
+Protective prototype rejection is active by default: score 0.25, margin 0.08, maximum
+2.5-second motion interval, and an explicit insufficient-hand-evidence rejection. A
+rejected result is `UNKNOWN` and is never spoken. Pair-reranked clips use combined fast
+GOOD+THANKYOU evidence against the third class for this gate, rather than applying a
+threshold across incompatible logit scales. This remains a heuristic closed-set gate;
+reliable open-set rejection still requires independently held-out nonsign/background
+data and likely an explicit OTHER/no-sign training class.
+
+Fresh saved-video smoke results at the live 720/1280 settings are correct and accepted:
+GOOD in 660.4 ms, THANKYOU in 752.2 ms, and HUNGRY in 271.2 ms after clip close. With
+the 0.20-second neutral close, these correspond to approximately 0.86, 0.95, and 0.47
+seconds before speech launch on this Mac, excluding ordinary camera scheduling jitter.
+The user's saved head-scratch reference is now `UNKNOWN` for insufficient hand evidence
+instead of HOME. The low-resolution 640-pixel session recordings are references rather
+than exact extractor replays; the user's three earlier ambiguous sign segments also lost
+hand evidence when re-extracted from those recordings, so a fresh live signer retest is
+still required before claiming the reported mistakes are solved.
+
+`test/test_live_isolated_v17.py` now also covers motion trimming and global/local
+auxiliary scheduling. Its five tests plus all seventeen focused v17 extractor tests pass
+(22 total); Python compilation, CLI help, and `git diff --check` pass. The usage guide
+documents hybrid behavior, rejection, timing, and the extraction contract.
+
+## 2026-09-02 07:56 PST — laptop live isolated 100-gloss prototype implemented and saved-video gated
+
+`scripts/live_isolated_v17.py` is now the runnable laptop prototype. It uses the
+locked checkpoint label map, built-in/OpenCV camera input, Apple Vision hands+face on
+each processed frame and body at a time-adjusted auxiliary interval, one shared
+detection pass for segmentation/landmarks/real-pixel crops, a neutral-return plus
+low-motion automatic boundary, top-three model scores and margin, hand/face/motion
+quality, boundary progress, accepted history, nonblocking macOS `say`, and a
+single-worker classification queue. It saves an atomic `history.json` after every
+prediction and a 640-pixel-wide 15-FPS MP4 without aspect distortion. Live frame
+history is bounded to five seconds so long camera sessions do not retain unbounded
+full-resolution frames. Saved `--video` development files are intentionally treated
+as one isolated clip and classified once at EOF; only the webcam path uses automatic
+segmentation.
+
+The default `--mode lip-aware` reproduces the frozen per-sample-zscore four-stream
+teacher weights: 0.30 landmark, 0.15 mouth, 0.35 lower face, and 0.20 hand. Both
+visual views use their actual face-aligned pixels. Their identical frozen Auto-AVSR
+frontend is shared in memory and receives mouth+lower-face as one two-view batch;
+this retained the exact `HELLO` output scores while reducing the post-clip latency
+from 1,140.2 ms to 736.8 ms on the same run setup. `--mode fast` uses the selected
+unified landmark+hand Core ML model and therefore exposes only the four lip
+landmarks, not full visual lip reading. Core ML/MPS lazy compilation is paid before
+the camera opens. The initial un-warmed 9.07-second measurement is not representative
+and is retained only as an artifact; all reported runtime measurements below are
+after explicit warm-up.
+
+Two Citizen signer-disjoint **validation** videos passed the saved-video gate in both
+architectures. Final representative results are: lip-aware `HELLO -> HELLO`, score
+0.5801, margin 0.5141, mouth/lower validity 100%, 736.8 ms after clip close; lip-aware
+`THANKYOU -> THANKYOU`, score 0.5460, margin 0.5164, both visual views 100% valid,
+755.6 ms before the exact batching optimization; fast `HELLO -> HELLO`, score 0.8934,
+margin 0.8893, 375.4 ms; and fast `THANKYOU -> THANKYOU`, score 0.8329, margin
+0.8180, 177.4 ms. These are pipeline smoke cases, not a new accuracy estimate. The
+low-resolution reference output was probed as 640x480, 15 FPS, 25 frames / 1.667 s
+for the final `HELLO` run. Final lip-aware evidence is under
+`artifacts/reports/live_isolated_v17_lip_validation/20260902_075549_892643/`; the
+latest fast evidence is under
+`artifacts/reports/live_isolated_v17_fast_validation/20260902_075436_955044/` for
+`HELLO` and `20260902_075342_952405/` for `THANKYOU`.
+
+`test/test_live_isolated_v17.py` covers motion-to-rest emission, EOF fallback, and
+the critical rule that a static hold away from the learned neutral pose must not end
+a sign. The three new tests plus all seventeen focused v17 extractor tests pass (20
+total); Python compilation and targeted `git diff --check` pass. Usage and explicit
+scope/score caveats are in `artifacts/reports/live_isolated_v17/README.md`. The
+MacBook camera index 0 opens successfully and returned one 1920x1080 frame. The live
+UI has not been signer-tested in this noninteractive run, so the next gate is a user
+session with neutral -> one normal-speed sign -> neutral.
+No Citizen test, other sealed split, Stage 2, or naturalization model was accessed.
+
+Research basis: Apple's live Vision examples support per-frame pixel-buffer requests
+with explicit prediction backpressure; Apple also provides sequence request handling
+and live face tracking. The 2024 EMNLP online CSLR work supports isolated-dictionary
+recognizers as an online baseline but identifies the offline-CTC/short-window mismatch
+that prevents calling this continuous recognition. Manual/nonmanual fusion evidence
+supports retaining mouth/face input. Raw neural softmax is not generally calibrated,
+so the HUD and JSON deliberately call these values `model_score`, not confidence.
+Primary references: Apple Vision hand pose, live object recognition, gesture sample,
+and face tracking documentation; Sincan et al., EMNLP 2024, *Towards Online
+Continuous Sign Language Recognition and Translation*; Gueuwou et al., LREC 2020,
+*Sign Language Recognition Using Neural Network*; and Guo et al., ICML 2017,
+*On Calibration of Modern Neural Networks*.
+
+## 2026-09-02 07:42 PST — live 100-gloss prototype architecture and extractor timing frozen
+
+The requested laptop prototype will be an isolated-sign Stage-1 diagnostic, not a
+Stage-2 or continuous-translation claim. It will use the locked 100-label order and
+Apple Vision, automatic motion/rest boundaries, top-three uncalibrated model scores,
+hand/face input quality, boundary progress, accepted history, optional macOS speech,
+and timestamped low-resolution session video plus JSON. The user accepts an explicit
+neutral/rest pause for this prototype only; the later no-pause path still requires a
+learned or sliding-window online boundary/decoder design.
+
+The implementation decision is one Apple Vision pass per processed frame shared by
+segmentation, landmark construction, and real-pixel hand/mouth crops. This avoids
+rerunning hand and face detection once per modality at clip close. On 24 development
+frames from a Citizen **validation** `HELLO` clip downscaled without distortion to a
+720-pixel maximum side, the reusable Vision detector measured: hands-only 7.11 ms
+median / 10.58 ms p90, hands+face 17.38 ms median / 38.66 ms p90, and hands+face with
+body every fourth frame 19.84 ms median / 26.31 ms p90. The small sample is an
+extractor feasibility measurement on this Mac, not sustained latency or camera
+accuracy evidence. No Citizen test or other sealed split was accessed.
+
+Two modes are planned for an honest latency/accuracy comparison. The default
+`lip-aware` mode will reproduce the frozen four-stream 0.30 landmark / 0.15 mouth /
+0.35 lower-face / 0.20 hand teacher, so mouth pixels genuinely affect the decision.
+The optional `fast` mode will use the selected unified landmark+hand Core ML model;
+its four lip landmarks remain present but it must not be described as full lip
+reading. Both modes reuse the existing Core ML MobileCLIP2 hand encoder. Raw softmax
+values will be labeled **model scores**, not calibrated confidence.
+
+## 2026-09-02 07:24 PST — historical alphabet live loop located; reuse the interaction pattern, not its model contract
+
+The requested pre-Stage-2 live alphabet implementation is in commit `4fd5f44`
+(`007 - cursor 68%`, 2026-02-22) at `src/main_inference_CUDA.py`; commit `46ece22`
+retains the same inference file while changing only the trainer. Neither commit
+contains `src/train_stage2.py`. The live path is a 26-class, one-hand MediaPipe
+Stage-1 classifier: it buffers at least ten webcam frames, resamples to 32 frames,
+normalizes around the wrist, derives XYZ/velocity/acceleration features, applies a
+0.85 softmax threshold plus four agreeing predictions, and displays the top label,
+confidence bar, and accumulated held-sign sequence. A later revision in commit
+`a4839c5` adds motion gating, cooldown, lock progress, top-three scores, FPS, and
+editing controls; that same commit also introduces a Stage-2 trainer, but its live
+camera entry point still calls Stage 1 only.
+
+The matching local alphabet asset still exists at
+`artifacts/model_assets/weights/SLT_Stage1_Results/best_model.pth`: SHA-256
+`829c639c8cf3e4bde9b8bf522eaad021faccd15be03d58b5cdf5670004580401`, 26 labels
+`A` through `Z`, 9 input channels, `d_model=256`, four transformer layers, epoch 35,
+and a recorded 100% validation score. That accuracy is not independent evidence: the
+historical trainer performs a stratified random sample split rather than a
+signer-disjoint split, and the newer alphabet audit already warns that signer/session
+independence is unknown. The model is also incompatible with v17 inputs: historical
+features are one MediaPipe hand shaped `[32,21,9]`, whereas v17 uses Apple Vision,
+two-hand/face/body landmarks shaped `[32,61,5]` plus three hand-image embeddings.
+The surviving checkpoint was strictly loaded against the exact `46ece22` architecture
+without missing or unexpected keys; a zero-input smoke produced finite `[1,26]`
+logits from 3,633,926 parameters. This proves artifact/code compatibility only, not
+recognition accuracy or live-camera generalization.
+
+The old design is therefore useful as a live diagnostic UX and control-loop
+reference, not as a replacement for Stage 2 and not as a checkpoint to connect to
+the current mobile pipeline. Its steady-hand gate, buffer reset, and cooldown work
+like a deliberate fingerspelling keyboard; using those as conversational sign
+boundaries would suppress moving signs and discard natural coarticulation. The
+current v17 mobile recognizer instead processes completed recorded files in
+nonoverlapping 32-frame windows, emits 101-way CTC logits, and exposes no confidence
+in the frozen Stage-2-to-Stage-3 contract. A true live path still needs a streaming
+window adapter and provisional CTC state.
+
+The separate Flutter app directory is not itself a Git repository. Its current camera
+UI calls `startVideoRecording`, then `stopVideoRecording`, and only afterward invokes
+the native v17 pipeline on the completed file. It does not call the camera plugin's
+image-stream API. Therefore adding old-style confidence feedback is not merely a UI
+toggle: frames, orientation, Apple Vision tracking, crops, embeddings, CTC state, and
+backpressure must be connected as a new streaming input path.
+
+Recommended consultation boundary: first resurrect the old HUD behavior as a
+separate current-v17 Stage-1 live diagnostic (top-k scores, hand/input quality,
+rolling-window state) to isolate camera/extractor/domain problems. Then add a distinct
+Stage-2 streaming mode that first preserves the trained motion-anchored,
+nonoverlapping 32-frame window contract, retains CTC blank/prefix state across
+successive runs, shows provisional token posterior/margin outside the frozen
+downstream contract, and commits a gloss only after blank-delimited hysteresis.
+Overlapping/short-stride windows should be a later measured experiment because the
+current head was selected on nonoverlapping windows. Do not let Stage-1 confidence
+choose conversational sign boundaries.
+No historical file was restored, no runtime/model/app code changed, and no data split
+or test set was accessed in this inspection.
+
+## 2026-09-02 07:17 PST — standalone SignWriting pilot runs locally but fails the first semantic gate
+
+The public English-to-ASL SignWriting checkpoint was evaluated by itself before any
+pose/video work. `scripts/evaluate_signwriting_symbolic_pilot_v17.py` runs the official
+`signwriting-translation` code in an isolated Python 3.11 environment, renders Formal
+SignWriting locally, and compares three symbolic strategies: natural-English input,
+project-gloss-order input, and concatenation of separately generated isolated forms.
+It does not generate landmarks, pose, or video.
+
+The local non-split cache is
+`data/local/signwriting_symbolic_pilot_v1/hf_cache/` (about 463 MB). The forward model
+is `sign/sockeye-text-to-factored-signwriting` revision
+`3a45c3bedc0c6ee08fcb3e87b1aaee602dfa06d9`, licensed CC BY-NC 4.0. The separate
+diagnostic reverse model is `sign/sockeye-signwriting-to-text` revision
+`8f314871ee42ad68f9e01ab23e818d8aaa695665`, whose model card says MIT. The existing
+project venv was not modified; the official package needs Python 3.10+ whereas the
+project venv is Python 3.9.6.
+
+The review artifact is `artifacts/reports/signwriting_symbolic_pilot_v1/index.html`,
+with raw FSW, local renders, and machine-readable results in `report.json`. All five
+natural phrase outputs and all twelve isolated lexical outputs are structurally
+parseable FSW. Syntax alone is insufficient: none of the five natural phrase outputs
+strictly round-trips to its source text through the separate reverse checkpoint. The
+diagnostics are: `Good morning -> daughter`, `Hello, how are you? -> you`, `My name ->
+synagogues`, `Thank you friend -> face the punctuation`, and `I will go to school
+tomorrow -> day before yesterday`. Only 7/12 isolated probes strictly round-trip.
+Gloss-order prompting and concatenated isolated outputs remain parseable but do not
+repair phrase semantics under the same diagnostic. The reverse model is not ground
+truth and these results still require a fluent ASL signer who reads SignWriting, but
+the severe omissions and unrelated returns are enough to fail an unattended
+automation gate.
+
+Decision: keep SignWriting as a potentially useful representation, but hold this
+public checkpoint before connecting either Rylo or a local pose renderer. The next
+safe comparison is native review of the report followed by a dictionary-grounded or
+locally fine-tuned symbolic planner using only verified entries for the 100-sign
+vocabulary. No pilot output was added to Stage-2 training/validation/test, no split or
+sealed data was accessed, and no pose generation was resumed.
+
+## 2026-09-02 06:59 PST — evaluate SignWriting as the reverse symbolic layer, not Stage-2 motion data
+
+The reverse-generation branch is paused for architecture discussion. Rylo's public
+design should be evaluated for reuse instead of rebuilding its language-production
+stack: spoken text -> normalized text/SignWriting -> pose -> skeleton/avatar. Public
+references are `https://github.com/sign/translate`,
+`https://github.com/sign-language-processing/signwriting-translation`, and
+`https://github.com/sign-language-processing/spoken-to-signed-translation`.
+
+SignWriting and SignBank+ are valid candidate datasets for a future reverse symbolic
+planner. They can supervise English/text -> ASL notation, expand lexical and
+phonological coverage, and provide explicit handshape, orientation, location,
+movement, and nonmanual constraints for a SignWriting-conditioned pose generator.
+They are not continuous-landmark datasets: notation rows do not contain measured
+frame timing, signer identity/style, natural inter-sign coarticulation, camera/view
+variation, detector missingness, or genuine phrase video. Therefore they must not be
+counted as Stage-2 CTC training examples or used by themselves as proof that generated
+motion is human-correct.
+
+A motion generator would still require paired SignWriting + genuine pose/video (and
+preferably temporal alignment) or independently reviewed motion. Rylo's public
+gloss-to-pose baseline primarily performs lexicon lookup, cropping, concatenation,
+and smoothing; its output can be an external renderer/baseline but not recognition
+ground truth. Keep three data roles separate: genuine continuous phrase landmarks for
+Stage 2, SignWriting/text pairs for reverse language planning, and generated poses for
+native review only unless separately validated.
+
+No SignWriting data or model was downloaded or admitted to a split in this decision.
+The newly staged transition-safe coverage audit remains unrun, and no further reverse
+generation was started while this architecture is being discussed.
+
+## 2026-09-01 22:41 PST — genuine-entry fallback removes sampled jerk; full reverse demo passes
+
+All four v6 high-jerk failures originated at the join into the next genuine clip, not
+inside the learned transition. `synthesize_join` now tries the original boundary and,
+only if its local speed/acceleration/jerk gate fails, may skip at most the first one or
+two complete genuine entry frames. It never fabricates a frame, never changes hand
+participation, and does not use a longer crop merely to make a numerical gate pass.
+The composed right-hand lexical segment is reclassified after this preparation and
+must retain its exact Stage-1 gloss.
+
+The balanced 48-pair fast report is now
+`artifacts/reports/stage2_v17_grounded_transition_scalability_fast_v7/report.json`.
+All 48 boundaries pass motion, presence, hand-side, and bone gates. Overall 46/48
+(95.83%) pass after adding the exact post-preparation lexical-label gate; `HOT LESS`
+and `LEARN DAY` are rejected because P37's only complete-edge source is no longer
+classified as the intended right gloss. The prior 44/48 result therefore improved
+without hiding lexical damage.
+
+The reserved unbiased confirmation audit is
+`artifacts/reports/stage2_v17_grounded_transition_scalability_200_v2/report.json`:
+178/200 (89.0%) pass all required gates, versus 159/200 (79.5%) in the previous
+200-pair report. Motion alone passes 189/200 (94.5%); thirteen rows fail the new
+post-preparation Stage-1 label safeguard, with two overlapping motion failures. Only
+five of 200 accepted/rejected samples needed a one- or two-frame entry fallback. The
+one-to-two-hand stratum remains weakest at 46/56 (82.14%). This is evidence of a
+remaining source-clip/data-quality gap, not permission to trim 3–4 lexical frames.
+
+The grounded text renderer now retains every Citizen candidate clip per signer/gloss
+instead of silently overwriting all but the last. For each phrase it evaluates the
+primary exact candidate plus at most two one-clip substitutions per gloss, and
+`--allow-different-signers` now actually selects a same signer independently for each
+phrase rather than requiring every signer to cover the union of all requested words.
+Both source clips and post-join gloss segments must classify exactly. Local boundary
+motion, anatomy, bone, complete-hand, and hand-participation checks remain hard gates.
+The corpus-wide normalized-motion ratio is now a ranking diagnostic, matching the
+scalability audit, because isolated Citizen clips upsampled into a phrase have much
+lower high-order motion than the nine directly extracted 128-frame local phrases; it
+must not veto an otherwise exact and locally plausible boundary.
+
+The complete current reverse-path run is
+`artifacts/reports/stage2_v17_grounded_text_input_demo_v2/`. All five supported English
+inputs render successfully with exact source and composed gloss predictions and all
+hard machine gates: `GOOD MORNING` (P40), `HELLO HOW YOU` (P51), `MY NAME` (P52),
+`THANKYOU FRIEND` (P52), and `TOMORROW SCHOOL GO` (P31). Three pass the global motion
+diagnostic; `MY NAME` and `THANKYOU FRIEND` do not, which is explicitly recorded rather
+than hidden. The contact sheet was visually inspected and shows complete hands plus
+stable face/body rigs with correct one-/two-hand changes. Repaired outlier boundary
+frames are separately shown in
+`artifacts/reports/stage2_v17_grounded_transition_repaired_outlier_review_v1/contact_sheet.png`.
+
+`venv/bin/python -m unittest test.test_signing_voice_v17 -v` passes all 18 tests and
+`git diff --check` passes. Generated artifacts remain native-review-only and are not
+training, validation, or test data. No Citizen test or other sealed/test split was
+accessed.
+
+## 2026-09-01 22:19 PST — grounded joins now use complete real hand edges; fast gate reaches 44/48
+
+The shared grounded phrase path now separates Stage-1 recognition trimming from
+transition-only edge trimming. Stage 1 still receives the original observed isolated
+span. Immediately before joining, `trim_transition_span` removes partial-hand edge
+frames and retains the actual one-/two-hand participation. Transition stabilization
+then reconstructs a complete 21-node hand only for a side genuinely present in at
+least one neighboring sign; a side absent from both signs remains absent. This fixes
+the floating-point/partial-hand rendering defect without forcing every sign to use two
+hands. The face/body anatomy rig remains complete on every rendered frame.
+
+The timing path retains its learned duration except for a narrow kinematic guard: if
+the generated transition speed is below 0.25x the genuine neighboring-gloss p95, it
+tries shorter allowed spans and accepts a replacement only when speed, acceleration,
+and jerk all fall inside the existing 0.25x–4x gate. This changed `IMPORTANT WATER`
+from 12 to 11 transition frames without regressing an accepted pair.
+
+The same seeded 48-pair/four-stratum audit now passes 44/48 (91.67%), up from 40/48
+(83.33%):
+`artifacts/reports/stage2_v17_grounded_transition_scalability_fast_v6/report.json`.
+All presence, no-invented-hand, handless-frame, transition-only-node, and hand-bone
+gates pass on all 48. The four rejected high-jerk boundaries are `LISTEN EAT`,
+`SICK MY`, `SICK COLD`, and `TRY COLD`; testing every learned allowable duration
+(4–12 frames) found no duration that passed, so these must remain rejected rather
+than admitted as generated data. The earlier direct hand-completion trial failed the
+transition-only-node gate (6/48), and spherical/interior-time smoothing trials
+regressed the motion screen; neither trial is retained.
+
+Two native-review-only renders visually confirm the repaired structural behavior:
+`artifacts/reports/stage2_v17_grounded_text_input_visual_fix_v1/` renders
+two-handed `IMPORTANT` into one-handed `WATER`, while
+`artifacts/reports/stage2_v17_grounded_text_input_visual_one_hand_v1/` keeps
+`FIND THEY` one-handed throughout. Both reports pass boundary gates, preserve source
+and rig hand participation exactly, keep every active rig hand at 21 nodes, and keep
+face/body nodes complete. Contact sheets were visually inspected; native ASL motion
+review is still required. These artifacts remain ineligible for recognition training,
+validation, or testing.
+
+`venv/bin/python -m unittest test.test_signing_voice_v17 -v` passes all 17 tests, and
+`git diff --check` passes. No Citizen test split or other sealed/test split was
+accessed.
+
+## 2026-09-01 22:03 PST — 48-pair fast transition gate replaces blind batch rendering
+
+The scalability audit now uses seeded random sampling within each hand-participation
+stratum instead of lexicographically spaced rows. Its focused regression passes. A
+fast gate of 12 samples from each of the four observed one/two-hand transition
+patterns completed in approximately 12 seconds and passed 40/48 pairs (83.33%). The
+report is
+`artifacts/reports/stage2_v17_grounded_transition_scalability_fast_v1/report.json`.
+
+All eight failures were `transition_motion_orders_in_gloss_range`; two also failed the
+non-blocking global motion diagnostic. There were no missing-body, missing-hand,
+forced-second-hand, presence, or hand-bone failures. Pattern pass rates were 75.0%
+one-to-one hand, 83.33% one-to-two, 83.33% two-to-one, and 91.67% two-to-two. The
+failed ordered pairs were `FIND THEY`, `LIKE MY`, `LISTEN EAT`, `FATHER BAD`,
+`HE HUNGRY`, `ANGRY HOME`, `WHAT WATER`, and `MAKE READ`.
+
+Use this 48-pair numerical screen before rendering phrase batches. Render only
+accepted phrases; retain the unbiased 200-pair audit as a later confirmation gate.
+This shortens iteration but does not relax native-signer review or make generated
+artifacts eligible for training, validation, or testing. No sealed/test split was
+accessed.
+
+## 2026-09-01 21:57 PST — Rylo is useful architecture reference, not an authorized Stage-2 corpus
+
+The public Rylo Translate frontend and legacy gloss-to-pose pipeline are available at
+`https://github.com/sign/translate` and
+`https://github.com/sign-language-processing/spoken-to-signed-translation`. The live
+frontend is an Angular/Ionic PWA. For spoken-to-signed output it calls a hosted cloud
+function that returns a `.pose` sequence, while a separate hosted model translates
+text to SignWriting. A single normal service check of `How are you?` returned a
+549,536-byte `application/pose` artifact and a token/lemma-style `x-glosses` header;
+no Rylo artifact was copied into this repository or admitted to any dataset split.
+
+This does not provide natural continuous ASL ground truth. Rylo's own technology map
+marks fluent-pose synthesis as currently skipped/low quality, and the open baseline
+crops, concatenates, and filters isolated dictionary poses. Its current source also
+hides lowered-hand landmarks to avoid frozen floating hands. These are precisely the
+render/presence and synthetic-transition assumptions that must not teach the Stage-2
+recognizer. Hosted `.pose` outputs may be used only as qualitative external
+comparators, never as training, validation, or test labels.
+
+Two public data resources are separately downloadable: SignBank+ provides roughly
+2.03 million text/SignWriting rows under CC BY-NC 4.0, and its text-to-SignWriting
+Sockeye model is also CC BY-NC 4.0. They contain notation/text rather than continuous
+signer video, signer identities, or natural inter-sign motion, so they may help a
+future language/notation layer but cannot close the present Stage-2 transition gap.
+The open gloss-to-pose repository additionally bundles ASL fingerspelling pose clips,
+not a conversational phrase corpus.
+
+Rylo Dictionary is more interesting but not currently ingestible. Rylo states that
+Deaf experts contribute human-signed lexical videos, AI avatars anonymize/normalize
+them, a second annotator reviews each retarget, and the video/concept links are
+non-commercial-only. The site exposes no authorized bulk dataset export, and Rylo's
+general Terms prohibit automated scraping/downloading and using the site to build a
+similar or competing service. Do not scrape its signed media or enumerate its private
+API. Request a written research data/API license from `research@rylo.com`, including
+permission for model training, retention, redistribution of derived landmarks, and
+publication, before any acquisition. Even with permission, these are isolated lexical
+signs and must not be treated as natural phrase-transition evidence.
+
+## 2026-09-01 21:25 PST — natural-text input reaches the gated grounded renderer
+
+`active/v17/text_to_sign_phrase_catalog_v17.json` is the first explicit reverse-path
+language contract. It maps five curated conversational English inputs and bounded
+aliases to the already gated gloss sequences. The generator now accepts repeated
+`--text` inputs, records the original text and catalog hash, renders both the text and
+resolved glosses in each video, and preserves the full lexical/transition/anatomy gate
+chain. Unsupported English fails before model or artifact work and lists the supported
+normalized inputs; this prototype does not pretend that a five-entry catalog is a
+general English-to-ASL translator.
+
+The complete natural-text run is
+`artifacts/reports/stage2_v17_grounded_text_input_demo_v1/`: `Good morning`,
+`Hello, how are you?`, `My name`, `Thank you friend`, and
+`I will go to school tomorrow` all resolve to the intended gloss sequences and pass
+the same exact-content, one-hand, motion, bone, transition, face/body, and artifact
+gates. `index.html` is the canonical native-review entry point. The source catalog
+and all generated artifacts remain training/validation/test-ineligible, and native ASL
+review is still incomplete. No sealed or test split was accessed.
+
+## 2026-09-01 21:20 PST — five-phrase grounded scalability gate passes after hand-kinematic repair
+
+The grounded path now passes every locally benchmarkable conversational phrase whose
+literal glosses exist in the Citizen 100: `GOOD MORNING`, `HELLO HOW YOU`, `MY NAME`,
+`THANKYOU FRIEND`, and `TOMORROW SCHOOL GO`. Batch generation may select a different
+train-only signer for each utterance while keeping every utterance internally
+same-signer. The selected signers are P50, P11, P37, P50, and P27 respectively. All
+12 exact isolated components are correctly recognized by frozen Stage 1 (confidence
+range 0.5635--0.9550), and source versus final-rig hand participation matches for
+every gloss. Five independent selected-signer `SORRY` audits remain exactly one-handed
+and classify correctly.
+
+The first five-phrase artifact (`...scalability_v1`) is rejected despite its older
+gates: contact-sheet inspection exposed brief hand-skeleton shrinkage inside several
+transitions. The cause was linear interpolation of absolute finger coordinates across
+different endpoint poses. `stabilize_transition_hands` now retains the learned wrist
+trajectory but reconstructs all finger chains with interpolated endpoint-derived bone
+lengths. It preserves the original node/side presence mask, so it cannot add a hand or
+create nodes present only inside a transition. A regression test begins with a fully
+collapsed transition, restores every right-hand bone above its endpoint floor, and
+keeps the source-absent left hand exactly zero.
+
+The replacement output is
+`artifacts/reports/stage2_v17_grounded_text_to_sign_scalability_v2/`. Across the five
+phrases, p95 speed is 0.927--1.140x, acceleration 0.856--1.150x, and jerk
+0.680--1.080x aggregate genuine local train. Transition/gloss p95 speed is
+0.594--1.836x; median transition/gloss hand-bone length is 0.707--1.933x. Every
+transition has zero handless frames, zero nodes present only within the generated
+span, complete render hands when active, and complete face/body on every render
+frame. All five machine gates pass. `index.html` provides a native-review page and
+`contact_sheet.png` provides the visual audit overview. These remain synthetic
+native-review-only artifacts and are explicitly ineligible for training, validation,
+or testing.
+
+The train-only Citizen inventory contains 32 signers. P33, P37, and P52 each cover
+all 100 glosses; consequently every unordered pair (4,950/4,950) and triple
+(161,700/161,700) has at least one same-signer source route. This proves source
+coverage for a 50-phrase expansion, not linguistic validity or transition quality.
+New phrases must still be curated by native signers and pass the same per-phrase
+recognition, motion, bone, presence, render, and native-review gates. No sealed or test
+split was accessed.
+
+## 2026-09-01 21:11 PST — grounded text-to-sign pilot passes machine gates; native review required
+
+The first reviewable unseen-combination path now grounds lexical motion in exact
+train-only ASL Citizen isolated clips from one real signer and generates only the
+short boundary between adjacent signs. `scripts/generate_grounded_text_to_sign_v17.py`
+discovers train signers covering every requested gloss, verifies each isolated clip
+with the frozen landmark Stage-1 checkpoint, preserves each source gloss's own
+left/right-hand participation, and uses the all-real transition inpainter plus the
+multi-corpus timing model for the boundary. Signer selection uses exact component
+recognition, source anatomy coverage, and distance to the aggregate genuine local
+train motion distribution. It does not inspect either held-out phrase trajectory.
+
+The selected signer is P40. Stage 1 correctly recognizes all five requested source
+clips: `GOOD` 0.7847, `MORNING` 0.9150, `TOMORROW` 0.9049, `SCHOOL` 0.9715, and `GO`
+0.9116. The independent `SORRY` audit is exactly one-handed (`[true,false]`) and is
+recognized as `SORRY`, proving the path does not add a second hand. Per-gloss source,
+generated-observation, and render-rig participation match exactly: `GOOD` and
+`TOMORROW` remain one-handed; `MORNING`, `SCHOOL`, and `GO` use both hands.
+
+Both unseen compositions pass the aggregate genuine-motion gate. `GOOD MORNING` p95
+speed/acceleration/jerk are 1.446x/1.051x/1.092x genuine local train;
+`TOMORROW SCHOOL GO` is 1.183x/1.083x/0.957x. Every transition contains a hand, has
+zero presence changes at its joins, and introduces zero nodes absent at both boundary
+endpoints. Transition/gloss p95 speed ratios are 0.524x and 0.731x. The v3 animation
+contract makes face and body complete on every rendered frame and every active hand a
+complete 21-node hand, while leaving an unused hand absent. Contact-sheet inspection
+confirmed readable bodies and hands without between-sign disappearance.
+
+The review artifacts and videos are under
+`artifacts/reports/stage2_v17_grounded_text_to_sign_pilot_v1/`; the machine-readable
+record is `report.json`. Every artifact explicitly sets training, validation, and test
+eligibility to false. Passing these gates permits native-signer review only; it does
+not establish fluent coarticulation and must not be used as recognition ground truth.
+No Citizen test, local test, SemLex test, How2Sign validation/test, or other sealed
+split was accessed.
+
+## 2026-09-01 20:58 PST — four whole-utterance code priors rejected before rendering
+
+Four free-running temporal-code priors were evaluated with `GOOD MORNING` and
+`TOMORROW SCHOOL GO` excluded from training. The plain prior ranked the intended
+phrases 7th/3rd; pooled-text/history-dropout v2 ranked them 3rd/8th; monotonic-gloss
+timeline v3 ranked them 4th/6th and incorrectly made `TOMORROW SCHOOL GO` one-handed.
+The v4 text-only code/side anchor corrected that hand-participation error and retained
+the exactly one-handed `SORRY I LATE` audit, but semantics still ranked 5th/5th and
+unseen motion fell to 0.34--0.49x genuine on at least one derivative order. All four
+remain rejected and unrendered. The v4 checkpoint is
+`artifacts/models/temporal_code_prior_v17_text_anchor_v4/model.pth`, SHA-256
+`4f26aaad3bd42beba187bbcac8e26f0d0efb9ad1d202679d806452da1f475a3c`;
+its rejection report is
+`artifacts/reports/stage2_v17_temporal_text_to_sign_v4/evaluation.json`.
+
+This falsifies whole-utterance autoregression with only weak/equal gloss alignment as
+the immediate reverse-generation route. The safer architecture is exact per-gloss
+content grounding plus a separately learned, short coarticulation model. The temporal
+tokenizer remains accepted as a representation, but none of its rejected priors may
+produce training data.
+
+## 2026-09-01 18:12 PST — 64-step temporal tokenizer passes every unseen reconstruction gate
+
+The accepted tokenizer doubles temporal resolution to 64 discrete code steps for 128
+frames, increases coordinate weight only inside the reconstruction objective, and
+retains EMA codebook updates plus class-balanced absence supervision. Its checkpoint
+is `artifacts/models/temporal_motion_tokenizer_v17_v2/model.pth`, SHA-256
+`efc6e138a397bb48352a4686b814de2fec902913379880329964d67b4857fc09`, selected at
+epoch 38. Neither `GOOD MORNING` nor `TOMORROW SCHOOL GO` appeared in tokenizer
+training.
+
+All held-out reconstruction gates pass: coordinate loss 0.0320 (<0.04), presence F1
+0.9827, exact phrase-level hand-participation accuracy 1.000, 51 active codes with
+23.53 aggregate perplexity, and reconstructed p95 speed/acceleration/jerk at
+1.030x/0.957x/1.075x genuine motion. Ordinary validation has coordinate 0.0275,
+presence F1 0.9900, hand participation 0.9973, and 81 active codes. This proves the
+discrete temporal representation can reproduce unseen genuine phrase trajectories
+without pose averaging or adding an unused hand. It authorizes training a
+gloss-conditioned temporal code prior, but does not yet authorize an unseen generated
+phrase render.
+
+## 2026-09-01 18:00 PST — temporal tokenizer smoke restores real motion range; full gate pending
+
+`model_temporal_motion_tokenizer_v17.py` replaces one utterance-wide latent with 32
+time-varying discrete codes across each 128-frame trajectory. Its convolutional
+encoder/decoder reconstructs observation XYZ, detector presence, and confidence; it
+does not use the animation rig. `train_temporal_motion_tokenizer_v17.py` excludes both
+compositional holdouts from self-supervised fitting, balances genuine source families,
+and blocks temporal-prior training unless reconstruction anatomy, coordinate, motion,
+and code-utilization gates all pass.
+
+The first three-epoch smoke was rejected because its learned-gradient codebook
+collapsed to three active codes and its reconstruction marked every hand/body node
+present. EMA codebook initialization and class-balanced absence supervision fixed the
+root mechanisms. After five smoke epochs, reconstructed holdout p95 motion reached
+0.675x genuine speed, 0.786x acceleration, and 0.801x jerk, passing all three motion
+range gates and substantially exceeding the rejected global-latent generators. It no
+longer forces all nodes present. The smoke still fails overall: holdout presence F1 is
+0.847, hand participation is 0.917, coordinate loss is 0.066, and only 10/128 codes
+are active. Therefore it remains non-renderable and cannot yet authorize prior
+training. The next action is a full tokenizer run, not a gloss generator.
+
+## 2026-09-01 17:55 PST — multi-source global-latent generator rejected; temporal latent needed
+
+The source-balanced full-trajectory CVAE trained on 1,606 non-holdout train rows and
+369 validation rows, reserving all 24 validation performances of `GOOD MORNING` and
+`TOMORROW SCHOOL GO`. With KL weight 0.01 and prior-loss checkpoint selection, early
+stopping retained epoch 3 of 10. The 1,544,946-parameter checkpoint is
+`artifacts/models/full_trajectory_generator_v17_multisource_holdout_v1/model.pth`,
+SHA-256 `a6a5ee3e1931e0a342cfdea3a0bca47de3dc225075f319bb2ee7de22823ca941`.
+Ordinary prior validation presence F1 is 0.919 at its calibrated 0.30 threshold and
+hand-participation accuracy is 0.966, but coordinates lose to the source-family mean.
+On the compositional holdout, prior presence F1 is 0.802 and hand participation is
+0.917; coordinate loss also loses to the family mean.
+
+The strict 32-prior-sample motion gate rejected both unseen combinations. The
+`GOOD MORNING` output produced only 0.028x genuine p95 speed, 0.035x acceleration,
+and 0.038x jerk;
+`TOMORROW SCHOOL GO` produced 0.026x, 0.034x, and 0.036x. This is substantially worse
+than the local-only CVAE's already-rejected motion. No review render or training sample
+was written. The evaluator result is
+`artifacts/reports/stage2_v17_full_trajectory_generation_v1/evaluation.json`.
+
+The diagnosed architecture bottleneck is the single mean-pooled 32-D motion latent,
+which is broadcast identically to all 128 frame queries. It can encode a target for
+posterior reconstruction but cannot supply time-varying motion to the text-only prior;
+coordinate regression therefore averages performances into nearly static poses.
+Mixing more genuine sources does not fix that bottleneck. The next justified model is
+a temporal/discrete motion representation (motion tokenizer plus conditional temporal
+prior, or a temporal-latent diffusion model), trained on all genuine trajectories as
+an unlabeled motion prior while keeping gloss-conditioned local content and hand-side
+participation explicit. This is a meaningful architecture replacement and awaits user
+consultation. Rejected synthetic motion remains barred from every dataset and renderer.
+All 18 focused generation/signing-voice tests pass, Python compilation succeeds, and
+`git diff --check` is clean.
+
+## 2026-09-01 17:50 PST — 2,095 genuine whole-utterance trajectories complete and audited
+
+The whole-utterance Apple Vision extraction completed in 3,353 seconds: 2,094 new
+archives plus one previously verified archive, zero failures, and exact coverage of
+all 2,095 manifest rows. A full cold-read integrity audit found no missing archives,
+no non-finite values, and exact `[128,61,5]` observation shapes and manifest metadata.
+Counts are 780 local phrases, 1,104 ASLLRP `OTHER`, 155 2M-Flores, and 56 exact
+ASLLRP spans. Split counts remain 1,702 train and 393 validation with the ASLLRP signer
+boundary intact. Observed source participation is 60 right-only, 81 left-only, and
+1,954 two-hand trajectories; these are detector observations, not rig-forced hands.
+Mean observation presence is 84.27% (range 26.95--100%), mean duration is 4.53 s
+(range 0.3--42.13 s), and the corpus occupies 89 MB. No generated motion or sealed
+test source is present. The canonical extraction report is
+`artifacts/reports/stage2_v17_full_trajectory_generation_v1/extraction.json`.
+
+## 2026-09-01 17:24 PST — signer-profile transfer is presence-invariant; jerk is a render gate
+
+`apply_voice_profile_to_trajectory` now transfers a learned isolated-signer spatial
+profile onto an arbitrary-length continuous trajectory without modifying detector
+presence or confidence. Coordinates are transformed only where the source trajectory
+is present; absent nodes remain exactly zero. Therefore this style/accent operation
+cannot invent a second hand for a one-handed sign. Its resampled temporal curve is
+disabled by default until continuous-motion evaluation justifies using it. A focused
+128-frame one-handed regression test proves the unused hand remains absent and all
+auxiliary channels are bit-identical; all 17 signing-voice and full-trajectory tests
+pass at that step. The unseen-generation evaluator now selects candidate latents using speed,
+acceleration, and jerk together and independently requires every generated holdout to
+remain within 0.25--4x the genuine held-out p95 for each measure. This prevents a
+right-speed but snapping trajectory from passing. All 18 focused tests pass after the
+new three-order motion gate. This only establishes the representation safety invariant, not that generated
+signer identity or motion is perceptually genuine. The whole-utterance extraction is
+still live at 1,375/2,095 rows with one existing skipped archive and zero failures.
+Re-evaluating the strongest local-only CVAE smoke under the stricter gate rejected it:
+`GOOD MORNING` reached 0.239x genuine speed, 0.305x acceleration, and 0.279x jerk;
+`TOMORROW SCHOOL GO` reached only 0.112x, 0.104x, and 0.107x respectively. It also
+lost to the source-family mean on validation/holdout coordinates and holdout velocity.
+The machine-readable rejection is
+`artifacts/models/full_trajectory_generator_v17_local_cvae_kl_smoke/evaluation_motion_gate.json`;
+rendering remains disabled.
+
+Checkpoint selection for future full-trajectory runs now uses
+`validation_prior.loss`, not target-conditioned posterior reconstruction loss. This
+aligns early stopping with the actual text-to-sign inference path; posterior metrics
+remain diagnostic only. The focused full-trajectory tests pass. Extraction is at
+1,425/2,095 with zero failures.
+
+## 2026-09-01 17:19 PST — whole-utterance conditional generation corpus/model underway; unsafe smokes rejected
+
+The reverse path no longer uses independently normalized 32-frame pieces.
+`scripts/prepare_full_trajectory_manifest_v17.py` combines every available labeled
+real clip from all nine local phrase families, ASLLRP exact spans, ASLLRP `OTHER`
+spans, and 2M-Flores into
+`active/v17/full_trajectory_generation_manifest_v17.json`: 2,095 rows, 454 literal
+gloss/special tokens, 1,702 train and 393 validation. Source roles remain unchanged;
+ASLLRP validation is signer-held-out, local validation is familiar-source, and 2M dev
+remains train-role only. Local `FOOD`, `LATE`, `TEACHER`, and `MEET` stay literal and
+are not mapped into Stage 1. The extractor writes one 128-step trajectory per complete
+video under one coordinate normalization. Its active run has reached 1,125/2,095 with
+zero failures; all 780 local clips are complete.
+
+`model_full_trajectory_v17.py` and `train_full_trajectory_v17.py` implement a
+gloss-conditioned frame decoder with coordinate, detector-presence/confidence,
+velocity, acceleration, jerk/scale, hand-participation, and duration supervision.
+`GOOD MORNING` and `TOMORROW SCHOOL GO` are excluded entirely as compositional
+holdouts because all five component glosses occur independently outside those exact
+sequences. `HELLO HOW YOU` was not used as the holdout because `HELLO` has only one
+training occurrence outside that phrase, which would confound composition with a
+missing-token problem.
+
+The first deterministic local-only smoke was rejected: although ordinary validation
+coordinates beat a source-family mean, unseen coordinates did not, participation was
+91.7%, and every hand node appeared in every generated frame. Stronger negative
+presence and temporal-change loss removed the all-present collapse, but generated
+speed remained only 10--11% of genuine holdouts. A conditional motion-latent encoder
+was then added because point regression averages distinct performances into slow
+motion. With posterior motion evidence, the local latent smoke reached 90.9% held-out
+presence F1 and 97.9% participation, proving representation capacity; honest prior
+samples reached 25.2% of genuine speed for `GOOD MORNING` but only 11.2% for
+`TOMORROW SCHOOL GO`, and coordinate gates still failed. All these smokes remain
+non-renderable. `evaluate_full_trajectory_generator_v17.py` now rejects all-present,
+static-presence, slow-motion, participation, coordinate, and velocity failures before
+any unseen-combination video can be written. No synthetic result entered any dataset
+or review video.
+
+## 2026-09-01 16:46 PST — v3 preserves one-handed signs; safe exact text-to-sign path added
+
+The user correctly rejected the v2 rig assumption that every displayed sign should
+contain two hands. `complete_landmark_anatomy` now preserves linguistic hand-side
+participation: a hand never observed in the source remains exactly absent, a
+participating hand bridges at most three missing detector frames, and longer inactive
+spans remain absent. Face/body completion remains render-only. Artifact contract v3
+stores explicit `animation_rig_presence` and `animation_rig_confidence` alongside XYZ;
+loaders reject v2/legacy artifacts, require rig and observation hand participation to
+match, and retain the hard training/validation/test-ineligible flags.
+
+The rebuilt train-only anatomy package is
+`artifacts/models/signing_landmark_anatomy_v17_v3/anatomy.npz`, SHA-256
+`fdd286f73e49a69d686b7b014b9d736192b29b818f22d575cc1e8efca29e0f06`.
+It preserves exact participation for all 100 gloss prototypes: 48 selected sources are
+one-handed and remain one-handed; 52 are two-handed and remain two-handed. Both sparse
+observation and v3 rig content accuracy are 100% on this train-only content gate. V2 is
+explicitly marked obsolete and must not be used.
+
+The all-nine genuine reference was regenerated under v3 after auditing every train
+recording and choosing, within each phrase's top detection-quality quartile, the take
+closest to median duration. `SORRY_I_LATE` is one-handed in this selected performance
+and remains `[left=false, right=true]` in the rig; every other phrase's observed/rig
+side participation also matches exactly. `scripts/render_text_to_sign_retrieval_v17.py`
+adds an honest reverse baseline: plain text such as `hello how you` resolves to an
+exact known local phrase and renders its genuine full trajectory as a landmark-only
+skeleton. Unknown combinations fail closed instead of invoking the rejected isolated
+stitcher. The example is
+`artifacts/reports/stage2_v17_text_to_sign_retrieval_v1/phrase.mp4`. Twenty-five
+focused tests pass and `git diff --check` is clean. This is retrieval, not yet unseen
+phrase generation.
+
+## 2026-09-01 14:47 PST — genuine all-nine phrase render establishes the visual baseline
+
+`scripts/render_genuine_local_phrase_reference_v17.py` now selects the longest
+train-role recording in each of the nine local phrase families and extracts each whole
+performance under one coordinate normalization. It does not stitch independently
+normalized windows, concatenate isolated signs, or generate transitions. The 53.9 s
+side-by-side reference video is
+`artifacts/reports/stage2_v17_genuine_local_phrase_reference_v1/genuine_local_phrase_reference.mp4`
+(SHA-256 `22bf2ae1c159eabb4afcc4ae2dfc199ece6ed077f98f9283ec95f71da9093040`).
+The left panel shows sparse detector observations; the right shows a render-only
+completed rig driven by the exact same genuine motion. The report folder also contains
+a nine-phrase contact sheet, machine-readable report, and one separated raw artifact
+per phrase.
+
+Across these full phrase references, real observation presence ranges from 60.3% to
+79.5%. Every artifact preserves observed XYZ exactly after float16 serialization
+(maximum measured error 0), retains observation masks separately, contains no
+ambiguous `landmarks` tensor, and is explicitly reference-only/ineligible for dataset
+splits. Twenty-two focused tests pass and `git diff --check` is clean. This proves the
+render path can keep the avatar visible without altering recognizer evidence. It does
+not prove novel-combination generation, learned full-utterance coarticulation, or
+native linguistic naturalness; rejected synthetic generation remains disabled pending
+review of this genuine-motion baseline.
+
+## 2026-09-01 14:44 PST — render rigs can no longer masquerade as recognizer observations
+
+The landmark artifact architecture now separates two representations. Detector-style
+`recognition_prototypes` retain real sparse presence/confidence, while
+`animation_rig_prototypes` are completed only for drawing. The anatomy builder writes
+the v2 contract without the old ambiguous `content_prototypes` key. The phrase renderer
+requires v2 and saves `animation_rig_xyz`, `observation_xyz`,
+`observation_presence`, and `observation_confidence` separately; it never writes a
+recognition-shaped `landmarks` tensor. Every synthetic file is explicitly ineligible
+for training, validation, and testing. The review builder fails closed on legacy
+ambiguous files and treats presence changes/missing nodes as detector evidence rather
+than structural failures. This implements an architectural contamination barrier; it
+does not make the current isolated-medoid phrase composer human-natural.
+
+The train-only v2 anatomy package is
+`artifacts/models/signing_landmark_anatomy_v17_v2/anatomy.npz`, SHA-256
+`0098c0e2b2fd8d66edf73344b3e5bc612c4e6d33b9f112f988b6a44a1feb79ee`.
+All 100 selected prototypes retain their correct class in both observation and rig
+form. Genuine observation presence is 70.44%; only the render rig is 100% complete.
+No held-out/test source was accessed. Eighteen focused anatomy, artifact-contract,
+transition, and signing-voice tests pass. Novel phrase generation remains disabled;
+the next gate is rendering a genuine local full-phrase trajectory through the
+separated observation/rig path.
+
+## 2026-09-01 14:31 PST — source-balanced all-real transition adaptation improves local motion without guard regression
+
+The remaining downloaded domain reference is now compatible too. The three retained
+OpenASL train-split clips were converted by
+`scripts/prepare_openasl_transition_manifest_v17.py` and the standard extractor with
+zero failures. One channel-proxy clip is train-role and two are validation-role; all
+three preserve their original acquisition split, and OpenASL validation/test video was
+not accessed beyond those already retained train-split derivatives.
+
+`TransitionWindowDataset` now optionally reads either continuous-transition archives
+or the existing Stage-2 multimodal v17 archives, filters roles and sources before
+preloading, and accepts sources without signer metadata. Existing callers retain their
+old narrow glob and behavior. `active/v17/train_transition_all_real_v17.py` reuses the
+frozen 2.02M-parameter transition inpainter and adapts it with equal probability over
+six genuine corpus families: all-nine local phrases (1,781 train windows), ASLLRP old
++ `OTHER` (3,761), 2M-Flores (2,686), How2Sign (4,938), one NCSLGR training signer
+(424), and YouTube/OpenASL web motion (810). No synthetic trajectory participates.
+
+Model selection uses 445 familiar-source local validation windows spanning all nine
+phrases, 801 signer-held-out ASLLRP `OTHER` windows, and 137 windows from the held-out
+NCSLGR signer. The full 4,938 How2Sign and 802 train-side YouTube windows are replay
+guards; a candidate is rejected if any selection/guard domain regresses more than
+0.005 relative reconstruction improvement from the frozen initialization. The 15
+OpenASL validation windows are reference-only because that sample is too small for
+selection.
+
+The bounded run stopped after eight epochs by patience and selected epoch 4. Relative
+masked-reconstruction improvement over endpoint interpolation changed from 16.07% to
+20.74% on local (+4.67 points), 23.08% to 23.50% on ASLLRP, 20.41% to 21.27% on
+held-out NCSLGR, 25.87% to 25.41% on the How2Sign guard (within the predeclared
+0.5-point tolerance), 10.15% to 10.74% on the web guard, and 0.43% to 1.79% on the
+tiny OpenASL reference. The selected checkpoint is
+`artifacts/models/transition_all_real_v17_v1/model.pth`, SHA-256
+`0faaa4f8289257fed02ba9f17c1fc1b5fd8035f921ff500292644efd2eb44123`;
+training took 71.0 seconds. This is materially better genuine local-motion
+reconstruction and demonstrates that using all sources with explicit balance works.
+It is still a masked 4--12-frame motion model, not gloss-conditioned full-phrase
+generation or a human-naturalness pass. Four focused audit/dataset tests pass. No
+project or public test split was accessed.
+
+## 2026-09-01 14:25 PST — all nine local phrase families now have v17 motion-only trajectories
+
+The user authorized using all genuine downloaded sources for experimentation while
+phrase generation remains stopped. `scripts/prepare_local_phrase_motion_manifest_v17.py`
+now pins all 780 local videos as motion-only continuous rows. It preserves the existing
+20-recording capture batches and every-fifth-repetition familiar-source validation
+contract, yielding 624 train and 156 validation recordings across all nine phrase
+families. The folder phrase is provenance only; target sequences are empty, so
+`FOOD`, `LATE`, `TEACHER`, and `MEET` are not added to Stage 1 and no `FOOD -> EAT`
+mapping is implied.
+
+The standard v17 continuous extractor completed all 780 videos in 506.9 seconds with
+zero failures and schema fingerprint `b872fa3dcc16aab5`. The new tree is
+`data/local/local_phrase_motion_landmarks_v17`; its manifest is
+`active/v17/local_phrase_motion_manifest_v17.json` (SHA-256
+`a2b5eab75f61cb0dffae7ce7ac89bb56c6ad7150cf85ab4b84184d0a58c9388f`) and its
+extraction report is
+`artifacts/reports/stage2_v17_real_motion_reference_audit/local_phrase_motion_extraction.json`.
+There are 2,226 valid 32-frame trajectories out of 2,349 attempted windows: 1,781
+train-side and 445 validation. Every phrase has valid motion on both roles, including
+the previously uncached I_WANT_FOOD (144/35 train/validation windows), SORRY_I_LATE
+(298/75), and YESTERDAY_TEACHER_MEET (169/39). The validation rows are familiar-source
+repetitions because signer identity is unavailable; they are useful engineering gates
+but not signer-generalization evidence. Three focused manifest/audit tests pass. No
+sealed or public test split was accessed.
+
+## 2026-09-01 14:13 PST — generation stopped; all genuine sources expose anatomy/motion design failure
+
+At the user's direction, phrase generation was stopped before any further training or
+rendering. No generation or Stage-2 training process remains active. Both generated
+review pilots are now explicitly rejected and quarantined by `REJECTED.md` files. V1
+loses or fragments detected bodies/hands; v2's attempted anatomy completion forces all
+61 detector-presence values to one while its motion remains visibly nonhuman. Neither
+pilot may enter recognition training, validation, or testing.
+
+The new reproducible audit is
+`artifacts/reports/stage2_v17_real_motion_reference_audit/README.md`, backed by
+`audit.json`, `reconstruction_transfer.json`, and
+`scripts/audit_real_motion_reference_v17.py`. All nine local phrase folders were
+visually sampled in `local_phrases_contact_sheet.png`. Their 780 raw clips comprise
+GOOD_MORNING 60, HELLO_HOW_YOU 140, I_WANT_FOOD 60, MY_NAME 60, PLEASE_HELP_ME 140,
+SORRY_I_LATE 140, THANKYOU_FRIEND 60, TOMORROW_SCHOOL_GO 60, and
+YESTERDAY_TEACHER_MEET 60. The existing v16-era archives cover all 780 for
+reference-only presence analysis; only the six vocabulary-compatible phrases have
+current v17 Stage-2 archives (390 train clips / 1,144 valid windows). The v16 arrays
+remain prohibited from v17 training.
+
+The compatible real-data experiment used every currently extracted train-side source,
+without accessing held-out or sealed splits: 390 local clips, 44 older exact-target
+ASLLRP clips, 879 ASLLRP `OTHER`-CTC spans, 155 2M-Flores `dev` clips, 1,026 How2Sign
+train clips, 166 NCSLGR clips, and 103 train-side YouTube-ASL channel proxies. The
+three retained OpenASL clips were included in the inventory as raw visual/domain
+references but could not be scored because no compatible v17 extraction exists.
+How2Sign/YouTube English metadata were not promoted to ordered gloss truth.
+
+Detector-presence distributions prove that v2 would poison recognition training. All
+61 nodes are present in 100% of v2 frames, versus 54.6% across pooled genuine v17
+train-side frames and 0% across local v17 phrase frames. V2 also suppresses genuine
+dynamics: its hand speed/acceleration/jerk p95 values are 0.1843/0.2291/0.3523, while
+the genuine-source p95 ranges are 0.3269--0.5497 / 0.4652--0.8063 /
+0.8080--1.3894. Low jerk here is under-articulation, not evidence of human smoothness.
+The local videos visibly contain preparation, overlapping articulation, continuous arm
+travel, retraction, and rest that isolated medoids plus a short inpainted gap cannot
+represent.
+
+`scripts/evaluate_transition_real_sources_v17.py` then froze the existing
+How2Sign+YouTube transition checkpoint and masked a deterministic 4--12 frame interval
+in every compatible genuine window. Relative reconstruction improvements over endpoint
+interpolation were positive on all sources: local 14.0%, older ASLLRP 29.0%, ASLLRP
+`OTHER` 21.7%, 2M-Flores 21.0%, How2Sign 26.0%, NCSLGR 27.7%, and YouTube train 7.7%.
+However only 50.1% of local windows improved, the weakest practical transfer result;
+the current inpainter is therefore not ready to drive local phrase generation. These
+are train-side masked-reconstruction diagnostics, not independent naturalness or
+text-to-sign evidence.
+
+The architectural correction is now locked for consultation before more generation:
+use all genuine corpora with source-balanced sampling, learn/retrieve full continuous
+phrase trajectories rather than joining isolated medoids, keep semantic/gloss
+supervision separate from motion-only self-supervision, and split the product into a
+persistent kinematic animation rig plus a separate learned detector-observation mask.
+An always-present internal rig is appropriate for rendering but must never be written
+into recognition features. Two focused audit tests pass. No Citizen, SemLex, local
+sealed, RIT, How2Sign validation/test, YouTube internal validation, or 2M-Flores
+`devtest` split was accessed.
+
+## 2026-09-01 13:43 PST — native visual review rejects pilot anatomy continuity despite prior structural gate
+
+The user reviewed the ten generated landmark-avatar videos and reported disappearing
+bodies, disappearing/fragmentary hands, and a frequent single-hand appearance. The
+pilot is therefore rejected for training and remains quarantined as synthetic review
+evidence. Its previous machine pass was necessary but insufficient: it checked that at
+least one hand node existed on every transition frame and that presence did not change
+at the exact splice, but did not require complete 21-node hands, a persistent torso,
+or stable handedness/anatomy throughout each gloss and transition.
+
+Targeted tracing localizes the root cause upstream of the avatar renderer. The final
+profile package stores one observed train-only medoid clip as the content prototype for
+each gloss. `build_prototypes` minimizes XYZ error only over nodes present in a
+candidate and has no coverage/completeness penalty, so a sparsely detected clip can be
+selected as the medoid. `apply_voice_profile` modifies only XYZ and deliberately
+preserves the prototype's presence/visibility channels. `trim_observed_span` trims on
+any observed hand node, not on a complete hand/body criterion. The transition
+composer's endpoint-anchored presence prevents new pop-in at the splice but necessarily
+propagates missing source anatomy. Finally, the abstract renderer draws the torso only
+when both shoulder nodes are present and draws each hand bone only when both endpoint
+nodes are present; sparse masks therefore become visibly missing bodies and fragmented
+wireframe hands.
+
+The pinned prototypes confirm this directly. `HELLO` has no complete left-hand frame,
+only 26/32 complete right-hand frames, and 0/32 complete-body frames; `I` has no
+complete right-hand or complete-body frame; `NEED` has no complete left-hand or
+complete-body frame; `READY` has a complete four-node body in only 1/32 frames. Some
+active prototype frames contain only 5--10 of the 42 possible hand nodes. Across the
+rendered pilot, the fraction of frames with a complete body is only 11--45% for nine
+of ten phrases (the ASLLRP-heavy `GOOD NIGHT FAMILY` is 87%). `I NEED WATER` contains
+both hands concurrently in 0% of its rendered frames because all three chosen medoids
+carry only one observed/active hand. One-handed lexical signs may legitimately use one
+active hand, but a human avatar should still retain the inactive hand and body rather
+than treating nondetection as anatomical absence.
+
+No generator fix or rerender was made during this diagnosis. The correct next fix is
+to rebuild content prototypes with coverage-aware source selection and a persistent
+avatar anatomy contract, distinguishing an unobserved/inactive landmark from an absent
+body part. The revised native-review gate must measure full-hand and body continuity
+over every frame, not merely any-hand presence at transition boundaries. No test split
+was accessed.
+
+## 2026-09-01 13:28 PST — first 10 generated phrase videos ready for native review
+
+The first ten rows of `stage2_generated_phrase_review_plan_v17.json` were rendered as
+30 complete synthetic landmark trajectories: ten phrase videos, each showing the same
+sequence in the three novel profile voices Aster, Cobalt, and Juniper. The review
+directory is `artifacts/reports/stage2_v17_generated_phrase_review_pilot_v1/`; its
+`index.html` is a playable local gallery, `README.md` links every MP4, `review.csv`
+contains one blank native-review row per phrase/voice, `contact_sheet.png` provides a
+visual overview, and `manifest.json` pins all generation reports, raw landmarks,
+videos, previews, source-voice mixtures, transition spans, hashes, and diagnostics.
+Every output is labeled `synthetic_native_review_only`, validation/test-ineligible,
+and human-review-required.
+
+The first render audit found a genuine composition defect: isolated prototypes retained
+their extractor padding, so several generated transitions began and ended on empty
+frames, and the learned auxiliary presence output could make hands or body landmarks
+appear only inside a generated interval. Those renders were overwritten and were not
+admitted to the review bundle. `signing_voice_phrase_v17.py` now trims every isolated
+prototype to its observed hand-motion span before duration resampling. Generated XYZ
+coarticulation still comes from the frozen How2Sign/web transition inpainter, while
+presence and visibility are anchored by interpolation between the two observed
+endpoints. This prevents a landmark from flashing into or out of existence solely
+inside the synthesized span without replacing learned spatial motion with a direct
+join.
+
+The corrected 30 voice/phrase trajectories all pass the bounded machine gates: every
+isolated content prediction matches its requested gloss; every learned transition has
+at least one observed hand on every frame; no landmark presence changes at either join;
+and no node appears only inside a transition when absent at both endpoints. The ten
+H.264 MP4 files independently decode at 1920x900 and 30 fps. Thirteen signing-voice
+tests and the new review-auditor test pass. The profile and transition packages also
+cold-reload and retain their pinned hashes. These structural results do not prove ASL
+naturalness, grammatical acceptability, or absence of perceptual jerk; native review
+is now the required gate before any generated item may be copied into training. No
+Citizen, SemLex, local sealed, RIT, 2M-Flores `devtest`, How2Sign validation, or
+How2Sign test split was accessed.
+
+## 2026-09-01 13:08 PST — matched public-data Stage-2 ablation favors conservative 2M + ASLLRP transfer
+
+All currently usable recommended data were already acquired, so no duplicate corpus
+download was performed: 2M-Flores has 155 selected `dev` videos and frozen features;
+ASLLRP has 1,104 `OTHER`-CTC spans (879 train / 225 signer-held-out validation) and
+frozen features; NCSLGR has 166 utterances from two native signers; and the How2Sign
+train-only subset has 1,027 acquired clips, 1,026 usable, across six source signer IDs.
+NCSLGR and How2Sign remain transition/self-supervision sources because the current
+artifacts do not provide compatible exact-variant ordered CTC targets. DSP video is
+not downloadable under the published BU terms, Apple's annotation bundle was not
+located, and ASL Homework remains access-gated. No large unlabeled corpus was added.
+
+`train_stage_2_other_ctc_v17.py` now accepts the existing
+`slt_stage2_temporal_pretrain_v17` checkpoint as a safe initialization. It verifies the
+original teacher hash and matching configuration, proves that temporal pretraining did
+not change the CTC head, optionally interpolates only the non-head state through
+`--temporal-mix`, and keeps the original 100-class checkpoint as the distillation
+teacher. The checkpoint/report record complete temporal provenance. Four focused tests
+pass, including a 25% interpolation and original-teacher separation test; Python
+compilation and `git diff --check` pass.
+
+Full-strength temporal initialization followed by the original high-rate adaptation
+was rejected: every trained epoch violated an old-data guard, and its selected epoch 8
+had 12/259 local, 13/24 older-ASLLRP, and 365/682 new-ASLLRP full-sequence edits.
+Initialization screens at 25%, 50%, and 75% showed that 50% is the strongest mix that
+preserves both legacy gates before training. The original training recipe at 50% was
+also rejected because epoch 0 remained selected and all trained epochs forgot old
+phrases.
+
+A predeclared conservative matched A/B then froze the backbone for all ten epochs,
+used a `1e-4` head learning rate, raised replay distillation to 1.0, reduced new ASLLRP
+sampling mass to 0.25, and used identical data, seed 1701, and selection gates in both
+runs. ASLLRP-only selected epoch 5 with 617/682 new-ASLLRP full edits (90.47% WER),
+450/284 target-only edits, 0/225 full exact sequences, 11/24 older-ASLLRP edits, and
+7/259 local edits. The 50%-2M + ASLLRP combination selected epoch 6 with 542/682 full
+edits (79.47% WER), 365/284 target-only edits, 4/225 full exact sequences, the same
+11/24 older-ASLLRP edits, and an improved 6/259 local result. This is 75 fewer full
+edits (12.2% relative) and 85 fewer target-only edits (18.9% relative) than the matched
+ASLLRP-only run. Both saved artifacts reproduced their metrics exactly after cold CPU
+reload.
+
+The combined result is retained only as a research candidate, not promoted for app
+deployment or autonomous generation: 79.47% full WER and 1.78% full exact-sequence
+accuracy remain weak. It demonstrates useful cross-corpus temporal transfer and shows
+that optimization/forgetting is part of the Stage-2 failure, but genuine signer and
+transition supervision remain inadequate. How2Sign/NCSLGR-generated combinations must
+be exported only as provenance-tracked `synthetic` review candidates; native approval
+is required before training use, and generated samples remain prohibited from
+validation/test. The detailed comparison is in
+`artifacts/reports/stage2_v17_multidata_ablation_v1/EXPERIMENT.md`. No Citizen, SemLex,
+local sealed, RIT, 2M-Flores `devtest`, How2Sign validation, or How2Sign test split was
+accessed.
+
+## 2026-09-01 12:48 PST — online overlap survey completed before further generation work
+
+At the user's request, phrase generation and additional Stage-2 training are paused
+while public datasets overlapping the locked Citizen-100 vocabulary are ranked. The
+full evidence table is
+`artifacts/reports/stage2_v17_online_overlap_survey/ONLINE_DATASET_OVERLAP.md`.
+
+The best immediately usable ordered-gloss source remains the already acquired
+2M-Flores-ASL `dev` material: 95/100 normalized lexical labels across 811/999
+target-bearing sentences, with only `GOODBYE`, `PLEASE`, `SAD`, `SORRY`, and
+`TOMORROW` absent. Its signer field is not adequate for a new signer-disjoint claim
+(997 rows use local ID 0 and two use ID 1), and lexical strings are not proof of the
+pinned ASL-LEX variants. The best exact-variant source remains ASLLRP continuous:
+53/100 pinned variants and 1,483 target tokens in the 1,104 spans already acquired.
+The already acquired NCSLGR static subset contributes only 17/100 lexical labels and
+198 target tokens from two native signers.
+
+DSP Sentences is the strongest newly quantified lead if permission can be secured. Its
+official metadata contains 3,172 continuous sign tokens from 15 signers. Exact joining
+through the pinned ASL-LEX `SignBankAnnotationID` finds 50/100 variants, 281 target
+tokens, 218 target-bearing utterance files, and at least one target token from every
+one of the 15 signer codes. Current BU documentation explicitly excludes
+DawnSignPress data from downloadable video, so this is a permission/contact candidate,
+not an immediately usable video corpus. RIT sentence metadata shows 30/100 exact
+variants and 236 target tokens, but RIT remains permanently excluded from development
+because its external evaluation was already consumed. This survey read only the
+already retained RIT CSV to report corpus-level overlap; it did not access RIT video,
+features, predictions, or metrics.
+
+Apple and Gallaudet's April 2026 paper is the highest-upside future source. It reports
+nearly 500 manually glossed ASL STEM Wiki videos, 8,655 sign annotations, 16 signers,
+411 unique glosses in the ASL Citizen dictionary, and over 300 hours of
+pseudo-annotations. The promised annotation data were not found on the Apple page, in
+the arXiv source bundle, or in the current Microsoft ASL STEM Wiki repository, so
+locked-100 overlap cannot yet be computed. The paper's own review distinguishes
+native/native-like signers from multiple L2 signers; future ingestion must preserve
+that split rather than pool all 16. How2Sign still exposes video/keypoints plus English
+translations rather than downloadable ordered gloss targets and remains suitable only
+for transition/self-supervised objectives under the current contract.
+
+For isolated data, online lexical coverage is high but does not solve Stage 2: WLASL
+has 99/100 lexical strings (`HE` absent), MS-ASL has 95/100 exact lexical strings or
+96/100 with `BYE` treated only as a candidate alias, Sem-Lex official train metadata
+maps 98/100 ASL-LEX-linked classes, and the bounded ASLLVD selection already covers
+52/100 exact variants. These sources can reinforce Stage 1 or signer style, but they
+contain no genuine phrase transitions. No project test split or test video was
+accessed, and no new corpus video was downloaded.
+
+## 2026-09-01 12:32 PST — Stage 2 data, collection, and generation plan locked
+
+The user approved the following execution order: finish and audit the newly prepared
+1,104-span ASLLRP `OTHER`-CTC expansion; train it together with the existing real
+phrase replay and train-only synthetic replay on MPS; then use the already acquired
+How2Sign train-only material to learn transition motion and timing; then compose new
+locked-vocabulary phrase combinations; finally retrain Stage 2 and evaluate only on
+genuine signer-disjoint recordings. Long MPS runs are authorized. The generated
+review artifacts must be returned as a directory for native-signer inspection.
+
+The vocabulary remains the exact pinned Citizen/ASL-LEX 100-class inventory. A single
+explicit `OTHER` class is added only to the Stage-2 CTC head (101 nonblank classes,
+blank index 0, `OTHER` CTC index 101), and `OTHER` is removed after CTC collapse. No
+new lexical class or numeric/lexical variant is silently merged. The 1,104 natural
+ASLLRP spans are combined with the old real local/ASLLRP phrase replay and the selected
+train-only multivoice pool. Synthetic phrases are training-only: they must never enter
+validation, sealed testing, or model-selection truth.
+
+The bounded genuine collection remains 30 conversational gloss sequences, 13 native
+ASL signers, three independent normal-speed performances per signer and phrase, and
+three synchronized phone views per performance. Thus the planned capture is 1,170
+independent performances and 3,510 videos; the three camera recordings of one
+performance are correlated views, not three independent takes. Capture should include
+the intended varied front/oblique angles at comparable quality. The preferred
+signer-disjoint split is 9 training, 2 validation, and 2 sealed test signers. Every
+signer identity and synchronized performance group must stay in exactly one split.
+All 13 may record all 30 prompts, but the six composition-test prompts below remain
+quarantined from training even when recorded by a training signer.
+
+The approved 30-prompt collection inventory is:
+
+| Role | ID | Exact gloss sequence |
+| --- | ---: | --- |
+| real base/train | 01 | `HELLO HOW YOU` |
+| real base/train | 02 | `GOOD MORNING` |
+| real base/train | 03 | `GOOD NIGHT` |
+| real base/train | 04 | `THANKYOU FRIEND` |
+| real base/train | 05 | `PLEASE HELP I` |
+| real base/train | 06 | `I NEED HELP NOW` |
+| real base/train | 07 | `YOU NEED HELP PLEASE` |
+| real base/train | 08 | `WHAT YOUR NAME` |
+| real base/train | 09 | `MY NAME` |
+| real base/train | 10 | `I UNDERSTAND YOU` |
+| real base/train | 11 | `I NO UNDERSTAND` |
+| real base/train | 12 | `I KNOW MY FAMILY` |
+| real base/train | 13 | `I NO KNOW WHERE HOME` |
+| real base/train | 14 | `WHERE HOSPITAL` |
+| real base/train | 15 | `WHERE DOCTOR` |
+| real base/train | 16 | `I SICK` |
+| real base/train | 17 | `I HUNGRY WANT EAT` |
+| real base/train | 18 | `I WANT WATER PLEASE` |
+| real base/train | 19 | `I WANT EAT NOW` |
+| real base/train | 20 | `YOU READY GO` |
+| real base/train | 21 | `WAIT PLEASE` |
+| real base/train | 22 | `STOP PLEASE` |
+| real base/train | 23 | `I GO HOME NOW` |
+| real base/train | 24 | `SEE YOU TOMORROW` |
+| held-out recombination | 25 | `HELLO HOW YOU READY` |
+| held-out recombination | 26 | `SEE YOU NEED HELP` |
+| held-out recombination | 27 | `HELP I WANT WATER` |
+| held-out recombination | 28 | `I UNDERSTAND YOU NEED HELP` |
+| hard unseen transition | 29 | `I NEED DOCTOR` |
+| hard unseen transition | 30 | `I GO HOSPITAL` |
+
+These are exact model gloss prompts, not claims about English word order. Native
+signers must use the pinned lexical variants and may flag a prompt as linguistically
+unnatural before capture; any approved replacement must remain inside the locked 100
+and be recorded in this handoff before data collection. Prompts 01--24 provide the
+real transition base. Prompts 25--28 test whole-sequence recombination from learned
+parts, while 29--30 deliberately test transitions absent from the base inventory.
+
+How2Sign is not a replacement for this phone collection. The local bounded subset has
+1,027 train-only rows from six How2Sign signers and deliberately empty gloss targets,
+so it is suitable for self-supervised transition inpainting, duration, rhythm, and
+nonmanual/body-context learning but cannot directly supervise the locked-100 CTC
+sequence. The already completed train-all transition package combines 4,938 How2Sign
+windows with 994 train-only web windows. Its held-out How2Sign reconstruction gain is
+20.2012%, its generated-vs-real discriminator remains above chance (61.1289% balanced
+accuracy, AUC 0.648197), and its timing model reaches 92.3887% exact duration accuracy
+with 0.1721-frame MAE. These are useful machine gates, not proof of human naturalness.
+
+Phrase generation must preserve complete recognizable gloss cores and synthesize only
+the missing coarticulation interval, conditioned on genuine left/right context and the
+predicted 4--12-frame span. Direct concatenation, linear interpolation, unexplained
+hand appearance/disappearance, and out-of-distribution position, velocity,
+acceleration, jerk, bone geometry, or presence changes are rejection conditions.
+Generated samples must retain the requested Stage-1/Stage-2 content before they may be
+used for training. The first expansion target is 20 generated combinations, producing
+a 50-phrase training inventory in conjunction with the 30 real prompts; this is a
+training inventory only, and support for a generated combination may be claimed only
+after it is recognized in a genuine held-out recording. Native review follows the
+first training/generation run rather than blocking it.
+
+The ASLLRP expansion's remaining preprocessing step is now complete. The frozen
+selected Stage-1 encoder cached all 1,104/1,104 archives on MPS in 52.78 seconds with
+zero failures, a 12% process cap, and 121,847,808 peak MPS driver bytes. The independent
+frozen-input audit reports 1,104 expected/actual archives, all 4,505 windows valid,
+879 train plus 225 signer-held-out validation rows, no unexpected archives, and a
+valid 3,978-item/100-class train-only multivoice pool with 18,000 planned sequences.
+Reports are `artifacts/reports/stage2_v17_asllrp_other_ctc/frozen_cache.json` and
+`artifacts/reports/stage2_v17_asllrp_other_ctc/frozen_audit.json`. No test split was
+accessed. The combined Stage-2 run is now unblocked.
+
+The first full combined `OTHER`-CTC adaptation then ran on MPS and is rejected for
+promotion. It completed ten epochs plus the epoch-zero baseline in 58.95 seconds under
+the 12% cap; the selected result is deliberately epoch zero because no trained epoch
+preserved both legacy guards (local at most 7 edits and sparse held-out ASLLRP at most
+11 edits). The trained trajectory proves the new spans are learnable: natural-ASLLRP
+full WER fell from 107.1848% at epoch zero to 53.3724% at epoch 10 and target-only WER
+fell from 223.2394% to 79.5775%. However, sparse held-out-ASLLRP target edits worsened
+from 11 to 12--14 through epoch 5 and 13--14 afterward; local edits ranged 7--11. The
+hash-pinned epoch-zero safeguard is
+`artifacts/models/stage2_v17_asllrp_other_ctc_v1/best_model.pth` (SHA-256
+`8113f5b96d8b2e2f17bcc3e491dda66511b678bb50cf54070b7763efe6924a0b`), and the full
+history is `artifacts/models/stage2_v17_asllrp_other_ctc_v1/result.json`. This is a
+negative single-head result, not evidence against the acquired data; it shows that the
+current objective trades legacy phrase competence for natural `OTHER` competence.
+No test split or consumed external evaluation was accessed.
+
+## 2026-09-01 06:53 PST — unsafe phone selector withdrawn; full ASLLRP OTHER-CTC rebuild underway
+
+The 02:30 two-head general selector promotion was invalidated by the subsequently
+available physical-phone diagnostic recordings. On the five saved `I NEED HELP`
+attempts it introduced empty/`WHERE`-biased behavior despite its validation gains.
+It has been removed from the mobile target. The app is restored to
+`stage2_v17_full_activity_routed_hybrid_v2`: multi-sign input uses the pinned bare
+`Stage2PhraseV17FP32` head, while a single-sign output uses the repaired full-motion
+Stage-1 plus isolated-correction route. The restored manifest pins checkpoint
+`b15b06ff...` and Core ML package tree `0b83fc...`. Flutter tests, the native
+activity-alignment test, signed Release build, installation, and launch on the
+connected iPhone 13 pass. This supersedes the mobile-promotion claim below; it is not
+a new physical-phone accuracy claim.
+
+Two further validation-only shortcuts were implemented and rejected. Reclassifying
+CTC-emission segments through Stage 1 collapses to 24/24 ASLLRP and 264/259 local
+edits because CTC emission locations are not sign boundaries. Frame-level Stage-1
+identity-logit fusion selects zero identity weight on training and leaves ASLLRP at
+11/24 while worsening local validation to 8/259. Neither is a deployment candidate.
+
+The highest-leverage Stage-2 data defect is now fixed at the preparation boundary.
+The latest ASLLRP sentence metadata contains 17,519 valid annotations from 2,130
+utterances, but the old preparation retained only 44 training clips because every
+out-of-vocabulary annotation broke the continuous span. The new exact-variant,
+signer-disjoint plan keeps full target-bearing natural spans and maps intervening
+annotations to an explicit CTC `OTHER` token. It contains 1,104 bounded spans (879
+train from BEN/CORY/RACHEL and 225 validation from JONATHAN), 1,483 locked-vocabulary
+target tokens, 2,103 collapsed OTHER tokens, and 1,090 unique parent utterances. Crops
+are split only between manual annotations and never exceed 256 frames/eight mobile
+windows. The plan is at
+`artifacts/reports/stage2_v17_asllrp_other_ctc_plan/plan.json`; targeted acquisition
+is active under `data/local/asllrp_other_ctc_v17/` rather than downloading an entire
+unrelated corpus.
+
+The 101-class Stage-2 contract and warm-start trainer are implemented. A critical
+index-boundary test now guarantees acquisition CTC IDs 1..101 are converted exactly
+once into archive class IDs 0..100 before the existing loader reapplies the blank
+offset. The selected 100-gloss head is extended with a neutral OTHER row while all
+old logits remain bit-identical at epoch zero; replay distillation and source-balanced
+sampling protect the existing local and sparse-ASLLRP performance during adaptation.
+The natural ASLLRP target subset has no exact locked `I`, `NEED`, `HELP`, or `HELLO`
+occurrences but has 51 training `WHERE` occurrences, so natural ASLLRP is capped at
+40% rather than allowed to dominate adaptation. The other 60% replays local real
+phrases, sparse target-only ASLLRP, and the selected train-only multivoice synthetic
+pool. That pool covers all 100 classes and includes 194 `NEED` compositions. The
+explicit phone-development gate replays the five saved `I NEED HELP` tensor captures;
+the current bare head gets 0/5 exact and is the pinned pre-training baseline.
+Nineteen focused model/data tests and Python compilation pass. No Citizen, SemLex,
+local, RIT, or other test split was accessed.
+
+Integrity clarification: a subsequent over-broad text search for candidate gloss
+spellings across `data/local/dataset_metadata/asllrp_signbank/*.csv` printed rows from
+the already local RIT external metadata file as well as the intended ASLLRP file. No
+RIT video, feature tensor, model prediction, metric, or checkpoint selection was run,
+and no printed RIT row is used by the OTHER-CTC preparation or training. The consumed
+RIT external evaluation was not rerun. Future variant inspection is pinned explicitly
+to `asllrp_sentence_signs_2025_06_28.csv`; the preceding sentence should therefore be
+read as “no test evaluation or test media access,” not as “no metadata filename was
+ever printed.”
+
+The targeted ASLLRP acquisition and Apple Vision/RGB extraction are now complete.
+Acquisition verified 1,090/1,090 parent utterances and 1,104/1,104 bounded spans with
+zero failures. The finalized manifest hash is
+`35bef0af546fb0ed7a600614a0828f33209219191a2be789813bfd018584b881` and converts
+acquisition CTC IDs to archive class IDs exactly once. The fail-closed extraction audit
+reports 1,104 expected/actual/audited archives, zero missing/unexpected/failing
+archives, 4,505 total windows, zero invalid landmark windows, and 96.9138% mean valid
+hand-view coverage. The audit is
+`artifacts/reports/stage2_v17_asllrp_other_ctc/extraction_audit.json`.
+
+Hand embedding remains in progress under the prior crash-safe resource contract. Test
+batches 64 and 48 were rejected by the 8% MPS watermark at approximately 1.3 GiB
+allocated; the worker exited before system pressure or corruption, and the watermark
+was not disabled or raised. Batch 32 is stable with short subprocess lifetimes. The
+fixed 256px MobileCLIP2 transform was also simplified from per-image
+NumPy→PIL→no-op resize→tensor into vectorized NumPy→tensor. A direct parity check
+against the pinned transform measured max absolute input difference 0.0, and a focused
+unit test passes. Existing completed embeddings are hash/schema-audited and reused.
+
+## 2026-09-01 02:30 PST — validated two-head Stage-2 selector promoted to the iPhone app
+
+The ASLLRP sentence metadata was re-audited against the downloaded parent utterances
+and the 1,719 exact-variant segmented signs. It preserves manual start/end frames for
+every target sign, and all 56 active train/validation phrase crops reconstruct the
+declared target sequence exactly. The clips are therefore genuine, correctly ordered
+continuous signing—not corrupt or arbitrary labels. Their limitation is statistical:
+after the Jonathan holdout, only 44 sparse phrase crops remain, most are 23--40 source
+frames long and contain a nearly unique two-sign transition. This is insufficient as a
+main sequence corpus even though the same signer/style variation is useful supplemental
+evidence and Stage 1 can learn broader isolated-sign invariance from far more examples.
+
+A manual-boundary CTC fine-tune was implemented and screened to distinguish an
+alignment problem from a coverage problem. It adds exact ASLLRP frame-interval
+cross-entropy, real-phrase CTC, and warm-head distillation under a 12% MPS memory cap.
+All 56 alignments pass their CTC-collapse integrity gate, and the 16-epoch run completed
+in 22.97 seconds without memory pressure. It nevertheless worsened ASLLRP validation
+from 11 edits to 14--16 and local validation from 7 edits to 8--15. The output
+`stage2_v17_aligned_ctc_v1` therefore retains epoch zero and is explicitly rejected.
+This negative result isolates the problem to phrase/signer coverage rather than a
+missing alignment loss.
+
+The existing phrase-agnostic general CTC selector was then promoted instead. It
+combines the exact context-primary and transition-specialist heads with the frozen
+0.10 blend, +0.30 blank bias, equal-length multi-token eligibility rule, and exact
+specialist CTC likelihood comparison. It does not inspect gloss identity, phrase
+identity, signer identity, or validation labels at inference. On the complete non-test
+development gates it improves every compared domain relative to the prior primary:
+ASLLRP contiguous phrases improve from 11/24 to **9/24 edits** (37.50% WER; 4/12
+exact), local phrases improve from 7/259 to **6/259 edits** (2.3166% WER; 92/97
+exact), and ASLLRP held-out-signer contextual signs improve from 44/254 to **43/254
+edits** (16.9291% WER; 213/254 exact). These are development-validation results, not
+an independent phone-signer accuracy claim.
+
+Both exact heads were exported as FP32 Core ML packages. The primary package tree hash
+is `92a4a2e49c9cfcfeb51189c4468f269030f10f6c714e911da02ae8a5620f88e7` and the
+specialist hash is `db14bc692cdc76e466c902ed64aa0b7dbd5c5c505af8849dff236c7ed55d8082`.
+Each individual export has zero decode mismatches on all 109 phrase-validation rows.
+The combined Core ML selector was then checked on 363 phrase/context rows and has zero
+PyTorch decode mismatches and zero selector-decision mismatches while reproducing the
+9/24, 6/259, and 43/254 results exactly. Host timing is not physical-iPhone evidence.
+
+The mobile candidate is now
+`stage2_v17_general_selector_activity_routed_hybrid_v3`. Multi-sign recordings run the
+validated two-head selector; one-sign CTC outputs remain routed through the repaired
+full-activity Stage-1/isolated-correction hybrid. Benchmark JSON pins both package and
+checkpoint hashes and reports which route won. The simulator build passes, both native
+iPhone-13-simulator tests pass, Flutter tests pass, and a signed Release build was
+installed and launched on the connected physical iPhone 13. Physical camera accuracy
+still requires fresh owner-operated recordings; installation alone is not presented as
+that evidence. Twenty focused Python tests, Python compilation, JSON/plist validation,
+and repository `git diff --check` pass. No Citizen, SemLex, local, ASLLRP, RIT, or
+other test split was accessed.
+
+## 2026-09-01 02:06 PST — unsafe Stage-2 shortcuts rejected; single-sign mobile route repaired
+
+The completed `stage2_v17_accuracy_repair_v1` experiment was recovered and audited.
+Despite 30 epochs and 554.54 seconds of training, it reduced equal-weight isolated
+validation accuracy from the selected Stage-1 model's 94.1517% to 89.998%, produced
+15/24 ASLLRP validation edits, and also worsened the local phrase result. Its checkpoint
+is rejected and must not replace either the Stage-1 classifier or the deployed phrase
+head. This is further evidence that asking the sparse phrase CTC objective to relearn
+the 100 isolated class identities is destructive rather than an accuracy repair.
+
+A latent schema-integrity defect was fixed before testing denser temporal windows.
+Stage-2 archives extracted with a non-default window stride previously received the
+same schema fingerprint as non-overlapping stride-32 archives. `window_stride` is now
+part of the Stage-2 feature configuration and temporal contract; the established
+stride-32 fingerprint remains unchanged for compatibility, while stride-8 archives
+receive the distinct `44e9f97c67a003c4` fingerprint. The extractor and MobileCLIP2
+encoder now propagate and verify that value, and all eight focused extraction tests
+pass.
+
+All 12 existing ASLLRP held-out validation clips were re-extracted at a 32-frame window
+with stride 8, hand-encoded, and frozen through the selected encoder without touching a
+test split. The denser inputs made every evaluated phrase head worse: the deployed bare
+head increased from 11/24 to 15/24 edits, while the general selector increased from
+9/24 to 14/24. CTC prefix beam search was also evaluated on the original non-overlap
+features across several blank biases and worsened both ASLLRP and local validation; the
+existing greedy collapse remains better. Overlap and beam search are therefore rejected
+for the current checkpoint rather than promoted as speculative fixes.
+
+The iOS single-sign route was repaired independently of the phrase head. It now detects
+the complete activity span, retains bounded motion context, resamples that entire span
+for both Stage-1 landmarks and MobileCLIP2 hand features, and reruns the frozen encoder
+on the aligned span before applying the validation-proven isolated hybrid. The previous
+arbitrary most-active 32-frame window route was removed. The candidate is identified as
+`stage2_v17_full_activity_routed_hybrid_v2`; Flutter tests pass, the new native iPhone-13
+simulator activity-span test passes, and a signed Release build was installed and
+launched on the connected physical iPhone 13. Physical accuracy is not yet claimed:
+new user recordings are required to validate that route on-device. No Citizen, SemLex,
+local, ASLLRP, or other test split was accessed.
+
+## 2026-09-01 01:19 PST — Stage-2 phrase evidence is coverage-limited, not proof of corrupt ASLLRP video
+
+The real continuous-training manifest was audited at the exact-sequence, token, and
+signer levels after the physical-phone Stage-2 failures. ASLLRP contributes only 44
+training clips, 38 distinct two-gloss sequences, 92 target tokens, and three training
+signers. Thirty-four of the 38 training sequences occur exactly once; only `HOME WHEN`
+and `WHEN FRIEND` occur three times and `HAVE TIME` and `SCHOOL TOMORROW` occur twice.
+The 12-clip ASLLRP validation set contains 24 tokens from the held-out signer JONATHAN,
+but five of its eight exact sequences were never seen in training. `BAD` is not present
+as a training target token at all. The bare phrase CTC result of 11/24 edits (45.8333%
+WER) and 2/12 exact sequences is therefore evidence that the current Stage-2 corpus is
+too sparse for reliable held-out-signer sequence learning; it is not, by itself,
+evidence that the underlying videos or annotations are corrupt.
+
+The local phrase corpus has the opposite limitation. It contributes 390 training and
+97 validation clips but only six exact phrases. Every validation phrase and every
+validation token occurs in training, with heavy repetition: `HELLO HOW YOU` and
+`PLEASE HELP I` each have 107 training examples, while the other four phrases have
+32--48. The validation split uses the same local signer pool, as previously permitted
+for data expansion. Its 7/259 edits (2.7027% WER) and 91/97 exact sequences (93.8144%)
+mainly measure interpolation over repeated phrase templates and recording conditions;
+they are not evidence of unseen-signer or novel-phrase generalization. The ASLLRP and
+local scores therefore must not be compared as though they were equally difficult
+accuracy tests.
+
+Stage 2 is a CTC gloss-sequence recognizer rather than a phrase-ID classifier, so one
+example of every exact sentence is not inherently required. It does, however, require
+repeated gloss evidence across varied temporal contexts, transitions, durations, and
+signers. The current ASLLRP subset is also deficient on those axes, while the local set
+has repetitions but almost no phrase/context or signer diversity. ASLLRP remains useful
+as a small hard supplemental/held-out diagnostic and should not be discarded, but it
+cannot serve as the main training corpus or the sole model-selection gate.
+
+The high isolated-sign validation results across Citizen, SemLex, and local data show
+that Stage 1 learned substantial signer/style/camera invariance for the 100 pinned
+classes; they do not prove that arbitrary lexical variants are interchangeable.
+Project mappings still pin exact raw gloss/ASL-LEX variants and do not merge numeric
+variants. A true variant mismatch can remain mislabeled even when a model handles
+ordinary signer accent/style variation. The next high-leverage action is genuine
+continuous data collection for a bounded functional phrase inventory, with repeated
+transitions from multiple signers and a signer-held-out validation partition. No test
+split was accessed during this audit.
+
+## 2026-08-31 20:19 PST — physical-phone errors localized to Stage 2 and its WHERE adapter
+
+The 22 successful post-fix captures in the connected iPhone 13's Files-visible
+`Documents/Diagnostics` directory were copied read-only to a temporary host directory
+and audited. All seven saved arrays in every capture have the expected finite values,
+window/source masks agree with the reports, Apple Vision observed usable hands, and
+the orientation path uses AVFoundation's preferred track transform. Replaying the
+exact saved landmark, hand-embedding, validity, box, and window-mask tensors through
+the pinned PyTorch graphs reproduces all 22 phone/Core ML gloss sequences exactly.
+This rules out an iOS label-order error, corrupt NumPy export, stochastic Core ML
+behavior, and a global class-index shift.
+
+The deployed checkpoint is a context-adapted Stage-2 head, not the bare temporal CTC
+head. Its development-selected residual has weight `1.5` and is allowed to change
+only zero-based classes 9 and 86, `WHERE` and `HOME`. On capture `115101`, the bare
+head decodes the exact phone tensors as `NEED NEED`; adding the deployed residual
+changes the same tensors to `WHERE WHERE`. The residual changes five of the 22 phone
+decodes and explains a material part of the observed WHERE collapse. It was selected
+on ASLLRP development validation where NEED had no coverage, so its behavior on this
+new phone signer is validation overfit rather than independent generalization.
+
+A bounded validation-only A/B was then run on every existing Citizen, SemLex, and
+local isolated validation clip for `HELLO`, `MORNING`, `NEED`, and `WHERE`—165 clips
+total, with no test access. The selected isolated Stage-1 model scores 151/165; the
+bare Stage-2 CTC head scores 120/165; the deployed context-adapted Stage 2 scores
+117/165. Per class, the three results are respectively: `HELLO` 29/32, 19/32, 19/32;
+`MORNING` 44/45, 39/45, 39/45; `NEED` 37/40, 17/40, 11/40; and `WHERE` 41/48, 45/48,
+48/48. In local validation alone, the adapter changes NEED from 8/27 exact to 4/27
+and emits WHERE on 19/27 NEED clips. The underlying isolated data/model is therefore
+not globally trashed; the main degradation is introduced by the Stage-2 training and
+deployment contract.
+
+The Stage-2 coverage audit explains that degradation. Real Stage-2 phrase training
+contains HELLO only inside 107 `HELLO HOW YOU` rows and has no real NEED target at all.
+Its real validation contains HELLO only inside 27 `HELLO HOW YOU` rows and again no
+NEED. By contrast, contextual ASLLRP contributes 50 real WHERE training clips and 16
+WHERE validation clips, after which the explicit WHERE residual further boosts that
+class. The isolated Stage-1 replay itself is reasonably populated: Citizen/SemLex/local
+train counts for HELLO are 14/12/105, MORNING 14/17/149, NEED 15/14/177, and WHERE
+14/18/153. This is a Stage-2 supervision/selection imbalance, not evidence that those
+four isolated class folders were mislabeled.
+
+There is also a phone temporal-boundary mismatch. `prepareStage2` anchors nonoverlapping
+32-frame windows at recording frame zero and does not trim or re-anchor before
+windowing. Fourteen of the 22 phone attempts contain 19--30 frames before Apple Vision
+first observes a hand. Consequently, a short isolated sign is often split between the
+end of a mostly idle first window and a resampled partial second window; this explains
+the sensitivity to when Record was tapped and the duplicated `HELLO HELLO`/`NEED NEED`
+outputs. Stored portrait/landscape metadata is not the primary cause.
+
+No production change was made during this diagnosis. The recommended next design is
+to remove the development-only HOME/WHERE residual from deployment, motion-anchor the
+completed clip before forming windows, and run the already strong whole-clip Stage-1
+classifier for a single detected sign while retaining Stage 2 for multi-sign clips.
+Stage 2 should then be retrained/evaluated with class-balanced one-token replay, random
+leading/trailing idle and window-offset augmentation, and an all-100-class isolated
+validation gate in addition to genuine phrase gates. The 22 phone captures should be
+given intended gloss labels and retained as new-signer diagnostic evidence, with a
+subset locked before any phone-data adaptation. Incremental extraction during
+recording remains explicitly deferred. No Citizen, SemLex, local, ASLLRP, or other
+test split was accessed.
+
+## 2026-08-31 19:54 PST — physical iPhone diagnostics fixed and Release app reinstalled
+
+Two user-operated iPhone 13 runs established the first real-camera evidence for the
+Flutter app. A short intended `HELLO` clip was recorded upright at 720x1280 but decoded
+as `MORNING`; its report showed 2,330.3 ms Apple Vision extraction, 1,341.3 ms RGB crop
+encoding, 26.5 ms median Core ML inference, and nominal thermal state. A later phrase
+run emitted `HELLO HELLO HOW YOU`; recognition retained the intended phrase with one
+duplicate token, but Stage 3 fell back to `Hello hello how you.` because exact reviewed
+templates never delete recognized tokens. That enabled benchmark run showed 6,119.8 ms
+extraction, 28.3 ms median, 32.1 ms p90, resident memory 73.6->441.6 MiB, and nominal
+thermal state. These timings and memory values describe the pre-fix physical build;
+they are not post-optimization measurements.
+
+The live app at
+`/Users/frnzlo/Documents/machine_learning/mobile_app/slt_mobile_app` now fixes the
+camera-preview distortion at its root: Flutter no longer wraps `CameraPreview` in the
+raw sensor aspect ratio a second time, and an orientation-aware cover layout preserves
+geometry without stretching. Portrait controls were moved ahead of the scrollable
+result so they are no longer clipped, and the benchmark line now renders a real newline.
+
+Every attempt is copied out of iOS temporary storage before extraction to a unique
+Files-visible `Documents/Diagnostics/<UTC timestamp>_<UUID>/` directory. Successful
+captures retain `recording.mp4`, `report.json`, `tensor_manifest.json`, raw upright
+landmarks, exact normalized model landmarks, source/window masks, hand-valid masks,
+normalized hand boxes, and exact MobileCLIP2 hand embeddings as float32 NumPy files.
+Failed attempts retain the video plus `error.json`. `UIFileSharingEnabled` and
+`LSSupportsOpeningDocumentsInPlace` are enabled, so the folders appear under
+Files -> On My iPhone -> ASL Translator -> Diagnostics. Reports are saved for every
+capture rather than only benchmarks, and the old literal Swift `${...}` filename bug
+can no longer overwrite prior evidence. RGB crop images are deliberately not duplicated;
+the original video and saved boxes reproduce them.
+
+The completed-file pipeline still forms sequential 32-source-frame windows, with each
+window normalized/resampled to the model's fixed 32x61x5 input. Safe latency/memory
+changes were applied without changing those model inputs: model/label/naturalizer
+resources are cached once, camera files use AVFoundation's preferred transform rather
+than a four-rotation Vision sweep, the hand observations from landmark extraction are
+reused for RGB crop creation, normal one-shot inference reuses the cold output instead
+of running the neural path twice, and per-frame/per-crop autorelease pools bound Apple
+framework temporaries. Core ML remains configured with `computeUnits=.all`, leaving
+CPU/GPU/Neural Engine scheduling to iOS. Independent parallel Vision windows were not
+introduced because the pre-fix run already reached 441.6 MiB and concurrent window
+buffers would increase peak memory. Live extraction during recording remains a separate
+camera-stream architecture and is deferred until the post-fix completed-file benchmark
+is measured.
+
+Stage 3 gained one explicit reviewed rendering for the observed recognizer sequence
+`HELLO HELLO HOW YOU` -> `Hello, how are you?`; the gloss output remains unchanged and
+visible. The ordinary `HELLO HOW YOU` template already existed. The canonical and app
+manifest copies match at SHA-256
+`1d855ad74b2c26d68a28dd6fc55630bb00e2127ec6ab57fadc74e685b46b7716`.
+This remains bounded reviewed-template naturalization, not an on-device LLM or general
+ASL-to-English translator.
+
+Validation passed: Flutter analysis has zero issues, both Flutter tests pass, all eight
+focused Stage-3 naturalizer tests pass, and the unsigned arm64 Release iOS build succeeds
+at 126.3 MB. The signed Release app version 1.0.0 was then installed and launched on the
+connected iPhone 13 `angelo` under bundle ID `com.kokoab.sltMobileApp`. Post-fix
+latency, memory stability, prediction behavior, and Files bundle contents still require
+the next user-operated recording. PopSign was explicitly removed from the active plan.
+No Citizen, SemLex, local, ASLLRP, PopSign, or 2M-Flores test split was accessed.
+
+## 2026-08-26 23:07 PST — live-camera v17 inference integrated into the Flutter app
+
+The original Flutter design at
+`/Users/frnzlo/Documents/machine_learning/mobile_app/slt_mobile_app` is now a
+functional iOS-first record/stop/translate app rather than a UI mock-up. It uses the
+official Flutter `camera 0.12.0+2` plugin, defaults to the front camera, records a
+complete clip without audio, and sends the saved file through the proven Apple Vision
+v17 orientation/aspect-ratio-safe extractor. The locked Stage-2 Core ML CTC model
+naturally returns one gloss for a single recognized sign or multiple glosses for a
+recognized phrase. The bounded Stage-3 renderer exposes the gloss sequence, reviewed
+English when an exact template exists, and the literal gloss-preserving fallback
+otherwise. The UI supports portrait and landscape layouts and includes clear status,
+failure, retry, and conversation actions. Android native inference remains untouched
+and explicitly unavailable.
+
+A persistent Settings switch enables device benchmarking; it is off by default and
+normal users see no benchmark panel. An enabled run performs one extraction, five
+warmups, and 20 timed Stage-2 inferences, then shows extraction time, median/p90 model
+time, before/after resident memory, and thermal state. It writes and shares an atomic
+JSON report pinned to the Stage-2 candidate/checkpoint/package/vocabulary hashes and
+Stage-3 manifest hash. Simulator reports set
+`hardwarePerformanceClaim=false` and `thermalsInterpretable=false`; physical-device
+runs identify themselves separately. Normal inference skips the five benchmark
+warmups. Camera captures are marked end-to-end camera-to-gloss evidence, while no
+physical-iPhone performance or accuracy result is claimed until the app is run on the
+phone.
+
+The app bundles exact copies of the three selected Core ML packages and exact
+manifests. Manifest SHA-256 values are unchanged: vocabulary
+`3a665bda8d2b916c504406be815e601eeb55badfe62afcec42c7869885eab7cf`,
+Stage-2 mobile contract
+`342101de35b0c3065d730b44172e112b348281234b6e870f421ffd069c32adfa`,
+and Stage-3 naturalizer
+`68c7ce67632f66ee70fa3b3d36eb8df33ad72dc674edbf3b720e93c1240f84a6`.
+The copied Stage-2 Swift runtime differs from the proven benchmark source only by a
+configurable warmup count.
+
+Validation passed: `flutter analyze` has zero issues, both focused Flutter tests
+pass, both plist files lint cleanly, and the unsigned iOS Release build succeeds for
+arm64 with iOS 17.0 minimum and bundle ID `com.kokoab.sltMobileApp`. The resulting
+`Runner.app` is 126.2 MB and contains exactly the three compiled model bundles plus
+the three pinned manifests. Large local model packages are ignored by the mobile
+app's `.gitignore`. No Citizen, SemLex, local, ASLLRP, or 2M-Flores test split was
+accessed.
 
 ## 2026-08-24 21:21 PST — v17 source and evidence published to GitHub
 

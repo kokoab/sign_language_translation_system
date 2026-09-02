@@ -121,3 +121,34 @@ def apply_voice_profile(
     present = value[..., 3:4] > 0
     output[..., :3] = np.where(present, spatial, 0.0)
     return output
+
+
+def apply_voice_profile_to_trajectory(
+    features: np.ndarray,
+    profile: SigningVoiceProfileV17,
+    *,
+    profile_strength: float = 1.0,
+    curve_strength: float = 0.0,
+) -> np.ndarray:
+    """Transfer a signer profile without changing hand participation or presence."""
+    profile.validate()
+    value = np.asarray(features, dtype=np.float32)
+    if value.ndim != 3 or value.shape[1:] != (NUM_NODES, 5) or not len(value):
+        raise ValueError("trajectory must be non-empty [frames,61,5]")
+    if not 0.0 <= profile_strength <= 1.0 or not 0.0 <= curve_strength <= 1.0:
+        raise ValueError("profile and curve strengths must be in [0, 1]")
+    source_time = np.linspace(0.0, 1.0, PROFILE_FRAMES)
+    target_time = np.linspace(0.0, 1.0, len(value))
+    curve = np.stack([
+        np.interp(target_time, source_time, profile.frame_curve[:, channel])
+        for channel in range(3)
+    ], axis=1).astype(np.float32)
+    output = value.copy()
+    present = value[..., 3:4] > 0
+    spatial = (
+        value[..., :3]
+        + profile_strength * profile.node_offset[None]
+        + curve_strength * curve[:, None]
+    )
+    output[..., :3] = np.where(present, spatial, 0.0)
+    return output

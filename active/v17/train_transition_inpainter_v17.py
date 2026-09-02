@@ -69,19 +69,32 @@ def landmark_tree_fingerprint(root: Path) -> tuple[int, str]:
 
 class TransitionWindowDataset(Dataset):
     def __init__(
-        self, root: Path, signers: set[str], *, seed: int, fixed_masks: bool,
-        preload: bool = True,
+        self, root: Path, signers: set[str] | None, *, seed: int, fixed_masks: bool,
+        preload: bool = True, all_archives: bool = False,
+        roles: set[str] | None = None, sources: set[str] | None = None,
     ):
         self.rows: list[tuple[Path, int, str]] = []
         self.preloaded_features: list[np.ndarray] | None = [] if preload else None
         self.seed = seed
         self.fixed_masks = fixed_masks
-        for path in sorted(root.glob("*/*.transition_landmarks_v17.npz")):
+        pattern = "**/*.npz" if all_archives else "*/*.transition_landmarks_v17.npz"
+        for path in sorted(root.glob(pattern)):
             with np.load(path, allow_pickle=False) as payload:
+                if "landmarks" not in payload.files or "metadata_json" not in payload.files:
+                    continue
                 metadata = json.loads(str(payload["metadata_json"]))
-                valid = payload["window_valid"].astype(np.bool_)
+                if roles is not None and str(metadata.get("role", "train")) not in roles:
+                    continue
+                if sources is not None and str(metadata.get("source")) not in sources:
+                    continue
+                if "window_valid" in payload.files:
+                    valid = payload["window_valid"].astype(np.bool_)
+                elif "landmark_window_valid" in payload.files:
+                    valid = payload["landmark_window_valid"].astype(np.bool_)
+                else:
+                    continue
                 signer = str(metadata["signer_id"])
-                if signer not in signers:
+                if signers is not None and signer not in signers:
                     continue
                 landmarks = payload["landmarks"] if self.preloaded_features is not None else None
                 for window in np.flatnonzero(valid):

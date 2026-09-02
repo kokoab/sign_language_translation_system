@@ -1,0 +1,206 @@
+{
+  "format": "slt_live_isolated_v17_session",
+  "version": 2,
+  "prototype_scope": "low-motion-delimited isolated Stage-1; not continuous Stage-2",
+  "started_utc": "2026-09-02T02:57:46.056280+00:00",
+  "source": "data/raw_videos/PHRASES/THANKYOU_FRIEND/fa5f33d6.mp4",
+  "mode": "hybrid",
+  "score_semantics": "uncalibrated softmax over model/fused scores",
+  "config": {
+    "processing_fps": 30.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": true,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true
+  },
+  "models": {
+    "unified_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_unified_multimodal_student_v1/best_model.pth",
+      "sha256": "1caeadf4b3ca620aa9fef00b35c012b39d7c093f67da1ee2f6987d2c2297906b"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "stage1_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1UnifiedMultimodalV17FP32.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "orientation_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1OrientationV17.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "landmark_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_citizen_semlex_full_clean_balanced/best_model.pth",
+      "sha256": "23d5b7f1b343a6b5246e4afe03c0ab99067d3dac6e355024b5c53e5c31013f8e"
+    },
+    "mouth_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_visual_speech_auto_avsr_mouth_frozen/best_model.pth",
+      "sha256": "e3e1b12c48206dd005119551cced65502c421bc426f2350643afbed646ecd8bd"
+    },
+    "lower_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_visual_speech_auto_avsr_lower_face_frozen/best_model.pth",
+      "sha256": "4c0b8f1dbf14c2faf8020a6f795d5dc2af64d1cf708f3a805907882b8b84669e"
+    }
+  },
+  "video": "artifacts/reports/live_motion_valley_v17_local_phrase_tuned_v1/runs/THANKYOU_FRIEND/20260902_105746_055841/session_lowres.mp4",
+  "predictions": [
+    {
+      "gloss": "NAME",
+      "candidate_gloss": "NAME",
+      "model_score": 0.9428316354751587,
+      "margin": 0.9397625513374805,
+      "gate_score": 0.8635955452919006,
+      "gate_margin": 0.8575559258460999,
+      "top3": [
+        {
+          "gloss": "NAME",
+          "model_score": 0.9428316354751587
+        },
+        {
+          "gloss": "MORE",
+          "model_score": 0.0030690841376781464
+        },
+        {
+          "gloss": "LESS",
+          "model_score": 0.002787678735330701
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "hybrid",
+      "frames": 73,
+      "motion_trimmed_frames": 63,
+      "start_seconds": 0.1,
+      "end_seconds": 2.5,
+      "diagnostics": {
+        "normalization_scale": 0.2650420069694519,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.9047619047619048,
+        "source_frames": 63,
+        "trim_start": 0,
+        "trim_end_exclusive": 63,
+        "hand_frame_fraction": 0.9841269841269841,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.875,
+        "motion_trim_start": 7,
+        "motion_trim_end_exclusive": 70,
+        "motion_trim_fallback": false,
+        "live_auxiliary_interval": 8,
+        "raw_clip_seconds": 2.4,
+        "motion_trimmed_seconds": 2.0666666666666664,
+        "observed_processing_fps": 30.0,
+        "mouth_pixels_used": false,
+        "visual_tie_break": false,
+        "landmark_tie_break": false,
+        "fast_top3": [
+          "NAME",
+          "MORE",
+          "LESS"
+        ],
+        "fast_gate_score": 0.8635955452919006,
+        "fast_gate_margin": 0.8575559258460999
+      },
+      "latency_ms": {
+        "tensor_extraction": 35.88979199999898,
+        "hand_image_encoding": 265.6582500000013,
+        "classification": 25.71779100000171,
+        "total": 327.265833000002
+      },
+      "buffer_epoch": 0,
+      "display_epoch": 0,
+      "included_in_active_buffer": true
+    },
+    {
+      "gloss": "UNKNOWN",
+      "candidate_gloss": "WRITE",
+      "model_score": 0.32813188433647156,
+      "margin": 0.07870243489742279,
+      "gate_score": 0.23872417211532593,
+      "gate_margin": 0.048526301980018616,
+      "top3": [
+        {
+          "gloss": "WRITE",
+          "model_score": 0.32813188433647156
+        },
+        {
+          "gloss": "HOW",
+          "model_score": 0.24942944943904877
+        },
+        {
+          "gloss": "DOCTOR",
+          "model_score": 0.08920364081859589
+        }
+      ],
+      "accepted": false,
+      "rejection_reasons": [
+        "low_score",
+        "low_margin"
+      ],
+      "mode": "hybrid",
+      "frames": 18,
+      "motion_trimmed_frames": 15,
+      "start_seconds": 2.7,
+      "end_seconds": 3.2666666666666666,
+      "diagnostics": {
+        "normalization_scale": 0.2553471624851227,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.06666666666666667,
+        "source_frames": 15,
+        "trim_start": 0,
+        "trim_end_exclusive": 15,
+        "hand_frame_fraction": 0.8666666666666667,
+        "face_presence_fraction": 0.0625,
+        "body_presence_fraction": 0.0625,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 15,
+        "motion_trim_fallback": false,
+        "live_auxiliary_interval": 8,
+        "raw_clip_seconds": 0.5666666666666664,
+        "motion_trimmed_seconds": 0.46666666666666634,
+        "observed_processing_fps": 30.000000000000014,
+        "mouth_pixels_used": false,
+        "visual_tie_break": false,
+        "landmark_tie_break": false,
+        "fast_top3": [
+          "WRITE",
+          "HOW",
+          "DOCTOR"
+        ],
+        "fast_gate_score": 0.23872417211532593,
+        "fast_gate_margin": 0.048526301980018616
+      },
+      "latency_ms": {
+        "tensor_extraction": 23.588124999996296,
+        "hand_image_encoding": 282.76158300000276,
+        "classification": 25.539833999999928,
+        "total": 331.889541999999
+      },
+      "buffer_epoch": 0,
+      "display_epoch": 0,
+      "included_in_active_buffer": false
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-02T02:57:46.597117+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    }
+  ],
+  "utterances": [],
+  "test_accessed": false,
+  "finished_utc": "2026-09-02T02:57:51.804488+00:00"
+}

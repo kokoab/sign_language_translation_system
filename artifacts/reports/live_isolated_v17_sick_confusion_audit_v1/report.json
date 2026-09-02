@@ -1,0 +1,85 @@
+{
+  "format": "slt_live_isolated_v17_sick_confusion_audit",
+  "version": 1,
+  "session": "artifacts/reports/live_isolated_v17/20260902_090932_943567/history.json",
+  "user_stated_intent": "The newest sequence includes repeated SICK attempts and comparisons with FATHER, MOTHER, and FEEL; exact intended label per event was not recorded.",
+  "session_summary": {
+    "predictions": 47,
+    "cascade_predictions": 44,
+    "cascade_fallback_count": 28,
+    "cascade_fallback_fraction": 0.6363636363636364,
+    "primary_only_post_clip_median_ms": 21.753833999994754,
+    "fallback_post_clip_median_ms": 276.6460830000028,
+    "mouth_visual_calls": 3,
+    "observed_processing_fps_median": 14.685242891935015,
+    "sick_cluster_observation": "Repeated candidates cluster around SICK, FATHER, WHY, KNOW, and THINK. One early attempt was accepted as SICK; several later attempts placed SICK first but rejected it, or placed FATHER/WHY above SICK."
+  },
+  "current_unified_cache_support": {
+    "citizen": {
+      "SICK": {"train": 14, "validation": 4, "validation_correct": 4},
+      "FATHER": {"train": 14, "validation": 3, "validation_correct": 3},
+      "MOTHER": {"train": 14, "validation": 3, "validation_correct": 3},
+      "FEEL": {"train": 15, "validation": 4, "validation_correct": 4}
+    },
+    "semlex": {
+      "SICK": {"train": 23, "validation": 18, "validation_correct": 17},
+      "FATHER": {"train": 10, "validation": 6, "validation_correct": 6},
+      "MOTHER": {"train": 14, "validation": 6, "validation_correct": 6},
+      "FEEL": {"train": 16, "validation": 12, "validation_correct": 12}
+    },
+    "local": {
+      "SICK": {"train": 0, "validation": 0, "validation_correct": 0},
+      "FATHER": {"train": 85, "validation": 18, "validation_correct": 17},
+      "MOTHER": {"train": 135, "validation": 26, "validation_correct": 26},
+      "FEEL": {"train": 153, "validation": 27, "validation_correct": 26}
+    }
+  },
+  "training_handedness": {
+    "citizen_SICK_two_hand_sample_fraction": 0.929,
+    "semlex_SICK_two_hand_sample_fraction": 0.92,
+    "citizen_FATHER_one_hand_sample_fraction": 1.0,
+    "citizen_MOTHER_one_hand_sample_fraction": 1.0,
+    "citizen_FEEL_one_hand_sample_fraction": 1.0,
+    "interpretation": "The user's one-handed SICK reduction is underrepresented and is structurally closer to the one-handed forehead/face classes in the current local adaptation."
+  },
+  "existing_one_hand_sick_candidates": {
+    "source": "data/local/popsign_citizen100_variant_audit",
+    "clips": 3,
+    "all_extract_as_one_hand": true,
+    "landmark_primary_predictions": [
+      {"clip": "225-sick", "prediction": "SICK", "score": 0.829},
+      {"clip": "422-sick", "prediction": "SLEEP", "score": 0.268},
+      {"clip": "497-sick", "prediction": "SICK", "score": 0.889}
+    ],
+    "role": "Useful training candidates after review, not sufficient alone and not a general PopSign promotion."
+  },
+  "existing_citizen_visual_validation": {
+    "mouth": {
+      "SICK": "1/4",
+      "FATHER": "2/3",
+      "MOTHER": "3/3",
+      "FEEL": "1/4"
+    },
+    "lower_face": {
+      "SICK": "0/4",
+      "FATHER": "2/3",
+      "MOTHER": "1/3",
+      "FEEL": "1/4"
+    },
+    "decision": "Do not activate the current visual teachers for this confusion set. A retrained detailed-face/lip supplement needs its own validation gate."
+  },
+  "diagnosis": [
+    "This is a domain/variant coverage gap, not a label-index mismatch.",
+    "The cascade is behaving as configured but transfers poorly on this live session: 63.6% fallback versus 11.4% on Citizen validation.",
+    "The current history does not store intended labels or exact per-clip tensors, so it is diagnostic evidence but not safe supervised retraining data."
+  ],
+  "recommended_retrain": {
+    "primary": "Add reviewed one-handed SICK performances and balanced hard negatives FATHER, MOTHER, FEEL, WHY, KNOW, and THINK; train handshape plus hand-to-face-location discrimination without removing two-handed SICK.",
+    "targeted_augmentation": "For two-handed SICK training clips, sometimes preserve the hand nearest the face and mask the lower/stomach hand. Existing augmentation drops a few random nodes but never models this complete one-hand lexical reduction.",
+    "supplement": "Train a separate Apple Vision detailed face/lip motion expert and promote it only if it improves the focused confusion gate without reducing all-class signer-disjoint validation.",
+    "collection_requirement": "Future labeled live clips should save exact v17 tensors, hand crops, detailed lip landmarks, boundaries, and intended gloss; the current low-resolution session MP4 is reference-only."
+  },
+  "citizen_test_accessed": false,
+  "semlex_test_accessed": false,
+  "other_sealed_test_accessed": false
+}

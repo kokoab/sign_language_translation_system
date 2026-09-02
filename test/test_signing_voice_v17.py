@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import torch
@@ -22,10 +23,15 @@ from active.v17.signing_voice_phrase_v17 import (
     compose_phrase,
     normalize_style_mix,
     synthesize_boundary,
+    synthesize_join,
+    trim_observed_span,
+    trim_transition_span,
+    stabilize_transition_hands,
 )
 from active.v17.model_signing_voice_profile_v17 import (
     SigningVoiceProfileV17,
     apply_voice_profile,
+    apply_voice_profile_to_trajectory,
     decode_profile,
     encode_profile,
     estimate_voice_profile,
@@ -48,6 +54,15 @@ class _DummyTiming(nn.Module):
 class _DummyMean(nn.Module):
     def forward(self, features, mask):
         return interpolate_masked_context(features, mask)
+
+
+class _HallucinatingPresenceMean(nn.Module):
+    def forward(self, features, mask):
+        output = interpolate_masked_context(features, mask)
+        output[..., 3:] = torch.where(
+            mask[:, :, None, None], torch.ones_like(output[..., 3:]), output[..., 3:]
+        )
+        return output
 
 
 class SigningVoiceV17Tests(unittest.TestCase):
@@ -158,6 +173,98 @@ class SigningVoiceV17Tests(unittest.TestCase):
             "gloss", "transition", "gloss"
         ])
 
+    def test_phrase_trims_unobserved_padding_before_transition(self):
+        sign = np.zeros((32, 61, 5), np.float32)
+        sign[2:30, ..., 3:] = 1
+        trimmed = trim_transition_span(sign)
+        self.assertEqual(len(trimmed), 28)
+        phrase, timeline = compose_phrase(
+            [sign, sign], [3, 7], 1.0, torch.full((100,), 20),
+            _DummyMean(), _DummyTiming(),
+        )
+        transition = next(row for row in timeline if row["kind"] == "transition")
+        self.assertTrue(
+            (phrase[transition["start"]:transition["stop"], :42, 3] > 0).any(axis=1).all()
+        )
+
+    def test_trim_removes_partial_hand_edges_without_adding_a_second_hand(self):
+        sign = np.zeros((10, 61, 5), np.float32)
+        sign[:, 21, 3:] = 1
+        sign[2:8, 21:42, 3:] = 1
+        trimmed = trim_transition_span(sign)
+        self.assertEqual(len(trimmed), 6)
+        self.assertFalse((trimmed[:, :21, 3] > 0).any())
+        self.assertTrue((trimmed[:, 21:42, 3] > 0).all())
+
+    def test_transition_presence_is_anchored_to_observed_endpoints(self):
+        sign = np.zeros((32, 61, 5), np.float32)
+        sign[:, :42, 3:] = 1
+        transition, _ = synthesize_boundary(
+            sign, sign, _HallucinatingPresenceMean(), _DummyTiming()
+        )
+        self.assertTrue((transition[:, :42, 3] > 0).all())
+        self.assertFalse((transition[:, 42:, 3] > 0).any())
+
+    def test_transition_hand_stabilization_preserves_bones_without_second_hand(self):
+        left = np.zeros((2, 61, 5), np.float32)
+        right = np.zeros_like(left)
+        tree = (
+            (0, 1), (1, 2), (2, 3), (3, 4),
+            (0, 5), (5, 6), (6, 7), (7, 8),
+            (0, 9), (9, 10), (10, 11), (11, 12),
+            (0, 13), (13, 14), (14, 15), (15, 16),
+            (0, 17), (17, 18), (18, 19), (19, 20),
+        )
+        for features, direction in ((left, 1.0), (right, -1.0)):
+            hand = features[:, 21:42]
+            hand[..., 3:] = 1
+            for parent, child in tree:
+                hand[:, child, :3] = hand[:, parent, :3] + (direction * 0.1, 0.02, 0.0)
+        collapsed = np.zeros((5, 61, 5), np.float32)
+        collapsed[:, :21, 3:] = 1
+        collapsed[:, 21:42, 3:] = 1
+        fixed = stabilize_transition_hands(collapsed, left, right)
+        self.assertFalse((fixed[:, :21, 3] > 0).any())
+        self.assertTrue((fixed[:, 21:42, 3] > 0).all())
+        for parent, child in tree:
+            length = np.linalg.norm(
+                fixed[:, 21 + child, :3] - fixed[:, 21 + parent, :3], axis=1
+            )
+            self.assertTrue((length > 0.09).all())
+
+    def test_transition_completes_only_a_legitimately_participating_hand(self):
+        left = np.zeros((2, 61, 5), np.float32)
+        right = np.zeros_like(left)
+        for features in (left, right):
+            features[:, 21:42, 3:] = 1
+            features[:, 21:42, 0] = np.arange(21, dtype=np.float32)
+        partial = np.zeros((5, 61, 5), np.float32)
+        partial[:, 21, 3:] = 1
+        fixed = stabilize_transition_hands(partial, left, right)
+        self.assertFalse((fixed[:, :21, 3] > 0).any())
+        self.assertTrue((fixed[:, 21:42, 3] > 0).all())
+
+    def test_join_can_skip_one_genuine_entry_frame_without_adding_a_hand(self):
+        left = np.zeros((10, 61, 5), np.float32)
+        right = np.zeros_like(left)
+        transition = np.zeros((4, 61, 5), np.float32)
+        for value in (left, right, transition):
+            value[:, 21:42, 3:] = 1
+        failed = {"speed": 1.0, "acceleration": 1.0, "jerk": 5.0}
+        passed = {"speed": 1.0, "acceleration": 1.0, "jerk": 1.0}
+        with patch(
+            "active.v17.signing_voice_phrase_v17.synthesize_boundary",
+            side_effect=((transition, 4), (transition, 4)),
+        ), patch(
+            "active.v17.signing_voice_phrase_v17._transition_motion_ratios",
+            side_effect=(failed, passed),
+        ):
+            result, prepared_right, span, offset = synthesize_join(
+                left, right, object(), _DummyTiming()
+            )
+        self.assertEqual((span, offset, len(prepared_right)), (4, 1, 9))
+        self.assertFalse((result[:, :21, 3] > 0).any())
+
     def test_profile_estimation_removes_content_and_roundtrips_latent(self):
         prototypes = np.zeros((2, 32, 61, 5), np.float32)
         prototypes[..., 3:] = 1
@@ -187,6 +294,26 @@ class SigningVoiceV17Tests(unittest.TestCase):
         generated = apply_voice_profile(prototype, profile)
         self.assertTrue(np.array_equal(generated[..., 3:], prototype[..., 3:]))
         self.assertTrue(np.allclose(generated[..., :3], 0.1))
+
+    def test_trajectory_profile_cannot_invent_second_hand(self):
+        trajectory = np.zeros((128, 61, 5), np.float32)
+        trajectory[:, 21:42, :3] = 0.2
+        trajectory[:, 21:42, 3] = 1
+        trajectory[:, 21:42, 4] = 0.8
+        profile = SigningVoiceProfileV17(
+            np.full((61, 3), 0.1, np.float32),
+            np.linspace(0, 0.2, 32, dtype=np.float32)[:, None]
+            * np.ones((1, 3), np.float32),
+        )
+
+        generated = apply_voice_profile_to_trajectory(
+            trajectory, profile, curve_strength=1.0
+        )
+
+        self.assertEqual(generated.shape, trajectory.shape)
+        self.assertTrue(np.array_equal(generated[..., 3:], trajectory[..., 3:]))
+        self.assertTrue(np.array_equal(generated[:, :21, :3], np.zeros((128, 21, 3))))
+        self.assertGreater(float(generated[:, 21:42, :3].mean()), 0.2)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,3 @@
+# SignWriting symbolic pilot v1
+
+Open `index.html` to compare natural-English prompting, project-gloss-order prompting, and concatenated isolated forms for five phrases, plus 12 isolated lexical probes. Every output is structurally parseable, but none of the five natural phrase outputs strictly round-trips to its input and only 7/12 isolated probes do. The automated recommendation is therefore HOLD before pose rendering. Reverse translation is only a diagnostic, not semantic ground truth; native ASL/SignWriting review is still required. Nothing here is eligible for Stage-2 training, validation, or testing.

@@ -12,7 +12,6 @@ import sys
 import time
 
 import numpy as np
-from PIL import Image
 import torch
 
 if __package__ in (None, ""):
@@ -34,6 +33,23 @@ from active.v17.schema_stage2_hand_mobileclip2_v17 import (
 LOG = logging.getLogger("encode_stage2_hand_mobileclip2_v17")
 
 
+def preprocess_crop_batch(
+    crops: np.ndarray, batch_locations: np.ndarray,
+    device: torch.device, dtype: torch.dtype,
+) -> torch.Tensor:
+    """Vectorized exact MobileCLIP2 preprocessing for fixed 256px RGB crops."""
+    selected = np.ascontiguousarray(
+        crops[batch_locations[:, 0], batch_locations[:, 1]]
+    )
+    if selected.ndim != 4 or selected.shape[1:] != (CROP_SIZE, CROP_SIZE, 3):
+        raise ValueError(f"unexpected hand crop batch {selected.shape}")
+    # The pinned MobileCLIP2-S0 transform is Resize(256), CenterCrop(256),
+    # RGB conversion, ToTensor, Normalize(mean=0,std=1). Crops already satisfy
+    # the first three operations, so this is bit-exact and avoids PIL per image.
+    value = torch.from_numpy(selected).permute(0, 3, 1, 2).float().div_(255.0)
+    return value.to(device=device, dtype=dtype)
+
+
 def output_path(output_root: Path, crop_root: Path, crop_path: Path) -> Path:
     relative = crop_path.relative_to(crop_root)
     stem = crop_path.name.removesuffix(".stage2_rgb_v17.npz")
@@ -41,7 +57,7 @@ def output_path(output_root: Path, crop_root: Path, crop_path: Path) -> Path:
 
 
 def encode_one(
-    path: Path, model, preprocess, device: torch.device, image_batch_size: int,
+    path: Path, model, _preprocess, device: torch.device, image_batch_size: int,
     expected_crop_schema: str,
 ):
     with np.load(path, allow_pickle=False) as payload:
@@ -61,9 +77,7 @@ def encode_one(
     with torch.inference_mode():
         for start in range(0, len(locations), image_batch_size):
             batch_locations = locations[start : start + image_batch_size]
-            tensors = torch.stack(
-                [preprocess(Image.fromarray(crops[int(frame), int(view)])) for frame, view in batch_locations]
-            ).to(device=device, dtype=dtype)
+            tensors = preprocess_crop_batch(crops, batch_locations, device, dtype)
             encoded = model.encode_image(tensors, normalize=True).float().cpu().numpy()
             for value, (frame, view) in zip(encoded, batch_locations):
                 embeddings[int(frame), int(view)] = value
@@ -135,7 +149,11 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         embeddings, valid, boxes, metadata = encode_one(
             crop_path, model, preprocess, device, args.image_batch_size,
             crop_schema_fingerprint(
-                Stage2FeatureV17Config(maximum_source_frames=args.maximum_source_frames)
+                Stage2FeatureV17Config(
+                    window_source_frames=args.window_source_frames,
+                    window_stride=args.window_stride or None,
+                    maximum_source_frames=args.maximum_source_frames,
+                )
             ),
         )
         save(destination, embeddings, valid, boxes, metadata)
@@ -178,6 +196,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--image-batch-size", type=int, default=16)
     parser.add_argument("--mps-memory-fraction", type=float, default=0.08)
     parser.add_argument("--maximum-source-frames", type=int, default=256)
+    parser.add_argument("--window-source-frames", type=int, default=32)
+    parser.add_argument("--window-stride", type=int, default=0)
     parser.add_argument("--overwrite", action="store_true")
     return parser
 

@@ -32,7 +32,7 @@ The selected model provenance should remain:
 - Stage-2 contract SHA-256:
   `8be66a44d337dd99484d3ee3140f3124c2e121abe20e93ce7f09b94d96ecc30d`
 - Stage-3 manifest SHA-256:
-  `68c7ce67632f66ee70fa3b3d36eb8df33ad72dc674edbf3b720e93c1240f84a6`
+  `1d855ad74b2c26d68a28dd6fc55630bb00e2127ec6ab57fadc74e685b46b7716`
 
 Verify the two regular files with:
 

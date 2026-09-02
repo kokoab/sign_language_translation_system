@@ -43,6 +43,17 @@ class Stage3MobileNaturalizerV17Tests(unittest.TestCase):
         self.assertEqual(result["rendering_mode"], "literal_fallback")
         self.assertTrue(result["safe_fallback_used"])
 
+    def test_observed_duplicate_hello_sequence_has_reviewed_translation(self):
+        result = naturalize_stage2_output(
+            self.output([15, 15, 14, 2]),
+            manifest=self.manifest,
+            contract=self.contract,
+        )
+        self.assertEqual(result["glosses"], ["HELLO", "HELLO", "HOW", "YOU"])
+        self.assertEqual(result["literal_english"], "Hello hello how you.")
+        self.assertEqual(result["natural_english"], "Hello, how are you?")
+        self.assertEqual(result["rendering_mode"], "reviewed_template")
+
     def test_empty_sequence_is_empty_and_safe(self):
         result = naturalize_stage2_output(
             self.output([]), manifest=self.manifest, contract=self.contract,

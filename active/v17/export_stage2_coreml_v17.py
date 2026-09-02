@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export the exact compact context-adapted v17 Stage-2 graph to Core ML."""
+"""Export an exact compact v17 Stage-2 CTC graph to Core ML."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ if __package__ in (None, ""):
 from active.v17.export_stage1_coreml_v17 import directory_bytes, sha256_file, tree_sha256
 from active.v17.model_stage2_v17 import (
     FROZEN_TEMPORAL_FEATURE_DIM,
-    load_stage2_context_adapted,
+    load_stage2_model_v17,
 )
 from active.v17.train_stage_2_v17 import RealPhraseDataset, collapse_ctc
 
@@ -130,14 +130,15 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         args.parity_root, args.checkpoint
     )):
         raise ValueError("Stage-2 Core ML parity is restricted to non-test data")
-    original, checkpoint = load_stage2_context_adapted(args.checkpoint)
+    original, checkpoint = load_stage2_model_v17(args.checkpoint)
     original.eval()
+    config = original.config
     export_model = copy.deepcopy(original)
     replace_masked_attention(export_model)
     wrapper = Stage2ExportWrapper(export_model).eval()
     dataset = RealPhraseDataset(args.parity_root, "validation")
     sample = dataset[0]
-    sample_arrays = fixed_input(sample.features.astype(np.float32), original.base.config.max_windows)
+    sample_arrays = fixed_input(sample.features.astype(np.float32), config.max_windows)
     sample_tensors = tuple(torch.from_numpy(value) for value in sample_arrays)
     with torch.inference_mode():
         reference, _ = original(sample_tensors[0], sample_tensors[1] > 0.5)
@@ -152,12 +153,12 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         inputs=[
             ct.TensorType(
                 name="frozen_features",
-                shape=(1, original.base.config.max_windows, 32, FROZEN_TEMPORAL_FEATURE_DIM),
+                shape=(1, config.max_windows, 32, FROZEN_TEMPORAL_FEATURE_DIM),
                 dtype=np.float32,
             ),
             ct.TensorType(
                 name="window_mask",
-                shape=(1, original.base.config.max_windows),
+                shape=(1, config.max_windows),
                 dtype=np.float32,
             ),
         ],
@@ -185,7 +186,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     with torch.inference_mode():
         for row in dataset.samples:
             arrays = fixed_input(
-                row.features.astype(np.float32), original.base.config.max_windows
+                row.features.astype(np.float32), config.max_windows
             )
             tensors = tuple(torch.from_numpy(value) for value in arrays)
             torch_logits, _ = original(tensors[0], tensors[1] > 0.5)
@@ -195,10 +196,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             ).reshape(torch_value.shape)
             max_abs = max(max_abs, float(np.max(np.abs(torch_value - coreml_value))))
             torch_decoded = decoded(
-                torch_value, len(row.features), original.base.config.tokens_per_window
+                torch_value, len(row.features), config.tokens_per_window
             )
             coreml_decoded = decoded(
-                coreml_value, len(row.features), original.base.config.tokens_per_window
+                coreml_value, len(row.features), config.tokens_per_window
             )
             decode_mismatches += int(torch_decoded != coreml_decoded)
             exact_tensor_mismatches += int(not np.array_equal(torch_value, coreml_value))
@@ -215,10 +216,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "format_coreml": f"mlprogram_{args.precision}",
         "minimum_deployment_target": "iOS15",
         "inputs": {
-            "frozen_features": [1, original.base.config.max_windows, 32, FROZEN_TEMPORAL_FEATURE_DIM],
-            "window_mask": [1, original.base.config.max_windows],
+            "frozen_features": [1, config.max_windows, 32, FROZEN_TEMPORAL_FEATURE_DIM],
+            "window_mask": [1, config.max_windows],
         },
-        "output": [1, original.base.config.max_windows * original.base.config.tokens_per_window, 101],
+        "output": [1, config.max_windows * config.tokens_per_window, 101],
         "manual_attention_max_abs": manual_max_abs,
         "parity_role": "validation",
         "parity_samples": len(dataset),

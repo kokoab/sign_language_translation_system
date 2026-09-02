@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate and render one complete phrase in three novel landmark signing voices."""
+"""Render synthetic landmark phrases without conflating rigs and observations."""
 
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ from active.v17.signing_voice_phrase_v17 import (
     NovelVoiceRecipe,
     voice_duration_ratio,
 )
+from active.v17.landmark_anatomy_v17 import complete_landmark_anatomy
 from active.v17.model_signing_voice_profile_v17 import (
     apply_voice_profile,
     decode_profile,
@@ -116,28 +117,31 @@ def line_if_present(canvas, frame, first, second, color, center, extent, width):
     )
 
 
-def avatar_panel(features, frame_index, size, center, extent, accent):
+def avatar_panel(
+    features, frame_index, size, center, extent, accent, *, filled_avatar=True
+):
     width, height = size
     canvas = np.full((height, width, 3), (13, 16, 23), np.uint8)
     frame = features[frame_index]
     # Filled head and torso make this readable as an articulated avatar rather than
     # a diagnostic landmark plot. Fine facial and hand motion remains data-driven.
-    face_nodes = frame[42:57]
-    face_present = face_nodes[:, 3] > 0
-    if face_present.any():
-        points = [point_xy(value, center, extent, size) for value in face_nodes[face_present]]
-        array = np.asarray(points)
-        face_center = tuple(np.mean(array, axis=0).round().astype(int))
-        radius_x = max(22, int(np.ptp(array[:, 0]) * 0.72))
-        radius_y = max(30, int(np.ptp(array[:, 1]) * 0.72))
-        cv2.ellipse(canvas, face_center, (radius_x, radius_y), 0, 0, 360, (69, 76, 91), -1, cv2.LINE_AA)
-    if all(frame[index, 3] > 0 for index in (57, 58)):
-        left = point_xy(frame[57], center, extent, size)
-        right = point_xy(frame[58], center, extent, size)
-        shoulder_y = (left[1] + right[1]) // 2
-        bottom_y = min(height - 20, shoulder_y + max(100, abs(right[0] - left[0])))
-        polygon = np.asarray([left, right, (right[0] + 35, bottom_y), (left[0] - 35, bottom_y)])
-        cv2.fillConvexPoly(canvas, polygon, (38, 48, 67), cv2.LINE_AA)
+    if filled_avatar:
+        face_nodes = frame[42:57]
+        face_present = face_nodes[:, 3] > 0
+        if face_present.any():
+            points = [point_xy(value, center, extent, size) for value in face_nodes[face_present]]
+            array = np.asarray(points)
+            face_center = tuple(np.mean(array, axis=0).round().astype(int))
+            radius_x = max(22, int(np.ptp(array[:, 0]) * 0.72))
+            radius_y = max(30, int(np.ptp(array[:, 1]) * 0.72))
+            cv2.ellipse(canvas, face_center, (radius_x, radius_y), 0, 0, 360, (69, 76, 91), -1, cv2.LINE_AA)
+        if all(frame[index, 3] > 0 for index in (57, 58)):
+            left = point_xy(frame[57], center, extent, size)
+            right = point_xy(frame[58], center, extent, size)
+            shoulder_y = (left[1] + right[1]) // 2
+            bottom_y = min(height - 20, shoulder_y + max(100, abs(right[0] - left[0])))
+            polygon = np.asarray([left, right, (right[0] + 35, bottom_y), (left[0] - 35, bottom_y)])
+            cv2.fillConvexPoly(canvas, polygon, (38, 48, 67), cv2.LINE_AA)
     for first, second in ((57, 58), (57, 59), (59, 0), (58, 60), (60, 21)):
         line_if_present(canvas, frame, first, second, (112, 124, 146), center, extent, 12)
     for edge in FACE_EDGES:
@@ -149,6 +153,13 @@ def avatar_panel(features, frame_index, size, center, extent, accent):
         for index in range(start, stop):
             if frame[index, 3] > 0:
                 cv2.circle(canvas, point_xy(frame[index], center, extent, size), 3, accent, -1, cv2.LINE_AA)
+    if not filled_avatar:
+        for index in range(42, 61):
+            if frame[index, 3] > 0:
+                cv2.circle(
+                    canvas, point_xy(frame[index], center, extent, size),
+                    3, (218, 221, 231), -1, cv2.LINE_AA,
+                )
     # Wrist trails expose timing and path differences between synthesized voices.
     for wrist in (0, 21):
         trail = []
@@ -202,7 +213,7 @@ def render_frame(voices, logical_frame, bounds, size=(1920, 900)):
         put_text(canvas, current_segment(voice, frame_index), (x + 14, 795), 0.62, accent, 2)
         put_text(canvas, f"{len(voice['phrase'])} generated frames", (x + 14, 824), 0.49, (155, 170, 193), 1)
         draw_timeline(canvas, voice, x + 14, 844, panel_width - 28, frame_index)
-    put_text(canvas, "Blue = generated gloss motion | Yellow = learned transition | no human trajectory is being replayed", (34, 886), 0.53, (178, 190, 208), 1)
+    put_text(canvas, "Render-only 61-node rig | detector observation mask stored separately | synthetic review only", (34, 886), 0.53, (178, 190, 208), 1)
     return canvas
 
 
@@ -226,6 +237,44 @@ def run(args):
     )
     if checkpoint.get("format") != "slt_signing_voice_profile_v17":
         raise ValueError("the final renderer requires a signing-voice profile checkpoint")
+    with np.load(args.anatomy_package, allow_pickle=False) as payload:
+        anatomy_metadata = json.loads(str(payload["metadata_json"]))
+        recognition_prototypes = payload["recognition_prototypes"].astype(np.float32)
+        animation_rig_prototypes = payload["animation_rig_prototypes"].astype(np.float32)
+        source_hand_activity = payload["source_hand_activity"].astype(bool)
+        source_hand_participation = payload["source_hand_participation"].astype(bool)
+        prototype_pool_indices = payload["prototype_pool_indices"].astype(int)
+        anatomy_template = {
+            "absolute_xyz": payload["canonical_absolute_xyz"].astype(np.float32),
+            "hand_shapes": payload["canonical_hand_shapes"].astype(np.float32),
+            "wrist_from_elbow": payload["canonical_wrist_from_elbow"].astype(np.float32),
+        }
+    if anatomy_metadata.get("format") != "slt_signing_landmark_anatomy_v17":
+        raise ValueError("unexpected signing-landmark anatomy package")
+    if anatomy_metadata.get("version") != 3:
+        raise ValueError(
+            "unsafe or obsolete anatomy package: generation requires the v3 "
+            "hand-participation-preserving rig contract"
+        )
+    if anatomy_metadata.get("pool_sha256") != checkpoint.get("pool_sha256"):
+        raise ValueError("anatomy package and signing voice use different train pools")
+    if anatomy_metadata.get("content_checkpoint_sha256") != sha256(args.content_checkpoint):
+        raise ValueError("anatomy package and content evaluator differ")
+    if (
+        recognition_prototypes.shape != (100, 32, 61, 5)
+        or animation_rig_prototypes.shape != (100, 32, 61, 5)
+        or source_hand_activity.shape != (100, 32)
+        or source_hand_participation.shape != (100, 2)
+    ):
+        raise ValueError("unexpected anatomy package arrays")
+    rig_participation = np.stack((
+        (animation_rig_prototypes[..., :21, 3] > 0).any(axis=(1, 2)),
+        (animation_rig_prototypes[..., 21:42, 3] > 0).any(axis=(1, 2)),
+    ), axis=1)
+    if not np.array_equal(rig_participation, source_hand_participation):
+        raise ValueError("animation prototypes invent or remove a participating hand")
+    if (recognition_prototypes[..., 3] == 1).all():
+        raise ValueError("observation prototypes contain a fabricated all-present mask")
     mean, timing = load_transition_voice(args.mean_checkpoint, args.timing_checkpoint, device)
     content_model, content_labels = load_content_model(args.content_checkpoint, device)
     if content_labels != {str(key): int(value) for key, value in checkpoint["label_to_index"].items()}:
@@ -248,10 +297,11 @@ def run(args):
         style = F.normalize(torch.from_numpy(profile.vector()), dim=0)
         targets = [int(checkpoint["label_to_index"][gloss]) for gloss in args.glosses]
         isolated = []
+        activity_masks = []
         predictions = []
         selected_strengths = []
         for target in targets:
-            prototype = checkpoint["content_prototypes"][target].numpy().astype(np.float32)
+            prototype = recognition_prototypes[target]
             candidates = [
                 apply_voice_profile(
                     prototype, profile, profile_strength=float(strength),
@@ -269,13 +319,28 @@ def run(args):
                     choice = index
                     break
             isolated.append(candidates[choice])
+            activity_masks.append(source_hand_activity[target])
             predictions.append(candidate_predictions[choice])
             selected_strengths.append(float(checkpoint["content_gate_strengths"][choice]))
         ratio = voice_duration_ratio(checkpoint, recipe)
-        phrase, timeline = compose_phrase(
+        observation_phrase, timeline = compose_phrase(
             isolated, targets, ratio, checkpoint["class_median_observed_frames"],
-            mean, timing, device,
+            mean, timing, device, activity_masks,
         )
+        animation_rig, observed_mask = complete_landmark_anatomy(
+            observation_phrase, anatomy_template
+        )
+        if not np.array_equal(observed_mask, observation_phrase[..., 3] > 0):
+            raise RuntimeError("animation completion changed the detector observation mask")
+        observed_participation = np.asarray([
+            observed_mask[..., :21].any(), observed_mask[..., 21:42].any()
+        ])
+        rig_participation = np.asarray([
+            (animation_rig[..., :21, 3] > 0).any(),
+            (animation_rig[..., 21:42, 3] > 0).any(),
+        ])
+        if not np.array_equal(observed_participation, rig_participation):
+            raise RuntimeError("animation rig invented or removed a participating hand")
         voice = {
             "name": recipe.name,
             "recipe": recipe,
@@ -284,10 +349,13 @@ def run(args):
             "targets": targets,
             "predictions": predictions,
             "isolated": isolated,
-            "phrase": phrase,
+            "phrase": animation_rig,
+            "observation_phrase": observation_phrase,
+            "observation_presence": observed_mask,
             "timeline": timeline,
             "duration_ratio": ratio,
             "selected_profile_strengths": selected_strengths,
+            "prototype_pool_indices": prototype_pool_indices[targets].tolist(),
             "glosses": args.glosses,
             "index_to_label": index_to_label,
         }
@@ -301,13 +369,27 @@ def run(args):
     for voice in voices:
         path = args.output_dir / f"voice_{voice['name'].lower()}.npz"
         metadata = {
+            "artifact_contract_version": 3,
+            "role": "synthetic_native_review_only",
+            "training_eligible": False,
+            "validation_eligible": False,
+            "test_eligible": False,
             "name": voice["name"], "glosses": args.glosses,
             "targets": voice["targets"], "predictions": voice["predictions"],
             "timeline": voice["timeline"], "duration_ratio": voice["duration_ratio"],
             "selected_profile_strengths": voice["selected_profile_strengths"],
+            "prototype_pool_indices": voice["prototype_pool_indices"],
+            "hand_participation_preserved": True,
+            "observation_presence_fraction": float(voice["observation_presence"].mean()),
         }
         np.savez_compressed(
-            path, landmarks=voice["phrase"].astype(np.float16),
+            path,
+            animation_rig_xyz=voice["phrase"][..., :3].astype(np.float16),
+            animation_rig_presence=(voice["phrase"][..., 3] > 0),
+            animation_rig_confidence=voice["phrase"][..., 4].astype(np.float16),
+            observation_xyz=voice["observation_phrase"][..., :3].astype(np.float16),
+            observation_presence=voice["observation_presence"],
+            observation_confidence=voice["observation_phrase"][..., 4].astype(np.float16),
             metadata_json=np.asarray(json.dumps(metadata, sort_keys=True)),
         )
         raw_reports.append({"path": path.as_posix(), "sha256": sha256(path)})
@@ -319,7 +401,7 @@ def run(args):
         raise RuntimeError("OpenCV could not create the signing-voice video")
     slate(writer, [
         "V17 AI SIGNING VOICES",
-        "Content prototypes + novel style latents + generated whole signs + learned transitions",
+        "Sparse observations + novel style latents + learned short-gap transitions",
         "Abstract articulated avatars; this is not photorealistic RGB generation",
     ], args.fps * 2)
     repeats = max(1, args.fps // args.logical_fps)
@@ -365,6 +447,8 @@ def run(args):
             "targets": [index_to_label[value] for value in voice["targets"]],
             "stage1_predictions": [index_to_label[value] for value in voice["predictions"]],
             "all_stage1_predictions_correct": voice["targets"] == voice["predictions"],
+            "hand_participation_preserved": True,
+            "observation_presence_fraction": float(voice["observation_presence"].mean()),
             "transition_spans": [
                 int(row["stop"]) - int(row["start"])
                 for row in voice["timeline"] if row["kind"] == "transition"
@@ -372,7 +456,7 @@ def run(args):
         })
     report = {
         "format": "slt_signing_voice_phrase_demo_v17",
-        "version": 1,
+        "version": 3,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "requested_glosses": args.glosses,
         "video": args.video.as_posix(), "video_sha256": sha256(args.video),
@@ -380,6 +464,8 @@ def run(args):
         "raw_voices": raw_reports,
         "signing_voice_checkpoint": args.signing_voice_checkpoint.as_posix(),
         "signing_voice_checkpoint_sha256": sha256(args.signing_voice_checkpoint),
+        "anatomy_package": args.anatomy_package.as_posix(),
+        "anatomy_package_sha256": sha256(args.anatomy_package),
         "mean_checkpoint_sha256": sha256(args.mean_checkpoint),
         "timing_checkpoint_sha256": sha256(args.timing_checkpoint),
         "content_checkpoint_sha256": sha256(args.content_checkpoint),
@@ -387,8 +473,9 @@ def run(args):
         "pairwise_mean_absolute_xyz_difference": pairwise_motion,
         "voices": report_voices,
         "claim_boundary": (
-            "This is a first content-conditioned, novel-latent, complete landmark signing-voice system. "
-            "It is an abstract avatar and has not been rated as linguistically natural by fluent Deaf signers."
+            "This output is synthetic native-review material, not recognizer ground truth. "
+            "The render-only rig preserves which hands participate; detector observations "
+            "remain separate. Native signers have not approved linguistic naturalness."
         ),
         "test_evaluated": False,
         "citizen_test_accessed": False,
@@ -403,7 +490,8 @@ def run(args):
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--signing-voice-checkpoint", type=Path, required=True)
-    parser.add_argument("--mean-checkpoint", type=Path, default=Path("artifacts/models/transition_inpainter_multicorpus_v17_allvoices_final/model.pth"))
+    parser.add_argument("--anatomy-package", type=Path, default=Path("artifacts/models/signing_landmark_anatomy_v17_v3/anatomy.npz"))
+    parser.add_argument("--mean-checkpoint", type=Path, default=Path("artifacts/models/transition_all_real_v17_v1/model.pth"))
     parser.add_argument("--timing-checkpoint", type=Path, default=Path("artifacts/models/transition_span_multicorpus_v17_allvoices_final/model.pth"))
     parser.add_argument("--content-checkpoint", type=Path, default=Path("artifacts/models/stage1_v17_unified_multimodal_student_v1/best_model.pth"))
     parser.add_argument("--glosses", nargs="+", default=["HELLO", "HOW", "YOU"])

@@ -1,0 +1,98 @@
+{
+  "format": "slt_live_isolated_v17_fast_cascade_validation",
+  "version": 1,
+  "split": "citizen_validation",
+  "samples": 378,
+  "selection_warning": "The fallback threshold was selected on this validation split and requires a new portrait signer-disjoint evaluation set.",
+  "models": {
+    "primary": "artifacts/coreml/Stage1OrientationV17.mlpackage",
+    "fallback": "artifacts/models/stage1_v17_unified_multimodal_student_v1/best_model.pth",
+    "visual_tie_break": [
+      "artifacts/models/stage1_v17_visual_speech_auto_avsr_mouth_frozen/best_validation_logits.npz",
+      "artifacts/models/stage1_v17_visual_speech_auto_avsr_lower_face_frozen/best_validation_logits.npz"
+    ]
+  },
+  "accuracy": {
+    "landmark_primary_correct": 362,
+    "landmark_primary_top1": 0.9576719576719577,
+    "unified_fallback_correct": 364,
+    "unified_fallback_top1": 0.9629629629629629,
+    "two_model_oracle_correct": 367,
+    "two_model_oracle_top1": 0.9708994708994709,
+    "score_threshold": 0.7,
+    "fallback_clips": 43,
+    "fallback_fraction": 0.11375661375661375,
+    "threshold_cascade_correct_before_visual_tie_break": 364,
+    "threshold_cascade_top1_before_visual_tie_break": 0.9629629629629629,
+    "good_thankyou_visual_tie_break_clips": 7,
+    "threshold_cascade_correct_after_visual_tie_break": 366,
+    "threshold_cascade_top1_after_visual_tie_break": 0.9682539682539683
+  },
+  "classifier_latency_ms": {
+    "canonical_primary_mac_median": 16.3092085000045,
+    "canonical_primary_mac_p90": 21.671249999997144,
+    "new_primary_probe_median": 8.679417000001521,
+    "new_primary_probe_p90": 12.94130380000098,
+    "boundary": "Core ML classifier only; excludes camera, Vision extraction, fallback hand crops, speech, and iPhone thermals"
+  },
+  "face_landmark_benchmark": {
+    "video": "data/local/citizen100_v17/raw/val/THANKYOU/7976564165646398-THANK YOU.mp4",
+    "frames": 90,
+    "maximum_image_side": 720,
+    "hands_every_frame_body_every_8_face_every_8": {
+      "median_ms": 8.056208000000176,
+      "p90_ms": 22.60101220000008,
+      "mean_ms": 10.464722633333364
+    },
+    "hands_and_face_every_frame_body_every_8": {
+      "median_ms": 18.444499500000376,
+      "p90_ms": 26.703374999999955,
+      "mean_ms": 19.855385611111195
+    },
+    "thirty_fps_budget_ms": 33.333333333333336,
+    "result": "Every-frame face/lip landmarks remain inside the per-frame development budget on this Mac."
+  },
+  "decision": {
+    "cascade_implemented": true,
+    "cascade_status": "experimental_clickable_A_B_mode",
+    "default_replaced": false,
+    "reason": "The validation-selected cascade is available beside the existing default for live A/B comparison; high-confidence primary errors prevent promoting it to the default.",
+    "interactive_modes": {
+      "DEFAULT": "hybrid",
+      "CASCADE": "landmark primary with unified fallback below 0.70"
+    },
+    "always_on_face_landmarks_implemented": true,
+    "stage1_face_feature_interval": 8,
+    "note": "Face landmarks are detected and displayed every processed frame, while Stage 1 still receives the sparse every-eighth-frame contract used in training."
+  },
+  "implementation_smoke": {
+    "split": "citizen_validation",
+    "hello": {
+      "history": "artifacts/reports/live_isolated_v17_cascade_smoke/20260902_090730_513829/history.json",
+      "expected": "HELLO",
+      "predicted": "HELLO",
+      "primary_score": 0.9129316806793213,
+      "fallback_used": false,
+      "mouth_pixels_used": false,
+      "post_clip_total_ms": 25.37804099999974
+    },
+    "thankyou_primary": {
+      "history": "artifacts/reports/live_isolated_v17_cascade_smoke/20260902_090447_087648/history.json",
+      "expected": "THANKYOU",
+      "predicted": "THANKYOU",
+      "primary_score": 0.9039129018783569,
+      "fallback_used": false,
+      "mouth_pixels_used": true
+    },
+    "thankyou_forced_fallback": {
+      "history": "artifacts/reports/live_isolated_v17_cascade_smoke/20260902_090521_494952/history.json",
+      "expected": "THANKYOU",
+      "predicted": "THANKYOU",
+      "threshold": 1.0,
+      "fallback_used": true
+    }
+  },
+  "citizen_test_accessed": false,
+  "other_sealed_test_accessed": false,
+  "test_evaluated": false
+}

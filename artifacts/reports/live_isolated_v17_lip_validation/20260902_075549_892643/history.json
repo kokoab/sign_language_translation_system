@@ -1,0 +1,95 @@
+{
+  "format": "slt_live_isolated_v17_session",
+  "version": 1,
+  "prototype_scope": "pause-delimited isolated Stage-1; not continuous Stage-2",
+  "started_utc": "2026-09-01T23:55:49.893058+00:00",
+  "source": "data/local/citizen100_v17/raw/val/HELLO/020030442376253177-HELLO.mp4",
+  "mode": "lip-aware",
+  "score_semantics": "uncalibrated softmax over model/fused scores",
+  "config": {
+    "processing_fps": 15.0,
+    "maximum_image_side": 720,
+    "record_width": 640,
+    "minimum_score": 0.0,
+    "minimum_margin": 0.0
+  },
+  "models": {
+    "unified_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_unified_multimodal_student_v1/best_model.pth",
+      "sha256": "1caeadf4b3ca620aa9fef00b35c012b39d7c093f67da1ee2f6987d2c2297906b"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "landmark_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_citizen_semlex_full_clean_balanced/best_model.pth",
+      "sha256": "23d5b7f1b343a6b5246e4afe03c0ab99067d3dac6e355024b5c53e5c31013f8e"
+    },
+    "hand_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_hand_mobileclip2_multisource_balanced/best_model.pth",
+      "sha256": "ec16d1b14a2346fecd993d92b3c92b4965cd1204132f64514d86c109570e6d84"
+    },
+    "mouth_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_visual_speech_auto_avsr_mouth_frozen/best_model.pth",
+      "sha256": "e3e1b12c48206dd005119551cced65502c421bc426f2350643afbed646ecd8bd"
+    },
+    "lower_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_visual_speech_auto_avsr_lower_face_frozen/best_model.pth",
+      "sha256": "4c0b8f1dbf14c2faf8020a6f795d5dc2af64d1cf708f3a805907882b8b84669e"
+    }
+  },
+  "video": "artifacts/reports/live_isolated_v17_lip_validation/20260902_075549_892643/session_lowres.mp4",
+  "predictions": [
+    {
+      "gloss": "HELLO",
+      "model_score": 0.5801346302032471,
+      "margin": 0.5140688046813011,
+      "top3": [
+        {
+          "gloss": "HELLO",
+          "model_score": 0.5801346302032471
+        },
+        {
+          "gloss": "HEAR",
+          "model_score": 0.06606582552194595
+        },
+        {
+          "gloss": "THINK",
+          "model_score": 0.010339285247027874
+        }
+      ],
+      "accepted": true,
+      "mode": "lip-aware",
+      "frames": 25,
+      "start_seconds": 0.0,
+      "end_seconds": 1.6045714285714285,
+      "diagnostics": {
+        "normalization_scale": 0.1626177430152893,
+        "normalization_scale_source": "palm_length",
+        "shoulder_coverage": 0.0,
+        "source_frames": 25,
+        "trim_start": 0,
+        "trim_end_exclusive": 16,
+        "hand_frame_fraction": 0.75,
+        "face_presence_fraction": 0.8125,
+        "body_presence_fraction": 0.0,
+        "live_auxiliary_interval": 4,
+        "reference_face_fraction": 1.0,
+        "mouth_valid_fraction": 1.0,
+        "lower_face_valid_fraction": 1.0,
+        "mouth_pixels_used": true
+      },
+      "latency_ms": {
+        "tensor_extraction": 74.60145900000015,
+        "hand_image_encoding": 158.89862499999907,
+        "classification": 503.32733300000143,
+        "total": 736.8274170000007
+      },
+      "expected_gloss": "HELLO",
+      "correct": true
+    }
+  ],
+  "test_accessed": false,
+  "finished_utc": "2026-09-01T23:55:52.317686+00:00"
+}
