@@ -1,12 +1,50 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 19:34 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 19:46 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-02 19:46 PST — first real reel-path session exposes duplicated visual inference
+
+Read-only diagnosis of the user's first webcam run at
+`artifacts/reports/live_reel_stage1_v17/20260902_194002_860837/` confirms genuine
+throughput loss. During 96.96 seconds, the camera supplied approximately 28.09 FPS,
+but the main loop completed only 20.86 landmark observations per second and discarded
+700 stale frames. The reel path therefore lost about one quarter of captured frames;
+this is not merely a display impression.
+
+MediaPipe lips are not the primary bottleneck. A 240-frame replay of the recorded
+640x360 session measured 3.11/3.49/4.84 ms median/p90/max for the 40-point lip tracker.
+The architectural cost is duplicated visual inference. The 38 Stage-1 proposals used
+4.40 seconds total; 27 subsequent full Stage-1 verifications used another 9.33 seconds
+(277.0 ms median), including 6.89 seconds of MobileCLIP hand encoding. In parallel,
+30 accepted Stage-2 windows used 9.15 seconds (221.1 ms median, 732.8 ms p90, 974.4 ms
+maximum). Stage 2 attempted 78 windows in total because the current reel script feeds
+it every elapsed-time window, including idle/background periods, rather than only an
+active utterance. The Stage-1 verifier and Stage-2 arbiter also load separate instances
+of the same hand-image encoder and can contend while the detector/display loop runs.
+
+Prediction latency is additionally increased by policy: every stable Stage-1 proposal
+runs a full verifier, and weak proposals require two verified hits. This protects
+against transition fragments but can add two 0.2-0.7 second verifier passes after the
+initial 0.62-second candidate. The isolated prototype feels smoother because it stops
+landmark extraction while its one classification future is running and continues to
+read/display camera frames; it does not run full Stage 2 every 1.067 seconds.
+
+The live session also invalidates promotion based only on the five local replays. It
+committed HELLO, YES, HOW, HELLO, LESS, YOU, HOW, CHILD, HELLO, HEAR, HOW, I, I, while
+Stage 2 produced unstable sequences such as WHY COME and HELLO MORNING HOW. The next
+fix should not tune the lip tracker. The minimal architectural correction is to keep
+the fast Stage-1 landmark proposal and lip overlay live, remove continuous full CTC
+from the display-critical path, and run full Stage-2 arbitration only for buffered
+active signing/FINISH (or use the 11 ms landmark preview live). Full Stage-1 hand-image
+verification should be reserved for genuinely ambiguous proposals rather than every
+commit attempt. No source code, model, or dataset was changed, and no sealed/test split
+was accessed.
 
 ## 2026-09-02 19:34 PST — separate reel path now uses visible lip markers and Stage-2 final arbitration
 
