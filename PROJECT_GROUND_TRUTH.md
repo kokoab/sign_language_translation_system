@@ -1,12 +1,86 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 14:23 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 19:34 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-02 19:34 PST — separate reel path now uses visible lip markers and Stage-2 final arbitration
+
+The accepted pause-delimited prototype `scripts/live_isolated_v17.py` and its models
+remain unchanged. A separate `scripts/live_reel_stage1_v17.py` experiment now performs
+frequent Stage-1 landmark proposals, invokes the full unified classifier as a verifier,
+uses a two-hit commit lock for weak transition fragments, and feeds the already-trained
+Stage-2 CTC model asynchronously as a final multi-sign sequence arbiter. Stage 2 never
+replaces a one-gloss result unless a stable multi-gloss CTC sequence contains the
+Stage-1 evidence, so isolated signs are not automatically expanded into phrases. For
+utterances beyond the Stage-2 model's eight-window context, emissions leaving the
+window are frozen into a prefix instead of silently losing the sentence beginning.
+
+The new lip path is no longer display-only. `active/v17/lip_marker_v17.py` extracts 40
+MediaPipe FaceMesh points from the outer and inner lip contours on every processed
+frame, immediately discards RGB, and normalizes face position, scale, and roll before
+computing shape and temporal-change features. The exact same 40 points are now drawn
+on screen as white markers with black outer and inner contours. The tiny closed-pair
+model at `artifacts/models/lip_marker_good_thankyou_phrase_crops_v17/model.npz` is only
+allowed to choose GOOD versus THANKYOU after Stage 1 proposes one of that pair; it
+cannot introduce an unrelated class. On permitted validation it scored 22/27 overall,
+including 16/20 phrase crops and 6/7 Citizen clips. This helps when mouthing differs,
+but deliberately does not claim that neutral-mouth GOOD and THANKYOU are separable by
+lips alone.
+
+The phrase/activity-adapted Stage-1 model is separate at
+`artifacts/models/stage1_v17_unified_phrase_activity_adapt_reel_v2/best_model.pth`.
+Its selected validation results were 96.03% Citizen, 89.16% SemLex, 97.03% local
+isolated, 66.41% equal phrase segments, and 69.79% activity crops. Its FP16 Core ML
+export is 23.58 MiB, measured 8.64 ms median after warm-up, and had zero top-1
+mismatches across 378 permitted validation archives. A more aggressive pair-targeted
+checkpoint improved phrase/activity accuracy to 83.01/82.43% but regressed the SemLex
+GOOD/THANKYOU pair to 38.1%; it is preserved as an experiment and is not the default.
+
+Five normal-speed held-out local phrase replays now finish exactly through the hybrid
+router: HELLO HOW YOU, GOOD MORNING, MY NAME, PLEASE HELP I, and THANKYOU FRIEND. In
+the last THANKYOU FRIEND replay, the raw Stage-1 proposal was GOOD and the lip marker
+specialist corrected it to THANKYOU at confidence 0.99999999; a later transition
+fragment was still READ, while Stage 2 supplied `THANKYOU FRIEND FRIEND`, adjacent
+duplicate collapse produced `THANKYOU FRIEND`, and FINISH selected the exact sequence.
+This is useful replay evidence, not an independent signer or production-accuracy claim.
+Fourteen focused reel/lip unit tests pass, Python compilation passes, and
+`git diff --check` passes. No Citizen test or sealed split was accessed.
+
+## 2026-09-02 14:34 PST — newest live Stage-2 session confirms utterance-stream over-emission
+
+Read-only inspection of the user's newest webcam session,
+`artifacts/reports/live_stage2_ctc_v17/20260902_142833_531729/history.json`, confirms
+that the reported extra words are model hypotheses rather than a HUD-only artifact.
+Examples include `HELLO -> HELLO LIKE -> HELLO LIKE WHY -> HELLO LIKE WHY WHO ->
+HELLO LIKE WHY WHO MAYBE`, and a later stream revision from `HELLO` to
+`NEED HELLO GOODBYE` after its third accepted window. The first attempted stream also
+resolved as `HELLO HOW ASK`, rather than the expected familiar `HELLO HOW YOU` pattern.
+Across the session, 39 windows were accepted and 11 rejected; accepted post-landmark
+inference latency was 282.17 ms median, with hand-image embedding still dominant.
+
+The behavior is partly the intended Stage-2 contract and partly a live-design/data
+failure. The script treats every accepted 1.067-second window between RESET/FINISH as
+another part of one open continuous utterance, gives each window eight CTC time slots,
+and has no explicit one-sign endpoint or idle/no-sign class. Therefore a hold,
+transition, partial sign, or incidental hand motion can extend or revise the entire
+phrase hypothesis and can legitimately decode two or three nonblank tokens. Greedy CTC
+collapse itself is operating as implemented; the unsuitable assumption is using this
+continuous utterance decoder as the default reel-like single-sign interaction.
+
+The selected UX direction is consequently a separate Stage-1 isolated-lock loop for
+the reel behavior: frequent rolling complete-sign candidates, immediate provisional
+labels, stability/debounce plus duplicate suppression before committing a chip, and
+RESET/FINISH defining the sentence buffer. Stage 2 remains optional for explicit
+continuous-utterance mode or later confirmation, not required for the fast default.
+The current Stage-1 model was trained on completed clips, so raw frame-by-frame labels
+must not be committed directly; an endpoint/stability gate is still required, and the
+previous wrist-motion valley alone is not reliable enough. No source code, model, or
+dataset was changed during this diagnosis, and no test or sealed split was accessed.
 
 ## 2026-09-02 14:18 PST — Stage-2 cascade is fast and safe for provisional/final routing, not hard early lock
 
