@@ -1,0 +1,224 @@
+{
+  "format": "slt_live_stage2_ctc_v17_session",
+  "version": 1,
+  "prototype_scope": "accepted v17 general CTC selector over non-overlapping continuous windows",
+  "started_utc": "2026-09-02T03:40:13.755514+00:00",
+  "source": "data/raw_videos/PHRASES/TOMORROW_SCHOOL_GO/973e8bb0.mp4",
+  "mode": "stage2-ctc",
+  "score_semantics": "greedy CTC sequence; no calibrated confidence claim",
+  "config": {
+    "processing_fps": 30.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": false,
+    "window_source_frames": 32,
+    "maximum_windows": 8,
+    "tokens_per_window": 8,
+    "live_face_display": "every processed frame",
+    "model_face_sampling": "every eighth processed frame, matching v17 training"
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    }
+  },
+  "video": "artifacts/reports/live_stage2_ctc_v17_local_phrase_eval_v1/20260902_114013_755324/session_lowres.mp4",
+  "predictions": [
+    {
+      "accepted": true,
+      "hypothesis": [
+        "TOMORROW"
+      ],
+      "ctc_tokens": [
+        79
+      ],
+      "primary_tokens": [
+        79
+      ],
+      "specialist_tokens": [
+        79
+      ],
+      "specialist_selected": false,
+      "window_count": 1,
+      "frames": 32,
+      "start_seconds": 0.0,
+      "end_seconds": 1.0333333333333334,
+      "diagnostics": {
+        "normalization_scale": 0.39315080642700195,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.03125,
+        "source_frames": 32,
+        "observed_hand_frames": 23,
+        "hand_presence_fraction": 0.3519345223903656,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.015625,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 2.487707999998534,
+        "hand_image_encoding": 129.92595800000117,
+        "frozen_encoder": 8.52783399999879,
+        "ctc_selector": 3.558125000001411,
+        "total": 144.49962499999992
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "TOMORROW",
+        "SCHOOL"
+      ],
+      "ctc_tokens": [
+        79,
+        88
+      ],
+      "primary_tokens": [
+        79,
+        88
+      ],
+      "specialist_tokens": [
+        79,
+        88
+      ],
+      "specialist_selected": false,
+      "window_count": 2,
+      "frames": 32,
+      "start_seconds": 1.0666666666666667,
+      "end_seconds": 2.1,
+      "diagnostics": {
+        "normalization_scale": 0.36375701427459717,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.28125,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 0.7611607313156128,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.2109375,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 3.3651670000001133,
+        "hand_image_encoding": 276.62508300000076,
+        "frozen_encoder": 8.597457999998781,
+        "ctc_selector": 3.3014170000011944,
+        "total": 291.88912500000083
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "TOMORROW",
+        "SCHOOL",
+        "GO"
+      ],
+      "ctc_tokens": [
+        79,
+        88,
+        36
+      ],
+      "primary_tokens": [
+        79,
+        88,
+        36
+      ],
+      "specialist_tokens": [
+        79,
+        88,
+        36
+      ],
+      "specialist_selected": false,
+      "window_count": 3,
+      "frames": 32,
+      "start_seconds": 2.1333333333333333,
+      "end_seconds": 3.1666666666666665,
+      "diagnostics": {
+        "normalization_scale": 0.1486906111240387,
+        "normalization_scale_source": "palm_length",
+        "shoulder_coverage": 0.0,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 0.9977678656578064,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.0,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 3.9193750000006133,
+        "hand_image_encoding": 334.40562499999874,
+        "frozen_encoder": 9.662625000000702,
+        "ctc_selector": 3.35670900000018,
+        "total": 351.34433400000023
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false
+    },
+    {
+      "accepted": false,
+      "hypothesis": [],
+      "rejection_reasons": [
+        "insufficient_hand_evidence"
+      ],
+      "frames": 10,
+      "start_seconds": 3.2,
+      "end_seconds": 3.5,
+      "diagnostics": {
+        "rejection_reason": "insufficient_hand_evidence",
+        "source_frames": 10,
+        "observed_hand_frames": 1
+      },
+      "latency_ms": {
+        "total": 0.07945900000017048
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-02T03:40:13.806765+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    }
+  ],
+  "utterances": [],
+  "test_accessed": false,
+  "finished_utc": "2026-09-02T03:40:16.125066+00:00"
+}

@@ -1,0 +1,458 @@
+{
+  "format": "slt_live_stage2_ctc_v17_session",
+  "version": 1,
+  "prototype_scope": "accepted v17 general CTC selector over non-overlapping continuous windows",
+  "started_utc": "2026-09-02T11:19:36.002931+00:00",
+  "source": "data/raw_videos/PHRASES/HELLO_HOW_YOU/c2e41b7c.mp4",
+  "mode": "stage2-ctc",
+  "score_semantics": "greedy CTC sequence; no calibrated confidence claim",
+  "config": {
+    "processing_fps": 30.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "window_source_frames": 32,
+    "window_seconds": 1.0666666666666667,
+    "maximum_windows": 8,
+    "tokens_per_window": 8,
+    "live_face_display": "MediaPipe overlay every processed frame",
+    "model_face_sampling": "every eighth processed frame, matching v17 training",
+    "capture_policy": "latest-frame webcam; sequential saved video"
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    }
+  },
+  "video": "artifacts/reports/live_stage2_boundary_probe_v1/20260902_191936_002616/session_lowres.mp4",
+  "predictions": [
+    {
+      "accepted": true,
+      "hypothesis": [
+        "HELLO"
+      ],
+      "ctc_tokens": [
+        15
+      ],
+      "token_positions": [
+        6
+      ],
+      "primary_tokens": [
+        15
+      ],
+      "specialist_tokens": [
+        15
+      ],
+      "specialist_selected": false,
+      "window_count": 1,
+      "frames": 32,
+      "start_seconds": 0.0,
+      "end_seconds": 1.0333333333333334,
+      "diagnostics": {
+        "normalization_scale": 0.4357603192329407,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.03125,
+        "source_frames": 32,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.1711309552192688,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.015625,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 8.342667000000858,
+        "hand_image_encoding": 114.17637499999955,
+        "frozen_encoder": 10.980166999999597,
+        "ctc_selector": 5.290500000000975,
+        "total": 138.78970900000098
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "HELLO"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "HELLO"
+      ],
+      "ctc_tokens": [
+        15
+      ],
+      "token_positions": [
+        6
+      ],
+      "primary_tokens": [
+        15
+      ],
+      "specialist_tokens": [
+        15,
+        15
+      ],
+      "specialist_selected": false,
+      "window_count": 2,
+      "frames": 32,
+      "start_seconds": 1.0666666666666667,
+      "end_seconds": 2.1,
+      "diagnostics": {
+        "normalization_scale": 0.42346370220184326,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.03125,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 0.4985119104385376,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.015625,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 5.383874999999705,
+        "hand_image_encoding": 269.64150000000234,
+        "frozen_encoder": 13.275124999999832,
+        "ctc_selector": 5.069583999997462,
+        "total": 293.37008399999934
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "HELLO"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "HELLO",
+        "HOW"
+      ],
+      "ctc_tokens": [
+        15,
+        14
+      ],
+      "token_positions": [
+        6,
+        19
+      ],
+      "primary_tokens": [
+        15,
+        14
+      ],
+      "specialist_tokens": [
+        15,
+        15,
+        14
+      ],
+      "specialist_selected": false,
+      "window_count": 3,
+      "frames": 32,
+      "start_seconds": 2.1333333333333333,
+      "end_seconds": 3.1666666666666665,
+      "diagnostics": {
+        "normalization_scale": 0.37085863947868347,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.03125,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 0.8117559552192688,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.015625,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 4.604457999999312,
+        "hand_image_encoding": 412.5961250000003,
+        "frozen_encoder": 24.535166999999802,
+        "ctc_selector": 7.424041000000159,
+        "total": 449.1597909999996
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "HELLO",
+        "HOW"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "HELLO",
+        "HOW"
+      ],
+      "ctc_tokens": [
+        15,
+        14
+      ],
+      "token_positions": [
+        6,
+        19
+      ],
+      "primary_tokens": [
+        15,
+        14
+      ],
+      "specialist_tokens": [
+        15,
+        15,
+        14,
+        14
+      ],
+      "specialist_selected": false,
+      "window_count": 4,
+      "frames": 32,
+      "start_seconds": 3.2,
+      "end_seconds": 4.233333333333333,
+      "diagnostics": {
+        "normalization_scale": 0.3675793409347534,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.53125,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 0.875,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.265625,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 7.333207999998592,
+        "hand_image_encoding": 356.3641669999988,
+        "frozen_encoder": 12.46579200000042,
+        "ctc_selector": 5.267082999999673,
+        "total": 381.4302499999975
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "HELLO",
+        "HOW"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "ctc_tokens": [
+        15,
+        14,
+        2
+      ],
+      "token_positions": [
+        6,
+        19,
+        36
+      ],
+      "primary_tokens": [
+        15,
+        14,
+        2
+      ],
+      "specialist_tokens": [
+        15,
+        15,
+        14,
+        14,
+        2
+      ],
+      "specialist_selected": false,
+      "window_count": 5,
+      "frames": 32,
+      "start_seconds": 4.266666666666667,
+      "end_seconds": 5.3,
+      "diagnostics": {
+        "normalization_scale": 0.37756162881851196,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.78125,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 0.5,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.3984375,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 7.95958400000174,
+        "hand_image_encoding": 241.0595829999984,
+        "frozen_encoder": 12.227958000000427,
+        "ctc_selector": 5.527874999998517,
+        "total": 266.77499999999907
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "ctc_tokens": [
+        15,
+        14,
+        2
+      ],
+      "token_positions": [
+        6,
+        19,
+        36
+      ],
+      "primary_tokens": [
+        15,
+        14,
+        2
+      ],
+      "specialist_tokens": [
+        15,
+        15,
+        14,
+        14,
+        2
+      ],
+      "specialist_selected": false,
+      "window_count": 6,
+      "frames": 26,
+      "start_seconds": 5.333333333333333,
+      "end_seconds": 6.166666666666667,
+      "diagnostics": {
+        "normalization_scale": 0.38392728567123413,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.6538461538461539,
+        "source_frames": 26,
+        "observed_hand_frames": 26,
+        "hand_presence_fraction": 0.5,
+        "face_presence_fraction": 0.96875,
+        "body_presence_fraction": 0.328125,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 6.575042000001474,
+        "hand_image_encoding": 240.10987499999814,
+        "frozen_encoder": 20.535917000000126,
+        "ctc_selector": 9.824041000001671,
+        "total": 277.0448750000014
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-02T11:19:36.085432+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-02T11:19:40.537568+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 6.2,
+      "active_glosses": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "buffered_frames": 0
+    },
+    {
+      "recorded_utc": "2026-09-02T11:19:40.540161+00:00",
+      "type": "finish_submitted",
+      "utterance_id": "ctc-0001",
+      "requested_utc": "2026-09-02T11:19:40.540142+00:00",
+      "glosses": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "stream_epoch": 0
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "ctc-0001",
+      "requested_utc": "2026-09-02T11:19:40.540142+00:00",
+      "glosses": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "stream_epoch": 0,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"HELLO\", \"HOW\", \"YOU\"]",
+      "input_glosses": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "literal_sentence": "Hello how you.",
+      "fallback_sentence": "Hello, how are you?",
+      "fallback_mode": "reviewed_template",
+      "sentence": "Hello, how are you?",
+      "rendering_mode": "reviewed_template",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.17533399999791754,
+      "completed_utc": "2026-09-02T11:19:40.542423+00:00",
+      "displayed_and_spoken": true
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_processed": 186,
+    "landmark_observations": 186,
+    "stale_camera_frames_dropped": 0
+  },
+  "finished_utc": "2026-09-02T11:19:40.546680+00:00"
+}

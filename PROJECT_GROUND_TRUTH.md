@@ -1,12 +1,112 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 21:21 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-03 07:29 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-03 07:29 PST — emission live bottleneck removed; lightweight streaming direction researched
+
+The user's first learned-emission webcam session at
+`artifacts/reports/live_reel_emission_stage1_v17/20260903_071450_141909/`
+confirmed an implementation bottleneck distinct from model latency. Its 130 learned
+landmark proposals took 37.11 ms median / 48.95 ms p90, while 26 subsequent hand-image
+verification calls took 745.07 ms median / 979.22 ms p90 (maximum 1,088.00 ms). The
+103-second session produced 1,273 landmark observations but dropped 1,604 stale camera
+frames. Repeated Core ML hand-crop encoding was the dominant source of the reported
+lag, not the 101-logit emission model.
+
+`scripts/live_reel_emission_stage1_v17.py` now defaults to a landmark-only fast commit:
+after two stable learned-emission proposals, it reuses that accepted result and does
+not load or call the expensive hand-image verifier. `--full-visual-verifier` restores
+the prior comparison path. The accepted `scripts/live_reel_stage1_v17.py` behavior is
+unchanged because the new switch is enabled only by the separate wrapper. An 18-second
+saved-video smoke processed all 270 frames, produced 60 proposals at 37.84 ms median,
+and made no additional verifier inference. It establishes removal of the 0.65--1.09
+second operation, not webcam FPS or accuracy; those require a new live session. The
+speed/accuracy tradeoff is deliberate because the image verifier may reject or correct
+some landmark proposals.
+
+A primary-source review found no compatible downloadable checkpoint for the fixed
+100-ASL v17 vocabulary. The direct EMNLP 2024 online CSLR model is conceptually similar
+to Reel but uses two S3D streams and reports 5.1 GB V100 memory. Skeleton CSLR evidence
+from CoSign and ICCVW 2025 supports grouped hand/body/face/mouth keypoints, short 1D
+temporal convolution, and CTC supervision. The recommended next experiment is therefore
+a sub-million-parameter causal landmark TCN with cached per-frame state and a 101-way
+CTC output (blank plus 100 glosses), trained on genuine phrase sequences plus isolated
+augmentation. It is a new streaming sequence recognizer, not the existing whole-phrase
+Stage-2 live policy. Full paper/model assessment is in
+`artifacts/reports/lightweight_streaming_stage2_research_v1/README.md`. Twenty-seven
+focused tests, compilation, and `git diff --check` pass.
+
+## 2026-09-03 00:48 PST — learned Stage-1 emission helps but does not replace sequence recognition
+
+A complete separate Stage-1/Reel experiment now exists in
+`active/v17/train_stage_1_reel_emission_v17.py`,
+`active/v17/model_reel_emission_v17.py`, and
+`scripts/live_reel_emission_stage1_v17.py`. Neither accepted Reel checkpoint nor its
+default entry point was replaced. The selected model freezes the phrase-adapted
+100-gloss classifier and learns a tiny ordered-temporal `__NO_EMIT__` head from
+complete signs, incomplete prefixes, and between-sign transitions. The original 100
+gloss logits are preserved bit-for-bit. Training uses permitted Citizen/SemLex replay,
+all local phrase caches, and manually aligned ASLLRP training phrases; JONATHAN remains
+signer-disjoint ASLLRP validation. No test or reserved RIT data was accessed.
+
+At its validation-selected 0.77 threshold, the temporal head accepts 97.68% of 1,639
+complete validation windows and catches 83.56% of 1,813 incomplete windows. The held-out
+ASLLRP slice is materially weaker: 20/24 complete accepted and 16/36 incomplete caught.
+The safer live threshold 0.95 accepts 99.02% complete and catches 70.60% incomplete
+overall; its ASLLRP figures are 21/24 and 7/36. A first linear-head attempt is retained
+as a failed baseline: it caught only 13.7% incomplete at a 95.5% complete-accept gate.
+
+The FP16 Core ML export is 13.48 MiB and measured 11.93 ms median / 14.04 ms p90 on this
+Mac. Across 378 Citizen validation clips it had zero top-1 and zero emission-decision
+mismatches against PyTorch. The separate live preset probes at 0.32 seconds, every 0.08
+seconds, and requires two agreeing proposals. It tied the accepted Reel timing on five
+local phrases at 3/5 exact and four token edits, but committed more slowly (0.93 versus
+0.67 seconds median). On the same 12 fast ASLLRP clips, it remained 0/12 exact but
+improved from 20 to 17 token edits, emitted 8 rather than 5 glosses, and reduced median
+committed duration from 0.67 to 0.57 seconds.
+
+Therefore this model remains an experimental auxiliary gate, not the new default. It
+demonstrates that Stage-1 temporal fine-tuning can reduce partial-window emissions, but
+it cannot recover unrestricted natural sequences: the fast ASLLRP clips still lack
+enough stable probes and retain classification/domain errors. A future natural stream
+needs a temporal sequence model with explicit blank/boundary supervision, but does not
+need to reuse the current slow whole-phrase Stage-2 live policy. Full evidence and the
+run command are in
+`artifacts/reports/stage1_v17_reel_emission_experiment_v1/README.md`. Twenty-five focused
+tests, compilation, checkpoint/Core ML load smoke, and `git diff --check` pass.
+
+## 2026-09-02 22:23 PST — Reel local-phrase gains do not transfer to fast ASLLRP clips
+
+The user's newest completed webcam history at
+`artifacts/reports/live_reel_stage1_v17/20260902_213908_704489/history.json` is genuinely
+better under deliberately clearer articulation. Stage 2 was disabled. It produced five
+nonempty FINISH sequences, including `I GO DOCTOR TOMORROW MORNING I FEEL SICK`, and the
+five provisional `LESS` appearances never committed. This supports the Reel interaction
+for the current signer, but expected labels were not recorded for every attempt and some
+suspicious `CHILD` commits remain, so the session is not an accuracy benchmark.
+
+A new development-only external check replayed all 12 vocabulary-covered ASLLRP
+contiguous validation-cache clips that were excluded from the local phrase adapter. The
+underlying rows are still `train_candidate` material, not sealed test data. With default
+Reel timing and Stage 2/lips/speech disabled, exact sequence accuracy was 0/12 and total
+WER was 20/24 = 83.33%. Only five glosses committed: four aligned correctly and one was a
+wrong `WRITE`; deletion/under-emission dominated because these short, fast videos yielded
+only two to four probes.
+
+A model-only equal-segment comparison separated classification from live emission. On 24
+ASLLRP gloss crops, original versus adapted top-1 was 10/24 versus 8/24 for the landmark
+proposal and 13/24 versus 12/24 for the full verifier; full-verifier top-5 tied at 18/24.
+Thus the local phrase/activity adaptation did not transfer to this small ASLLRP domain.
+The failure combines signer/domain mismatch with a Reel policy too conservative for fast
+clips. Full details are in
+`artifacts/reports/live_reel_asllrp_external_adapted_v1/README.md`. Sixteen focused Reel
+tests pass, and no protected test split was accessed.
 
 ## 2026-09-02 21:21 PST — Reel delay reduced and unsafe lip override disabled
 

@@ -1,0 +1,213 @@
+{
+  "format": "slt_live_stage2_ctc_v17_session",
+  "version": 1,
+  "prototype_scope": "accepted v17 general CTC selector over non-overlapping continuous windows",
+  "started_utc": "2026-09-02T04:09:23.205290+00:00",
+  "source": "data/raw_videos/PHRASES/GOOD_MORNING/GOOD_MORNING_11.mp4",
+  "mode": "stage2-ctc",
+  "score_semantics": "greedy CTC sequence; no calibrated confidence claim",
+  "config": {
+    "processing_fps": 15.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "tiny",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": false,
+    "window_source_frames": 32,
+    "window_seconds": 1.0666666666666667,
+    "maximum_windows": 8,
+    "tokens_per_window": 8,
+    "live_face_display": "MediaPipe overlay every processed frame",
+    "model_face_sampling": "every eighth processed frame, matching v17 training",
+    "capture_policy": "latest-frame webcam; sequential saved video"
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    }
+  },
+  "video": "artifacts/reports/live_stage2_ctc_v17_timebase15_eval_v1/20260902_120923_204337/session_lowres.mp4",
+  "predictions": [
+    {
+      "accepted": true,
+      "hypothesis": [
+        "THANKYOU"
+      ],
+      "ctc_tokens": [
+        18
+      ],
+      "token_positions": [
+        4
+      ],
+      "primary_tokens": [
+        18
+      ],
+      "specialist_tokens": [
+        18
+      ],
+      "specialist_selected": false,
+      "window_count": 1,
+      "frames": 16,
+      "start_seconds": 0.0,
+      "end_seconds": 1.0,
+      "diagnostics": {
+        "normalization_scale": 0.352745920419693,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.0625,
+        "source_frames": 16,
+        "observed_hand_frames": 13,
+        "hand_presence_fraction": 0.400297611951828,
+        "face_presence_fraction": 0.5625,
+        "body_presence_fraction": 0.046875,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 10.32379200000122,
+        "hand_image_encoding": 238.6706659999973,
+        "frozen_encoder": 21.44075000000001,
+        "ctc_selector": 10.843541999999928,
+        "total": 281.27874999999847
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "THANKYOU"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "GOOD"
+      ],
+      "ctc_tokens": [
+        58
+      ],
+      "token_positions": [
+        4
+      ],
+      "primary_tokens": [
+        58
+      ],
+      "specialist_tokens": [
+        18
+      ],
+      "specialist_selected": false,
+      "window_count": 2,
+      "frames": 16,
+      "start_seconds": 1.0666666666666667,
+      "end_seconds": 2.066666666666667,
+      "diagnostics": {
+        "normalization_scale": 0.5031225681304932,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.0625,
+        "source_frames": 16,
+        "observed_hand_frames": 15,
+        "hand_presence_fraction": 0.71875,
+        "face_presence_fraction": 0.5625,
+        "body_presence_fraction": 0.03125,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 15.748416000000987,
+        "hand_image_encoding": 1977.0008750000015,
+        "frozen_encoder": 32.40612499999784,
+        "ctc_selector": 20.357875000001968,
+        "total": 2045.5132910000025
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "GOOD"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "GOOD",
+        "MORNING"
+      ],
+      "ctc_tokens": [
+        58,
+        81
+      ],
+      "token_positions": [
+        4,
+        20
+      ],
+      "primary_tokens": [
+        58,
+        81
+      ],
+      "specialist_tokens": [
+        58,
+        81
+      ],
+      "specialist_selected": false,
+      "window_count": 3,
+      "frames": 12,
+      "start_seconds": 2.1333333333333333,
+      "end_seconds": 2.8666666666666667,
+      "diagnostics": {
+        "normalization_scale": 0.10306615382432938,
+        "normalization_scale_source": "palm_length",
+        "shoulder_coverage": 0.0,
+        "source_frames": 12,
+        "observed_hand_frames": 12,
+        "hand_presence_fraction": 0.9285714030265808,
+        "face_presence_fraction": 0.75,
+        "body_presence_fraction": 0.0,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 120.98479199999801,
+        "hand_image_encoding": 531.6124580000014,
+        "frozen_encoder": 36.13500000000158,
+        "ctc_selector": 20.07895899999923,
+        "total": 708.8112090000003
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "GOOD",
+        "MORNING"
+      ]
+    }
+  ],
+  "events": [],
+  "utterances": [],
+  "test_accessed": false,
+  "finished_utc": "2026-09-02T04:09:29.507047+00:00"
+}

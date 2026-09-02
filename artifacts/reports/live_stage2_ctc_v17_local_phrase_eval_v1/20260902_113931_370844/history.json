@@ -1,0 +1,196 @@
+{
+  "format": "slt_live_stage2_ctc_v17_session",
+  "version": 1,
+  "prototype_scope": "accepted v17 general CTC selector over non-overlapping continuous windows",
+  "started_utc": "2026-09-02T03:39:31.371145+00:00",
+  "source": "data/raw_videos/PHRASES/GOOD_MORNING/GOOD_MORNING_11.mp4",
+  "mode": "stage2-ctc",
+  "score_semantics": "greedy CTC sequence; no calibrated confidence claim",
+  "config": {
+    "processing_fps": 30.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": false,
+    "window_source_frames": 32,
+    "maximum_windows": 8,
+    "tokens_per_window": 8,
+    "live_face_display": "every processed frame",
+    "model_face_sampling": "every eighth processed frame, matching v17 training"
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    }
+  },
+  "video": "artifacts/reports/live_stage2_ctc_v17_local_phrase_eval_v1/20260902_113931_370844/session_lowres.mp4",
+  "predictions": [
+    {
+      "accepted": true,
+      "hypothesis": [
+        "THANKYOU"
+      ],
+      "ctc_tokens": [
+        18
+      ],
+      "primary_tokens": [
+        18
+      ],
+      "specialist_tokens": [
+        18
+      ],
+      "specialist_selected": false,
+      "window_count": 1,
+      "frames": 32,
+      "start_seconds": 0.0,
+      "end_seconds": 1.0333333333333334,
+      "diagnostics": {
+        "normalization_scale": 0.37038129568099976,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.53125,
+        "source_frames": 32,
+        "observed_hand_frames": 26,
+        "hand_presence_fraction": 0.3839285671710968,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.3359375,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 3.589291000000827,
+        "hand_image_encoding": 144.5054999999993,
+        "frozen_encoder": 8.864667000000992,
+        "ctc_selector": 3.3947919999999243,
+        "total": 160.35425000000103
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "GOOD"
+      ],
+      "ctc_tokens": [
+        58
+      ],
+      "primary_tokens": [
+        58
+      ],
+      "specialist_tokens": [
+        58
+      ],
+      "specialist_selected": false,
+      "window_count": 2,
+      "frames": 32,
+      "start_seconds": 1.0666666666666667,
+      "end_seconds": 2.1,
+      "diagnostics": {
+        "normalization_scale": 0.5030075311660767,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.28125,
+        "source_frames": 32,
+        "observed_hand_frames": 29,
+        "hand_presence_fraction": 0.671875,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.1484375,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 3.2527499999996934,
+        "hand_image_encoding": 225.9449999999994,
+        "frozen_encoder": 8.55504100000104,
+        "ctc_selector": 3.4949999999991377,
+        "total": 241.24779099999927
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "GOOD",
+        "MORNING"
+      ],
+      "ctc_tokens": [
+        58,
+        81
+      ],
+      "primary_tokens": [
+        58,
+        81
+      ],
+      "specialist_tokens": [
+        58,
+        81
+      ],
+      "specialist_selected": false,
+      "window_count": 3,
+      "frames": 24,
+      "start_seconds": 2.1333333333333333,
+      "end_seconds": 2.9,
+      "diagnostics": {
+        "normalization_scale": 0.10310298949480057,
+        "normalization_scale_source": "palm_length",
+        "shoulder_coverage": 0.0,
+        "source_frames": 24,
+        "observed_hand_frames": 24,
+        "hand_presence_fraction": 0.835565447807312,
+        "face_presence_fraction": 0.71875,
+        "body_presence_fraction": 0.0,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 2.6570000000010197,
+        "hand_image_encoding": 255.3311669999996,
+        "frozen_encoder": 8.669917000000638,
+        "ctc_selector": 3.43391599999876,
+        "total": 270.092
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-02T03:39:31.423590+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    }
+  ],
+  "utterances": [],
+  "test_accessed": false,
+  "finished_utc": "2026-09-02T03:39:33.641792+00:00"
+}

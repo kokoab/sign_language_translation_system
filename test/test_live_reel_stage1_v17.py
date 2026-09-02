@@ -99,9 +99,18 @@ class StableGlossLockTest(unittest.TestCase):
         self.assertFalse(args.dense_model_auxiliary)
 
     def test_large_reel_controls_match_their_drawn_area(self) -> None:
-        self.assertEqual(clicked_reel_control(20, 680, 1280, 720), "reset")
-        self.assertEqual(clicked_reel_control(200, 680, 1280, 720), "finish")
-        self.assertIsNone(clicked_reel_control(500, 680, 1280, 720))
+        from scripts.reel_hud_v17 import reel_control_button_rects
+
+        for action, (left, top, right, bottom) in reel_control_button_rects(
+            1280, 720
+        ).items():
+            self.assertEqual(
+                clicked_reel_control(
+                    (left + right) // 2, (top + bottom) // 2, 1280, 720
+                ),
+                action,
+            )
+        self.assertIsNone(clicked_reel_control(20, 20, 1280, 720))
 
     def test_auxiliary_display_cache_does_not_modify_model_detection(self) -> None:
         from active.v17.extract_v17 import FrameDetection
@@ -174,6 +183,38 @@ class StableGlossLockTest(unittest.TestCase):
         self.assertEqual(result["candidate_gloss"], "GLOSS_7")
         self.assertEqual(result["mode"], "reel-cascade-landmark")
         self.assertEqual(result["latency_ms"]["hand_image_encoding"], 0.0)
+
+    def test_learned_no_emit_rejects_a_partial_proposal(self) -> None:
+        class Orientation:
+            def predict(self, _provider):
+                logits = np.zeros((1, 101), np.float32)
+                logits[0, 7] = 4.0
+                logits[0, 100] = 8.0
+                return {"var_5535": logits}
+
+        classifier = ReelCascadeClassifier.__new__(ReelCascadeClassifier)
+        classifier.orientation = Orientation()
+        classifier.labels = [f"GLOSS_{index}" for index in range(100)]
+        classifier.args = SimpleNamespace(
+            quiet_motion=0.006,
+            minimum_score=0.25,
+            minimum_margin=0.08,
+            maximum_accept_seconds=2.5,
+            cascade_score=0.55,
+            no_emit_probability_threshold=0.77,
+        )
+        observations = [SimpleNamespace(seconds=0.0), SimpleNamespace(seconds=1.0)]
+        with patch(
+            "scripts.live_reel_stage1_v17.trim_to_motion",
+            return_value=(observations, {}),
+        ), patch(
+            "scripts.live_reel_stage1_v17.landmarks_from_observations",
+            return_value=(np.zeros((32, 61, 5), np.float32), {}),
+        ):
+            result = classifier.classify(observations)
+        self.assertFalse(result["accepted"])
+        self.assertIn("learned_no_emit", result["rejection_reasons"])
+        self.assertGreater(result["diagnostics"]["no_emit_probability"], 0.77)
 
     def test_lips_resolve_only_a_closed_pair_model_disagreement(self) -> None:
         base = {

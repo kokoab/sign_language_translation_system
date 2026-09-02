@@ -1,0 +1,371 @@
+{
+  "format": "slt_live_stage2_ctc_v17_session",
+  "version": 1,
+  "prototype_scope": "accepted v17 general CTC selector over non-overlapping continuous windows",
+  "started_utc": "2026-09-02T11:20:01.877001+00:00",
+  "source": "data/raw_videos/PHRASES/GOOD_MORNING/c84d2b6d.mp4",
+  "mode": "stage2-ctc",
+  "score_semantics": "greedy CTC sequence; no calibrated confidence claim",
+  "config": {
+    "processing_fps": 30.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "window_source_frames": 32,
+    "window_seconds": 1.0666666666666667,
+    "maximum_windows": 8,
+    "tokens_per_window": 8,
+    "live_face_display": "MediaPipe overlay every processed frame",
+    "model_face_sampling": "every eighth processed frame, matching v17 training",
+    "capture_policy": "latest-frame webcam; sequential saved video"
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    }
+  },
+  "video": "artifacts/reports/live_stage2_boundary_probe_v1/20260902_192001_876723/session_lowres.mp4",
+  "predictions": [
+    {
+      "accepted": false,
+      "hypothesis": [],
+      "rejection_reasons": [
+        "insufficient_hand_evidence"
+      ],
+      "frames": 32,
+      "start_seconds": 0.0,
+      "end_seconds": 1.0333333333333334,
+      "diagnostics": {
+        "rejection_reason": "insufficient_hand_evidence",
+        "source_frames": 32,
+        "observed_hand_frames": 0
+      },
+      "latency_ms": {
+        "total": 0.38691700000015317
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "GOOD"
+      ],
+      "ctc_tokens": [
+        58
+      ],
+      "token_positions": [
+        3
+      ],
+      "primary_tokens": [
+        58
+      ],
+      "specialist_tokens": [
+        58
+      ],
+      "specialist_selected": false,
+      "window_count": 1,
+      "frames": 32,
+      "start_seconds": 1.0666666666666667,
+      "end_seconds": 2.1,
+      "diagnostics": {
+        "normalization_scale": 0.25199073553085327,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.78125,
+        "source_frames": 32,
+        "observed_hand_frames": 30,
+        "hand_presence_fraction": 0.765625,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.59375,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 7.617291999999054,
+        "hand_image_encoding": 250.8654159999999,
+        "frozen_encoder": 21.3347920000011,
+        "ctc_selector": 9.221624999998568,
+        "total": 289.03912499999865
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "GOOD"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "GOOD",
+        "GOOD"
+      ],
+      "ctc_tokens": [
+        58,
+        58
+      ],
+      "token_positions": [
+        2,
+        12
+      ],
+      "primary_tokens": [
+        58,
+        71
+      ],
+      "specialist_tokens": [
+        58,
+        58
+      ],
+      "specialist_selected": true,
+      "window_count": 2,
+      "frames": 32,
+      "start_seconds": 2.1333333333333333,
+      "end_seconds": 3.1666666666666665,
+      "diagnostics": {
+        "normalization_scale": 0.2862536609172821,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.78125,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 0.9360119104385376,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.71875,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 7.91987499999891,
+        "hand_image_encoding": 389.6164580000026,
+        "frozen_encoder": 12.584582999998872,
+        "ctc_selector": 8.430541999999264,
+        "total": 418.55145799999957
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "GOOD",
+        "GOOD"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "MORNING",
+        "GOOD",
+        "MORNING"
+      ],
+      "ctc_tokens": [
+        81,
+        58,
+        81
+      ],
+      "token_positions": [
+        3,
+        12,
+        19
+      ],
+      "primary_tokens": [
+        58,
+        58,
+        81
+      ],
+      "specialist_tokens": [
+        81,
+        58,
+        81
+      ],
+      "specialist_selected": true,
+      "window_count": 3,
+      "frames": 32,
+      "start_seconds": 3.2,
+      "end_seconds": 4.233333333333333,
+      "diagnostics": {
+        "normalization_scale": 0.2725357711315155,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.53125,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 0.9992559552192688,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.5234375,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 7.293708999998927,
+        "hand_image_encoding": 377.2782079999999,
+        "frozen_encoder": 14.90049999999954,
+        "ctc_selector": 10.767832999999172,
+        "total": 410.24024999999756
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "MORNING",
+        "GOOD",
+        "MORNING"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "GOOD",
+        "GOOD",
+        "MORNING"
+      ],
+      "ctc_tokens": [
+        58,
+        58,
+        81
+      ],
+      "token_positions": [
+        4,
+        12,
+        20
+      ],
+      "primary_tokens": [
+        58,
+        58,
+        81
+      ],
+      "specialist_tokens": [
+        81,
+        58,
+        81,
+        81
+      ],
+      "specialist_selected": false,
+      "window_count": 4,
+      "frames": 24,
+      "start_seconds": 4.266666666666667,
+      "end_seconds": 5.033333333333333,
+      "diagnostics": {
+        "normalization_scale": 0.28410571813583374,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.7083333333333334,
+        "source_frames": 24,
+        "observed_hand_frames": 14,
+        "hand_presence_fraction": 0.59375,
+        "face_presence_fraction": 0.71875,
+        "body_presence_fraction": 0.5546875,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 6.82658299999872,
+        "hand_image_encoding": 255.52750000000302,
+        "frozen_encoder": 22.459791999999368,
+        "ctc_selector": 11.940291999998465,
+        "total": 296.7541669999996
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "GOOD",
+        "GOOD",
+        "MORNING"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-02T11:20:01.954054+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-02T11:20:05.950715+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 5.066666666666666,
+      "active_glosses": [
+        "GOOD",
+        "GOOD",
+        "MORNING"
+      ],
+      "buffered_frames": 0
+    },
+    {
+      "recorded_utc": "2026-09-02T11:20:05.952776+00:00",
+      "type": "finish_submitted",
+      "utterance_id": "ctc-0001",
+      "requested_utc": "2026-09-02T11:20:05.952761+00:00",
+      "glosses": [
+        "GOOD",
+        "GOOD",
+        "MORNING"
+      ],
+      "stream_epoch": 0
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "ctc-0001",
+      "requested_utc": "2026-09-02T11:20:05.952761+00:00",
+      "glosses": [
+        "GOOD",
+        "GOOD",
+        "MORNING"
+      ],
+      "stream_epoch": 0,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"GOOD\", \"GOOD\", \"MORNING\"]",
+      "input_glosses": [
+        "GOOD",
+        "GOOD",
+        "MORNING"
+      ],
+      "literal_sentence": "Good good morning.",
+      "fallback_sentence": "Good good morning.",
+      "fallback_mode": "literal_fallback",
+      "sentence": "Good good morning.",
+      "rendering_mode": "literal_fallback",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.16533299999821338,
+      "completed_utc": "2026-09-02T11:20:05.954654+00:00",
+      "displayed_and_spoken": true
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_processed": 152,
+    "landmark_observations": 152,
+    "stale_camera_frames_dropped": 0
+  },
+  "finished_utc": "2026-09-02T11:20:05.958796+00:00"
+}

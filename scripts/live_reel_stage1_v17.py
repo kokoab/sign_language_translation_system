@@ -52,10 +52,12 @@ from scripts.live_isolated_v17 import (
     landmarks_from_observations,
     observation_quality,
     parser as isolated_parser,
+    sha256,
     trim_to_motion,
     utc_now,
     wrist_motion,
 )
+from scripts.reel_hud_v17 import ReelHud, clicked_reel_control
 from scripts.live_stage2_ctc_v17 import (
     DEFAULT_ENCODER,
     DEFAULT_PRIMARY,
@@ -95,23 +97,55 @@ class ReelCascadeClassifier:
     def __init__(self, args: argparse.Namespace):
         import coremltools as ct
 
-        fast_args = copy.copy(args)
-        fast_args.mode = "fast"
-        self.full = IsolatedClassifier(fast_args)
         self.args = args
-        self.labels = self.full.labels
+        self.full = None
+        if getattr(args, "landmark_only_commit", False):
+            import torch
+
+            checkpoint = torch.load(
+                args.unified_checkpoint, map_location="cpu", weights_only=False
+            )
+            self.labels = [
+                label for label, _ in sorted(
+                    checkpoint["label_to_index"].items(), key=lambda row: row[1]
+                )
+            ]
+        else:
+            fast_args = copy.copy(args)
+            fast_args.mode = "fast"
+            self.full = IsolatedClassifier(fast_args)
+            self.labels = self.full.labels
         self.orientation = ct.models.MLModel(
             str(args.orientation_coreml), compute_units=ct.ComputeUnit.ALL
+        )
+        self.orientation_output_name = (
+            self.orientation.get_spec().description.output[0].name
         )
         self.orientation.predict({
             "landmarks": np.zeros((1, 32, 61, 5), np.float32),
         })
 
     def provenance(self) -> dict[str, object]:
+        base = (
+            self.full.provenance() if self.full is not None else {
+                "unified_checkpoint": {
+                    "path": str(self.args.unified_checkpoint),
+                    "sha256": sha256(self.args.unified_checkpoint),
+                },
+            }
+        )
         return {
-            **self.full.provenance(),
+            **base,
             "orientation_coreml": {
                 "path": str(self.args.orientation_coreml), "sha256": "mlpackage",
+            },
+            "reel_no_emit": {
+                "enabled": getattr(
+                    self.args, "no_emit_probability_threshold", None
+                ) is not None,
+                "probability_threshold": getattr(
+                    self.args, "no_emit_probability_threshold", None
+                ),
             },
         }
 
@@ -147,11 +181,27 @@ class ReelCascadeClassifier:
                     "total": elapsed,
                 },
             }
-        raw = np.asarray(
-            self.orientation.predict({"landmarks": features[None]})["var_5535"]
-        ).reshape(len(self.labels))
+        raw_all = np.asarray(
+            self.orientation.predict({"landmarks": features[None]})[
+                getattr(self, "orientation_output_name", "var_5535")
+            ]
+        ).reshape(-1)
+        if len(raw_all) not in {len(self.labels), len(self.labels) + 1}:
+            raise ValueError(
+                f"expected {len(self.labels)} or {len(self.labels) + 1} Reel logits, "
+                f"got {len(raw_all)}"
+            )
+        raw = raw_all[: len(self.labels)]
         probability = np.exp(raw - raw.max())
         probability /= probability.sum()
+        no_emit_probability = 0.0
+        no_emit_threshold = getattr(
+            self.args, "no_emit_probability_threshold", None
+        )
+        if len(raw_all) == len(self.labels) + 1:
+            all_probability = np.exp(raw_all - raw_all.max())
+            all_probability /= all_probability.sum()
+            no_emit_probability = float(all_probability[-1])
         order = np.argsort(probability)[::-1][:3]
         score = float(probability[order[0]])
         top3 = [
@@ -167,6 +217,11 @@ class ReelCascadeClassifier:
             rejection.append("low_margin")
         if duration > self.args.maximum_accept_seconds:
             rejection.append("clip_too_long")
+        if (
+            no_emit_threshold is not None
+            and no_emit_probability >= float(no_emit_threshold)
+        ):
+            rejection.append("learned_no_emit")
         elapsed = 1000.0 * (time.perf_counter() - started)
         diagnostics.update(motion)
         diagnostics.update({
@@ -176,6 +231,8 @@ class ReelCascadeClassifier:
             "cascade_fallback_used": False,
             "mouth_pixels_used": False,
             "lip_markers_used_for_general_classification": False,
+            "no_emit_probability": no_emit_probability,
+            "no_emit_probability_threshold": no_emit_threshold,
         })
         return {
             "gloss": top3[0]["gloss"] if not rejection else "UNKNOWN",
@@ -202,6 +259,8 @@ class ReelCascadeClassifier:
         }
 
     def verify(self, observations: list[ObservedFrame]) -> dict[str, object]:
+        if self.full is None:
+            raise RuntimeError("the full visual verifier is disabled")
         return self.full.classify(observations)
 
 
@@ -402,24 +461,12 @@ def add_targeted_lip_evidence(
     }
 
 
-def reel_control_button_rects(
-    width: int, height: int
-) -> dict[str, tuple[int, int, int, int]]:
-    del width
-    top = max(224, height - 64)
-    return {
-        "reset": (14, top, 154, top + 48),
-        "finish": (166, top, 326, top + 48),
-    }
-
-
-def clicked_reel_control(x: int, y: int, width: int, height: int) -> str | None:
-    for action, (left, top, right, bottom) in reel_control_button_rects(
-        width, height
-    ).items():
-        if left <= x <= right and top <= y <= bottom:
-            return action
-    return None
+def proposal_as_fast_verifier(result: dict[str, object]) -> dict[str, object]:
+    """Reuse a stable learned-emission proposal without the slow image verifier."""
+    verifier = copy.deepcopy(result)
+    verifier["mode"] = "learned-emission-landmark-fast"
+    verifier.setdefault("diagnostics", {})["full_visual_verifier_used"] = False
+    return verifier
 
 
 def persistent_auxiliary_detection(
@@ -483,90 +530,6 @@ def draw_reel_detection(
     return output
 
 
-def draw_hud(
-    frame: np.ndarray,
-    latest: ObservedFrame | None,
-    latest_result: dict[str, object] | None,
-    lock: StableGlossLock,
-    pending: bool,
-    active: bool,
-    fps: float,
-    glosses: list[str],
-    finishing_glosses: list[str],
-    sentence: str,
-    finish_pending: bool,
-    speech_text: str | None,
-    ctc_hypothesis: list[str] | None = None,
-) -> np.ndarray:
-    height, width = frame.shape[:2]
-    overlay = frame.copy()
-    cv2.rectangle(overlay, (0, 0), (min(width, 690), 196), (15, 15, 15), -1)
-    cv2.addWeighted(overlay, 0.72, frame, 0.28, 0, frame)
-    quality = "hand --  face --  motion --"
-    if latest is not None:
-        quality = (
-            f"hand {latest.hand_quality:.2f}  face {latest.face_quality:.2f}  "
-            f"motion {latest.motion:.3f}"
-        )
-    provisional = "--"
-    evidence = ""
-    if latest_result is not None:
-        provisional = str(latest_result.get("candidate_gloss") or "UNKNOWN")
-        evidence = (
-            f"  evidence {float(latest_result.get('gate_score', 0.0)):.2f}"
-            f"  margin {float(latest_result.get('gate_margin', 0.0)):.2f}"
-        )
-    lines = [
-        f"{'VERIFYING' if pending else ('SIGNING' if active else 'READY')}   {fps:.1f} FPS",
-        quality,
-        f"provisional {provisional}{evidence}",
-        f"stable {lock.hits}/{lock.required_hits}   last committed {lock.suppressed or '--'}",
-        "sequence " + (
-            " ".join(ctc_hypothesis) if ctc_hypothesis else "--"
-        ),
-        "No neutral pose required; F/FINISH closes the sentence",
-    ]
-    for index, text in enumerate(lines):
-        cv2.putText(
-            frame, text, (14, 28 + 31 * index), cv2.FONT_HERSHEY_SIMPLEX,
-            0.58, (255, 255, 255), 1, cv2.LINE_AA,
-        )
-
-    panel_top = max(224, height - 102)
-    cv2.rectangle(frame, (0, panel_top), (width, height), (20, 20, 20), -1)
-    shown_glosses = finishing_glosses if finish_pending and finishing_glosses else glosses
-    shown = "  ".join(shown_glosses) if shown_glosses else "(empty)"
-    max_chars = max(18, (width - 36) // 11)
-    if len(shown) > max_chars:
-        shown = "..." + shown[-(max_chars - 3):]
-    cv2.putText(
-        frame, f"GLOSS BUFFER: {shown}", (14, panel_top + 29),
-        cv2.FONT_HERSHEY_SIMPLEX, 0.64, (255, 255, 255), 1, cv2.LINE_AA,
-    )
-    status = f"SPEAKING: {speech_text}" if speech_text else sentence
-    if finish_pending:
-        status = "Naturalizing finished glosses..."
-    if status:
-        cv2.putText(
-            frame, status[:max_chars], (14, panel_top + 59),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.57, (225, 225, 225), 1, cv2.LINE_AA,
-        )
-    for action, (left, top, right, bottom) in reel_control_button_rects(
-        width, height
-    ).items():
-        color = (55, 55, 155) if action == "reset" else (35, 145, 70)
-        if action == "finish" and finish_pending:
-            color = (80, 100, 45)
-        cv2.rectangle(frame, (left, top), (right, bottom), color, -1)
-        cv2.rectangle(frame, (left, top), (right, bottom), (245, 245, 245), 1)
-        label = "WORKING" if action == "finish" and finish_pending else action.upper()
-        cv2.putText(
-            frame, label, (left + 18, top + 31),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.56, (255, 255, 255), 1, cv2.LINE_AA,
-        )
-    return frame
-
-
 def run(args: argparse.Namespace) -> dict[str, object]:
     classifier = ReelCascadeClassifier(args)
     sequence_arbiter = None if args.no_stage2_arbiter else LiveStage2CTC(args)
@@ -594,6 +557,9 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "commit_score": args.commit_score,
         "commit_hits": args.commit_hits,
         "instant_commit_score": args.instant_commit_score,
+        "full_visual_verifier": not getattr(
+            args, "landmark_only_commit", False
+        ),
         "release_hits": args.release_hits,
         "transition_overlap_seconds": args.transition_overlap_seconds,
         "no_hand_release_seconds": args.no_hand_release_seconds,
@@ -688,6 +654,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     display_times: deque[float] = deque(maxlen=30)
     ui_actions: deque[tuple[str, float]] = deque()
     display_size = [1280, 720]
+    hud = ReelHud()
     last_button_seconds = {"reset": float("-inf"), "finish": float("-inf")}
     warm_logged = False
 
@@ -799,10 +766,14 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             if proposal is not None and future_clip is not None:
                 future_result = result
                 future_proposal = proposal
-                future_kind = "verification"
-                future = classifier_executor.submit(classifier.verify, future_clip)
-                return
-            verifier = None
+                if getattr(args, "landmark_only_commit", False):
+                    verifier = proposal_as_fast_verifier(result)
+                else:
+                    future_kind = "verification"
+                    future = classifier_executor.submit(classifier.verify, future_clip)
+                    return
+            else:
+                verifier = None
         else:
             verifier = future.result()
             if future_result is None:
@@ -1227,7 +1198,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                     shown, latest_lips, mirror=not args.no_mirror_display
                 )
                 display_size[:] = [shown.shape[1], shown.shape[0]]
-                shown = draw_hud(
+                shown = hud.draw(
                     shown, latest, latest_result, lock, future is not None, active,
                     fps,
                     glosses + (["GOOD/THANKYOU?"] if pending_pair else []),
@@ -1235,6 +1206,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                     finish_requested or naturalizer_future is not None,
                     None if speaker is None else speaker.current_text,
                     ctc_hypothesis,
+                    {
+                        "dropped": dropped_camera_frames,
+                        "observations": processed,
+                    },
                 )
                 cv2.imshow(WINDOW_NAME, shown)
                 key = cv2.waitKey(1) & 0xFF
