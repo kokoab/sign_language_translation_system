@@ -1,6 +1,6 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-02 14:18 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-02 14:23 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
@@ -60,6 +60,11 @@ were not edited for this experiment. Seven focused live Stage-2 tests pass and
 `git diff --check` passes. Full findings are in
 `artifacts/reports/stage2_v17_landmark_cascade_preview_v1/README.md`. No sealed or test
 split was accessed.
+
+The code, tests, ground-truth handoff, and compact reports were committed as
+`e027f72` (`Add time-normalized Stage 2 cascade experiments`). Local webcam histories,
+session videos, trained checkpoints, and Core ML packages remain uncommitted/ignored;
+no personal recording was added to git.
 
 ## 2026-09-02 14:02 PST — motion-valley YOU errors are boundary-dependent; landmark CTC retraining started
 
