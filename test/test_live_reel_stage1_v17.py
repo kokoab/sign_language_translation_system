@@ -7,17 +7,20 @@ from unittest.mock import patch
 import numpy as np
 
 from scripts.live_reel_stage1_v17 import (
+    FinishGesture,
     ReelCascadeClassifier,
     StableGlossLock,
     VerifiedCommitLock,
     add_targeted_lip_evidence,
     clicked_reel_control,
     draw_reel_detection,
+    is_finish_gesture,
     parser,
     persistent_auxiliary_detection,
     resolve_good_thankyou_context,
     select_finished_sequence,
 )
+from active.v17.extract_v17 import HandDetection
 
 
 class FixedLipModel:
@@ -36,7 +39,48 @@ def prediction(label: str, accepted: bool = True) -> dict[str, object]:
     return {"gloss": label if accepted else "UNKNOWN", "accepted": accepted}
 
 
+def open_hand(x: float) -> HandDetection:
+    points = np.zeros((21, 2), np.float32)
+    points[0] = (x, 0.72)
+    points[1:5] = (
+        (x + 0.02, 0.67), (x + 0.04, 0.62),
+        (x + 0.07, 0.59), (x + 0.10, 0.56),
+    )
+    for offset, (mcp, pip, dip, tip) in zip(
+        (-0.06, -0.02, 0.02, 0.06),
+        ((5, 6, 7, 8), (9, 10, 11, 12),
+         (13, 14, 15, 16), (17, 18, 19, 20)),
+    ):
+        points[mcp] = (x + offset, 0.62)
+        points[pip] = (x + offset, 0.54)
+        points[dip] = (x + offset, 0.47)
+        points[tip] = (x + offset, 0.39)
+    return HandDetection(
+        xy=points, confidence=np.ones(21, np.float32),
+        chirality="unknown", score=1.0,
+    )
+
+
 class StableGlossLockTest(unittest.TestCase):
+    def test_ten_finger_finish_requires_two_open_upright_hands(self) -> None:
+        hands = {"left": open_hand(0.32), "right": open_hand(0.68)}
+        self.assertTrue(is_finish_gesture(hands))
+        closed = open_hand(0.68)
+        closed.xy[[8, 12, 16, 20], 1] = 0.60
+        self.assertFalse(is_finish_gesture({"left": hands["left"], "right": closed}))
+        self.assertFalse(is_finish_gesture({"left": hands["left"], "right": None}))
+
+    def test_finish_gesture_holds_latches_and_rearms_after_release(self) -> None:
+        hands = {"left": open_hand(0.32), "right": open_hand(0.68)}
+        gesture = FinishGesture(hold_seconds=0.65)
+        self.assertFalse(gesture.update(hands, 0.0))
+        self.assertFalse(gesture.update(hands, 0.3))
+        self.assertTrue(gesture.update(hands, 0.7))
+        self.assertFalse(gesture.update(hands, 0.9))
+        self.assertFalse(gesture.update({"left": None, "right": None}, 1.1))
+        self.assertFalse(gesture.update(hands, 1.2))
+        self.assertTrue(gesture.update(hands, 1.9))
+
     def test_requires_repeated_agreement(self) -> None:
         lock = StableGlossLock(required_hits=3, release_hits=2)
         self.assertIsNone(lock.update(prediction("HELLO")))
@@ -97,6 +141,8 @@ class StableGlossLockTest(unittest.TestCase):
             parser().parse_args(["--lip-marker-verifier"]).no_lip_marker_verifier
         )
         self.assertFalse(args.dense_model_auxiliary)
+        self.assertFalse(args.no_finish_gesture)
+        self.assertEqual(args.finish_gesture_hold_seconds, 0.4)
 
     def test_large_reel_controls_match_their_drawn_area(self) -> None:
         from scripts.reel_hud_v17 import reel_control_button_rects
