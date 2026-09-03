@@ -1,0 +1,201 @@
+{
+  "protocol": {
+    "format": "slt_stage1_family_benchmark_v17",
+    "training": "same 2,863-sample balanced 100-gloss training corpus",
+    "validation": "same 378-clip signer-disjoint validation split",
+    "maximum_epochs": 2,
+    "early_stopping_patience": 2,
+    "batch_size": 64,
+    "seed": 1701,
+    "optimizer": "AdamW(lr=3e-4, weight_decay=0.03)",
+    "schedule": "8-epoch warmup then cosine decay to 0.02x",
+    "objective": "cross-entropy with label smoothing 0.10",
+    "selection": "highest validation top-1 using EMA weights",
+    "reported_validation_backend": "PyTorch CPU from the persisted selected checkpoint",
+    "augmentation": "augment_v17 with identical defaults",
+    "latency": "PyTorch CPU, one thread, batch one, 20 warmups, 300 iterations",
+    "training_device": "mps",
+    "host": "macOS-26.2-arm64-arm-64bit",
+    "torch_version": "2.8.0",
+    "test_accessed": false
+  },
+  "results": [
+    {
+      "family": "compact_transformer",
+      "display_name": "Compact Transformer",
+      "seed": 1701,
+      "best_epoch": 2,
+      "epochs_completed": 2,
+      "parameters": 3556581,
+      "validation": {
+        "loss": 3.9176200445366915,
+        "top1": 7.407407407407407,
+        "top5": 28.571428571428573,
+        "macro_f1": 2.8791162979352474,
+        "samples": 378
+      },
+      "data": {
+        "train_samples": 2863,
+        "validation_samples": 378,
+        "sampling": {
+          "mode": "class_source_balanced_replacement",
+          "expected_class_probability": 0.01,
+          "expected_source_probabilities": {
+            "citizen": 0.5,
+            "semlex": 0.5
+          },
+          "minimum_sample_weight": 0.00020618556701030926,
+          "maximum_sample_weight": 0.002577319587628866
+        }
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 4.577238403330972,
+          "loss": 4.4183264358964545,
+          "top1": 5.291005291005291,
+          "top5": 16.666666666666668,
+          "macro_f1": 1.777470950102529,
+          "samples": 378,
+          "lr": 0.0003,
+          "seconds": 4.5456748750000004
+        },
+        {
+          "epoch": 2,
+          "train_loss": 4.247709384382583,
+          "loss": 3.9176200445366915,
+          "top1": 7.407407407407407,
+          "top5": 28.571428571428573,
+          "macro_f1": 2.8791162979352474,
+          "samples": 378,
+          "lr": 0.0003,
+          "seconds": 3.526133916
+        }
+      ],
+      "test_accessed": false,
+      "latency": {
+        "median_ms": 1.7583545,
+        "p90_ms": 1.9206708000000001,
+        "iterations": 300
+      }
+    },
+    {
+      "family": "conv_transformer",
+      "display_name": "Conv-augmented Transformer",
+      "seed": 1701,
+      "best_epoch": 2,
+      "epochs_completed": 2,
+      "parameters": 6916069,
+      "validation": {
+        "loss": 3.858286287418749,
+        "top1": 5.555555555555555,
+        "top5": 24.603174603174605,
+        "macro_f1": 0.8756461626229067,
+        "samples": 378
+      },
+      "data": {
+        "train_samples": 2863,
+        "validation_samples": 378,
+        "sampling": {
+          "mode": "class_source_balanced_replacement",
+          "expected_class_probability": 0.01,
+          "expected_source_probabilities": {
+            "citizen": 0.5,
+            "semlex": 0.5
+          },
+          "minimum_sample_weight": 0.00020618556701030926,
+          "maximum_sample_weight": 0.002577319587628866
+        }
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 4.524397206148233,
+          "loss": 4.318070129111961,
+          "top1": 3.9682539682539684,
+          "top5": 12.698412698412698,
+          "macro_f1": 1.1370091914274285,
+          "samples": 378,
+          "lr": 0.0003,
+          "seconds": 7.176802042000002
+        },
+        {
+          "epoch": 2,
+          "train_loss": 4.203651468028482,
+          "loss": 3.858286287418749,
+          "top1": 5.555555555555555,
+          "top5": 24.603174603174605,
+          "macro_f1": 0.8756461626229067,
+          "samples": 378,
+          "lr": 0.0003,
+          "seconds": 6.208588917
+        }
+      ],
+      "test_accessed": false,
+      "latency": {
+        "median_ms": 3.485208,
+        "p90_ms": 3.9814122000000003,
+        "iterations": 300
+      }
+    },
+    {
+      "family": "anatomical_token_transformer",
+      "display_name": "Anatomical-token Transformer",
+      "seed": 1701,
+      "best_epoch": 2,
+      "epochs_completed": 2,
+      "parameters": 6854373,
+      "validation": {
+        "loss": 3.971870185206176,
+        "top1": 4.232804232804233,
+        "top5": 18.253968253968253,
+        "macro_f1": 0.7583118484456179,
+        "samples": 378
+      },
+      "data": {
+        "train_samples": 2863,
+        "validation_samples": 378,
+        "sampling": {
+          "mode": "class_source_balanced_replacement",
+          "expected_class_probability": 0.01,
+          "expected_source_probabilities": {
+            "citizen": 0.5,
+            "semlex": 0.5
+          },
+          "minimum_sample_weight": 0.00020618556701030926,
+          "maximum_sample_weight": 0.002577319587628866
+        }
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 4.534039371462498,
+          "loss": 4.323919995121225,
+          "top1": 2.6455026455026456,
+          "top5": 13.227513227513228,
+          "macro_f1": 0.3138283562012375,
+          "samples": 378,
+          "lr": 0.0003,
+          "seconds": 8.261291875000001
+        },
+        {
+          "epoch": 2,
+          "train_loss": 4.236776098603766,
+          "loss": 3.971870185206176,
+          "top1": 4.232804232804233,
+          "top5": 18.253968253968253,
+          "macro_f1": 0.7583118484456179,
+          "samples": 378,
+          "lr": 0.0003,
+          "seconds": 6.4811614580000025
+        }
+      ],
+      "test_accessed": false,
+      "latency": {
+        "median_ms": 3.9486665,
+        "p90_ms": 5.0959045000000005,
+        "iterations": 300
+      }
+    }
+  ]
+}
