@@ -1,0 +1,2944 @@
+ATLAS: An Application-Based Squeezeformer—Flan-T5 System for Sign
+          Language Recognition and English Translation
+
+
+
+
+                ________________________________
+
+
+
+
+              A Capstone Project Presented to the Faculty
+                of the IT and Computer Education Unit
+                        Leyte Normal University
+                             Tacloban City
+
+
+
+
+                ________________________________
+
+
+
+
+                     In Partial Fulfillment of the
+                     Requirements for the Degree
+            Bachelor of Science in Information Technology
+
+
+
+
+                ________________________________
+
+
+
+
+                                 by:
+
+                     Francis Angelo C. Batiancela
+                        Rica Sheen G. Cabidog
+                         Kyle Grant G. Lapid
+                            Jazcel A. Esio
+
+
+
+
+                             April 2026
+                                                  Table of Contents
+
+Table of Contents........................................................................................................... ii
+List of Figures............................................................................................................... iii
+List of Tables.................................................................................................................iv
+CHAPTER 1: Introduction......................................................................................... 1
+    1.2 Purpose and Description.....................................................................................4
+    1.3 Objective of the Study........................................................................................6
+    1.4 Scope and Limitations........................................................................................ 7
+CHAPTER 2: Review of Related Literature/Related Systems.............................. 10
+    2.1 Related Literature............................................................................................. 10
+    2.2 Related Systems............................................................................................... 16
+CHAPTER 3: Technical Backgrounds..................................................................... 23
+    3.1 Current System................................................................................................. 23
+    3.2 Proposed System.............................................................................................. 24
+        Software Requirements.................................................................................... 27
+        Hardware Requirements................................................................................... 28
+        Peopleware....................................................................................................... 29
+CHAPTER 4: Methodology, Results, Discussion.................................................... 31
+    4.1 Requirements Analysis.....................................................................................31
+        Functional Requirements..................................................................................31
+        Performance Requirements.............................................................................. 32
+        Software and Hardware Requirements.............................................................34
+        Safety Requirements........................................................................................ 35
+        Security Requirements..................................................................................... 35
+    4.1.1 Actual Model Performance and Current Limitations.................................... 36
+    4.2 Design of Software, Systems, Product, and/or Processes................................ 37
+        Systems Development Life Cycle.................................................................... 37
+        Planning and Requirement Analysis................................................................ 39
+            Activity List................................................................................................40
+            GANTT Chart............................................................................................ 43
+            PERT Chart................................................................................................ 51
+        Design...............................................................................................................53
+            Context Diagram........................................................................................ 53
+            Data Flow Diagram.................................................................................... 54
+            Use-case..................................................................................................... 55
+            Flowchart....................................................................................................55
+REFERENCES........................................................................................................... 58
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                                                ii
+                                             List of Figures
+
+Figure 1: SDLC Modified Waterfall (Sashimi) Model...............................................38
+Figure 2: PERT Chart of the Proposed System........................................................... 52
+Figure 3: Context Diagram of the Proposed System...................................................53
+Figure 4: Data Flow Diagram of the Proposed System...............................................54
+Figure 5: Proposed System Use-Case Diagram.......................................................... 55
+Figure 6: Proposed System Flowchart........................................................................ 57
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                            iii
+                                                   List of Tables
+
+Table 1: Software and Descriptions.............................................................................27
+Table 2: Hardware Components and Descriptions...................................................... 28
+Table 3: Functional Requirements...............................................................................31
+Table 4: Performance Requirements............................................................................32
+Table 5: Software and Hardware Requirements.......................................................... 34
+Table 6: Safety Requirements......................................................................................35
+Table 7: Security Requirements ..................................................................................35
+Table 8: Activity List...................................................................................................39
+Table 9: GANTT Chart................................................................................................44
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                                     iv
+                                    CHAPTER 1
+
+
+       This chapter presents the background of the study on the development of
+
+ATLAS, an application-based Squeezeformer–Flan-T5 system for sign language
+
+recognition   and English    translation. It discusses existing systems, recent
+
+advancements in artificial intelligence and deep learning, and the limitations of
+
+current approaches in practical communication settings. The chapter also outlines the
+
+purpose, objectives, scope, and limitations of the study, highlighting the need for a
+
+more accessible and efficient communication support system.
+
+
+                                    Introduction
+
+
+       Communication is a fundamental human need and a key element of inclusion
+
+in educational and social environments. However, communication barriers continue to
+
+exist between sign language users and people who do not understand sign language.
+
+According to the World Health Organization, hearing loss affects a substantial portion
+
+of the global population and can limit access to education, employment, healthcare,
+
+and everyday social participation when communication support is inadequate (World
+
+Health Organization, 2026). In many academic settings, interactions between sign
+
+language users and non-sign language users are often reduced to written notes,
+
+improvised gestures, or delayed text-based exchanges rather than direct and efficient
+
+communication.
+
+
+       Recent developments in artificial intelligence, computer vision, and natural
+
+language processing have created new opportunities for sign language recognition and
+
+translation systems. One important development is the use of landmark-based visual
+representations instead of relying solely on raw video frames. Landmark-based input
+
+allows a system to focus on meaningful positional and motion cues while reducing
+
+unnecessary visual background information. In this study, the extraction phase is
+
+designed around landmark-based hand and body pose detection, with Apple Vision
+
+used as the primary extraction engine in the current evaluated implementation and
+
+MediaPipe considered as a cross-platform extraction alternative. MediaPipe Hands
+
+was designed as an on-device real-time hand tracking pipeline that predicts hand
+
+skeletons from monocular RGB input through a palm detector and hand landmark
+
+model, while Apple’s Vision framework provides built-in capabilities for detecting
+
+hand and human body poses in images and video on supported devices (Bazarevsky et
+
+al., 2020; Apple, n.d.-a; Apple, n.d.-b).
+
+
+        Despite these advances, sign language recognition is not simply a matter of
+
+detecting hand shapes or body positions. Signed languages are natural languages with
+
+their own linguistic structure, grammar, and visual-spatial organization, which means
+
+they cannot be treated as direct word-for-word equivalents of spoken or written
+
+English. Because of these structural differences, sign language translation requires
+
+more than accurate gesture recognition; it also requires a system that can generate
+
+grammatically coherent and meaningful English output from recognized sign
+
+sequences (Camgoz et al., 2020; Müller et al., 2023). Prior work has also shown that
+
+intermediate representations such as glosses can play an important role in bridging
+
+recognition and translation stages in sign language processing (Camgoz et al., 2020).
+
+
+        For sequential recognition tasks, modern deep learning architectures
+
+increasingly combine self-attention and convolution in order to model both long-range
+
+dependencies and local patterns. The Conformer architecture demonstrated the
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    |2
+effectiveness of this hybrid design by combining Transformer-based global context
+
+modeling with convolution-based local feature extraction in a parameter-efficient way
+
+(Gulati et al., 2020). Building on this idea, Squeezeformer was introduced as a more
+
+efficient Transformer architecture that redesigns the Conformer structure through a
+
+Temporal U-Net, simplified block organization, removal of redundant normalization
+
+steps, and efficient depthwise subsampling. In its original study, Squeezeformer
+
+consistently outperformed comparable automatic speech recognition baselines under
+
+the same training schemes while maintaining computational efficiency (Kim et al.,
+
+2022). Although Squeezeformer was originally proposed for automatic speech
+
+recognition, its sequence-modeling design makes it a strong candidate for sign
+
+language recognition tasks that also require efficient modeling of local and global
+
+temporal patterns (Gulati et al., 2020; Kim et al., 2022).
+
+
+        For language generation, Flan-T5 provides a strong foundation for converting
+
+structured intermediate sign or gloss representations into natural English text. Flan-T5
+
+is an instruction-tuned variant of the Text-to-Text Transfer Transformer, which frames
+
+language problems in a unified text-to-text format and allows tasks such as translation
+
+and generation to be handled within one sequence-to-sequence framework (Raffel et
+
+al., 2020; Chung et al., 2024). This makes Flan-T5 suitable for gloss-to-English
+
+generation because the model can process structured sign or gloss-like input and
+
+generate     readable,     grammatically      understandable       English       output.   The
+
+instruction-tuned nature of Flan-T5 is particularly relevant in sign language
+
+translation because it supports prompt-based and contextual generation rather than
+
+simple word substitution, which is necessary when translating signed language
+
+structures into natural English sentences (Raffel et al., 2020; Camgoz et al., 2020;
+
+Chung et al., 2024).
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.             |3
+        Despite continued progress in sign language technologies, many existing
+
+systems still face limitations in practical deployment. Some models are
+
+computationally demanding, some focus only on recognition without producing
+
+natural-language output, and others are developed primarily for benchmark settings
+
+rather than real communication scenarios. These limitations highlight the need for a
+
+more accessible and practical assistive system that can capture sign input, recognize
+
+sequential gesture patterns efficiently, and generate understandable English text for
+
+non-sign language users. In response to this need, the present study proposes ATLAS:
+
+An    Application-Based      Squeezeformer–Flan-T5         System     for   Sign   Language
+
+Recognition and English Translation. The system uses landmark-based extraction,
+
+Squeezeformer-based sign recognition, a CTC-based continuous recognition stage,
+
+and a Flan-T5-based language generation model for English translation. Through this
+
+pipeline, the study aims to contribute a practical assistive communication tool that
+
+translates recognized sign language input into understandable English text.
+
+
+1.2 Purpose and Description
+
+
+        The purpose of this study is to design, develop, and evaluate ATLAS: An
+
+Application-Based Squeezeformer–Flan-T5 System for Sign Language Recognition
+
+and English Translation. The proposed system aims to assist non-sign language users
+
+in understanding signed messages by recognizing sign language input and translating
+
+it into coherent and grammatically understandable English text. In doing so, the study
+
+seeks to help reduce communication barriers between sign language users and the
+
+hearing population within academic and social environments, particularly at Leyte
+
+Normal University.
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.         |4
+        This study focuses on evaluating the performance of the proposed system in
+
+terms of recognition accuracy, translation quality, and suitability for application-based
+
+deployment. In the recognition stage, the system adopts Squeezeformer as the main
+
+sequence-modeling backbone for sign language recognition. Squeezeformer was
+
+originally introduced as an efficient Transformer architecture for automatic speech
+
+recognition and was shown to perform strongly under comparable computational
+
+settings through a design that combines self-attention and convolution while reducing
+
+unnecessary architectural overhead (Kim et al., 2022). Its architecture incorporates
+
+efficiency-oriented refinements such as simplified block design, reduced redundancy,
+
+and efficient temporal downsampling, making it a relevant backbone for tasks that
+
+require accurate and efficient temporal modeling (Kim et al., 2022).
+
+
+        The recognition process is further supported by a CTC-based continuous
+
+recognition stage. This stage allows the system to process phrase-level input and
+
+generate sign or gloss sequences before translation. This is important because sign
+
+language translation requires more than isolated sign classification; the system must
+
+also account for ordered sign sequences that represent a complete message.
+
+
+        In the final translation stage, the system uses Flan-T5 to convert recognized
+
+sign or gloss sequences into natural English text. Flan-T5 is an instruction-tuned
+
+variant of the Text-to-Text Transfer Transformer, an encoder-decoder Transformer
+
+model that frames natural language processing tasks under a unified text-to-text
+
+paradigm (Raffel et al., 2020). This makes Flan-T5 suitable for sign-to-English
+
+translation because the model can generate coherent English output from structured
+
+textual input while also benefiting from instruction tuning. Since the system processes
+
+recognized sign or gloss-like sequences, Flan-T5 supports the generation of
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.      |5
+grammatically understandable English sentences rather than merely displaying
+
+isolated sign labels (Chung et al., 2024).
+
+
+        The developed system is not intended to function as a fully bidirectional
+
+communication system in which both parties directly operate the interface. Rather, it
+
+is designed primarily as an assistive translation tool for non-sign language users, who
+
+serve as the direct users of the system by viewing the translated English output and,
+
+when necessary, entering a typed response. In this setup, the sign language user serves
+
+mainly as the source of gesture input that the system captures and processes.
+
+
+        In addition, the system is not designed to perform simultaneous live translation
+
+while the sign language user is still signing. Instead, it follows a turn-based or
+
+segment-based translation process in which the completed sign input or phrase
+
+segment is captured and processed before the corresponding English text is generated.
+
+Because of this workflow, the system is more accurately described as a turn-based
+
+sign language recognition and translation system rather than a fully real-time
+
+interpreter.
+
+
+        To evaluate the developed system, a structured ASL dataset of predefined sign
+
+language gestures, continuous phrase samples, and gloss-to-English pairs is
+
+assembled and used for training, testing, recognition, and Flan-T5-based translation.
+
+These samples allow the recognition model to learn relevant sign patterns and enable
+
+the translation model to generate understandable English output. In addition, ISO/IEC
+
+25010:2023 is adopted as the software quality evaluation framework for assessing the
+
+system’s functional suitability, usability, reliability, and performance efficiency within
+
+an academic assistive communication setting.
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.       |6
+1.3 Objective of the Study
+
+
+          The primary objective of this study is to develop and evaluate ATLAS: An
+
+Application-Based Squeezeformer–Flan-T5 System for Sign Language Recognition
+
+and English Translation that uses landmark-based feature extraction through Apple
+
+Vision and MediaPipe, a Squeezeformer-based recognition model for sign sequence
+
+processing, a CTC-based continuous recognition stage for gloss-sequence generation,
+
+and a Flan-T5-based translation model for English text generation in order to assist
+
+non-sign language users in understanding signed messages through English text
+
+output.
+
+
+Specifically, this study aims to:
+
+
+    ●​ Develop a sign language recognition and English translation system that
+
+          consists of four major stages: (1) a landmark extraction phase using Apple
+
+          Vision as the primary extraction engine in the current evaluated
+
+          implementation and MediaPipe as a cross-platform extraction alternative, (2) a
+
+          Squeezeformer-based isolated sign classification stage that processes
+
+          sequential landmark features, (3) a CTC-based continuous recognition stage
+
+          that generates sign or gloss sequences from phrase-level input, and (4) a
+
+          Flan-T5-based translation stage that generates grammatically understandable
+
+          English text from the recognized sign representation.
+
+    ●​ Evaluate the performance of the Squeezeformer–CTC–Flan-T5 pipeline using
+
+          the collected ASL dataset in terms of accuracy, precision, recall, F1-score,
+
+          Word Error Rate (WER), sequence accuracy, and translation quality in order to
+
+          measure the system’s effectiveness in recognizing sign language input and
+
+          generating corresponding English text output.
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.     |7
+    ●​ Implement the trained recognition and translation pipeline in a prototype
+
+        system that captures completed sign language input, performs landmark
+
+        extraction through Apple Vision and MediaPipe-supported landmark formats,
+
+        processes the extracted coordinate-based data through the Squeezeformer and
+
+        CTC recognition stages, and generates the corresponding English text output
+
+        through the Flan-T5 translation model.
+
+    ●​ Validate the developed system based on ISO/IEC 25010:2023 quality
+
+        standards, particularly functional suitability, performance efficiency, usability,
+
+        and reliability, by conducting appropriate software evaluation procedures such
+
+        as Black Box testing for functional behavior and White Box testing for
+
+        internal logic and processing flow.
+
+
+1.4 Scope and Limitations
+
+
+        This study focuses on the design, development, and evaluation of ATLAS: An
+
+Application-Based Squeezeformer–Flan-T5 System for Sign Language Recognition
+
+and English Translation. The proposed system is built around landmark-based feature
+
+extraction, a Squeezeformer-based recognition backbone, a CTC-based continuous
+
+recognition stage, and a final sign-to-English translation stage utilizing a pretrained
+
+Flan-T5 model. In the evaluated implementation, Apple Vision serves as the primary
+
+landmark extraction engine, while MediaPipe is included as a cross-platform
+
+extraction alternative for future deployment. The system is intended to recognize
+
+predefined ASL signs and selected phrase-level inputs, generate sign or gloss
+
+sequences, and convert them into understandable English text to assist non-sign
+
+language users in interpreting signed messages. The current implementation is
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.       |8
+turn-based or segment-based and assistive in nature rather than a fully simultaneous
+
+real-time interpreter.
+
+
+        The study is limited to a structured dataset of predefined gestures, sign-label
+
+sequences, continuous phrase samples, and gloss-to-English pairs assembled for
+
+training, testing, and evaluation. Although the dataset contains a substantial number of
+
+extracted samples, it remains limited in signer diversity, variation, and environmental
+
+coverage. As a result, the model may have difficulty recognizing unfamiliar signs,
+
+unseen variations, or inputs captured under uncontrolled conditions. The performance
+
+of the system therefore depends heavily on the quality, consistency, and diversity of
+
+the available data. In addition, the current evaluation setup is class-stratified rather
+
+than signer-stratified, which means the reported recognition performance should be
+
+interpreted as signer-dependent rather than fully signer-independent.
+
+
+        Another limitation of the study is that the system is restricted to American
+
+Sign Language (ASL) only. The dataset, sign classes, sign-label sequences, and
+
+recognition pipeline used in the present study are all based on ASL, which means the
+
+system is not designed to recognize or translate other sign languages such as Filipino
+
+Sign Language (FSL) or other regional sign language systems. Because sign
+
+languages differ in vocabulary, grammar, structure, and gesture formation, the current
+
+model cannot be assumed to generalize across other sign languages without separate
+
+datasets, retraining, and evaluation. This limitation should therefore be considered
+
+when interpreting the scope and applicability of the proposed system.
+
+
+        A further limitation of the study is that the system does not yet perform true
+
+simultaneous live translation. Instead of generating English output continuously while
+
+the sign language user is still signing, the system follows a turn-based or
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.     |9
+segment-based translation process in which the full sign input or phrase segment is
+
+completed first before translation is generated. Because of this, the study does not
+
+cover fully simultaneous live sign-to-text interpretation, and processing time may still
+
+vary depending on the length and complexity of the input sequence.
+
+
+        The system is also designed and optimized for future mobile deployment, but
+
+the current evaluated implementation should be understood as a prototype system for
+
+validating the recognition and translation pipeline. Therefore, the study focuses on
+
+proving the functionality and performance of the landmark extraction, Squeezeformer
+
+recognition, CTC-based continuous recognition, and Flan-T5 translation components
+
+before full mobile integration.
+
+
+        Lastly, the study focuses specifically on the implementation of the
+
+Squeezeformer-based recognition backbone, the CTC-based continuous recognition
+
+stage, and the Flan-T5 translation model. It does not comprehensively explore other
+
+deep learning architectures, multimodal fusion approaches, or alternative deployment
+
+pipelines. The system is also limited to English text output generated through Flan-T5
+
+and does not yet fully account for all non-manual markers, facial expressions,
+
+contextual signing cues, and natural coarticulation patterns that may affect meaning in
+
+real-world sign language communication. These limitations should be considered
+
+when interpreting the current performance of the proposed system.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.     | 10
+                                            CHAPTER 2
+
+                REVIEW OF RELATED LITERATURE AND SYSTEMS
+
+         This    chapter    reviews     existing   studies,   systems, and technological
+
+developments       relevant    to     the    proposed   ATLAS:     An   Application-Based
+
+Squeezeformer-T5 System for Sign Language Recognition and English Translation. It
+
+discusses the theoretical foundations of sign language recognition, landmark-based
+
+visual    representation,     sequence modeling,        Squeezeformer-based   recognition,
+
+intermediate sign or gloss representation, and T5-based English text generation. By
+
+examining previous methods, architectures, and system limitations, this review
+
+identifies the research and implementation gaps that justify the development of a
+
+mobile-based, turn-based assistive system for translating recognized sign language
+
+input into grammatically understandable English text.
+
+
+
+2.1 Related Literature
+
+2.1.1 Natural Language Processing and Sign Language Translation
+
+         Natural Language Processing (NLP) is a critical component of modern sign
+
+language translation because the task extends beyond recognizing visible gestures and
+
+requires converting signed input into meaningful spoken or written language output.
+
+Recent work argues that signed languages should be treated as full natural languages
+
+within NLP because they exhibit core linguistic properties such as structure, grammar,
+
+and compositional meaning, yet they are still often underrepresented in mainstream
+
+NLP research (Yin et al., 2021). This view is important in sign language translation
+
+because the goal is not only to identify signs correctly, but also to generate output that
+
+is understandable and linguistically appropriate in the target language. Camgoz et al.
+(2020) showed that continuous sign language recognition and translation can be
+
+learned jointly within a Transformer-based framework, reinforcing the idea that sign
+
+language processing should be addressed as a sequence-to-sequence language
+
+problem rather than as isolated gesture classification alone.
+
+
+        A central issue in sign language translation is the structural mismatch between
+
+signed and spoken languages. Sign languages do not simply follow the word order of
+
+spoken English, and direct word-for-word substitution often fails to preserve meaning.
+
+This motivates the use of language-aware translation models that can capture context
+
+and generate more natural output. In the literature, sign language translation is
+
+increasingly framed as a machine translation problem in which the system learns to
+
+map signed input representations into spoken-language sentences. Camgoz et al.
+
+(2020) demonstrated that Transformer-based sign language translation can jointly
+
+model recognition and translation through CTC-guided learning, while Yin et al.
+
+(2021) emphasized that linguistic structure should be taken seriously when modeling
+
+signed languages computationally. These findings support the view that NLP is not
+
+optional in sign language translation systems but is instead necessary for producing
+
+coherent English text from recognized sign sequences.
+
+
+        For the present study, this literature provides the theoretical basis for treating
+
+ATLAS as both a recognition system and a translation system. The system is not
+
+intended merely to classify signs; it is also designed to generate English text output
+
+that can be understood by non-sign language users. Because of this, the translation
+
+stage must be grounded in NLP principles that account for sequence context,
+
+linguistic structure, and target-language generation. This makes the inclusion of a
+
+dedicated language generation component academically and practically justified.
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.       | 12
+2.1.2 Landmark-Based Visual Representation for Sign Language Recognition
+
+        Landmark-based visual representation has become an important approach in
+
+sign language recognition because it provides a structured alternative to raw video
+
+processing. Instead of analyzing every pixel in a frame, landmark-based methods
+
+represent relevant body parts through coordinate points, allowing the model to focus
+
+on movement and configuration patterns that are more directly related to gesture
+
+interpretation. This can reduce sensitivity to background clutter and can make
+
+processing more efficient for application-oriented systems. MediaPipe Hands is a
+
+well-known example of this approach: Zhang et al. (2020) described it as an
+
+on-device real-time hand tracking pipeline that predicts a hand skeleton from a single
+
+RGB camera using a palm detector followed by a hand landmark model. The same
+
+work reports real-time inference on mobile GPUs and high-quality landmark
+
+prediction, making it relevant to lightweight gesture-based applications.
+
+
+        In addition to MediaPipe, Apple’s Vision framework provides built-in pose
+
+analysis tools that are relevant to sign input extraction. Apple’s documentation states
+
+that Vision supports hand pose detection and human body pose detection in images
+
+and video, allowing applications to identify key points associated with hands and
+
+body structure on supported Apple platforms (Apple, n.d.-a; Apple, n.d.-b). This is
+
+important because sign language is not expressed through hand shape alone;
+
+upper-body posture, arm movement, and visible body alignment can also contribute to
+
+the meaning and clarity of signing. The availability of both hand pose and body pose
+
+estimation capabilities therefore strengthens the extraction phase of a sign language
+
+system by enabling a richer visual representation of the signer’s movement.
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    | 13
+        For ATLAS, landmark-based extraction is especially suitable because the
+
+system is designed as an application-based assistive tool rather than as a large
+
+raw-video benchmark model. By using MediaPipe and Apple Vision, the study adopts
+
+a practical extraction strategy that emphasizes structured hand and body information
+
+while remaining computationally lighter than full-frame visual modeling. This
+
+literature supports the decision to use coordinate-based visual input as the foundation
+
+for the later recognition and translation stages of the proposed system.
+
+
+
+2.1.3 Sequence Modeling for Sign Language Recognition
+
+        Sign language recognition is inherently a sequence modeling problem because
+
+the meaning of a sign often depends on how movement unfolds over time rather than
+
+on a single static pose. Temporal order, motion direction, rhythm, and transitions
+
+between positions all contribute to interpretation, particularly in continuous signing.
+
+For this reason, models that only examine isolated frames or short local features may
+
+fail to capture the broader context needed for accurate recognition and translation.
+
+Recent sign language research increasingly reflects this perspective by modeling sign
+
+input as a temporal sequence rather than as a set of unrelated snapshots. Camgoz et al.
+
+(2020), for example, proposed a joint end-to-end framework for continuous sign
+
+language recognition and translation that explicitly treats the input as a sequence and
+
+binds recognition and translation through a CTC objective.
+
+
+        This shift toward sequence-aware modeling parallels wider trends in deep
+
+learning, where attention-based architectures have shown strong ability to capture
+
+long-range dependencies across sequential data. In the sign language domain, such
+
+architectures are useful because the interpretation of one segment of a sign sequence
+
+may depend on earlier or later segments. Camgoz et al. (2020) showed that a
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    | 14
+Transformer-based framework can model these dependencies effectively, which
+
+helped establish sequence modeling as a central principle in modern sign language
+
+translation. The literature therefore supports the view that recognition in sign
+
+language systems should not be limited to static gesture identification, but should
+
+instead preserve temporal relationships across the input stream.
+
+
+        In the present study, this literature justifies the use of a recognition backbone
+
+specifically chosen for sequential processing. Since ATLAS is expected to process
+
+ordered landmark sequences and convert them into meaningful output, the model
+
+must be able to learn both local motion cues and broader temporal context. This
+
+makes sequence modeling a fundamental requirement of the system rather than a
+
+secondary enhancement.
+
+
+
+2.1.4 Squeezeformer as an Efficient Recognition Architecture
+
+        Hybrid attention-convolution architectures have become influential in
+
+sequence modeling because they combine the ability of attention mechanisms to
+
+capture long-range dependencies with the ability of convolutional modules to model
+
+local structure. Within this line of research, Squeezeformer was introduced by Kim et
+
+al. (2022) as an efficient Transformer architecture for automatic speech recognition.
+
+The authors report that the model improves on Conformer-like designs through a
+
+Temporal U-Net structure, a simpler block organization, removal of redundant Layer
+
+Normalization operations, and an efficient depthwise down-sampling layer. They
+
+further report that their final Squeezeformer model outperformed a comparable
+
+Conformer baseline while maintaining the same FLOP budget, supporting its
+
+efficiency claims.
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.      | 15
+        Although Squeezeformer was proposed in the speech domain, its architectural
+
+characteristics are relevant to other sequential recognition tasks because it is designed
+
+to capture both local and global patterns efficiently. This is especially significant for
+
+sign language recognition, where temporal dependencies matter but computational
+
+practicality is also important for deployment-oriented systems. The defensible claim
+
+from the literature is therefore not that Squeezeformer is already established
+
+specifically   for   sign    language     recognition,    but   that    it   is an efficient
+
+sequence-modeling architecture whose design principles are suitable for temporally
+
+structured input. That distinction is important for academic accuracy, especially when
+
+adapting architectures across domains.
+
+
+        For ATLAS, Squeezeformer provides the theoretical basis for the recognition
+
+stage because the system requires a model that can process landmark sequences
+
+efficiently while retaining important temporal information. Its efficiency-oriented
+
+design aligns with the application-based goal of the study, and its ability to balance
+
+local and long-range modeling makes it an appropriate backbone for sign sequence
+
+recognition within the proposed architecture.
+
+
+
+2.1.5 T5 and Intermediate Representation in Sign Language Translation
+
+        The Text-to-Text Transfer Transformer (T5) is a major sequence-to-sequence
+
+language model that frames diverse NLP tasks within a unified text-to-text
+
+formulation.    Raffel et al. (2020) showed that translation, summarization,
+
+classification, and other language tasks can all be expressed as text generation
+
+problems under one common architecture. This is relevant to sign language translation
+
+because recognized sign outputs can be represented in textual form and then
+
+converted into natural English through a sequence-to-sequence model. T5 therefore
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.          | 16
+provides a strong language-generation basis for systems that aim to move from
+
+recognition into coherent target-language output.
+
+
+        In sign language translation research, intermediate representations such as
+
+gloss remain important because they help bridge the gap between visual sign input
+
+and spoken-language generation. Camgoz et al. (2020) note that prior work had
+
+shown gloss-level tokenization to be highly beneficial for translation performance,
+
+and their Transformer-based framework continued to reflect the importance of
+
+intermediate structure in sign language translation. Similarly, Moryossef et al. (2021)
+
+describe gloss-to-text translation as a low-resource neural machine translation
+
+problem and show that sign language translation is often decomposed into
+
+video-to-gloss recognition and gloss-to-text translation. These studies support the idea
+
+that a staged pipeline can be more practical and effective than forcing the system to
+
+learn direct end-to-end translation from visual input alone.
+
+
+        At the same time, more recent work has also explored gloss-free translation
+
+approaches. Lin et al. (2023) argue that while intermediate representations like gloss
+
+have proven effective, gloss annotations are difficult to obtain in large quantities,
+
+which can limit dataset coverage and real-world scalability. Their gloss-free
+
+framework aims to reduce dependence on explicit gloss labels while still exploiting
+
+shared semantics between signs and spoken translation. This newer direction does not
+
+eliminate the value of intermediate representation; rather, it highlights an ongoing
+
+trade-off between annotation cost, interpretability, and modeling flexibility. In the
+
+context of the present study, intermediate recognized representation remains a
+
+reasonable and well-supported design choice because it offers a practical bridge from
+
+recognition to English generation while maintaining modularity in the pipeline.
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.     | 17
+        Taken together, the literature supports the use of T5 as the final language
+
+generation component of ATLAS and supports the broader idea of using an
+
+intermediate recognition output before producing English text. T5 contributes the
+
+text-generation capacity needed for fluent target-language output, while intermediate
+
+representation provides a structured handoff between the visual recognition stage and
+
+the translation stage. This makes the translation component of the proposed system
+
+consistent with both established and emerging directions in sign language NLP
+
+research.
+
+
+
+2.1 Related Systems
+
+2.2.1 Vision-Based Sign Language Recognition Systems
+
+
+        Vision-based sign language recognition systems use cameras, images, or video
+
+input to identify signed gestures. These systems are important because they allow sign
+
+input to be captured without requiring wearable sensors, gloves, or specialized
+
+hardware. In most camera-based systems, the signer performs a gesture in front of a
+
+camera, and the system analyzes visual information such as hand shape, hand
+
+movement, body posture, and spatial position. This makes vision-based recognition
+
+more practical for ordinary users because the system can operate using common
+
+devices with built-in cameras.
+
+
+        A major related system in this area is the Sign Language Transformers
+
+framework by Camgoz et al. (2020), which introduced a Transformer-based
+
+architecture for continuous sign language recognition and translation. Their system
+
+jointly learned sign language recognition and translation by using a Connectionist
+
+Temporal Classification loss to connect the recognition and translation tasks. This
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 18
+shows that sign language systems should not be limited to identifying isolated
+
+gestures, because continuous signing requires sequence-level understanding and
+
+language translation. Their study also reported strong performance on the
+
+RWTH-PHOENIX-Weather-2014T                dataset,     showing      the    effectiveness     of
+
+Transformer-based architectures for sign language recognition and translation.
+
+
+        This system is related to ATLAS because both systems treat sign language as a
+
+sequence-based recognition and translation problem rather than as simple image
+
+classification. However, ATLAS differs in its intended deployment. While Sign
+
+Language Transformers was developed mainly as a research and benchmark-oriented
+
+framework, ATLAS is designed as a mobile-based assistive application for practical
+
+communication support. ATLAS also uses landmark-based extraction before
+
+recognition, which can reduce unnecessary background information and make the
+
+system more suitable for application-based deployment. This makes ATLAS more
+
+focused on practical use by non-sign language users who need readable English
+
+output after a completed sign input.
+
+
+
+2.2.2 Landmark-Based and Keypoint-Based Recognition Systems
+
+
+        Landmark-based recognition systems use extracted body points, hand points,
+
+or skeletal coordinates instead of relying on full raw video frames. This approach is
+
+useful for sign language recognition because signs are strongly connected to the
+
+movement and position of hands, arms, and upper body. By converting visual input
+
+into coordinate-based data, the system can focus on meaningful gesture features while
+
+reducing background noise, lighting variation, and irrelevant visual details.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.             | 19
+        One important system that supports this approach is MediaPipe Hands by
+
+Zhang et al. (2020). MediaPipe Hands is an on-device, real-time hand tracking
+
+pipeline that predicts a hand skeleton from a single RGB camera input. It uses a palm
+
+detector followed by a hand landmark model, making it useful for applications that
+
+need lightweight and structured hand tracking. Apple’s Vision framework also
+
+supports this direction because it provides built-in capabilities for detecting hand
+
+poses and human body poses in images and video. Apple’s documentation describes
+
+Vision as a framework for analyzing images and video, including body pose tracking
+
+for action and gesture recognition.
+
+
+        These systems are directly related to ATLAS because ATLAS uses MediaPipe
+
+and Apple Vision in the extraction phase. Instead of processing every pixel of the
+
+video, ATLAS uses landmark data as the visual representation of the sign input. This
+
+supports the system’s goal of being mobile-based and assistive, since landmark
+
+extraction can be lighter and more focused than raw-frame processing.
+
+
+        ATLAS improves on basic landmark-based recognition systems because it
+
+does not stop at detecting hand or body points. MediaPipe and Apple Vision mainly
+
+provide pose or landmark extraction; they do not automatically produce full sign
+
+language translation. ATLAS uses these landmark outputs as the first stage of a larger
+
+pipeline. After extracting coordinates, ATLAS applies a Squeezeformer-based
+
+recognition model to analyze temporal sign patterns and then uses T5 to generate
+
+English text. Therefore, ATLAS builds upon landmark detection systems by turning
+
+extracted keypoints into a complete recognition-and-translation workflow.
+
+
+        The reason this model was chosen is that landmark-based extraction is more
+
+aligned with the study’s mobile and turn-based nature. Since ATLAS is not intended
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 20
+to be a high-cost raw-video benchmark system, using landmarks helps make the input
+
+representation more structured, efficient, and suitable for application deployment.
+
+
+
+
+2.2.3 Deep Learning-Based Sequential Sign Recognition Systems
+
+
+        Deep learning-based sequential recognition systems are designed to process
+
+ordered input over time. This is important in sign language because signs are not only
+
+defined by hand shape but also by movement, direction, timing, and transitions. A
+
+single frame may not be enough to understand a sign; the model must analyze how the
+
+gesture changes from one moment to another.
+
+
+        Transformer-based systems have become important in this field because they
+
+can model long-range dependencies in sequential data. Camgoz et al. (2020)
+
+demonstrated this through a Transformer-based framework that jointly handled
+
+continuous sign language recognition and translation. Their study supports the idea
+
+that sign language recognition should preserve temporal relationships and should be
+
+connected to translation rather than isolated gesture classification.
+
+
+        ATLAS is related to these sequential recognition systems because it also treats
+
+sign input as a temporal sequence. However, instead of using a standard Transformer
+
+as its recognition backbone, ATLAS uses Squeezeformer. Squeezeformer was
+
+introduced by Kim et al. (2022) as an efficient Transformer architecture for automatic
+
+speech recognition. It improves on Conformer-like designs through architectural
+
+changes such as Temporal U-Net structure, simplified block organization, removal of
+
+redundant normalization operations, and efficient depthwise downsampling. The
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.        | 21
+Squeezeformer paper reported that it outperformed comparable ASR baselines under
+
+the same training schemes while maintaining computational efficiency.
+
+
+        Although Squeezeformer was originally developed for speech recognition, its
+
+design is relevant to ATLAS because both speech and sign recognition involve
+
+sequential patterns. The defensible claim is not that Squeezeformer is already the
+
+standard model for sign language recognition, but that its efficient sequence-modeling
+
+structure makes it a suitable backbone for processing ordered landmark sequences.
+
+This is important for ATLAS because the system needs to recognize local motion
+
+cues, such as small hand movements, while also understanding broader temporal
+
+context across the completed sign input.
+
+
+        ATLAS is better suited to the study’s goals than heavier or more general
+
+sequential systems because Squeezeformer supports efficient temporal modeling.
+
+Since ATLAS is intended for mobile-based, turn-based application use, the model
+
+must balance recognition performance with practical deployment concerns.
+
+Squeezeformer was chosen because it provides a stronger fit for this balance: it is
+
+sequence-aware like Transformer-based models, but its architecture is designed to
+
+reduce unnecessary computational overhead.
+
+
+
+2.2.4 Gloss-Based or Intermediate Representation Translation Systems
+
+
+        Gloss-based and intermediate-representation systems divide sign language
+
+translation into stages. Instead of translating directly from video to spoken or written
+
+language, the system first recognizes signs into a structured representation, such as
+
+glosses or sign labels, and then translates that representation into a natural-language
+
+sentence. This is important because sign languages have their own grammar and
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.     | 22
+structure, so direct word-for-word conversion into English often produces unnatural
+
+or incorrect output.
+
+
+        Moryossef et al. (2021) described sign language translation as often being
+
+decomposed into video-to-gloss recognition and gloss-to-text translation. Their study
+
+treated gloss-to-text translation as a low-resource neural machine translation problem
+
+and showed that additional synthetic training data could improve translation
+
+performance for ASL-to-English and DGS-to-German. Camgoz et al. (2020) also
+
+emphasized the importance of gloss-level representation in sign language translation
+
+and used recognition and translation together within a Transformer-based system.
+
+
+        ATLAS is related to these systems because it also follows a staged pipeline.
+
+The system first recognizes sign input through the Squeezeformer-based recognition
+
+stage, then uses a T5-based translation stage to generate English text. This staged
+
+design is appropriate because it provides a structured handoff between visual
+
+recognition and language generation. It also makes the system more modular,
+
+meaning the recognition and translation components can be improved separately in
+
+future versions.
+
+
+        ATLAS improves on simple gloss-based systems by using a modern
+
+text-to-text language model for the final English generation stage. T5, introduced by
+
+Raffel et al. (2020), frames different NLP tasks under a unified text-to-text format,
+
+making it suitable for translation and generation tasks. In ATLAS, this is useful
+
+because the recognized sign or gloss-like output must be converted into
+
+grammatically understandable English rather than displayed only as isolated labels.
+
+
+        However, it is important to acknowledge that recent systems have also
+
+explored gloss-free sign language translation. Lin et al. (2023) argued that gloss
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.     | 23
+annotations are difficult to obtain in large quantities, which can limit real-world
+
+dataset coverage. Their GloFE framework addressed gloss-free sign language
+
+translation by using shared semantic concepts between signs and spoken translations.
+
+This shows that gloss-free systems are an emerging direction. Still, ATLAS uses an
+
+intermediate representation because it is more practical for the current study’s
+
+structured dataset, predefined ASL signs, and modular application-based design.
+
+
+        Therefore, ATLAS is better for this study’s scope because it chooses a more
+
+manageable and explainable pipeline. Rather than attempting a fully end-to-end
+
+gloss-free system that would require larger datasets and more complex training,
+
+ATLAS uses recognition followed by T5-based English generation. This makes the
+
+system easier to develop, evaluate, and defend within the limits of the capstone
+
+project.
+
+
+
+2.2.5 Application-Based or Mobile Sign Language Translation Systems
+
+
+        Application-based or mobile sign language translation systems focus on
+
+making recognition and translation usable outside laboratory or benchmark
+
+environments. These systems are important because the real value of sign language
+
+technology depends not only on model accuracy but also on whether the system can
+
+support actual communication. A practical system must consider user interaction,
+
+device capability, processing time, usability, and output clarity.
+
+
+        ATLAS belongs to this category because it is designed as a mobile-based
+
+assistive communication application. According to the paper, the system is not
+
+intended to function as a fully bidirectional live interpreter. Instead, it is designed
+
+mainly for non-sign language users, who view the translated English output and may
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    | 24
+enter a typed response when necessary. The sign language user provides the gesture
+
+input, while the application processes the completed sign input and produces English
+
+text through a turn-based workflow.
+
+
+        This makes ATLAS different from systems that focus only on recognition
+
+accuracy or benchmark performance. Some related systems may achieve strong
+
+results in controlled datasets, but they do not always address practical deployment
+
+issues such as mobile operation, user-facing output, typed response support, or
+
+turn-based communication flow. ATLAS specifically defines these as part of its
+
+functional and performance requirements, including keypoint extraction, sign gesture
+
+recognition, gloss-to-English translation, text response support, mobile-based
+
+operation, and turn-based processing.
+
+
+        ATLAS is also related to MediaPipe-based and Apple Vision-based mobile
+
+systems because these technologies are designed for practical visual analysis on
+
+supported devices. MediaPipe Hands supports real-time on-device hand tracking from
+
+a single RGB camera, while Apple Vision supports hand and body pose detection for
+
+image and video analysis. These systems support ATLAS’s decision to use
+
+landmark-based extraction in a mobile environment.
+
+
+        The reason ATLAS chose this kind of model is that the system needs both
+
+practicality and language output. A recognition-only mobile app would not be enough
+
+because non-sign language users need understandable English, not only gesture labels.
+
+A fully end-to-end raw-video translation model may also be too complex for the
+
+study’s dataset and deployment scope. ATLAS therefore uses a balanced design:
+
+landmark extraction for efficient visual input, Squeezeformer for temporal
+
+recognition, and T5 for English generation. This makes the system more suitable for a
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 25
+capstone-level mobile assistive tool because each component has a clear role and is
+
+supported by existing research.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 26
+                                    CHAPTER 3
+
+                          TECHNICAL BACKGROUND
+
+       This chapter presents the technical foundation of the proposed system,
+
+including the existing communication methods and the detailed architecture of the
+
+developed sign language translation system. It explains how the system captures,
+
+processes, and translates sign language gestures into meaningful English sentences.
+
+Furthermore, it outlines the actual computational pipeline, including feature
+
+extraction, spatial-temporal modeling, and inference mechanisms based on the
+
+implemented codebase.
+
+
+
+3.1 Current System
+
+       The existing communication landscape at Leyte Normal University (LNU) for
+
+deaf and mute students relies heavily on traditional and manual methods.
+
+Communication between deaf individuals and the hearing community—such as
+
+instructors, staff, and peers—is commonly facilitated through handwritten notes or
+
+basic mobile note-taking applications. While these approaches allow message
+
+exchange, they lack real-time interaction and conversational efficiency.
+
+       These methods introduce delays, especially in academic settings where
+
+immediate responses are necessary. The manual transcription process often results in
+
+shortened or simplified messages, limiting the expression of complex ideas.
+
+Additionally, there is no system that bridges the linguistic differences between sign
+
+language and English, leading to frequent misunderstandings.
+
+       This setup places the burden of communication entirely on deaf students and
+
+restricts spontaneous interactions in everyday scenarios. The absence of an automated
+translation system highlights the need for a more efficient and real-time
+
+communication solution.
+
+
+
+3.2 Proposed System
+
+
+        The proposed system, ATLAS (Application-Based Squeezeformer-T5 System
+
+for Sign Language Recognition and English Translation), is a mobile-based sign
+
+language    recognition     and    English    translation system developed using    a
+
+PyTorch-based deep learning pipeline. It is designed to process skeletal landmark data
+
+extracted from mobile device cameras and translate sign gestures into meaningful
+
+English text. Unlike traditional image-based recognition systems that rely on raw
+
+pixel data, the system uses coordinate-based representations enriched with kinematic
+
+and geometric features, allowing more efficient on-device processing while
+
+maintaining recognition performance.
+
+
+        The system begins with a platform-adaptive feature extraction stage. For
+
+Android-based deployments, MediaPipe is used as the primary landmark detection
+
+backbone, providing structured whole-body and hand keypoints from sign language
+
+video input. For iOS-based deployments, the Apple Vision Framework serves as the
+
+primary keypoint extraction backbone, leveraging on-device body and hand pose
+
+estimation capabilities. Both extractors provide structured skeletal data—including
+
+hand and upper-body reference points—that are used as the foundation for
+
+downstream recognition and translation. The extracted landmarks are then
+
+transformed into structured feature representations, including coordinate-based and
+
+geometric descriptors together with additional derived representations for motion and
+
+skeletal relationships.
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 28
+        The isolated-sign recognition stage operates on fixed-length input clips of 32
+
+frames. For each clip, the system uses 61 landmark nodes composed of 21 left-hand
+
+keypoints, 21 right-hand keypoints, 15 face keypoints, and 4 upper-body reference
+
+points. Each node is represented by 16 input channels derived from spatial
+
+coordinates, motion descriptors, visibility or masking information, and bone-related
+
+features, resulting in an input tensor of shape [B, 32, 61, 16]. These specifications
+
+define the exact structure of the skeletal input processed by the Squeezeformer
+
+recognition backbone.
+
+
+        Following feature extraction, the system performs sign recognition through the
+
+Squeezeformer architecture, an efficient transformer-based model originally designed
+
+for speech recognition that has been adapted in this study for skeletal gesture
+
+sequence modeling. The Squeezeformer captures both spatial relationships among
+
+detected landmarks and the temporal progression of gestures across sequential frames
+
+through its time-reduction and convolution-augmented self-attention modules. This
+
+design allows the system to model the structural configuration of hand and facial
+
+movements alongside their motion dynamics, while maintaining computational
+
+efficiency suitable for mobile deployment. In the implemented system, the model is
+
+trained using ArcFace angular margin loss with scheduled scale and margin ramps,
+
+mixup augmentation, and label smoothing. These techniques are used to improve
+
+class separation and support more robust recognition across gesture patterns.
+
+
+        The training dataset used in the system is composed of 66,451 extracted .npy
+
+files generated from approximately 67,000 raw sign language videos, covering 310
+
+ASL classes and 7 unique signers. These isolated-sign samples were assembled from
+
+publicly available ASL video sources, including WLASL-derived videos, YouTube
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 29
+ASL collections, and related ASL datasets, and were processed through
+
+platform-consistent skeletal extraction to produce structured representations for model
+
+training. In addition, Stage 2 sequence-level modeling uses 780 continuous phrase
+
+videos across 9 phrases, which serve as the basis for continuous recognition and
+
+gloss-sequence experiments.
+
+
+        For continuous sign recognition, the system uses a Stage 2 CTC-based
+
+architecture that extends the isolated-sign Squeezeformer backbone into phrase-level
+
+processing. In this stage, encoded clip-level features are pooled and passed to a
+
+sequence model that handles variable-length multi-clip input and predicts gloss
+
+sequences through CTC decoding. This stage is trained using both synthetic phrase
+
+construction from isolated-sign clips and a separate set of real continuous phrase
+
+videos. Through this design, the system is able to move from single-sign classification
+
+toward continuous phrase recognition before gloss-to-English translation.
+
+
+        The final stage of the system involves translating recognized gloss sequences
+
+into natural English text using the Flan-T5 model, a pretrained and instruction-tuned
+
+transformer. This model converts structured gloss representations into grammatically
+
+correct and contextually understandable English output. Through this stage, the
+
+system is able to move beyond simple sign recognition and produce more meaningful
+
+translated text for the Non-Sign Language User.
+
+
+        During inference, the system operates through a mobile application pipeline
+
+that uses MediaPipe on Android and Apple Vision on iOS for on-device video capture
+
+and landmark extraction. The implementation is designed for mobile deployment,
+
+supporting a turn-based sign language recognition and English translation workflow
+
+on consumer-grade smartphones. Although the architecture is designed with
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    | 30
+cross-platform portability in mind, the completed system in the present study is
+
+described as a mobile-based, turn-based sign language recognition and English
+
+translation tool.
+
+
+        Overall, the proposed ATLAS system provides an efficient and structured
+
+approach to sign language recognition and English translation by integrating
+
+platform-adaptive     landmark      extraction,   Squeezeformer-based        spatial-temporal
+
+modeling, CTC-based sequence recognition, and Flan-T5 natural language generation.
+
+Through this multi-stage pipeline, the system is designed to support more effective
+
+understanding of sign language input through English text output.
+
+
+
+Software Requirements
+
+Table 1. Software and Descriptions
+
+ Software                       Features                        Purpose
+
+
+ Python                         Core           programming Used             for        system
+
+                                language                        development
+
+
+ PyTorch                        Deep learning framework         Model       training     and
+
+                                                                inference
+
+
+ MediaPipe                      Whole-body        and   hand Primary               keypoint
+
+                                landmark            detection extraction backbone for
+
+                                (Android)                       Android-based            sign
+
+                                                                language input
+
+
+ Apple Vision ​                 On-device body and hand Primary                    keypoint
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 31
+ Framework                      pose estimation (iOS)           extraction backbone for
+
+                                                                iOS-based sign language
+
+                                                                input
+
+
+ OpenCV                         Image         and       video Handles            desktop-based
+
+                                processing                      video                 capture,
+
+                                                                preprocessing,            and
+
+                                                                turn-based input handling
+
+
+ Squeezeformer                  Efficient spatial-temporal Core recognition model
+
+                                transformer backbone            for       sign         gesture
+
+                                                                classification            and
+
+                                                                sequence modeling
+
+
+ HuggingFace                    NLP models                      Implements            Flan-T5
+
+ Transformers                                                   translation
+
+
+ CUDA                           GPU acceleration                Speeds up model training
+
+
+
+
+Hardware Requirements
+
+Table 2. Hardware Components and Descriptions
+
+ Hardware                     Features                           Purpose
+
+
+ Android / iOS Mobile             ●​ Multi-core                  Primary device used for
+
+ Device                                processor, sufficient real-time sign language
+
+                                       RAM,           built-in input        capture       and
+
+                                       camera,            and on-device              landmark
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.             | 32
+                                       on-device            AI extraction
+
+                                       acceleration       (e.g.,
+
+                                       GPU,            Neural
+
+                                       Engine)
+
+
+ Development               /      ●​ Multi-core           CPU, Used          for            system
+
+ Inference     Laptop    or            sufficient      RAM, development,                    model
+
+ Desktop                               local          storage, training,         testing,      and
+
+                                       webcam support, and preparing               deployment
+
+                                       optional           GPU builds
+
+                                       acceleration
+
+
+ Webcam / Camera Input            ●​ Built-in or external Used               to         capture
+
+ Device                                camera              with completed sign language
+
+                                       sufficient         video input for processing
+
+                                       quality
+
+
+ Local Storage                    ●​ Stores           videos, Supports                      dataset
+
+                                       extracted coordinate management,                 training
+
+                                       data, trained weights, outputs, and file transfer
+
+                                       and project file
+
+
+ Optional GPU-enabled             ●​ CUDA-capable GPU Speeds up training and
+
+ Workstation                           for model training, experimentation for deep
+
+                                       when available              learning models
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                 | 33
+Peopleware
+
+
+Non-Sign Language Users
+
+        The primary intended users of the system are non-sign language users within
+
+the Leyte Normal University community. These include students, faculty members,
+
+instructors, university administrators and staff, medical and guidance personnel, and
+
+IGP stall administrators or stall owners. The system is designed to assist these users in
+
+understanding signed messages by translating sign language input into English text
+
+through a mobile application interface. In this way, ATLAS serves as an assistive
+
+communication tool that helps reduce communication barriers between sign language
+
+users and the hearing community across academic, administrative, service, and daily
+
+campus interactions.
+
+
+
+Developers
+
+        The developers are the researchers responsible for designing, developing, and
+
+evaluating the core components of the system. Their responsibilities include
+
+collecting    and    preparing    the    sign    language     dataset,   implementing    the
+
+Squeezeformer-T5 model, developing the translation pipeline, and conducting system
+
+testing and evaluation. They are also responsible for refining the model’s
+
+performance, ensuring the reliability of the translation process, and improving the
+
+overall usability of the system based on feedback and experimental results. Through
+
+these efforts, the developers aim to create an assistive tool that is accurate, functional,
+
+and relevant to the communication needs of the Leyte Normal University community.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.          | 34
+                                      CHAPTER 4
+
+               METHODOLOGY, RESULTS, AND DISCUSSION
+
+       This chapter presents the systematic process involved in the development,
+
+implementation, and evaluation of the proposed sign language recognition and
+
+English translation system. Following the objectives outlined in Chapter 1, this
+
+section details the technical methodology used to support communication between
+
+sign language users and non-sign language users at Leyte Normal University (LNU).
+
+The   methodology      centers   on    a   multi-stage   architecture   that   uses    a
+
+Squeezeformer-based recognition backbone for sign sequence modeling and a
+
+T5-based translation stage for natural language generation. The implemented
+
+application is designed as a mobile-based assistive system that captures completed
+
+sign input, performs recognition and translation, and presents the corresponding
+
+English text output to the non-sign language user.
+
+
+
+4.1 Requirements Analysis
+
+       To ensure the system's effectiveness and reliability in a real-world academic
+
+setting, the following requirements were established based on the technical and user
+
+needs identified during the preliminary phases of the study.
+
+
+
+       Functional Requirements
+
+       Table 3. Functional Requirements
+
+        Requirement              Description
+         Keypoint Extraction       The system must extract relevant body and gesture
+
+                                   keypoints from captured sign language input and
+
+                                   convert them into structured coordinate-based data
+
+                                   for further processing.
+
+
+         Sign           Gesture The system must use a Squeezeformer-based
+
+         Recognition               recognition model to analyze temporal sign patterns
+
+                                   and sequence-level gesture information for sign
+
+                                   recognition.
+
+
+         Gloss-to-English          The system must use a T5-based model to translate
+
+         Translation               recognized sign or gloss outputs into grammatically
+
+                                   understandable English text.
+
+
+         Text          Response The system must allow the Non-Sign Language
+
+         Support                   User to enter a typed text response as part of the
+
+                                   communication support process.
+
+
+         Mobile-Based              The system must function through a mobile-based
+
+         Operation                 application environment that supports sign input
+
+                                   capture, recognition, translation, and output display.
+
+
+         GPU-Accelerated           Model training must utilize GPU acceleration when
+
+         Training                  available to speed up deep learning computations
+
+                                   and improve training efficiency.
+
+
+
+
+        Performance Requirements
+
+        Table 4. Performance Requirements
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.        | 36
+         Requirement               Description
+
+
+         Processing Mode           The system shall operate in a turn-based translation
+
+                                   process, in which the full sign input is first captured
+
+                                   before recognition and translation are performed.
+
+
+         Inference Time            The system shall process completed sign language
+
+                                   input within an acceptable turnaround time for
+
+                                   assisted communication. Although the system is
+
+                                   mobile-based, the present implementation is not yet
+
+                                   intended for simultaneous real-time inference.
+
+
+         Recognition               The Squeezeformer-based recognition model shall
+
+         Accuracy                  classify sign gestures from skeletal landmark
+
+                                   sequences with acceptable accuracy under the
+
+                                   collected dataset and current training configuration.
+
+
+         Translation Quality       The system shall generate understandable English
+
+                                   text from recognized sign or gloss outputs using the
+
+                                   T5-based translation stage.
+
+
+         System Stability          The application shall maintain stable execution
+
+                                   during     video    capture,    landmark      processing,
+
+                                   recognition, and translation without interrupting the
+
+                                   user workflow.
+
+
+
+
+​       Software and Hardware Requirements
+
+        Table 5. Software and Hardware Requirements
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.           | 37
+         Requirement               Description
+
+
+         Mobile-Based              The    current    system      is   implemented    as     a
+
+         Execution                 mobile-based application used for sign input
+
+                                   capture, landmark processing, recognition, and
+
+                                   translation.
+
+
+         Development               The system utilizes Python, PyTorch, OpenCV, and
+
+         Frameworks                Hugging Face Transformers for model development,
+
+                                   inference, and translation.
+
+
+         Processing                The system requires a mobile device environment
+
+         Resources                 with sufficient processing capability, memory,
+
+                                   camera support, and storage for gesture capture and
+
+                                   model execution.
+
+
+         Model     Deployment TThe current study focuses on the implementation
+
+         Status                    and evaluation of the recognition and translation
+
+                                   pipeline in a mobile-based application setting.
+
+
+         Storage Requirement       The system must provide adequate storage for
+
+                                   datasets, extracted coordinate files, trained model
+
+                                   weights, and supporting project resources.
+
+​
+
+        Safety Requirements
+
+        Table 6. Safety Requirements
+
+         Requirement               Description
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 38
+         Physical User Safety      The application interface must be designed to ensure
+
+                                   that users can maintain situational awareness of
+
+                                   their surroundings while signing into the camera.
+
+
+         Device Temperature The           mobile-based      implementation         should   be
+
+         Control                   executed under conditions that support stable
+
+                                   processing     and     inference      without    excessive
+
+                                   overheating, slowdown, or interruption during
+
+                                   operation.
+
+
+         Operational               The    camera-based      gesture      capture    must    be
+
+         Ergonomics                responsive enough to record natural movements
+
+                                   without requiring the user to hold uncomfortable or
+
+                                   static poses for extended periods.
+
+
+
+
+        Security Requirements
+
+        Table 7. Security Requirements
+
+         Requirement               Description
+
+
+         Data           Privacy To protect user identity and privacy in sensitive
+
+         (Coordinate-Based         settings, the system should process coordinate-based
+
+         Tracking)                 landmark information instead of relying on stored
+
+                                   raw video frames whenever possible.
+
+
+         Environment               The      recognition       pipeline      must       remain
+
+         Agnosticism               background-tolerant      by focusing on extracted
+
+                                   skeletal and gesture-related features rather than
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.              | 39
+                                   irrelevant visual background content.
+
+
+         Model Integrity           The trained model files and supporting resources
+
+                                   should be stored and managed in a way that helps
+
+                                   preserve     the   integrity    of   the      implemented
+
+                                   recognition and translation pipeline.
+
+
+         Confidentiality      of Sign input, translated output, and typed text
+
+         Interaction               responses should be handled within the application
+
+                                   environment as much as possible to support privacy
+
+                                   in sensitive communication contexts.
+
+
+
+
+4.2 Design of Software, Systems, Product, and/or Processes
+
+Systems Development Life Cycle
+
+        The project utilized the Sashimi Model, originally proposed by DeGrace and
+
+Stahl, which is characterized as a “waterfall model with overlapping phases” or “the
+
+waterfall model with feedback.” Unlike the traditional waterfall approach, this model
+
+allows information about problem areas to be addressed early because the phases
+
+overlap, enabling implementation issues to be identified during the design stage. This
+
+iterative method helps alleviate many problems of traditional models and is
+
+theoretically effective at managing costs by limiting iterations to two adjacent phases
+
+at a time, thereby preventing expensive backward moves from development all the
+
+way back to requirements. In practice, this framework allowed the team to develop
+
+the T5-based English translation component simultaneously with the refinement of the
+
+Squeezeformer-based sign recognition model. This overlap helped ensure that the
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.           | 40
+translation stage correctly interpreted the recognized output from the recognition
+
+stage, allowing the team to immediately address errors such as the misidentification of
+
+specific hand gestures or sequence-level prediction issues. This parallel workflow also
+
+supported the development of a structured and efficient mobile-based assistive
+
+translation system for the Leyte Normal University community. The cycle concluded
+
+with White-box and Black-box testing aligned with ISO/IEC 25010:2023 standards to
+
+help guarantee both technical and functional quality.
+
+
+
+
+                  Figure 1. SDLC Modified Waterfall (Sashimi) Model
+
+
+
+Planning and Requirement Analysis
+
+
+        This phase focused on identifying the communication needs of sign language
+
+users and non-sign language users within the academic setting. The team determined
+
+that the system should primarily function as an assistive sign-to-English translation
+
+tool, while still allowing the non-sign language user to enter a typed text response
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    | 41
+when necessary. A GANTT Chart was used to map out the project timeline and task
+
+dependencies, ensuring that the recognition and translation components were
+
+developed in a logical order. Additionally, a detailed Activity List guided the technical
+
+development, focusing on landmark processing, feature engineering, model
+
+refinement, and mobile-based usability considerations.
+
+
+Activity List
+
+        An activity list is a fundamental software project management tool that
+
+identifies all necessary tasks and their logical sequence to ensure a structured
+
+development workflow. It serves as a comprehensive guide that specifies the required
+
+resources, the estimated duration for each task, and the specific dependencies or
+
+requirements needed to move through the project phases successfully.
+
+
+
+        Table 8. Activity List
+
+                                                                                 DURATION
+          ID            TASKS                START      END       PREDECESSOR
+                                                                                  (DAYS)
+
+                                              Phase 1: Planning
+
+          A         Project Proposal         Jan. 20   Jan. 22        —             3
+                      Preparation
+
+          B      Proposal Approval and       Jan. 23   Jan. 24        A             2
+                  Adviser Assignment
+
+          C        Review of Related         Jan. 25   Jan. 29         B            5
+                       Literature
+
+          D     Identification of Research   Jan. 25   Jan. 27         B            3
+                         Problem
+
+          E        Chapter 1: Writing        Jan. 28   Feb. 1         D             5
+
+          F      Chapter 1: Submission       Feb. 2    Feb. 2          E            1
+
+          G        Chapter 1: Adviser        Feb. 3    Feb. 4          F            2
+                       Feedback
+
+          H       Chapter 1: Revision        Feb. 5    Feb. 7         G             3
+
+          I     Chapter 1: Resubmission      Feb. 8    Feb. 8         H             1
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.          | 42
+                                                                                 DURATION
+          ID            TASKS              START      END         PREDECESSOR
+                                                                                  (DAYS)
+
+                                            Phase 2: Designing
+
+          Y       Definition of System     Jan. 25   Jan. 28           B            4
+                  Scope and Features
+
+          Z       Dataset Planning and     Jan. 29    Feb. 3          Y             6
+                        Design
+
+          J        Chapter 2: Writing      Feb. 9    Feb. 13           I            5
+
+          K      Chapter 2: Submission     Feb. 14   Feb. 14           J            1
+
+          L        Chapter 2: Adviser      Feb. 15   Feb. 16          K             2
+                       Feedback
+
+          M       Chapter 2: Revision      Feb. 17   Feb. 19           L            3
+
+          N     Chapter 2: Resubmission    Feb. 20   Feb. 20          M             1
+
+          O        Chapter 3: Writing      Feb. 9    Feb. 14           I            6
+
+          P      Chapter 3: Submission     Feb. 15   Feb. 15          O             1
+
+          Q        Chapter 3: Adviser      Feb. 16   Feb. 17           P            2
+                       Feedback
+
+          R       Chapter 3: Revision      Feb. 18   Feb. 20          Q             3
+
+          S     Chapter 3: Resubmission    Feb. 21   Feb. 21           R            1
+
+          T        Chapter 4: Writing      Feb. 9    Feb. 14           I            6
+
+          U      Chapter 4: Submission     Feb. 15   Feb. 15           T            1
+
+          V        Chapter 4: Adviser      Feb. 16   Feb. 17          U             2
+                       Feedback
+
+          W       Chapter 4: Revision      Feb. 18   Feb. 20          V             3
+
+          X     Chapter 4: Resubmission    Feb. 21   Feb. 21          W             1
+
+                                           Phase 3: Development
+
+         AA          Core System           Feb. 4     Apr. 5           Z            61
+                     Development
+
+         AB        Data Cleaning and       Feb. 4    Feb. 11           Z            8
+                      Preparation
+
+         AC    Data Validation and Label   Feb. 12   Feb. 17          AB            6
+                      Checking
+
+         AD     Feature Engineering and    Feb. 18   Feb. 25          AC            8
+                      Processing
+
+         AE          Initial Model         Feb. 26    Mar. 7          AD            10
+                     Development
+
+         AF        Model Testing and       Mar. 8    Mar. 19          AE            12
+                      Iteration
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.           | 43
+                                                                                   DURATION
+          ID            TASKS              START        END          PREDECESSOR
+                                                                                    (DAYS)
+
+         AG     Technical Documentation     Mar. 20    Mar. 25           AF           6
+                      Preparation
+
+         AH        Pre-Oral Defense         Apr. 6      Apr. 6           AA           1
+
+          AI    Post Pre-Oral Revisions     Apr. 7     Apr. 11           AH           5
+
+          AJ    Submission to Research      Apr. 12    Apr. 14           AI           3
+                Ethics Committee (REC)
+
+         AK       REC Initial Review        Apr. 15    Apr. 21           AJ           7
+                       Process
+
+         AL       REC Revisions and         Apr. 22     May 1            AK           10
+                    Compliance
+
+         AM         Ethics Clearance        Apr. 7     May 11            AH           35
+                       Approval
+
+         BM        Survey Instrument        Apr. 15    Apr. 17           AJ           3
+                       Validation
+
+         BN     Participant Coordination    Apr. 18    Apr. 25           BM           8
+
+                                               Phase 4: Testing
+
+         AN         Additional Data         May 12     May 21            AM           10
+                      Collection
+
+         AO     Performance Evaluation      May 22     May 28            AN           7
+                  and Benchmarking
+
+         AR    User Interface Design and    May 12     May 25            AP           14
+                         Setup
+
+         AS         Initial System          May 26     May 29            AR           4
+                    Demonstration
+
+         AT         System Testing          May 30      Jun. 8           AS           10
+
+         AU     Debugging and Retesting     Jun. 9     Jun. 18           AT           10
+
+         AV      Evaluation Preparation     Jun. 19    Jun. 23           AU           5
+
+         AW      System Evaluation and      Jun. 24     Jul. 4           AV           11
+                   Usability Testing
+
+         BO       Results Analysis and       Jul. 5     Jul. 9           AW           5
+                     Interpretation
+
+                                           Phase 5: Implementation
+
+         AP       Mobile Application        May 12     Jun. 10           AM           30
+                    Development
+
+         AQ      System Integration and     Jun. 11    Sept. 27          AP          109
+                      Finalization
+
+         BK       System Backup and         Jun. 11    Jun. 15           AP           5
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.             | 44
+                                                                                   DURATION
+          ID            TASKS               START       END       PREDECESSOR
+                                                                                    (DAYS)
+
+                 Repository Preparation
+
+         BL     Version Control and Final   Jun. 16    Jun. 18         BK             3
+                         Backup
+
+         AX        Chapter 5: Writing        Jul. 5    Jul. 12         AR             8
+
+         AY      Chapter 5: Submission      Jul. 13    Jul. 13         AX             1
+
+         AZ        Chapter 5: Adviser       Jul. 14    Jul. 15         AY             2
+                       Feedback
+
+         BA       Chapter 5: Revision       Jul. 16    Jul. 18         AZ             3
+
+         BB     Chapter 5: Resubmission     Jul. 19    Jul. 19         BA             1
+
+         BC     Final Manuscript Editing    Aug. 1     Aug. 7        AW, BB           7
+
+         BD          Formatting and         Aug. 8     Aug. 10         BC             3
+                  Plagiarism Checking
+
+         BF      Adviser Final Approval     Aug. 8     Aug. 10         BC             3
+
+         BG        Presentation Script      Aug. 11    Aug. 14         BF             4
+                      Preparation
+
+         BH      Presentation Revision      Aug. 15    Aug. 17         BG             3
+
+          BJ        Final Document          Aug. 18    Aug. 20         BC             3
+                       Checking
+
+          BI      Mock Final Defense        Sept. 10   Sept. 10        BH             1
+
+         BE          Final Defense          Sept. 28    Sept.     AQ, BI, BJ, BO      3
+                                                         30
+
+
+
+
+GANTT Chart
+
+        The project was managed using a GANTT Chart to establish a clear timeline
+
+and track task dependencies from data collection to final deployment. This was paired
+
+with the overlapping nature of the Sashimi Model, where development stages such as
+
+hand-tracking and translation logic were worked on in parallel. This combined
+
+approach ensured that all milestones were met in a logical sequence while allowing
+
+for continuous feedback and immediate bug fixes throughout the development
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 45
+process, ensuring that the output of the recognition front-end correctly informed the
+
+translation engine during construction.
+
+
+
+Table 9. GANTT Chart
+
+                                (See table on the next page)
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 46
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 47
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 48
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 49
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 50
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 51
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 52
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 53
+PERT Chart
+
+        The researchers employed a Program Evaluation and Review Technique
+
+(PERT) chart to visualize task dependencies, durations, and the critical path within the
+
+systems development life cycle. This combination allows for structured planning and
+
+continuous monitoring of the overlapping phases required to develop the
+
+Squeezeformer-T5 sign language recognition and translation system.
+
+
+
+                              (See diagram on the next page)
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.     | 54
+                      Figure 2. PERT Chart of the Proposed System
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 55
+Design
+
+         The    system     architecture    integrates     skeletal   landmark    extraction,
+
+Squeezeformer-based sign recognition, and T5-based sign-to-English translation
+
+within a modular pipeline for sign language understanding. The current
+
+implementation follows a mobile-based, turn-based workflow intended to support
+
+non-sign language users in understanding signed input through English text output. A
+
+modular approach was employed to separate feature processing, recognition, and
+
+translation, while still allowing future expansion for additional vocabularies, datasets,
+
+and deployment environments.
+
+         Context Diagram
+
+                The context diagram illustrates the high-level relationship between the
+
+         proposed system and its primary external entity, the Non-Sign Language User.
+
+         It shows how the system provides translated English text output to support the
+
+         user in understanding captured sign language input. The diagram focuses on
+
+         the direct interaction between the system and the Non-Sign Language User
+
+         within the defined system boundary.
+
+
+
+
+                   Figure 3. Context Diagram of the Proposed System
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.         | 56
+        Data Flow Diagram
+
+                The Data Flow Diagram (DFD) presents the flow of data within the
+
+        proposed sign language recognition and English translation system. The
+
+        process begins when completed sign language input is captured by the
+
+        application and passed through the necessary processing stages for landmark
+
+        extraction, recognition, and translation. The system uses the available gesture
+
+        dataset and trained models to extract relevant hand and body keypoints
+
+        through MediaPipe and Apple Vision, process the extracted landmark
+
+        sequences through the Squeezeformer-based recognition model, and generate
+
+        the corresponding English text output through the T5-based translation model.
+
+        The translated English text is then displayed to the Non-Sign Language User
+
+        to support message understanding. In addition, the system may also allow the
+
+        Non-Sign Language User to enter a typed text response, which can be
+
+        displayed as part of the communication support process.
+
+
+
+
+                     Figure 4. Data Flow Diagram of the Proposed System
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    | 57
+        Use-case
+
+                The use case diagram illustrates the interaction between the Non-Sign
+
+        Language User and the proposed ATLAS: Squeezeformer-T5 Sign
+
+        Language Recognition and English Translation System. It shows that the
+
+        user can access the application, capture completed sign language input,
+
+        process the input for recognition and translation, view the generated English
+
+        text output, and enter a typed text response when necessary. This diagram
+
+        presents the main functions available to the direct user of the system and
+
+        reflects the system’s turn-based assistive communication workflow.
+
+​
+
+
+
+
+                                           ​
+
+
+
+
+                         Figure 5. Proposed System Use-Case Diagram
+
+
+
+        Flowchart
+
+                The flowchart illustrates the overall process of the proposed ATLAS:
+
+        Squeezeformer-T5 Sign Language Recognition and English Translation
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 58
+        System. The process starts when the application is opened and completed sign
+
+        language input is captured through the device camera. The captured input is
+
+        then processed through MediaPipe and Apple Vision for hand and body
+
+        landmark extraction, followed by preprocessing and normalization of the
+
+        extracted coordinate-based data. The processed landmark sequence is analyzed
+
+        by the Squeezeformer-based recognition model to identify the corresponding
+
+        sign or sign-label sequence. The recognized output is then passed to the
+
+        T5-based translation model, which generates grammatically understandable
+
+        English text. The translated English text is displayed to the Non-Sign
+
+        Language User to support message understanding. If needed, the user may
+
+        also enter a typed text response, which is then displayed by the system as part
+
+        of the turn-based communication support process.
+
+
+
+                              (See diagram on the next page)
+
+
+
+
+​
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    | 59
+                          Figure 6. Proposed System Flowchart
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 60
+                                      REFERENCES
+
+
+Apple. (n.d.-a). Detecting hand poses with Vision. Apple Developer Documentation.
+
+        https://developer.apple.com/documentation/vision/detecting-hand-poses-with-
+
+        vision
+
+
+Apple. (n.d.-b). Detecting human body poses in images. Apple Developer
+
+        Documentation.
+
+        https://developer.apple.com/documentation/vision/detecting-human-body-pose
+
+        s-in-images
+
+
+Apple. (n.d.-c). Detect body and hand pose with Vision. Apple Developer.
+
+        https://developer.apple.com/videos/play/wwdc2020/10653/
+
+
+Camgoz, N. C., Koller, O., Hadfield, S., & Bowden, R. (2020). Sign Language
+
+        Transformers: Joint end-to-end sign language recognition and translation. In
+
+        Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+
+        Recognition                             (pp.                             10023–10033).
+
+        https://openaccess.thecvf.com/content_CVPR_2020/html/Camgoz_Sign_Lang
+
+        uage_Transformers_Joint_End-to-End_Sign_Language_Recognition_and_Tra
+
+        nslation_CVPR_2020_paper.html
+
+
+Chung, H. W., Hou, L., Longpre, S., Zoph, B., Tay, Y., Fedus, W., Li, Y., Wang, X.,
+
+        Dehghani, M., Brahma, S., Webson, A., Gu, S. S., Dai, Z., Suzgun, M., Chen,
+
+        X., Chowdhery, A., Castro-Ros, A., Pellat, M., Robinson, K., … Wei, J.
+
+        (2024). Scaling instruction-finetuned language models. Journal of Machine
+
+        Learning Research, 25(70), 1–53. https://jmlr.org/papers/v25/23-0870.html
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 61
+DeGrace, P., & Stahl, L. H. (1990). Wicked problems, righteous solutions: A
+
+        catalogue of modern software engineering paradigms. Yourdon Press.
+
+        https://archive.org/details/wickedproblemsri0000degr
+
+
+Deng, J., Guo, J., Xue, N., & Zafeiriou, S. (2019). ArcFace: Additive angular margin
+
+        loss for deep face recognition. In Proceedings of the IEEE/CVF Conference on
+
+        Computer       Vision     and         Pattern    Recognition     (pp.      4690–4699).
+
+        https://openaccess.thecvf.com/content_CVPR_2019/html/Deng_ArcFace_Add
+
+        itive_Angular_Margin_Loss_for_Deep_Face_Recognition_CVPR_2019_pape
+
+        r.html
+
+
+Graves, A., Fernández, S., Gomez, F., & Schmidhuber, J. (2006). Connectionist
+
+        temporal classification: Labelling unsegmented sequence data with recurrent
+
+        neural networks. In Proceedings of the 23rd International Conference on
+
+        Machine                    Learning                    (pp.                  369–376).
+
+        https://www.cs.toronto.edu/~graves/icml_2006.pdf
+
+
+Gulati, A., Qin, J., Chiu, C.-C., Parmar, N., Zhang, Y., Yu, J., Han, W., Wang, S.,
+
+        Zhang, Z., Wu, Y., & Pang, R. (2020). Conformer: Convolution-augmented
+
+        Transformer for speech recognition. Proceedings of Interspeech 2020,
+
+        5036–5040. https://doi.org/10.21437/Interspeech.2020-3015
+
+
+Hugging             Face.           (n.d.).             Transformers             documentation.
+
+        https://huggingface.co/docs/transformers/index
+
+
+International Organization for Standardization. (2023). ISO/IEC 25010:2023: Systems
+
+        and software engineering — Systems and software Quality Requirements and
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 62
+        Evaluation          (SQuaRE)          —         Product          quality      model.
+
+        https://www.iso.org/standard/78176.html
+
+
+Kim, S., Gholami, A., Shaw, A., Lee, N., Mangalam, K., Malik, J., Mahoney, M. W.,
+
+        & Keutzer, K. (2022). Squeezeformer: An efficient Transformer for automatic
+
+        speech recognition. In Advances in Neural Information Processing Systems,
+
+        35.
+
+        https://proceedings.neurips.cc/paper_files/paper/2022/hash/3ccf6da39eeb8fefc
+
+        8bbb1b0124adbd1-Abstract-Conference.html
+
+
+Li, D., Rodriguez, C., Yu, X., & Li, H. (2020). Word-level deep sign language
+
+        recognition from video: A new large-scale dataset and methods comparison. In
+
+        Proceedings of the IEEE/CVF Winter Conference on Applications of
+
+        Computer Vision (pp. 1459–1469). https://dxli94.github.io/WLASL/
+
+
+Lin, K., Wang, X., Zhu, L., Sun, K., Zhang, B., & Yang, Y. (2023). Gloss-free
+
+        end-to-end sign language translation. In Proceedings of the 61st Annual
+
+        Meeting of the Association for Computational Linguistics (Volume 1: Long
+
+        Papers) (pp. 12904–12916). Association for Computational Linguistics.
+
+        https://doi.org/10.18653/v1/2023.acl-long.722
+
+
+Moryossef, A., Yin, K., Neubig, G., & Goldberg, Y. (2021). Data augmentation for
+
+        sign language gloss translation. In Proceedings of the 1st International
+
+        Workshop on Automatic Translation for Signed and Spoken Languages (pp.
+
+        1–11).    Association      for    Machine      Translation     in    the   Americas.
+
+        https://aclanthology.org/2021.mtsummit-at4ssl.1/
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.          | 63
+Müller, M., Jiang, Z., Moryossef, A., Rios, A., & Ebling, S. (2023). Considerations
+
+        for meaningful sign language machine translation based on glosses. In
+
+        Proceedings of the 61st Annual Meeting of the Association for Computational
+
+        Linguistics (Volume 2: Short Papers) (pp. 682–693). Association for
+
+        Computational Linguistics. https://doi.org/10.18653/v1/2023.acl-short.60
+
+
+NVIDIA.       (n.d.).    CUDA        Toolkit    documentation.       NVIDIA          Developer.
+
+        https://docs.nvidia.com/cuda/
+
+
+OpenCV. (n.d.). OpenCV documentation. https://docs.opencv.org/
+
+
+Python Software Foundation. (n.d.). Python documentation. https://docs.python.org/
+
+
+PyTorch.                   (n.d.).                 PyTorch                       documentation.
+
+        https://docs.pytorch.org/docs/stable/index.html
+
+
+Raffel, C., Shazeer, N., Roberts, A., Lee, K., Narang, S., Matena, M., Zhou, Y., Li,
+
+        W., & Liu, P. J. (2020). Exploring the limits of transfer learning with a unified
+
+        text-to-text Transformer. Journal of Machine Learning Research, 21(140),
+
+        1–67. https://jmlr.org/papers/v21/20-074.html
+
+
+Szegedy, C., Vanhoucke, V., Ioffe, S., Shlens, J., & Wojna, Z. (2016). Rethinking the
+
+        Inception architecture for computer vision. In Proceedings of the IEEE
+
+        Conference on Computer Vision and Pattern Recognition (pp. 2818–2826).
+
+        https://doi.org/10.1109/CVPR.2016.308
+
+
+World Health Organization. (2026, March 3). Deafness and hearing loss.
+
+        https://www.who.int/news-room/fact-sheets/detail/deafness-and-hearing-loss
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.             | 64
+Yin, K., Moryossef, A., Hochgesang, J., Goldberg, Y., & Alikhani, M. (2021).
+
+        Including signed languages in natural language processing. In Proceedings of
+
+        the 59th Annual Meeting of the Association for Computational Linguistics and
+
+        the 11th International Joint Conference on Natural Language Processing
+
+        (Volume 1: Long Papers) (pp. 7347–7360). Association for Computational
+
+        Linguistics. https://doi.org/10.18653/v1/2021.acl-long.570
+
+
+Zhang, F., Bazarevsky, V., Vakunov, A., Tkachenka, A., Sung, G., Chang, C.-L., &
+
+        Grundmann, M. (2020). MediaPipe Hands: On-device real-time hand tracking.
+
+        arXiv. https://arxiv.org/abs/2006.10214
+
+
+Zhang, H., Cissé, M., Dauphin, Y. N., & Lopez-Paz, D. (2018). mixup: Beyond
+
+        empirical    risk   minimization.      International    Conference on    Learning
+
+        Representations. https://openreview.net/forum?id=r1Ddp1-Rb
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.       | 65
+
