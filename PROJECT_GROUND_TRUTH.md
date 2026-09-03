@@ -1,12 +1,50 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-03 07:29 PST (+0800, Asia/Manila)
+**Last updated:** 2026-09-03 08:07 PST (+0800, Asia/Manila)
 
 This is the single canonical handoff for the project. Every future session must read
 this file before changing the pipeline and update it after every material decision,
 implementation, dataset action, experiment, or validation result. Other documents
 may provide detail, but conflicts are resolved in favor of this file and the current
 code/tests.
+
+## 2026-09-03 08:07 PST — tiny causal sequence head is fast but fails the accuracy gate
+
+A new non-destructive streaming experiment compared (1) a raw 61-node causal TCN and
+(2) a 26,861-parameter causal depthwise TCN/CTC head over rolling logits from the
+accepted phrase-adapted Stage 1. The raw model collapsed to CTC blank in its fail-fast
+screen and was rejected before a full training budget. The Stage-1 evidence head is a
+119 KiB checkpoint and retains per-block causal state. On this Mac/MPS, Stage 1 measured
+29.33 ms median and the head added 3.06 ms median, excluding landmark extraction.
+
+The selected development-only head reached 44.33% exact / 40.93% WER on 97 local
+phrase clips and 0/12 exact / 62.50% WER on signer-held-out ASLLRP phrases. It retained
+94.71% Citizen and 83.95% SemLex isolated exact accuracy. This misses the existing
+Stage-2 validation reference of 92.78% exact / 2.70% WER local and 16.67% exact /
+45.83% WER ASLLRP, so the new head is **not promoted or connected to live inference**.
+Its speed proves the head is not the bottleneck; learned continuous boundaries and
+domain coverage are.
+
+A controlled modality ablation confirms that all existing v17 landmarks are needed:
+all-landmark versus hands-only accuracy was 95.24% vs 65.08% Citizen, 85.28% vs 59.51%
+SemLex, and 63.32% vs 44.02% on local phrase segments. New live-only MediaPipe mouth
+nodes were not added because stored phrase archives lack them and would create schema
+mismatch. A separate Stage-1 contextual adaptation added 92 genuine ASLLRP training
+segments with Citizen/SemLex/local replay. Its gated epoch improved local segment
+accuracy 59.85% -> 66.41% and ASLLRP held-out segment accuracy 66.67% -> 75.00%, with
+Citizen 95.24% -> 94.97% and SemLex 85.28% -> 85.17%, without changing architecture or
+latency. But the downstream sequence head became worse (43.24% local and 66.67%
+ASLLRP WER), so this checkpoint also remains experimental.
+
+The user's new fast learned-emission histories confirm the previously documented
+accuracy tradeoff: sessions `20260903_073822_141602` and `20260903_074154_998790` did
+not load the RGB hand verifier and contained many low-confidence rejects; the later
+`20260903_074617_667378` comparison did load it via `--full-visual-verifier`. No default
+was silently changed again during this experiment. Full model/data/latency evidence is
+in `artifacts/reports/streaming_stage1_head_v17_experiment_v1/README.md`. No protected
+test or external-reserved sample was accessed.
+Eleven focused streaming/emission tests, compilation of all new entry points, and
+`git diff --check` pass.
 
 ## 2026-09-03 07:29 PST — emission live bottleneck removed; lightweight streaming direction researched
 
