@@ -86,9 +86,17 @@ def landmark_path(root: Path, row: dict[str, str]) -> Path:
     return root / "train" / row["canonical_label"] / f"{Path(row['video']).stem}.v17.npz"
 
 
-def load_isolated(path: Path) -> np.ndarray:
+def load_isolated(path: Path, logical_fps: float = 15.) -> np.ndarray:
     with np.load(path, allow_pickle=False) as payload:
         value = payload["features"].astype(np.float32)
+        metadata = json.loads(str(payload["metadata_json"]))
+    fps = float(metadata["fps"])
+    processed = int(metadata["source_frames_processed"])
+    decoded, sampled = int(metadata["decoded_frame_count"]), int(metadata["sampled_frame_count"])
+    if min(fps, logical_fps, processed, decoded, sampled) <= 0 or not np.isfinite([fps, logical_fps]).all():
+        raise ValueError("source timing must be finite and positive")
+    duration = processed * decoded / sampled / fps
+    value = resample_features(value, max(4, round(duration * logical_fps)))
     return trim_observed_span(value)
 
 
@@ -98,11 +106,12 @@ def isolated_candidates(
     gloss: str,
     stage1,
     labels: dict[int, str],
+    logical_fps: float = 15.,
 ) -> list[tuple[Path, np.ndarray, tuple[str, float]]]:
     choices = []
     for row in rows:
         path = landmark_path(root, row)
-        value = load_isolated(path)
+        value = load_isolated(path, logical_fps)
         source_prediction = recognize(stage1, labels, value)
         prepared_prediction = recognize(
             stage1, labels, trim_transition_span(value)
@@ -175,7 +184,7 @@ def load_stage1(path: Path):
 
 @torch.inference_mode()
 def recognize(model, labels, features):
-    probability = model(torch.from_numpy(features)[None]).softmax(dim=-1)[0]
+    probability = model(torch.from_numpy(resample_features(features, 32).astype(np.float32))[None]).softmax(dim=-1)[0]
     confidence, index = probability.max(dim=0)
     return labels[int(index)], float(confidence)
 
@@ -276,6 +285,7 @@ def run(args):
                 isolated_candidates(
                     args.isolated_root, rows[signer][gloss], gloss,
                     stage1, stage1_labels,
+                    args.logical_fps,
                 )
                 for gloss in phrase
             ]
@@ -461,7 +471,9 @@ def run(args):
         artifact = args.output / f"{safe}.grounded_text_to_sign_v17.npz"
         artifact_metadata = {
             "format": "slt_grounded_text_to_sign_v17", "version": 1,
-            "artifact_contract_version": 3,
+            "artifact_contract_version": 4,
+            "logical_fps": args.logical_fps,
+            "source_timing": "restored from source processed frames, sampling fraction and fps before trimming",
             "created_at": datetime.now(timezone.utc).isoformat(),
             "role": "synthetic_native_review_only", "requested_glosses": phrase.split(),
             "source_signer": selected["signer"], "timeline": row["timeline"],
