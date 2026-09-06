@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>YOU — notation engine comparison</title>
+<link rel="stylesheet" href="vendor/cwa/cwasa.css">
+<script src="vendor/cwa/allcsa.js"></script>
+<style>body{font:18px sans-serif;background:#eef1f4}pre{white-space:pre-wrap}#frames{display:none}</style>
+<h1>YOU — SignWriting to SiGML pilot</h1><p>Unverified notation conversion. Compare finger shape, palm direction and movement with the signer.</p>
+<div class="CWASAAvatar av0" style="width:720px;height:680px"></div><div class="CWASAGUI av0"></div>
+<pre id="status"></pre><script id="frames" type="application/json">{}</script>
+<p>Avatar engine © UEA, used unchanged. <a href="https://vh.cmp.uea.ac.uk/index.php/CWASA_Conditions_of_Use">Conditions of use</a>.</p>
+<script>
+for(const name of ['Avatar','AvatarGUI','Data','CWASA'])CWASA.getLogger(name,'debug');
+const input="<sigml><hamgestural_sign gloss=\"NEED\"><sign_manual><handconfig handshape=\"finger2\" thumbpos=\"across\" bend2=\"0 3.34 0 0\" /><handconfig extfidir=\"u\" /><handconfig palmor=\"d\" /><location_bodyarm location=\"shoulders\" side=\"right_at\" contact=\"neutral\" /><rpt_motion repetition=\"fromstart\"><tgt_motion><changeposture /><handconfig extfidir=\"o\" /><handconfig palmor=\"d\" /></tgt_motion></rpt_motion></sign_manual></hamgestural_sign></sigml>\n"; const record={events:[],signs:[],images:[],errors:[],human_accepted:false,training_eligible:false};
+function save(){document.getElementById('frames').textContent=JSON.stringify(record)}
+window.addEventListener('error',e=>{record.errors.push(e.message);save()});
+for(const kind of ['status','avatarloading','avatarloaded','avatarready','sigmlloaded','animidle']) CWASA.addHook(kind,e=>{
+ record.events.push({type:kind,msg:e.msg}); document.getElementById('status').textContent=JSON.stringify(record.events.slice(-6));save();
+},0);
+CWASA.addHook('sigmlsign',e=>{record.signs.push(e.msg);save()},0);
+CWASA.addHook('avatarframe',e=>{record.lastFrame=e.msg;save();if(e.msg.f%5===0 && record.images.length<50){const c=document.querySelector('canvas');try{record.images.push({frame:e.msg.f,png:c.toDataURL()});save()}catch(err){record.errors.push(String(err));save()}}},0);
+if(new URLSearchParams(location.search).has('capture'))CWASA.addHook('animactive',()=>setTimeout(()=>{document.querySelector('.bttnSuspend.av0').click();record.paused=true;save()},0),0);
+let started=false;CWASA.addHook('avatarready',()=>{if(!started){started=true;CWASA.playSiGMLText(input,0)}},0);
+CWASA.init({useClientConfig:false,jasBase:location.origin+"/vendor/",animgenFPS:30,avSettings:[{initAv:'anna',avList:'avs',width:720,height:680,ambIdle:false,initCamera:[0,0.35,2.5,0,0,30,-1,-1],initSpeed:0,allowFrameSteps:true,allowSiGMLText:true,initSiGMLURL:null}]});
+</script></html>
