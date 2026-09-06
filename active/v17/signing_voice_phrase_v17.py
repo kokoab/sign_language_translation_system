@@ -219,8 +219,8 @@ def stabilize_transition_hands(
         present_on_right = last is not None
         first = last.copy() if first is None else first
         last = first.copy() if last is None else last
-        first_shape = first[:, :3] - first[:1, :3]
-        last_shape = last[:, :3] - last[:1, :3]
+        first_shape = first[:, :2] - first[:1, :2]
+        last_shape = last[:, :2] - last[:1, :2]
         first_lengths = np.asarray([
             np.linalg.norm(first_shape[child] - first_shape[parent])
             for parent, child in HAND_TREE_EDGES
@@ -229,26 +229,22 @@ def stabilize_transition_hands(
             np.linalg.norm(last_shape[child] - last_shape[parent])
             for parent, child in HAND_TREE_EDGES
         ], dtype=np.float32)
+        first_angles = np.asarray([np.arctan2(*(first_shape[c] - first_shape[p])[::-1]) for p, c in HAND_TREE_EDGES])
+        last_angles = np.asarray([np.arctan2(*(last_shape[c] - last_shape[p])[::-1]) for p, c in HAND_TREE_EDGES])
+        angle_delta = (last_angles - first_angles + np.pi) % (2 * np.pi) - np.pi
         active = (output[:, start:start + 21, 3] > 0).any(axis=1)
         if present_on_left and present_on_right:
             active[:] = True
-        for frame, alpha in enumerate(np.linspace(0.0, 1.0, len(output))):
+        for frame, alpha in enumerate(np.linspace(0.0, 1.0, len(output) + 2)[1:-1]):
             if not active[frame]:
                 output[frame, start:start + 21] = 0
                 continue
-            blended = first_shape * (1.0 - alpha) + last_shape * alpha
             rebuilt = np.zeros((21, 3), dtype=np.float32)
             lengths = first_lengths * (1.0 - alpha) + last_lengths * alpha
+            angles = first_angles + alpha * angle_delta
             for edge, (parent, child) in enumerate(HAND_TREE_EDGES):
-                direction = blended[child] - blended[parent]
-                norm = float(np.linalg.norm(direction))
-                if norm < 1e-6:
-                    direction = last_shape[child] - last_shape[parent]
-                    norm = float(np.linalg.norm(direction))
-                if norm < 1e-6:
-                    direction = np.asarray((0.0, 1.0, 0.0), dtype=np.float32)
-                    norm = 1.0
-                rebuilt[child] = rebuilt[parent] + direction / norm * lengths[edge]
+                direction = np.asarray((np.cos(angles[edge]), np.sin(angles[edge]), 0.), dtype=np.float32)
+                rebuilt[child] = rebuilt[parent] + direction * lengths[edge]
             wrist = output[frame, start, :3]
             if output[frame, start, 3] <= 0:
                 wrist = first[0, :3] * (1.0 - alpha) + last[0, :3] * alpha
