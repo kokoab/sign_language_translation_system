@@ -48,6 +48,7 @@ from active.v17.schema_v17 import MOUTH_END, MOUTH_START, NUM_CHANNELS, NUM_NODE
 LOG = logging.getLogger("extract_stage2_multimodal_v17")
 ACTIVE_ROLES = {"train", "validation"}
 EXTERNAL_ROLE = "external_evaluation_reserved"
+CANDIDATE_ROLE = "candidate_verification"
 
 
 def window_ranges(
@@ -265,6 +266,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     manifest = json.loads(args.manifest.read_text())
     if args.external_evaluation:
         rows = [row for row in manifest["rows"] if row["role"] == EXTERNAL_ROLE]
+    elif args.role == CANDIDATE_ROLE:
+        rows = [row for row in manifest["rows"] if row["role"] == CANDIDATE_ROLE]
     else:
         rows = [row for row in manifest["rows"] if row["role"] in ACTIVE_ROLES]
     if args.role:
@@ -368,9 +371,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--report", type=Path,
         default=Path("artifacts/reports/stage2_v17_multimodal_extraction/latest.json"),
     )
-    parser.add_argument("--role", choices=sorted(ACTIVE_ROLES | {EXTERNAL_ROLE}))
     parser.add_argument(
-        "--source", choices=("local_phrases", "asllrp_contiguous", "two_m_flores_asl")
+        "--role", choices=sorted(ACTIVE_ROLES | {EXTERNAL_ROLE, CANDIDATE_ROLE})
+    )
+    parser.add_argument(
+        "--source", choices=(
+            "local_phrases", "asllrp_contiguous", "two_m_flores_asl", "cokely_verified"
+        )
     )
     parser.add_argument("--maximum-source-frames", type=int, default=256)
     parser.add_argument("--window-source-frames", type=int, default=32)

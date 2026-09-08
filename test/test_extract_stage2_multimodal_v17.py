@@ -2,11 +2,17 @@ import unittest
 
 import numpy as np
 
-from scripts.extract_stage2_multimodal_v17 import sample_indices, window_ranges
+from scripts.extract_stage2_multimodal_v17 import build_parser, sample_indices, window_ranges
 from active.v17.schema_stage2_features_v17 import Stage2FeatureV17Config, schema_fingerprint
 
 
 class Stage2MultimodalExtractionTests(unittest.TestCase):
+    def test_candidate_verification_role_is_explicitly_selectable(self):
+        args = build_parser().parse_args([
+            '--role', 'candidate_verification', '--source', 'cokely_verified'
+        ])
+        self.assertEqual(args.role, 'candidate_verification')
+
     def test_full_and_tail_windows(self):
         self.assertEqual(window_ranges(100), [(0, 32), (32, 64), (64, 96), (96, 100)])
 
