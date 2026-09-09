@@ -1,0 +1,1506 @@
+{
+  "format": "slt_live_reel_stage1_v17_session",
+  "version": 1,
+  "prototype_scope": "growing activity-anchored Stage-1 candidates with label-stability locks",
+  "started_utc": "2026-09-09T22:56:37.696170+00:00",
+  "source": "data/raw_videos/PHRASES/PLEASE_HELP_ME/3e65d621.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated Stage-1 softmax with temporal agreement",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "candidate_minimum_seconds": 0.5,
+    "candidate_maximum_seconds": 2.5,
+    "probe_interval_seconds": 0.12,
+    "stability_hits": 2,
+    "commit_score": 0.45,
+    "commit_hits": 1,
+    "instant_commit_score": 0.8,
+    "full_visual_verifier": true,
+    "release_hits": 1,
+    "transition_overlap_seconds": 0.0,
+    "no_hand_release_seconds": 0.2,
+    "capture_policy": "latest-frame webcam; sequential saved video",
+    "realtime_video": false,
+    "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+    "auxiliary_detection_schedule": "training_sparse_every_eighth_frame_with_display_hold",
+    "auxiliary_model_schedule": "training_sparse_every_eighth_frame",
+    "lip_marker_model": null,
+    "lip_marker_minimum_confidence": 0.999,
+    "stage2_sequence_arbiter": true,
+    "preserve_pending_frames": true,
+    "provisional_glosses": true,
+    "stage2_at_finish": true,
+    "stage2_review_only": true,
+    "stage2_minimum_phrase_seconds": 1.6,
+    "finish_gesture": false,
+    "finish_gesture_hold_seconds": 0.4
+  },
+  "models": {
+    "unified_checkpoint": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_unified_phrase_activity_adapt_reel_v2/best_model.pth",
+      "sha256": "278a9933df25508aa83823cf6a8e050fbf4ba729eb39b1c790c97e55032a6558"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "stage1_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1UnifiedPhraseActivityAdaptReelV17FP16.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "orientation_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1PhraseAdaptReelV17.mlpackage",
+      "sha256": "mlpackage"
+    },
+    "reel_no_emit": {
+      "enabled": false,
+      "probability_threshold": null
+    },
+    "stage2_sequence_arbiter": {
+      "general_selector": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+        "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+      },
+      "selector_report": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+        "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+      },
+      "frozen_encoder_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "primary_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "specialist_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "image_encoder": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      }
+    }
+  },
+  "video": "artifacts/reports/stage2_v17_transition_repair_v3/replay/baseline_please/20260910_065637_695924/session_lowres.mp4",
+  "predictions": [
+    {
+      "gloss": "UNKNOWN",
+      "candidate_gloss": "HUNGRY",
+      "model_score": 0.16850195825099945,
+      "margin": 0.051571570336818695,
+      "gate_score": 0.16850195825099945,
+      "gate_margin": 0.051571570336818695,
+      "top3": [
+        {
+          "gloss": "HUNGRY",
+          "model_score": 0.16850195825099945
+        },
+        {
+          "gloss": "BAD",
+          "model_score": 0.11693038791418076
+        },
+        {
+          "gloss": "THANKYOU",
+          "model_score": 0.07631614804267883
+        }
+      ],
+      "accepted": false,
+      "rejection_reasons": [
+        "low_score",
+        "low_margin"
+      ],
+      "mode": "reel-cascade-landmark",
+      "frames": 11,
+      "motion_trimmed_frames": 11,
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 1.7666666666666666,
+      "diagnostics": {
+        "normalization_scale": 0.3631021976470947,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "trim_start": 0,
+        "trim_end_exclusive": 11,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.09375,
+        "body_presence_fraction": 0.0703125,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 11,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.16850195825099945,
+        "cascade_primary_gloss": "HUNGRY",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 6.7161660000003565,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 6.7161660000003565
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": null,
+      "stable_hits": 0,
+      "lock_proposal": null,
+      "full_verifier": null,
+      "committed_gloss": null,
+      "completed_observed_seconds": 1.7666666666666666,
+      "completed_elapsed_seconds": 0.4792397080000015
+    },
+    {
+      "gloss": "UNKNOWN",
+      "candidate_gloss": "HUNGRY",
+      "model_score": 0.14926204085350037,
+      "margin": 0.06304468214511871,
+      "gate_score": 0.14926204085350037,
+      "gate_margin": 0.06304468214511871,
+      "top3": [
+        {
+          "gloss": "HUNGRY",
+          "model_score": 0.14926204085350037
+        },
+        {
+          "gloss": "OUR",
+          "model_score": 0.08621735870838165
+        },
+        {
+          "gloss": "BAD",
+          "model_score": 0.08197689056396484
+        }
+      ],
+      "accepted": false,
+      "rejection_reasons": [
+        "low_score",
+        "low_margin"
+      ],
+      "mode": "reel-cascade-landmark",
+      "frames": 14,
+      "motion_trimmed_frames": 14,
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 1.9,
+      "diagnostics": {
+        "normalization_scale": 0.3631021976470947,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.07142857142857142,
+        "source_frames": 14,
+        "trim_start": 0,
+        "trim_end_exclusive": 14,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.0625,
+        "body_presence_fraction": 0.046875,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 14,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.14926204085350037,
+        "cascade_primary_gloss": "HUNGRY",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 5.861790999999172,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 5.861790999999172
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": null,
+      "stable_hits": 0,
+      "lock_proposal": null,
+      "full_verifier": null,
+      "committed_gloss": null,
+      "completed_observed_seconds": 1.9,
+      "completed_elapsed_seconds": 0.5072595830000015
+    },
+    {
+      "gloss": "PLEASE",
+      "candidate_gloss": "PLEASE",
+      "model_score": 0.5266530513763428,
+      "margin": 0.4474545195698738,
+      "gate_score": 0.5266530513763428,
+      "gate_margin": 0.4474545195698738,
+      "top3": [
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.5266530513763428
+        },
+        {
+          "gloss": "HUNGRY",
+          "model_score": 0.07919853180646896
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.026250947266817093
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 17,
+      "motion_trimmed_frames": 17,
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 2.066666666666667,
+      "diagnostics": {
+        "normalization_scale": 0.3631021976470947,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.058823529411764705,
+        "source_frames": 17,
+        "trim_start": 0,
+        "trim_end_exclusive": 17,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.5625,
+        "body_presence_fraction": 0.046875,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 17,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.5266530513763428,
+        "cascade_primary_gloss": "PLEASE",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 6.357749999999385,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 6.357749999999385
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": "PLEASE",
+      "stable_hits": 1,
+      "lock_proposal": null,
+      "full_verifier": null,
+      "committed_gloss": null,
+      "completed_observed_seconds": 2.1,
+      "completed_elapsed_seconds": 0.5506108330000004
+    },
+    {
+      "gloss": "PLEASE",
+      "candidate_gloss": "PLEASE",
+      "model_score": 0.7045480012893677,
+      "margin": 0.6681283190846443,
+      "gate_score": 0.7045480012893677,
+      "gate_margin": 0.6681283190846443,
+      "top3": [
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.7045480012893677
+        },
+        {
+          "gloss": "HUNGRY",
+          "model_score": 0.03641968220472336
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.027357840910553932
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 20,
+      "motion_trimmed_frames": 20,
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 2.2,
+      "diagnostics": {
+        "normalization_scale": 0.3631021976470947,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.05,
+        "source_frames": 20,
+        "trim_start": 0,
+        "trim_end_exclusive": 20,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.46875,
+        "body_presence_fraction": 0.046875,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 20,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.7045480012893677,
+        "cascade_primary_gloss": "PLEASE",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 8.405874999999341,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 8.405874999999341
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": null,
+      "stable_hits": 0,
+      "lock_proposal": "PLEASE",
+      "full_verifier": {
+        "gloss": "STOP",
+        "candidate_gloss": "STOP",
+        "model_score": 0.2832358479499817,
+        "margin": 0.19660979509353638,
+        "gate_score": 0.2832358479499817,
+        "gate_margin": 0.19660979509353638,
+        "top3": [
+          {
+            "gloss": "STOP",
+            "model_score": 0.2832358479499817
+          },
+          {
+            "gloss": "PLEASE",
+            "model_score": 0.08662605285644531
+          },
+          {
+            "gloss": "EASY",
+            "model_score": 0.058268528431653976
+          }
+        ],
+        "accepted": true,
+        "rejection_reasons": [
+          "low_commit_score"
+        ],
+        "mode": "fast",
+        "frames": 20,
+        "motion_trimmed_frames": 20,
+        "start_seconds": 1.2666666666666666,
+        "end_seconds": 2.2,
+        "diagnostics": {
+          "normalization_scale": 0.3631021976470947,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 0.05,
+          "source_frames": 20,
+          "trim_start": 0,
+          "trim_end_exclusive": 20,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 0.46875,
+          "body_presence_fraction": 0.046875,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 20,
+          "motion_trim_fallback": false,
+          "live_auxiliary_interval": 8,
+          "raw_clip_seconds": 0.9333333333333336,
+          "motion_trimmed_seconds": 0.9333333333333336,
+          "observed_processing_fps": 20.35714285714285,
+          "mouth_pixels_used": false,
+          "visual_tie_break": false
+        },
+        "latency_ms": {
+          "tensor_extraction": 39.38320900000036,
+          "hand_image_encoding": 224.37974999999886,
+          "classification": 5.287958000000259,
+          "total": 269.0509169999995
+        },
+        "commit_score": 0.2832358479499817,
+        "commit_score_threshold": 0.45,
+        "proposal_verifier_agreement_score": 0.0,
+        "commit_stability_candidate": null,
+        "commit_stability_hits": 0,
+        "commit_stability_required": 1
+      },
+      "committed_gloss": null,
+      "completed_observed_seconds": 2.6666666666666665,
+      "completed_elapsed_seconds": 0.865284333
+    },
+    {
+      "gloss": "PLEASE",
+      "candidate_gloss": "PLEASE",
+      "model_score": 0.7590304017066956,
+      "margin": 0.7438307600095868,
+      "gate_score": 0.7590304017066956,
+      "gate_margin": 0.7438307600095868,
+      "top3": [
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.7590304017066956
+        },
+        {
+          "gloss": "HAPPY",
+          "model_score": 0.015199641697108746
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.013036874122917652
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 30,
+      "motion_trimmed_frames": 30,
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 2.7,
+      "diagnostics": {
+        "normalization_scale": 0.362245112657547,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.5666666666666667,
+        "source_frames": 30,
+        "trim_start": 0,
+        "trim_end_exclusive": 30,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.59375,
+        "body_presence_fraction": 0.4453125,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 30,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.7590304017066956,
+        "cascade_primary_gloss": "PLEASE",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 5.788125000000477,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 5.788125000000477
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": "PLEASE",
+      "stable_hits": 1,
+      "lock_proposal": null,
+      "full_verifier": null,
+      "committed_gloss": null,
+      "completed_observed_seconds": 2.7,
+      "completed_elapsed_seconds": 0.878647625000001
+    },
+    {
+      "gloss": "PLEASE",
+      "candidate_gloss": "PLEASE",
+      "model_score": 0.6769668459892273,
+      "margin": 0.651931731030345,
+      "gate_score": 0.6769668459892273,
+      "gate_margin": 0.651931731030345,
+      "top3": [
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.6769668459892273
+        },
+        {
+          "gloss": "HAPPY",
+          "model_score": 0.025035114958882332
+        },
+        {
+          "gloss": "EASY",
+          "model_score": 0.011924476362764835
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 33,
+      "motion_trimmed_frames": 33,
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 2.8666666666666667,
+      "diagnostics": {
+        "normalization_scale": 0.361816942691803,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.7575757575757576,
+        "source_frames": 33,
+        "trim_start": 0,
+        "trim_end_exclusive": 33,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.75,
+        "body_presence_fraction": 0.5078125,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 33,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.6769668459892273,
+        "cascade_primary_gloss": "PLEASE",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 7.475124999999139,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 7.475124999999139
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": null,
+      "stable_hits": 0,
+      "lock_proposal": "PLEASE",
+      "full_verifier": {
+        "gloss": "UNKNOWN",
+        "candidate_gloss": "PLEASE",
+        "model_score": 0.19377420842647552,
+        "margin": 0.12585357576608658,
+        "gate_score": 0.19377420842647552,
+        "gate_margin": 0.12585357576608658,
+        "top3": [
+          {
+            "gloss": "PLEASE",
+            "model_score": 0.19377420842647552
+          },
+          {
+            "gloss": "HELP",
+            "model_score": 0.06792063266038895
+          },
+          {
+            "gloss": "EASY",
+            "model_score": 0.05992679297924042
+          }
+        ],
+        "accepted": false,
+        "rejection_reasons": [
+          "low_score"
+        ],
+        "mode": "fast",
+        "frames": 33,
+        "motion_trimmed_frames": 33,
+        "start_seconds": 1.2666666666666666,
+        "end_seconds": 2.8666666666666667,
+        "diagnostics": {
+          "normalization_scale": 0.361816942691803,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 0.7575757575757576,
+          "source_frames": 33,
+          "trim_start": 0,
+          "trim_end_exclusive": 33,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 0.75,
+          "body_presence_fraction": 0.5078125,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 33,
+          "motion_trim_fallback": false,
+          "live_auxiliary_interval": 8,
+          "raw_clip_seconds": 1.6,
+          "motion_trimmed_seconds": 1.6,
+          "observed_processing_fps": 20.0,
+          "mouth_pixels_used": false,
+          "visual_tie_break": false
+        },
+        "latency_ms": {
+          "tensor_extraction": 39.72508300000044,
+          "hand_image_encoding": 209.54558299999883,
+          "classification": 4.917375000001556,
+          "total": 254.1880410000008
+        },
+        "commit_score": 0.6769668459892273,
+        "commit_score_threshold": 0.45,
+        "proposal_verifier_agreement_score": 0.6769668459892273,
+        "commit_stability_candidate": null,
+        "commit_stability_hits": 0,
+        "commit_stability_required": 1
+      },
+      "committed_gloss": null,
+      "completed_observed_seconds": 3.2666666666666666,
+      "completed_elapsed_seconds": 1.1811630410000014
+    },
+    {
+      "gloss": "PLEASE",
+      "candidate_gloss": "PLEASE",
+      "model_score": 0.692891001701355,
+      "margin": 0.6397524252533913,
+      "gate_score": 0.692891001701355,
+      "gate_margin": 0.6397524252533913,
+      "top3": [
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.692891001701355
+        },
+        {
+          "gloss": "HELP",
+          "model_score": 0.053138576447963715
+        },
+        {
+          "gloss": "HUNGRY",
+          "model_score": 0.01765545830130577
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 42,
+      "motion_trimmed_frames": 42,
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 3.3,
+      "diagnostics": {
+        "normalization_scale": 0.36138901114463806,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.7857142857142857,
+        "source_frames": 42,
+        "trim_start": 0,
+        "trim_end_exclusive": 42,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.5859375,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 42,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.692891001701355,
+        "cascade_primary_gloss": "PLEASE",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 6.770917000000765,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 6.770917000000765
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": "PLEASE",
+      "stable_hits": 1,
+      "lock_proposal": null,
+      "full_verifier": null,
+      "committed_gloss": null,
+      "completed_observed_seconds": 3.3,
+      "completed_elapsed_seconds": 1.1946232500000011
+    },
+    {
+      "gloss": "PLEASE",
+      "candidate_gloss": "PLEASE",
+      "model_score": 0.712694525718689,
+      "margin": 0.67410933598876,
+      "gate_score": 0.712694525718689,
+      "gate_margin": 0.67410933598876,
+      "top3": [
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.712694525718689
+        },
+        {
+          "gloss": "HELP",
+          "model_score": 0.03858518972992897
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.028633220121264458
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 45,
+      "motion_trimmed_frames": 45,
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 3.466666666666667,
+      "diagnostics": {
+        "normalization_scale": 0.36138901114463806,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.7333333333333333,
+        "source_frames": 45,
+        "trim_start": 0,
+        "trim_end_exclusive": 45,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.71875,
+        "body_presence_fraction": 0.546875,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 45,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.712694525718689,
+        "cascade_primary_gloss": "PLEASE",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 8.10762500000095,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 8.10762500000095
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": null,
+      "stable_hits": 0,
+      "lock_proposal": "PLEASE",
+      "full_verifier": {
+        "gloss": "HELP",
+        "candidate_gloss": "HELP",
+        "model_score": 0.2927209436893463,
+        "margin": 0.16954001784324646,
+        "gate_score": 0.2927209436893463,
+        "gate_margin": 0.16954001784324646,
+        "top3": [
+          {
+            "gloss": "HELP",
+            "model_score": 0.2927209436893463
+          },
+          {
+            "gloss": "PLEASE",
+            "model_score": 0.12318092584609985
+          },
+          {
+            "gloss": "STOP",
+            "model_score": 0.035112228244543076
+          }
+        ],
+        "accepted": true,
+        "rejection_reasons": [
+          "low_commit_score"
+        ],
+        "mode": "fast",
+        "frames": 45,
+        "motion_trimmed_frames": 45,
+        "start_seconds": 1.2666666666666666,
+        "end_seconds": 3.466666666666667,
+        "diagnostics": {
+          "normalization_scale": 0.36138901114463806,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 0.7333333333333333,
+          "source_frames": 45,
+          "trim_start": 0,
+          "trim_end_exclusive": 45,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 0.71875,
+          "body_presence_fraction": 0.546875,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 45,
+          "motion_trim_fallback": false,
+          "live_auxiliary_interval": 8,
+          "raw_clip_seconds": 2.2,
+          "motion_trimmed_seconds": 2.2,
+          "observed_processing_fps": 20.0,
+          "mouth_pixels_used": false,
+          "visual_tie_break": false
+        },
+        "latency_ms": {
+          "tensor_extraction": 48.26329199999968,
+          "hand_image_encoding": 204.32700000000102,
+          "classification": 4.668999999999812,
+          "total": 257.2592920000005
+        },
+        "commit_score": 0.2927209436893463,
+        "commit_score_threshold": 0.45,
+        "proposal_verifier_agreement_score": 0.0,
+        "commit_stability_candidate": null,
+        "commit_stability_hits": 0,
+        "commit_stability_required": 1
+      },
+      "committed_gloss": null,
+      "completed_observed_seconds": 4.0,
+      "completed_elapsed_seconds": 1.4972336660000014
+    },
+    {
+      "gloss": "PLEASE",
+      "candidate_gloss": "PLEASE",
+      "model_score": 0.3744224011898041,
+      "margin": 0.2362728714942932,
+      "gate_score": 0.3744224011898041,
+      "gate_margin": 0.2362728714942932,
+      "top3": [
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.3744224011898041
+        },
+        {
+          "gloss": "HELP",
+          "model_score": 0.13814952969551086
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.12681639194488525
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 50,
+      "motion_trimmed_frames": 50,
+      "start_seconds": 1.6,
+      "end_seconds": 4.066666666666666,
+      "diagnostics": {
+        "normalization_scale": 0.361816942691803,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.98,
+        "source_frames": 50,
+        "trim_start": 0,
+        "trim_end_exclusive": 50,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.96875,
+        "body_presence_fraction": 0.6953125,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 50,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.3744224011898041,
+        "cascade_primary_gloss": "PLEASE",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 8.305667000000128,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 8.305667000000128
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": "PLEASE",
+      "stable_hits": 1,
+      "lock_proposal": null,
+      "full_verifier": null,
+      "committed_gloss": null,
+      "completed_observed_seconds": 4.1,
+      "completed_elapsed_seconds": 1.5160285410000007
+    },
+    {
+      "gloss": "HELP",
+      "candidate_gloss": "HELP",
+      "model_score": 0.4470360279083252,
+      "margin": 0.35324425250291824,
+      "gate_score": 0.4470360279083252,
+      "gate_margin": 0.35324425250291824,
+      "top3": [
+        {
+          "gloss": "HELP",
+          "model_score": 0.4470360279083252
+        },
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.09379177540540695
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.07316029816865921
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 50,
+      "motion_trimmed_frames": 50,
+      "start_seconds": 1.7666666666666666,
+      "end_seconds": 4.2,
+      "diagnostics": {
+        "normalization_scale": 0.36106258630752563,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.66,
+        "source_frames": 50,
+        "trim_start": 0,
+        "trim_end_exclusive": 50,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.8125,
+        "body_presence_fraction": 0.4609375,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 50,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.4470360279083252,
+        "cascade_primary_gloss": "HELP",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 8.211540999999656,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 8.211540999999656
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": "HELP",
+      "stable_hits": 1,
+      "lock_proposal": null,
+      "full_verifier": null,
+      "committed_gloss": null,
+      "completed_observed_seconds": 4.2,
+      "completed_elapsed_seconds": 1.5377962500000013
+    },
+    {
+      "gloss": "HELP",
+      "candidate_gloss": "HELP",
+      "model_score": 0.758287787437439,
+      "margin": 0.724514152854681,
+      "gate_score": 0.758287787437439,
+      "gate_margin": 0.724514152854681,
+      "top3": [
+        {
+          "gloss": "HELP",
+          "model_score": 0.758287787437439
+        },
+        {
+          "gloss": "PLEASE",
+          "model_score": 0.03377363458275795
+        },
+        {
+          "gloss": "GOOD",
+          "model_score": 0.019590340554714203
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 50,
+      "motion_trimmed_frames": 50,
+      "start_seconds": 1.9,
+      "end_seconds": 4.366666666666666,
+      "diagnostics": {
+        "normalization_scale": 0.36106258630752563,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.66,
+        "source_frames": 50,
+        "trim_start": 0,
+        "trim_end_exclusive": 50,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.8125,
+        "body_presence_fraction": 0.4296875,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 50,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.758287787437439,
+        "cascade_primary_gloss": "HELP",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 6.7997500000007705,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 6.7997500000007705
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": null,
+      "stable_hits": 0,
+      "lock_proposal": "HELP",
+      "full_verifier": {
+        "gloss": "HELP",
+        "candidate_gloss": "HELP",
+        "model_score": 0.8436864614486694,
+        "margin": 0.8347891308367252,
+        "gate_score": 0.8436864614486694,
+        "gate_margin": 0.8347891308367252,
+        "top3": [
+          {
+            "gloss": "HELP",
+            "model_score": 0.8436864614486694
+          },
+          {
+            "gloss": "STOP",
+            "model_score": 0.008897330611944199
+          },
+          {
+            "gloss": "HOW",
+            "model_score": 0.0072298296727240086
+          }
+        ],
+        "accepted": true,
+        "rejection_reasons": [],
+        "mode": "fast",
+        "frames": 50,
+        "motion_trimmed_frames": 50,
+        "start_seconds": 1.9,
+        "end_seconds": 4.366666666666666,
+        "diagnostics": {
+          "normalization_scale": 0.36106258630752563,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 0.66,
+          "source_frames": 50,
+          "trim_start": 0,
+          "trim_end_exclusive": 50,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 0.8125,
+          "body_presence_fraction": 0.4296875,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 50,
+          "motion_trim_fallback": false,
+          "live_auxiliary_interval": 8,
+          "raw_clip_seconds": 2.4666666666666663,
+          "motion_trimmed_seconds": 2.4666666666666663,
+          "observed_processing_fps": 19.864864864864867,
+          "mouth_pixels_used": false,
+          "visual_tie_break": false
+        },
+        "latency_ms": {
+          "tensor_extraction": 33.38475000000152,
+          "hand_image_encoding": 203.70712499999934,
+          "classification": 5.10191699999929,
+          "total": 242.19379200000014
+        },
+        "commit_score": 0.8436864614486694,
+        "commit_score_threshold": 0.45,
+        "proposal_verifier_agreement_score": 0.758287787437439,
+        "commit_stability_candidate": null,
+        "commit_stability_hits": 0,
+        "commit_stability_required": 1
+      },
+      "committed_gloss": "HELP",
+      "completed_observed_seconds": 4.8,
+      "completed_elapsed_seconds": 1.827910416
+    },
+    {
+      "gloss": "I",
+      "candidate_gloss": "I",
+      "model_score": 0.9311726689338684,
+      "margin": 0.9281825562939048,
+      "gate_score": 0.9311726689338684,
+      "gate_margin": 0.9281825562939048,
+      "top3": [
+        {
+          "gloss": "I",
+          "model_score": 0.9311726689338684
+        },
+        {
+          "gloss": "THINK",
+          "model_score": 0.002990112639963627
+        },
+        {
+          "gloss": "SORRY",
+          "model_score": 0.0018401953857392073
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 11,
+      "motion_trimmed_frames": 11,
+      "start_seconds": 4.4,
+      "end_seconds": 4.9,
+      "diagnostics": {
+        "normalization_scale": 0.3757712244987488,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "trim_start": 0,
+        "trim_end_exclusive": 11,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.84375,
+        "body_presence_fraction": 0.421875,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 11,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.9311726689338684,
+        "cascade_primary_gloss": "I",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 5.221499999999324,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 5.221499999999324
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": "I",
+      "stable_hits": 1,
+      "lock_proposal": null,
+      "full_verifier": null,
+      "committed_gloss": null,
+      "completed_observed_seconds": 4.9,
+      "completed_elapsed_seconds": 1.8491895830000011
+    },
+    {
+      "gloss": "I",
+      "candidate_gloss": "I",
+      "model_score": 0.9346989393234253,
+      "margin": 0.931715513812378,
+      "gate_score": 0.9346989393234253,
+      "gate_margin": 0.931715513812378,
+      "top3": [
+        {
+          "gloss": "I",
+          "model_score": 0.9346989393234253
+        },
+        {
+          "gloss": "THINK",
+          "model_score": 0.002983425511047244
+        },
+        {
+          "gloss": "SORRY",
+          "model_score": 0.001860398449935019
+        }
+      ],
+      "accepted": true,
+      "rejection_reasons": [],
+      "mode": "reel-cascade-landmark",
+      "frames": 13,
+      "motion_trimmed_frames": 13,
+      "start_seconds": 4.4,
+      "end_seconds": 5.0,
+      "diagnostics": {
+        "normalization_scale": 0.3757712244987488,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.6923076923076923,
+        "source_frames": 13,
+        "trim_start": 0,
+        "trim_end_exclusive": 13,
+        "hand_frame_fraction": 1.0,
+        "face_presence_fraction": 0.6875,
+        "body_presence_fraction": 0.34375,
+        "motion_trim_start": 0,
+        "motion_trim_end_exclusive": 13,
+        "motion_trim_fallback": false,
+        "cascade_primary_score": 0.9346989393234253,
+        "cascade_primary_gloss": "I",
+        "cascade_score_threshold": 0.55,
+        "cascade_fallback_used": false,
+        "mouth_pixels_used": false,
+        "lip_markers_used_for_general_classification": false,
+        "no_emit_probability": 0.0,
+        "no_emit_probability_threshold": null
+      },
+      "latency_ms": {
+        "tensor_extraction": 5.126416999999606,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 5.126416999999606
+      },
+      "reel_epoch": 0,
+      "ignored_after_reset": false,
+      "stable_candidate": null,
+      "stable_hits": 0,
+      "lock_proposal": "I",
+      "full_verifier": {
+        "gloss": "I",
+        "candidate_gloss": "I",
+        "model_score": 0.9868085384368896,
+        "margin": 0.9836804817896336,
+        "gate_score": 0.9868085384368896,
+        "gate_margin": 0.9836804817896336,
+        "top3": [
+          {
+            "gloss": "I",
+            "model_score": 0.9868085384368896
+          },
+          {
+            "gloss": "SORRY",
+            "model_score": 0.0031280566472560167
+          },
+          {
+            "gloss": "WE",
+            "model_score": 0.0002942586725112051
+          }
+        ],
+        "accepted": true,
+        "rejection_reasons": [],
+        "mode": "fast",
+        "frames": 13,
+        "motion_trimmed_frames": 13,
+        "start_seconds": 4.4,
+        "end_seconds": 5.0,
+        "diagnostics": {
+          "normalization_scale": 0.3757712244987488,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 0.6923076923076923,
+          "source_frames": 13,
+          "trim_start": 0,
+          "trim_end_exclusive": 13,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 0.6875,
+          "body_presence_fraction": 0.34375,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 13,
+          "motion_trim_fallback": false,
+          "live_auxiliary_interval": 8,
+          "raw_clip_seconds": 0.5999999999999996,
+          "motion_trimmed_seconds": 0.5999999999999996,
+          "observed_processing_fps": 20.00000000000001,
+          "mouth_pixels_used": false,
+          "visual_tie_break": false
+        },
+        "latency_ms": {
+          "tensor_extraction": 6.685125000000625,
+          "hand_image_encoding": 141.46291700000012,
+          "classification": 5.122874999999638,
+          "total": 153.2709170000004
+        },
+        "commit_score": 0.9868085384368896,
+        "commit_score_threshold": 0.45,
+        "proposal_verifier_agreement_score": 0.9346989393234253,
+        "commit_stability_candidate": null,
+        "commit_stability_hits": 0,
+        "commit_stability_required": 1
+      },
+      "committed_gloss": "I",
+      "completed_observed_seconds": 5.0,
+      "completed_elapsed_seconds": 2.0423964160000008
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-09T22:56:37.752384+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:38.297535+00:00",
+      "type": "provisional_gloss",
+      "gloss": "PLEASE",
+      "start_seconds": 1.2666666666666666,
+      "end_seconds": 2.066666666666667,
+      "observed_seconds": 2.1,
+      "elapsed_seconds": 0.5499365000000012,
+      "since_activity_seconds": 0.8333333333333335,
+      "latency_ms": {
+        "tensor_extraction": 6.357749999999385,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 6.357749999999385
+      }
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:39.284453+00:00",
+      "type": "provisional_gloss",
+      "gloss": "HELP",
+      "start_seconds": 1.7666666666666666,
+      "end_seconds": 4.2,
+      "observed_seconds": 4.2,
+      "elapsed_seconds": 1.5368596660000016,
+      "since_activity_seconds": 2.9333333333333336,
+      "latency_ms": {
+        "tensor_extraction": 8.211540999999656,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 8.211540999999656
+      }
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:39.577475+00:00",
+      "type": "committed_buffer_retained",
+      "gloss": "HELP",
+      "consumed_until": 4.366666666666666,
+      "retained_frames": 9,
+      "retained_start": 4.4
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:39.595762+00:00",
+      "type": "provisional_gloss",
+      "gloss": "I",
+      "start_seconds": 4.4,
+      "end_seconds": 4.9,
+      "observed_seconds": 4.9,
+      "elapsed_seconds": 1.848170583,
+      "since_activity_seconds": 3.6333333333333337,
+      "latency_ms": {
+        "tensor_extraction": 5.221499999999324,
+        "hand_image_encoding": 0.0,
+        "classification": 0.0,
+        "total": 5.221499999999324
+      }
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:39.630663+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 5.033333333333333,
+      "active_glosses": [
+        "HELP"
+      ],
+      "classifier_pending": true
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:39.791143+00:00",
+      "type": "committed_buffer_retained",
+      "gloss": "I",
+      "consumed_until": 5.0,
+      "retained_frames": 0,
+      "retained_start": null
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:39.794427+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [],
+      "accepted": false,
+      "ignored_after_reset": false,
+      "window_count": null,
+      "latency_ms": {
+        "total": 0.10404200000024844
+      }
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:40.008583+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [
+        "PLEASE"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 1,
+      "latency_ms": {
+        "landmark_tensor": 1.5013330000002156,
+        "hand_image_encoding": 199.43433299999924,
+        "frozen_encoder": 7.433250000000058,
+        "ctc_selector": 2.7810000000005886,
+        "total": 211.1499160000001
+      }
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:40.269652+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [
+        "PLEASE",
+        "HELP"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 2,
+      "latency_ms": {
+        "landmark_tensor": 1.4442500000004799,
+        "hand_image_encoding": 247.34875000000045,
+        "frozen_encoder": 6.889292000000324,
+        "ctc_selector": 2.323124999998427,
+        "total": 258.0054169999997
+      }
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:40.474190+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 3,
+      "latency_ms": {
+        "landmark_tensor": 1.5125420000003942,
+        "hand_image_encoding": 189.77800000000045,
+        "frozen_encoder": 7.099708000000149,
+        "ctc_selector": 3.0796669999997306,
+        "total": 201.46991700000072
+      }
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:40.637744+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [
+        "PLEASE",
+        "HELP",
+        "I",
+        "I"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 4,
+      "latency_ms": {
+        "landmark_tensor": 1.128708999999617,
+        "hand_image_encoding": 148.62395799999996,
+        "frozen_encoder": 6.848707999999704,
+        "ctc_selector": 4.153834000000245,
+        "total": 160.75520899999952
+      }
+    },
+    {
+      "recorded_utc": "2026-09-09T22:56:40.638993+00:00",
+      "type": "finished_sequence_selected",
+      "stage1": [
+        "HELP",
+        "I"
+      ],
+      "stage2": [
+        "PLEASE",
+        "HELP",
+        "I",
+        "I"
+      ],
+      "selected": [
+        "HELP",
+        "I"
+      ],
+      "selection_mode": "stage1_with_stage2_review_candidate",
+      "active_seconds": 3.7333333333333334,
+      "stage2_stable": true,
+      "finish_decode_ms": 1029.6609999999991
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "reel-0001",
+      "requested_utc": "2026-09-09T22:56:40.643121+00:00",
+      "glosses": [
+        "HELP",
+        "I"
+      ],
+      "epoch": 0,
+      "finish_started_at": 11.419692208,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"HELP\", \"I\"]",
+      "input_glosses": [
+        "HELP",
+        "I"
+      ],
+      "literal_sentence": "Help i.",
+      "fallback_sentence": "Help i.",
+      "fallback_mode": "literal_fallback",
+      "sentence": "Help i.",
+      "rendering_mode": "literal_fallback",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.03583300000009615,
+      "completed_utc": "2026-09-09T22:56:40.643209+00:00",
+      "displayed_and_spoken": true,
+      "finish_total_ms": 1033.8807499999998
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_seen": 151,
+    "landmark_observations": 101,
+    "stale_camera_frames_dropped": 0,
+    "capture_elapsed_seconds": 1.8617479580000005
+  },
+  "finished_utc": "2026-09-09T22:56:40.647754+00:00"
+}
