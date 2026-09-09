@@ -1,0 +1,56 @@
+{
+  "format": "slt_stage2_transition_verification_v17",
+  "version": 1,
+  "decision": {
+    "selected_arm": null,
+    "integration_allowed": false,
+    "runtime_action": "retain_current_selector",
+    "selection_sha256": "7ae234e4b85d3df1dc50bffac4a16f2850ab4a6d522acd26c355b708e9977fa2"
+  },
+  "deliverables": {
+    "training_result_sha256": "badd541dbb156a4f57b8cbffc67fb8fdca36ac9a7c9c21e73954ff494b125e1e",
+    "failure_csv_sha256": "c8feb8cd073b48bda64b6e87e4c66f1c33d24560ddcd68e56c7ed890cee6083d",
+    "per_example_predictions_sha256": "54a93c3a0fe1fe412e83e760257671810f83dc9315691d2f18fa4d8d43092a4d",
+    "per_example_rows": 7272,
+    "per_example_snapshots": 6,
+    "readme_sha256": "ac031d3450f6e881abe778373941f2533282cccb37359fc8e4a3bf45a94161b1"
+  },
+  "focused_tests": {
+    "command": "PYTHONPYCACHEPREFIX=/tmp/slt_final_pycache venv/bin/python -m unittest test.test_prepare_stage2_transition_adapt_v17 test.test_extract_stage2_transition_adapt_v17 test.test_train_stage2_other_ctc_v17 test.test_select_stage2_transition_adapt_v17 test.test_live_stage2_ctc_v17 test.test_live_reel_continuous_v17 -v",
+    "tests": 60,
+    "status": "passed"
+  },
+  "checkpoint_validation": {
+    "checkpoints": 4,
+    "format": "slt_stage2_ctc_v17",
+    "model_num_classes": 101,
+    "output_logits": 102,
+    "all_weights_finite": true
+  },
+  "existing_development_replay": {
+    "path": "artifacts/reports/continuous_reel_v17_experiment_v1/final/comparison.json",
+    "sha256": "495f9a053378737e868c9eb65983a1a602268473563a89d20cfb580cd9fcf8a5",
+    "recordings": 5,
+    "baseline_total_edits": 5,
+    "continuous_total_edits": 5,
+    "stale_camera_frames_dropped": 0,
+    "test_accessed": false
+  },
+  "conditional_checks": {
+    "candidate_replay": "not applicable: no arm passed both-seed gates",
+    "candidate_coreml_parity": "not applicable: no candidate was selected or exported",
+    "candidate_finish_p95_delta": "not applicable: no candidate was integrated",
+    "candidate_package": "not produced",
+    "candidate_runtime_integration": "not performed"
+  },
+  "rollback": {
+    "selector": "artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+    "selector_sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d",
+    "launch_command": "venv/bin/python scripts/live_reel_continuous_v17.py --camera 0"
+  },
+  "git_diff_check": "passed",
+  "citizen_test_accessed": false,
+  "semlex_test_accessed": false,
+  "local_test_accessed": false,
+  "claims": "development and familiar-domain retention evidence only; no independent iPhone or general continuous-ASL claim"
+}
