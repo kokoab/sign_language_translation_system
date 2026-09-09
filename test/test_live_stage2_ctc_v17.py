@@ -1,5 +1,7 @@
 import unittest
 
+from scripts import live_stage2_ctc_v17 as stage2
+
 import numpy as np
 import torch
 
@@ -16,6 +18,52 @@ from scripts.live_stage2_ctc_v17 import (
 
 
 class LiveStage2CTCTests(unittest.TestCase):
+    def test_continuous_reel_enables_verified_repair_with_explicit_rollback(self):
+        from scripts.live_reel_continuous_v17 import parser as continuous_parser
+        args = continuous_parser().parse_args([])
+        self.assertIn('stage2_v17_transition_repair_v3', str(args.stage2_other_preservation))
+        self.assertIsNone(continuous_parser().parse_args(['--no-stage2-other-preservation']).stage2_other_preservation)
+        self.assertIsNone(stage2.parser().parse_args([]).stage2_other_preservation)
+
+    def test_preservation_rejects_changed_frozen_encoder(self):
+        import tempfile
+        from pathlib import Path
+        from types import SimpleNamespace
+        from active.v17.train_stage_2_other_ctc_v17 import directory_sha256
+        config = dict(blend_weight=.1, blank_bias=.3, score_margin=0., minimum_tokens=2)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            selector = root / 'model.pth'
+            selector.write_bytes(b'accepted')
+            package = root / 'package'
+            package.mkdir()
+            (package / 'model').write_bytes(b'expected')
+            encoder = root / 'encoder'
+            encoder.mkdir()
+            (encoder / 'model').write_bytes(b'changed')
+            args = SimpleNamespace(stage2_selector=selector, stage2_primary=package,
+                                   stage2_specialist=package, stage2_encoder=encoder,
+                                   image_encoder=package)
+            payload = dict(accepted_checkpoint={'selector_config': config},
+                           accepted_sha256=stage2.sha256(selector))
+            for name in ('primary', 'specialist', 'encoder', 'image_encoder'):
+                payload[f'runtime_{name}_sha256'] = directory_sha256(package)
+            with self.assertRaisesRegex(ValueError, 'encoder'):
+                stage2.validate_preservation_runtime(args, payload, config)
+
+    def test_preservation_rejects_changed_selector_configuration(self):
+        self.assertTrue(hasattr(stage2, 'validate_preservation_runtime'))
+        config = dict(blend_weight=.1, blank_bias=.3, score_margin=0., minimum_tokens=2)
+        payload = {'accepted_checkpoint': {'selector_config': config}}
+        with self.assertRaisesRegex(ValueError, 'configuration'):
+            stage2.validate_preservation_runtime(None, payload, dict(config, blank_bias=1.))
+
+    def test_other_filter_keeps_repeat_boundaries_and_emission_positions(self):
+        self.assertTrue(hasattr(stage2, 'supported_ctc_path'))
+        self.assertEqual(stage2.supported_ctc_path((2, 101, 2), (1, 4, 8)), ((2, 2), (1, 8)))
+        with self.assertRaises(ValueError):
+            stage2.supported_ctc_path((102,), (0,))
+
     def test_numpy_ctc_score_matches_selected_model_rule(self):
         logits = np.random.default_rng(17).normal(size=(8, 6)).astype(np.float32)
         tokens = (2, 4)
