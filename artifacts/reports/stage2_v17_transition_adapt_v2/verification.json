@@ -1,0 +1,51 @@
+{
+  "format": "slt_stage2_transition_verification_v17",
+  "version": 2,
+  "decision": {
+    "selected_arm": null,
+    "integration_allowed": false,
+    "runtime_action": "retain_current_selector",
+    "selection_sha256": "4faf5af461517a6760acc2cb1dbcbab46b1fdb8c75bac6cacd7cd44979f09123"
+  },
+  "deliverables": {
+    "training_result_sha256": "0468e3f491f1872f7be8a915eeb994581801f99006b6bee6e630e2d6f134cda7",
+    "failure_csv_sha256": "db0cd21927107606849441a157b184b86c831b7a8d3afc36b425e80639667a69",
+    "per_example_predictions_sha256": "190a0362d82403cc9c58839633fc31dc9a9d8aa892bf5b68bd3419d900af4f34",
+    "per_example_rows": 7272,
+    "per_example_snapshots": 6,
+    "readme_sha256": "1ef72e4bb68410afee2351aae19f64a16dd05800e55597162a55b2104eda633a"
+  },
+  "focused_tests": {
+    "command": "PYTHONPYCACHEPREFIX=/tmp/slt_v2_pycache venv/bin/python -m unittest test.test_prepare_stage2_transition_adapt_v17 test.test_extract_stage2_transition_adapt_v17 test.test_train_stage2_other_ctc_v17 test.test_select_stage2_transition_adapt_v17 test.test_live_stage2_ctc_v17 test.test_live_reel_continuous_v17 -v",
+    "tests": 63,
+    "status": "passed"
+  },
+  "semantic_label_validation": {
+    "stem_archives": 111,
+    "stored_index_range": "0-99",
+    "manifest_archive_vocabulary_matches": true
+  },
+  "checkpoint_validation": {
+    "checkpoints": 4,
+    "format": "slt_stage2_ctc_v17",
+    "output_logits": 102,
+    "all_weights_finite": true
+  },
+  "conditional_checks": {
+    "candidate_replay": "not applicable: no arm passed both-seed retention gates",
+    "candidate_coreml_parity": "not applicable: no candidate was selected or exported",
+    "candidate_finish_p95_delta": "not applicable: no candidate was integrated",
+    "candidate_package": "not produced",
+    "candidate_runtime_integration": "not performed"
+  },
+  "rollback": {
+    "selector": "artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+    "selector_sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d",
+    "launch_command": "venv/bin/python scripts/live_reel_continuous_v17.py --camera 0"
+  },
+  "git_diff_check": "passed",
+  "citizen_test_accessed": false,
+  "semlex_test_accessed": false,
+  "local_test_accessed": false,
+  "claims": "development and familiar-domain retention evidence only; no independent iPhone or general continuous-ASL claim"
+}

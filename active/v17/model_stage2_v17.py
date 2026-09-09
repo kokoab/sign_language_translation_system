@@ -768,8 +768,12 @@ def load_stage2_general_ctc_selector(
     path: str | Path,
 ) -> tuple[Stage2GeneralCTCSelectorV17, dict[str, object]]:
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+    return _general_selector_from_checkpoint(checkpoint)
+
+
+def _general_selector_from_checkpoint(checkpoint):
     if checkpoint.get("format") != "slt_stage2_general_ctc_selector_v17":
-        raise ValueError(f"{path}: not a general CTC selector v17 checkpoint")
+        raise ValueError("not a general CTC selector v17 checkpoint")
     state = checkpoint["model_state_dict"]
     adapter = checkpoint["primary_context_adapter_config"]
     config = Stage2V17Config(**checkpoint["model_config"])
@@ -797,12 +801,93 @@ def load_stage2_general_ctc_selector(
     return model, checkpoint
 
 
+def preserve_known_ctc_logits(known_logits: torch.Tensor, other_log_odds: torch.Tensor) -> torch.Tensor:
+    """Add OTHER probability without changing conditional known/blank evidence."""
+    if other_log_odds.shape != (*known_logits.shape[:-1], 1):
+        raise ValueError("OTHER log odds must match the known CTC timesteps")
+    return torch.cat((known_logits.log_softmax(-1), other_log_odds), dim=-1)
+
+
+def preserve_ctc_emission_runs(known_logits, other_log_odds, lengths, margin):
+    """Veto complete accepted emission runs; never invent or split known signs.
+
+    OTHER is an auxiliary rejection output. Blank runs and padding are unchanged.
+    The score is a mean log likelihood ratio over each contiguous emission run.
+    """
+    if known_logits.ndim != 3 or lengths.shape != (len(known_logits),):
+        raise ValueError("expected batched CTC logits and one length per row")
+    if not 0 <= margin < float('inf') or torch.any(lengths < 1) or torch.any(lengths > known_logits.shape[1]):
+        raise ValueError("invalid preservation margin or CTC lengths")
+    output = preserve_known_ctc_logits(known_logits, other_log_odds)
+    output[..., -1] = -torch.inf
+    for row, length in enumerate(lengths.detach().cpu().tolist()):
+        path = known_logits[row, :length].argmax(-1)
+        starts = [0] + (torch.where(path[1:] != path[:-1])[0] + 1).tolist() + [length]
+        for start, end in zip(starts, starts[1:]):
+            token = int(path[start])
+            if token == 0:
+                continue
+            score = (other_log_odds[row, start:end, 0] - output[row, start:end, token]).mean()
+            if score > margin:
+                output[row, start:end, -1] = output[row, start:end, token] + score
+    return output
+
+
+class Stage2OtherPreservingCTCV17(nn.Module):
+    """Frozen accepted selector with separately fitted, conservative OTHER evidence."""
+
+    def __init__(self, accepted, evidence, other_head, margin):
+        super().__init__()
+        old, new = accepted.config.to_dict(), evidence.config.to_dict()
+        if old.pop('num_classes') != 100 or new.pop('num_classes') != 101 or old != new:
+            raise ValueError("preservation model configurations differ")
+        if other_head.in_features != evidence.config.dim or other_head.out_features != 1:
+            raise ValueError("invalid OTHER evidence head")
+        if not 0 <= margin < float('inf'):
+            raise ValueError("invalid OTHER preservation margin")
+        self.accepted = accepted
+        self.evidence = evidence
+        self.other_head = other_head
+        self.margin = float(margin)
+        self.config = evidence.config
+        self.requires_grad_(False)
+        self.eval()
+
+    def other_log_odds(self, frozen_features, window_mask):
+        hidden, lengths = self.evidence.encode(frozen_features, window_mask)
+        normalizer = self.evidence.ctc_head(hidden)[..., :101].logsumexp(-1, keepdim=True)
+        return self.other_head(hidden) - normalizer, lengths
+
+    def forward(self, frozen_features, window_mask):
+        known, lengths = self.accepted(frozen_features, window_mask)
+        odds, evidence_lengths = self.other_log_odds(frozen_features, window_mask)
+        if not torch.equal(lengths, evidence_lengths):
+            raise ValueError("accepted/evidence temporal lengths differ")
+        return preserve_ctc_emission_runs(known, odds, lengths, self.margin), lengths
+
+
+def load_stage2_other_preserving(path):
+    payload = torch.load(path, map_location='cpu', weights_only=False)
+    if payload.get('format') != 'slt_stage2_other_preserving_ctc_v17':
+        raise ValueError("not an OTHER-preserving v17 checkpoint")
+    accepted, _ = _general_selector_from_checkpoint(payload['accepted_checkpoint'])
+    evidence_payload = payload['evidence_checkpoint']
+    evidence = Stage2TemporalHeadV17(Stage2V17Config(**evidence_payload['model_config']))
+    evidence.load_state_dict(evidence_payload['model_state_dict'], strict=True)
+    other_head = nn.Linear(evidence.config.dim, 1)
+    other_head.load_state_dict(payload['other_head_state_dict'], strict=True)
+    model = Stage2OtherPreservingCTCV17(accepted, evidence, other_head, payload['margin'])
+    return model, payload
+
+
 def load_stage2_model_v17(
     path: str | Path,
 ) -> tuple[nn.Module, dict[str, object]]:
     """Load any selected v17 Stage-2 inference artifact."""
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
     artifact_format = checkpoint.get("format")
+    if artifact_format == "slt_stage2_other_preserving_ctc_v17":
+        return load_stage2_other_preserving(path)
     if artifact_format == "slt_stage2_context_adapted_ctc_v17":
         return load_stage2_context_adapted(path)
     if artifact_format == "slt_stage2_direct_join_specialist_ctc_v17":
