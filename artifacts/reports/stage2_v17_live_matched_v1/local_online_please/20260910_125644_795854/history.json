@@ -1,0 +1,468 @@
+{
+  "format": "slt_live_reel_stage1_v17_session",
+  "version": 1,
+  "prototype_scope": "growing activity-anchored Stage-1 candidates with label-stability locks",
+  "started_utc": "2026-09-10T04:56:44.796097+00:00",
+  "source": "data/raw_videos/PHRASES/PLEASE_HELP_ME/3e65d621.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated Stage-1 softmax with temporal agreement",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "candidate_minimum_seconds": 0.5,
+    "candidate_maximum_seconds": 2.5,
+    "probe_interval_seconds": 0.12,
+    "stability_hits": 2,
+    "commit_score": 0.45,
+    "commit_hits": 1,
+    "instant_commit_score": 0.8,
+    "full_visual_verifier": true,
+    "release_hits": 1,
+    "transition_overlap_seconds": 0.0,
+    "no_hand_release_seconds": 0.2,
+    "capture_policy": "latest-frame webcam; sequential saved video",
+    "realtime_video": true,
+    "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+    "auxiliary_detection_schedule": "training_sparse_every_eighth_frame_with_display_hold",
+    "auxiliary_model_schedule": "training_sparse_every_eighth_frame",
+    "lip_marker_model": null,
+    "lip_marker_minimum_confidence": 0.999,
+    "stage2_sequence_arbiter": true,
+    "preserve_pending_frames": true,
+    "provisional_glosses": true,
+    "stage2_at_finish": false,
+    "sequence_preview": true,
+    "stage2_review_only": true,
+    "stage2_minimum_phrase_seconds": 1.6,
+    "finish_gesture": false,
+    "finish_gesture_hold_seconds": 0.4
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "other_preservation": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_transition_repair_v3/seed_1702.pth",
+      "sha256": "d7bdc71d68f3093311fe85feef85e9b0b90c838f6d4a11a903afb596248d5685"
+    },
+    "stage2_sequence_arbiter": {
+      "general_selector": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+        "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+      },
+      "selector_report": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+        "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+      },
+      "frozen_encoder_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "primary_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "specialist_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "image_encoder": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "other_preservation": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_transition_repair_v3/seed_1702.pth",
+        "sha256": "d7bdc71d68f3093311fe85feef85e9b0b90c838f6d4a11a903afb596248d5685"
+      }
+    }
+  },
+  "video": "artifacts/reports/stage2_v17_live_matched_v1/local_online_please/20260910_125644_795854/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06666666666666667,
+    0.13333333333333333,
+    0.2,
+    0.26666666666666666,
+    0.3333333333333333,
+    0.4,
+    0.4666666666666667,
+    0.5333333333333333,
+    0.6,
+    0.6666666666666666,
+    0.7333333333333333,
+    0.8,
+    0.8666666666666667,
+    0.9333333333333333,
+    1.0,
+    1.0666666666666667,
+    1.1333333333333333,
+    1.2,
+    1.2666666666666666,
+    1.3333333333333333,
+    1.4,
+    1.4666666666666666,
+    1.5333333333333334,
+    1.6,
+    1.6666666666666667,
+    1.7333333333333334,
+    1.8,
+    1.8666666666666667,
+    1.9333333333333333,
+    2.0,
+    2.066666666666667,
+    2.1333333333333333,
+    2.2,
+    2.2666666666666666,
+    2.3333333333333335,
+    2.4,
+    2.466666666666667,
+    2.533333333333333,
+    2.6,
+    2.6666666666666665,
+    2.7333333333333334,
+    2.8,
+    2.8666666666666667,
+    2.933333333333333,
+    3.0,
+    3.066666666666667,
+    3.1333333333333333,
+    3.2,
+    3.2666666666666666,
+    3.3333333333333335,
+    3.4,
+    3.466666666666667,
+    3.533333333333333,
+    3.6,
+    3.6666666666666665,
+    3.7333333333333334,
+    3.8,
+    3.8666666666666667,
+    3.933333333333333,
+    4.0,
+    4.066666666666666,
+    4.133333333333334,
+    4.2,
+    4.266666666666667,
+    4.333333333333333,
+    4.4,
+    4.466666666666667,
+    4.533333333333333,
+    4.6,
+    4.666666666666667,
+    4.733333333333333,
+    4.8,
+    4.866666666666666,
+    4.933333333333334,
+    5.0
+  ],
+  "predictions": [],
+  "events": [
+    {
+      "recorded_utc": "2026-09-10T04:56:44.878983+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:45.974975+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": false,
+      "hypothesis": [],
+      "accepted": false,
+      "ignored_after_reset": false,
+      "window_count": null,
+      "token_positions": null,
+      "start_seconds": 0.0,
+      "end_seconds": 1.0,
+      "latency_ms": {
+        "total": 0.12516700000020364
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:47.372586+00:00",
+      "type": "sequence_prefix_update",
+      "committed": [],
+      "provisional": [
+        "PLEASE"
+      ],
+      "conflict": false,
+      "new_commits": [],
+      "evidence_end": 8,
+      "observed_seconds": 2.4,
+      "window_end_seconds": 2.1,
+      "elapsed_seconds": 2.4983095000000004
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:47.373178+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": false,
+      "hypothesis": [
+        "PLEASE"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 1,
+      "token_positions": [
+        3
+      ],
+      "start_seconds": 1.0666666666666667,
+      "end_seconds": 2.1,
+      "latency_ms": {
+        "landmark_tensor": 2.1401670000003037,
+        "hand_image_encoding": 286.27224999999964,
+        "frozen_encoder": 9.689332999998967,
+        "ctc_selector": 20.43000000000106,
+        "total": 318.53175
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:48.746218+00:00",
+      "type": "sequence_prefix_update",
+      "committed": [
+        "PLEASE"
+      ],
+      "provisional": [
+        "HELP"
+      ],
+      "conflict": false,
+      "new_commits": [
+        "PLEASE"
+      ],
+      "evidence_end": 16,
+      "observed_seconds": 3.6,
+      "window_end_seconds": 3.1666666666666665,
+      "elapsed_seconds": 3.8719470829999993
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:48.746927+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": false,
+      "hypothesis": [
+        "PLEASE",
+        "HELP"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 2,
+      "token_positions": [
+        3,
+        11
+      ],
+      "start_seconds": 2.1666666666666665,
+      "end_seconds": 3.1666666666666665,
+      "latency_ms": {
+        "landmark_tensor": 1.6542909999994748,
+        "hand_image_encoding": 612.4435839999993,
+        "frozen_encoder": 13.856249999999903,
+        "ctc_selector": 16.423291000000617,
+        "total": 644.3774159999994
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:49.618621+00:00",
+      "type": "sequence_prefix_update",
+      "committed": [
+        "PLEASE",
+        "HELP"
+      ],
+      "provisional": [
+        "I"
+      ],
+      "conflict": false,
+      "new_commits": [
+        "HELP"
+      ],
+      "evidence_end": 24,
+      "observed_seconds": 4.6,
+      "window_end_seconds": 4.2,
+      "elapsed_seconds": 4.744356000000001
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:49.619379+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": false,
+      "hypothesis": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 3,
+      "token_positions": [
+        3,
+        11,
+        20
+      ],
+      "start_seconds": 3.2,
+      "end_seconds": 4.2,
+      "latency_ms": {
+        "landmark_tensor": 1.8659999999997012,
+        "hand_image_encoding": 436.3834999999998,
+        "frozen_encoder": 11.04870899999888,
+        "ctc_selector": 14.144665999999972,
+        "total": 463.44287499999837
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:49.881889+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 5.033333333333333,
+      "active_glosses": [
+        "PLEASE",
+        "HELP"
+      ],
+      "classifier_pending": false
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:50.217165+00:00",
+      "type": "sequence_prefix_update",
+      "committed": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "provisional": [
+        "I"
+      ],
+      "conflict": false,
+      "new_commits": [
+        "I"
+      ],
+      "evidence_end": 32,
+      "observed_seconds": 5.0,
+      "window_end_seconds": 5.0,
+      "elapsed_seconds": 5.342902833000001
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:50.217933+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [
+        "PLEASE",
+        "HELP",
+        "I",
+        "I"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 4,
+      "token_positions": [
+        3,
+        11,
+        20,
+        28
+      ],
+      "start_seconds": 4.266666666666667,
+      "end_seconds": 5.0,
+      "latency_ms": {
+        "landmark_tensor": 1.380083000000809,
+        "hand_image_encoding": 310.2945419999994,
+        "frozen_encoder": 10.141041000000683,
+        "ctc_selector": 13.087541999999175,
+        "total": 334.90320800000006
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T04:56:50.218478+00:00",
+      "type": "finished_sequence_selected",
+      "stage1": [],
+      "confirmed_ctc_prefix": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "stage2": [
+        "PLEASE",
+        "HELP",
+        "I",
+        "I"
+      ],
+      "selected": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "selection_mode": "confirmed_ctc_prefix_with_provisional_review",
+      "active_seconds": 3.7333333333333334,
+      "stage2_stable": true,
+      "finish_decode_ms": 336.6156250000003
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "reel-0001",
+      "requested_utc": "2026-09-10T04:56:50.219035+00:00",
+      "glosses": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "epoch": 0,
+      "finish_started_at": 12.391113375,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"PLEASE\", \"HELP\", \"I\"]",
+      "input_glosses": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "literal_sentence": "Please help i.",
+      "fallback_sentence": "Please help me.",
+      "fallback_mode": "reviewed_template",
+      "sentence": "Please help me.",
+      "rendering_mode": "reviewed_template",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.03512500000013574,
+      "completed_utc": "2026-09-10T04:56:50.219119+00:00",
+      "displayed_and_spoken": true,
+      "finish_total_ms": 337.2614580000004
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_seen": 151,
+    "landmark_observations": 101,
+    "stale_camera_frames_dropped": 0,
+    "capture_elapsed_seconds": 5.007600708000001
+  },
+  "finished_utc": "2026-09-10T04:56:50.227721+00:00"
+}
