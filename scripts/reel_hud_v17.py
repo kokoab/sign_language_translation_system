@@ -236,9 +236,11 @@ def _wrap(text: str, style: Type, limit: int, lines: int) -> tuple[str, ...]:
 class ReelHud:
     """Stateless with respect to the pipeline; remembers only what it draws."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, provisional: bool = False) -> None:
         self._committed: tuple[str, float] | None = None
         self._committed_at = 0.0
+        self.provisional = provisional
+        self._preview: tuple[str, float] | None = None
 
     def _remember_commit(self, latest_result: dict[str, object] | None) -> None:
         if not latest_result:
@@ -272,10 +274,22 @@ class ReelHud:
         speech_text: str | None,
         ctc_hypothesis: list[str] | None = None,
         stats: dict[str, object] | None = None,
+        revisable_transcript: bool = False,
     ) -> np.ndarray:
         if not glosses and not finishing_glosses:
             self._committed = None
         self._remember_commit(latest_result)
+        self._preview = None
+        if (
+            self.provisional and active and not finish_pending and latest_result
+            and latest_result.get("accepted")
+            and not latest_result.get("committed_gloss")
+            and latest_result.get("gloss") not in {None, "UNKNOWN", lock.suppressed}
+        ):
+            self._preview = (
+                str(latest_result["gloss"]) + "?",
+                float(latest_result.get("model_score", 0.0)),
+            )
         height, width = frame.shape[:2]
         scale = _scale(width)
         margin = int(24 * scale)
@@ -285,10 +299,25 @@ class ReelHud:
         shown_glosses = (
             finishing_glosses if finish_pending and finishing_glosses else glosses
         )
+        if self.provisional:
+            shown_glosses = list(glosses or finishing_glosses)
+            if self._preview and not revisable_transcript:
+                shown_glosses.append(self._preview[0])
         state, state_color = (
             ("VERIFYING", AMBER) if pending
             else ("SIGNING", ACCENT) if active else ("READY", MUTED)
         )
+        if revisable_transcript:
+            state, state_color = (
+                ("FINAL VISUAL PASS", AMBER) if finish_pending else
+                ("LIVE TRANSCRIPT", AMBER) if active else ("READY", MUTED)
+            )
+        elif self.provisional:
+            state, state_color = (
+                ("FINISHING", AMBER) if finish_pending else
+                ("PREVIEW", AMBER) if self._preview else
+                ("SIGNING", ACCENT) if active else ("READY", MUTED)
+            )
         style = Type(int(15 * scale), "Semibold")
         rail_left = margin + _chip_size(
             f"{state}   {fps:.1f} FPS", style, scale, dot=True
@@ -299,12 +328,22 @@ class ReelHud:
         )
         self._gloss_rail(
             image, draw, width - margin, margin, scale, shown_glosses,
-            max(rail_left, int(width * 0.34)),
+            max(rail_left, int(width * 0.34)), revisable_tail=revisable_transcript,
         )
         self._sentence(
             image, draw, margin, int(80 * scale), width, scale,
-            sentence, speech_text, finish_pending,
+            sentence, speech_text, finish_pending, revisable_transcript,
         )
+        if revisable_transcript and not finish_pending:
+            _shadowed(
+                image, (margin, int(216 * scale)), "Live transcript · may change",
+                Type(int(17 * scale), "Medium"), AMBER,
+            )
+        elif self.provisional and ctc_hypothesis and not finish_pending:
+            suggestion = "Sequence suggestion (review): " + " ".join(ctc_hypothesis)
+            style = Type(int(17 * scale), "Medium")
+            for index, row in enumerate(_wrap(suggestion, style, width - 2 * margin, 2)):
+                _shadowed(image, (margin, int((216 + 23 * index) * scale)), row, style, AMBER)
         controls_top = min(
             rect[1] for rect in reel_control_button_rects(width, height).values()
         )
@@ -322,7 +361,7 @@ class ReelHud:
 
     def _gloss_rail(
         self, image: Image.Image, draw: ImageDraw.ImageDraw, right: int, top: int,
-        scale: float, glosses: list[str], left_limit: int,
+        scale: float, glosses: list[str], left_limit: int, *, revisable_tail: bool,
     ) -> None:
         if not glosses:
             return
@@ -331,7 +370,7 @@ class ReelHud:
         x = right
         for index, gloss in enumerate(reversed(glosses)):
             newest = index == 0
-            ambiguous = gloss.endswith("?")
+            ambiguous = gloss.endswith("?") or (revisable_tail and index < 3)
             width = _chip_size(gloss, style, scale, dot=True)[0]
             if x - width < left_limit:
                 _chip(
@@ -350,10 +389,13 @@ class ReelHud:
     def _sentence(
         self, image: Image.Image, draw: ImageDraw.ImageDraw, margin: int, top: int,
         width: int, scale: float, sentence: str, speech_text: str | None,
-        finish_pending: bool,
+        finish_pending: bool, revisable_transcript: bool,
     ) -> None:
         waiting = finish_pending and not speech_text
-        text = "Naturalizing..." if waiting else (speech_text or sentence)
+        text = (
+            "Final visual transcription..." if revisable_transcript else
+            "Finishing..." if self.provisional else "Naturalizing..."
+        ) if waiting else (speech_text or sentence)
         if not text:
             return
         style = Type(int(34 * scale), "Semibold")
@@ -376,12 +418,16 @@ class ReelHud:
         scale: float, lock, active: bool,
     ) -> None:
         """Sits just above the controls, not over the signer's face."""
-        if self._committed is None:
+        value = self._preview or self._committed
+        if value is None:
             return
-        gloss, score = self._committed
+        gloss, score = value
+        color = AMBER if self._preview else WHITE
         age = time.perf_counter() - self._committed_at
         alpha = 255 if age < 1.6 else max(96, int(255 - (age - 1.6) * 110))
         alpha -= alpha % 16  # keep the fade on a few cacheable steps
+        if self._preview:
+            alpha = 255
         centre_x = width // 2
         top = bottom - int(128 * scale)
         style = Type(int(56 * scale), "Heavy")
@@ -391,7 +437,7 @@ class ReelHud:
                 max(14, style.size * room // _text_width(style, gloss)), "Heavy"
             )
         _shadowed(
-            image, (centre_x, top), gloss, style, WHITE,
+            image, (centre_x, top), gloss, style, color,
             alpha=alpha, anchor="mt", offset=3,
         )
 
@@ -407,7 +453,7 @@ class ReelHud:
         if filled > bar_height:
             draw.rounded_rectangle(
                 (left, bar_top, left + filled, bar_top + bar_height),
-                bar_height // 2, fill=(*ACCENT, alpha),
+                bar_height // 2, fill=(*(AMBER if self._preview else ACCENT), alpha),
             )
         _text(
             image, (centre_x, bar_top + int(16 * scale)), f"{score:.2f}",
