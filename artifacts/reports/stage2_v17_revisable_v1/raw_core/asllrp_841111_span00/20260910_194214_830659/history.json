@@ -1,0 +1,277 @@
+{
+  "format": "slt_live_reel_stage1_v17_session",
+  "version": 1,
+  "prototype_scope": "growing activity-anchored Stage-1 candidates with label-stability locks",
+  "started_utc": "2026-09-10T11:42:14.830824+00:00",
+  "source": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_NOW/841111_span00.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated Stage-1 softmax with temporal agreement",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "candidate_minimum_seconds": 0.5,
+    "candidate_maximum_seconds": 2.5,
+    "probe_interval_seconds": 0.12,
+    "stability_hits": 2,
+    "commit_score": 0.45,
+    "commit_hits": 1,
+    "instant_commit_score": 0.8,
+    "full_visual_verifier": true,
+    "release_hits": 1,
+    "transition_overlap_seconds": 0.0,
+    "no_hand_release_seconds": 0.2,
+    "capture_policy": "latest-frame webcam; sequential saved video",
+    "realtime_video": true,
+    "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+    "auxiliary_detection_schedule": "training_sparse_every_eighth_frame_with_display_hold",
+    "auxiliary_model_schedule": "training_sparse_every_eighth_frame",
+    "lip_marker_model": null,
+    "lip_marker_minimum_confidence": 0.999,
+    "stage2_sequence_arbiter": true,
+    "preserve_pending_frames": true,
+    "provisional_glosses": true,
+    "stage2_at_finish": false,
+    "sequence_preview": true,
+    "revisable_transcript": true,
+    "stage2_review_only": true,
+    "stage2_minimum_phrase_seconds": 1.6,
+    "finish_gesture": false,
+    "finish_gesture_hold_seconds": 0.4
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "live_adapted": {
+      "path": "artifacts/models/stage2_v17_revisable_core_v1/seed_17101/best.pth",
+      "sha256": "96f572fdb76c639197abb14e5c876462a798fd76e650f257c603b9dcdf0ce7ef"
+    },
+    "other_preservation": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_transition_repair_v3/seed_1702.pth",
+      "sha256": "d7bdc71d68f3093311fe85feef85e9b0b90c838f6d4a11a903afb596248d5685"
+    },
+    "stage2_sequence_arbiter": {
+      "general_selector": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+        "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+      },
+      "selector_report": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+        "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+      },
+      "frozen_encoder_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "primary_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "specialist_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "image_encoder": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "live_adapted": {
+        "path": "artifacts/models/stage2_v17_revisable_core_v1/seed_17101/best.pth",
+        "sha256": "96f572fdb76c639197abb14e5c876462a798fd76e650f257c603b9dcdf0ce7ef"
+      },
+      "other_preservation": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_transition_repair_v3/seed_1702.pth",
+        "sha256": "d7bdc71d68f3093311fe85feef85e9b0b90c838f6d4a11a903afb596248d5685"
+      }
+    }
+  },
+  "video": "artifacts/reports/stage2_v17_revisable_v1/raw_core/asllrp_841111_span00/20260910_194214_830659/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06673333333333334,
+    0.13346666666666668,
+    0.20020000000000002,
+    0.26693333333333336,
+    0.33366666666666667,
+    0.40040000000000003,
+    0.46713333333333334,
+    0.5338666666666667,
+    0.6006,
+    0.6673333333333333,
+    0.7340666666666666
+  ],
+  "predictions": [],
+  "events": [
+    {
+      "recorded_utc": "2026-09-10T11:42:14.947336+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-10T11:42:15.726660+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 0.8008000000000001,
+      "active_glosses": [],
+      "classifier_pending": false
+    },
+    {
+      "recorded_utc": "2026-09-10T11:42:16.073073+00:00",
+      "type": "revisable_transcript_update",
+      "previous": [],
+      "hypothesis": [
+        "FRIEND",
+        "HAVE"
+      ],
+      "unchanged_prefix": 0,
+      "replaced_tail": [],
+      "new_tail": [
+        "FRIEND",
+        "HAVE"
+      ],
+      "retained_windows": 1,
+      "observed_seconds": 0.7674333333333333,
+      "window_end_seconds": 0.7674333333333333,
+      "elapsed_seconds": 1.1328457080000005
+    },
+    {
+      "recorded_utc": "2026-09-10T11:42:16.073674+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [
+        "FRIEND",
+        "HAVE"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 1,
+      "token_positions": [
+        2,
+        7
+      ],
+      "start_seconds": 0.0,
+      "end_seconds": 0.7674333333333333,
+      "latency_ms": {
+        "landmark_tensor": 3.766749999999597,
+        "hand_image_encoding": 292.3646660000001,
+        "frozen_encoder": 10.150874999999893,
+        "ctc_selector": 40.036249999999995,
+        "total": 346.3185409999996
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T11:42:16.100389+00:00",
+      "type": "finished_sequence_selected",
+      "stage1": [],
+      "confirmed_ctc_prefix": null,
+      "stage2": [
+        "FRIEND",
+        "HAVE"
+      ],
+      "selected": [
+        "FRIEND",
+        "HAVE"
+      ],
+      "selection_mode": "revisable_visual_redecode",
+      "active_seconds": 0.7674333333333333,
+      "stage2_stable": false,
+      "final_visual_redecode": {
+        "hypothesis": [
+          "FRIEND",
+          "HAVE"
+        ],
+        "token_positions": [
+          2,
+          7
+        ],
+        "chunks": [
+          {
+            "start_window": 0,
+            "end_window": 1,
+            "ctc_steps": 8,
+            "window_count": 1,
+            "specialist_selected": false
+          }
+        ],
+        "retained_windows": 1,
+        "overlap_windows": 2
+      },
+      "finish_decode_ms": 374.541292
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "reel-0001",
+      "requested_utc": "2026-09-10T11:42:16.101193+00:00",
+      "glosses": [
+        "FRIEND",
+        "HAVE"
+      ],
+      "epoch": 0,
+      "finish_started_at": 7.562011666,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"FRIEND\", \"HAVE\"]",
+      "input_glosses": [
+        "FRIEND",
+        "HAVE"
+      ],
+      "literal_sentence": "Friend have.",
+      "fallback_sentence": "Friend have.",
+      "fallback_mode": "literal_fallback",
+      "sentence": "Friend have.",
+      "rendering_mode": "literal_fallback",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.03866700000010326,
+      "completed_utc": "2026-09-10T11:42:16.101292+00:00",
+      "displayed_and_spoken": true,
+      "finish_total_ms": 375.4513749999999
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_seen": 24,
+    "landmark_observations": 16,
+    "stale_camera_frames_dropped": 0,
+    "capture_elapsed_seconds": 0.7856182910000005,
+    "revisable_transcript": true
+  },
+  "finished_utc": "2026-09-10T11:42:16.102608+00:00"
+}

@@ -1,0 +1,463 @@
+{
+  "format": "slt_live_reel_stage1_v17_session",
+  "version": 1,
+  "prototype_scope": "growing activity-anchored Stage-1 candidates with label-stability locks",
+  "started_utc": "2026-09-10T11:42:59.002542+00:00",
+  "source": "data/raw_videos/PHRASES/HELLO_HOW_YOU/HELLO_HOW_YOU_20.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated Stage-1 softmax with temporal agreement",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "candidate_minimum_seconds": 0.5,
+    "candidate_maximum_seconds": 2.5,
+    "probe_interval_seconds": 0.12,
+    "stability_hits": 2,
+    "commit_score": 0.45,
+    "commit_hits": 1,
+    "instant_commit_score": 0.8,
+    "full_visual_verifier": true,
+    "release_hits": 1,
+    "transition_overlap_seconds": 0.0,
+    "no_hand_release_seconds": 0.2,
+    "capture_policy": "latest-frame webcam; sequential saved video",
+    "realtime_video": true,
+    "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+    "auxiliary_detection_schedule": "training_sparse_every_eighth_frame_with_display_hold",
+    "auxiliary_model_schedule": "training_sparse_every_eighth_frame",
+    "lip_marker_model": null,
+    "lip_marker_minimum_confidence": 0.999,
+    "stage2_sequence_arbiter": true,
+    "preserve_pending_frames": true,
+    "provisional_glosses": true,
+    "stage2_at_finish": false,
+    "sequence_preview": true,
+    "revisable_transcript": true,
+    "stage2_review_only": true,
+    "stage2_minimum_phrase_seconds": 1.6,
+    "finish_gesture": false,
+    "finish_gesture_hold_seconds": 0.4
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "live_adapted": {
+      "path": "artifacts/models/stage2_v17_revisable_core_v1/seed_17101/best.pth",
+      "sha256": "96f572fdb76c639197abb14e5c876462a798fd76e650f257c603b9dcdf0ce7ef"
+    },
+    "other_preservation": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_transition_repair_v3/seed_1702.pth",
+      "sha256": "d7bdc71d68f3093311fe85feef85e9b0b90c838f6d4a11a903afb596248d5685"
+    },
+    "stage2_sequence_arbiter": {
+      "general_selector": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+        "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+      },
+      "selector_report": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+        "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+      },
+      "frozen_encoder_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "primary_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "specialist_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "image_encoder": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+        "sha256": "validated_mlpackage"
+      },
+      "live_adapted": {
+        "path": "artifacts/models/stage2_v17_revisable_core_v1/seed_17101/best.pth",
+        "sha256": "96f572fdb76c639197abb14e5c876462a798fd76e650f257c603b9dcdf0ce7ef"
+      },
+      "other_preservation": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_transition_repair_v3/seed_1702.pth",
+        "sha256": "d7bdc71d68f3093311fe85feef85e9b0b90c838f6d4a11a903afb596248d5685"
+      }
+    }
+  },
+  "video": "artifacts/reports/stage2_v17_revisable_v1/raw_core/local_hello/20260910_194259_002381/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06666666666666667,
+    0.13333333333333333,
+    0.2,
+    0.26666666666666666,
+    0.3333333333333333,
+    0.4,
+    0.4666666666666667,
+    0.5333333333333333,
+    0.6,
+    0.6666666666666666,
+    0.7333333333333333,
+    0.8,
+    0.8666666666666667,
+    0.9333333333333333,
+    1.0,
+    1.0666666666666667,
+    1.1333333333333333,
+    1.2,
+    1.2666666666666666,
+    1.3333333333333333,
+    1.4,
+    1.4666666666666666,
+    1.5333333333333334,
+    1.6,
+    1.6666666666666667,
+    1.7333333333333334,
+    1.8,
+    1.8666666666666667,
+    1.9333333333333333,
+    2.0,
+    2.066666666666667,
+    2.1333333333333333,
+    2.2,
+    2.2666666666666666,
+    2.3333333333333335,
+    2.4,
+    2.466666666666667,
+    2.533333333333333,
+    2.6,
+    2.6666666666666665,
+    2.7333333333333334,
+    2.8,
+    2.8666666666666667,
+    2.933333333333333,
+    3.0,
+    3.066666666666667,
+    3.1333333333333333,
+    3.2,
+    3.2666666666666666,
+    3.3333333333333335
+  ],
+  "predictions": [],
+  "events": [
+    {
+      "recorded_utc": "2026-09-10T11:42:59.110364+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:00.545238+00:00",
+      "type": "revisable_transcript_update",
+      "previous": [],
+      "hypothesis": [
+        "HELLO"
+      ],
+      "unchanged_prefix": 0,
+      "replaced_tail": [],
+      "new_tail": [
+        "HELLO"
+      ],
+      "retained_windows": 1,
+      "observed_seconds": 1.4,
+      "window_end_seconds": 1.0,
+      "elapsed_seconds": 1.4378430410000007
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:00.545905+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": false,
+      "hypothesis": [
+        "HELLO"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 1,
+      "token_positions": [
+        5
+      ],
+      "start_seconds": 0.0,
+      "end_seconds": 1.0,
+      "latency_ms": {
+        "landmark_tensor": 4.447958000000085,
+        "hand_image_encoding": 264.62516700000015,
+        "frozen_encoder": 17.508791999999218,
+        "ctc_selector": 43.16954100000103,
+        "total": 329.7514580000005
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:01.812333+00:00",
+      "type": "revisable_transcript_update",
+      "previous": [
+        "HELLO"
+      ],
+      "hypothesis": [
+        "HELLO",
+        "HOW"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [
+        "HOW"
+      ],
+      "retained_windows": 2,
+      "observed_seconds": 2.6666666666666665,
+      "window_end_seconds": 2.1,
+      "elapsed_seconds": 2.7049442910000003
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:01.812937+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": false,
+      "hypothesis": [
+        "HELLO",
+        "HOW"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 2,
+      "token_positions": [
+        5,
+        11
+      ],
+      "start_seconds": 1.0666666666666667,
+      "end_seconds": 2.1,
+      "latency_ms": {
+        "landmark_tensor": 1.786915999998584,
+        "hand_image_encoding": 461.02470900000014,
+        "frozen_encoder": 11.678625000000054,
+        "ctc_selector": 31.070582999999985,
+        "total": 505.56083299999875
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:02.595971+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 3.4,
+      "active_glosses": [
+        "HELLO",
+        "HOW"
+      ],
+      "classifier_pending": false
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:02.746806+00:00",
+      "type": "revisable_transcript_update",
+      "previous": [
+        "HELLO",
+        "HOW"
+      ],
+      "hypothesis": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "unchanged_prefix": 2,
+      "replaced_tail": [],
+      "new_tail": [
+        "YOU"
+      ],
+      "retained_windows": 3,
+      "observed_seconds": 3.3666666666666667,
+      "window_end_seconds": 3.1666666666666665,
+      "elapsed_seconds": 3.6394234579999996
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:02.747605+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 3,
+      "token_positions": [
+        5,
+        11,
+        20
+      ],
+      "start_seconds": 2.1666666666666665,
+      "end_seconds": 3.1666666666666665,
+      "latency_ms": {
+        "landmark_tensor": 3.531166000000141,
+        "hand_image_encoding": 340.9227499999989,
+        "frozen_encoder": 14.704250000001196,
+        "ctc_selector": 35.02154199999907,
+        "total": 394.1797079999993
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:02.887459+00:00",
+      "type": "revisable_transcript_update",
+      "previous": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "hypothesis": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "retained_windows": 4,
+      "observed_seconds": 3.3666666666666667,
+      "window_end_seconds": 3.3666666666666667,
+      "elapsed_seconds": 3.7800773749999994
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:02.888113+00:00",
+      "type": "stage2_sequence_update",
+      "after_finish": true,
+      "hypothesis": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "accepted": true,
+      "ignored_after_reset": false,
+      "window_count": 4,
+      "token_positions": [
+        5,
+        11,
+        20
+      ],
+      "start_seconds": 3.2,
+      "end_seconds": 3.3666666666666667,
+      "latency_ms": {
+        "landmark_tensor": 0.9769170000009098,
+        "hand_image_encoding": 99.56612499999906,
+        "frozen_encoder": 11.458833000000723,
+        "ctc_selector": 26.991541999999313,
+        "total": 138.99341700000002
+      }
+    },
+    {
+      "recorded_utc": "2026-09-10T11:43:02.913616+00:00",
+      "type": "finished_sequence_selected",
+      "stage1": [],
+      "confirmed_ctc_prefix": null,
+      "stage2": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "selected": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "selection_mode": "revisable_visual_redecode",
+      "active_seconds": 2.9,
+      "stage2_stable": true,
+      "final_visual_redecode": {
+        "hypothesis": [
+          "HELLO",
+          "HOW",
+          "YOU"
+        ],
+        "token_positions": [
+          5,
+          11,
+          20
+        ],
+        "chunks": [
+          {
+            "start_window": 0,
+            "end_window": 4,
+            "ctc_steps": 32,
+            "window_count": 4,
+            "specialist_selected": true
+          }
+        ],
+        "retained_windows": 4,
+        "overlap_windows": 2
+      },
+      "finish_decode_ms": 317.65358300000025
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "reel-0001",
+      "requested_utc": "2026-09-10T11:43:02.914349+00:00",
+      "glosses": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "epoch": 0,
+      "finish_started_at": 10.169638583,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"HELLO\", \"HOW\", \"YOU\"]",
+      "input_glosses": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "literal_sentence": "Hello how you.",
+      "fallback_sentence": "Hello, how are you?",
+      "fallback_mode": "reviewed_template",
+      "sentence": "Hello, how are you?",
+      "rendering_mode": "reviewed_template",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.031041999999814607,
+      "completed_utc": "2026-09-10T11:43:02.914439+00:00",
+      "displayed_and_spoken": true,
+      "finish_total_ms": 318.48508300000054
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_seen": 102,
+    "landmark_observations": 68,
+    "stale_camera_frames_dropped": 0,
+    "capture_elapsed_seconds": 3.4885778750000007,
+    "revisable_transcript": true
+  },
+  "finished_utc": "2026-09-10T11:43:02.915452+00:00"
+}

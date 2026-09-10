@@ -105,6 +105,27 @@ def collapse_ctc_tokens(logits: np.ndarray, length: int) -> tuple[int, ...]:
     return tuple(output)
 
 
+def supported_ctc_path(tokens, positions):
+    """Remove auxiliary OTHER after CTC collapse, keeping genuine repetitions."""
+    if len(tokens) != len(positions) or any(token < 1 or token > 101 for token in tokens):
+        raise ValueError("invalid locked100 CTC path")
+    pairs = [(token, position) for token, position in zip(tokens, positions) if token != 101]
+    return tuple(token for token, _ in pairs), tuple(position for _, position in pairs)
+
+
+def validate_preservation_runtime(args, payload, selector):
+    expected = payload['accepted_checkpoint']['selector_config']
+    if any(selector.get(key) != expected[key] for key in ('blend_weight', 'blank_bias', 'score_margin', 'minimum_tokens')):
+        raise ValueError('OTHER preservation selector configuration changed')
+    if sha256(args.stage2_selector) != payload['accepted_sha256']:
+        raise ValueError('OTHER preservation requires its pinned accepted selector')
+    from active.v17.train_stage_2_other_ctc_v17 import directory_sha256
+    for name in ('primary', 'specialist', 'encoder', 'image_encoder'):
+        path = args.image_encoder if name == 'image_encoder' else getattr(args, f'stage2_{name}')
+        if directory_sha256(path) != payload[f'runtime_{name}_sha256']:
+            raise ValueError(f'OTHER preservation {name} Core ML package changed')
+
+
 def collapse_ctc_path(
     logits: np.ndarray, length: int
 ) -> tuple[tuple[int, ...], tuple[int, ...]]:
@@ -366,6 +387,40 @@ def draw_display_lips(
     return frame
 
 
+def validate_live_adapted_runtime(args, payload):
+    from scripts.cache_stage2_live_matched_v17 import input_contract
+    if not (getattr(args, "sequence_preview", False) or getattr(args, "revisable_transcript", False)) or getattr(args, "dense_model_auxiliary", False):
+        raise ValueError("live-adapted checkpoint requires the matched sequence-preview input")
+    if payload['input_contract'] != input_contract(args):
+        raise ValueError("live-adapted checkpoint input contract changed")
+    if args.stage2_other_preservation is None or sha256(args.stage2_other_preservation) != payload['design']['teacher_sha256']:
+        raise ValueError("live-adapted checkpoint teacher provenance changed")
+
+
+def observe_stage2_frame(frame, seconds, processed, detector, previous_wrists, args):
+    """Shared live/training observation contract; input is already canonically oriented."""
+    dense = getattr(args, "dense_model_auxiliary", False)
+    face = dense or processed % V17Config().face_interval == 0
+    body = dense or processed % V17Config().body_interval == 0
+    detection = detector.detect(
+        limit_image_side(frame, args.detection_image_side),
+        include_body=body, include_face=face, include_hands=True,
+    )
+    assigned = assign_hands(detection.hands, previous_wrists)
+    if not body:
+        from active.v17.extract_v17 import FrameDetection
+        detection = FrameDetection(
+            detection.hands, np.zeros_like(detection.body_xy),
+            np.zeros_like(detection.body_confidence), detection.face_xy,
+            detection.face_confidence,
+        )
+    return ObservedFrame(
+        limit_image_side(frame, args.maximum_image_side), detection, assigned,
+        seconds, wrist_motion(assigned, previous_wrists),
+        *observation_quality(detection), face_for_features=face,
+    )
+
+
 def stage2_landmarks_from_observations(
     observations: list[ObservedFrame],
 ) -> tuple[np.ndarray | None, dict[str, object]]:
@@ -482,6 +537,19 @@ class LiveStage2CTC:
         self.encoder_output = _model_output_name(self.encoder)
         self.primary_output = _model_output_name(self.primary)
         self.specialist_output = _model_output_name(self.specialist)
+        self.other_preservation = None
+        preservation_path = getattr(args, 'stage2_other_preservation', None)
+        if preservation_path is not None:
+            from active.v17.model_stage2_v17 import load_stage2_other_preserving
+            self.other_preservation, payload = load_stage2_other_preserving(preservation_path)
+            validate_preservation_runtime(args, payload, self.selector)
+        self.live_adapted = None
+        adapted_path = getattr(args, "stage2_live_checkpoint", None)
+        if adapted_path is not None:
+            from active.v17.model_stage2_live_adapt_v17 import load_stage2_live_adapted
+            self.live_adapted, adapted_payload = load_stage2_live_adapted(adapted_path)
+            validate_live_adapted_runtime(args, adapted_payload)
+            self.live_adapted.eval()
         self._warm()
 
     def _warm(self) -> None:
@@ -512,6 +580,10 @@ class LiveStage2CTC:
             "specialist_coreml": self.args.stage2_specialist,
             "image_encoder": self.args.image_encoder,
         }
+        if getattr(self.args, 'stage2_live_checkpoint', None) is not None:
+            paths['live_adapted'] = self.args.stage2_live_checkpoint
+        if getattr(self.args, 'stage2_other_preservation', None) is not None:
+            paths['other_preservation'] = self.args.stage2_other_preservation
         return {
             name: {
                 "path": str(path),
@@ -533,6 +605,66 @@ class LiveStage2CTC:
                 output = self.image_encoder.predict({"image": image})
                 embeddings[frame, view] = np.asarray(output["embedding"]).reshape(512)
         return embeddings
+
+    def decode_frozen_logits(
+        self, windows: list[np.ndarray],
+    ) -> tuple[np.ndarray, dict[str, object]]:
+        """Return uncollapsed CTC emissions for up to eight retained visual windows."""
+        if not 1 <= len(windows) <= MAXIMUM_WINDOWS:
+            raise ValueError(f"expected 1..{MAXIMUM_WINDOWS} frozen windows")
+        features = np.zeros((1, MAXIMUM_WINDOWS, 32, FROZEN_FEATURE_DIM), np.float32)
+        mask = np.zeros((1, MAXIMUM_WINDOWS), np.float32)
+        features[0, :len(windows)] = np.asarray(windows, dtype=np.float32)
+        mask[0, :len(windows)] = 1
+        provider = {"frozen_features": features, "window_mask": mask}
+        primary = np.asarray(self.primary.predict(provider)[self.primary_output])
+        specialist = np.asarray(self.specialist.predict(provider)[self.specialist_output])
+        length = len(windows) * TOKENS_PER_WINDOW
+        chosen, selected, base_tokens, specialist_tokens = select_general_ctc_logits(
+            primary, specialist, length,
+            blend_weight=float(self.selector["blend_weight"]),
+            blank_bias=float(self.selector["blank_bias"]),
+            score_margin=float(self.selector["score_margin"]),
+            minimum_tokens=int(self.selector["minimum_tokens"]),
+        )
+        if self.live_adapted is not None:
+            import torch
+            with torch.inference_mode():
+                chosen, _ = self.live_adapted(
+                    torch.from_numpy(features), torch.from_numpy(mask > 0.5),
+                )
+                chosen = chosen.numpy()
+        elif self.other_preservation is not None:
+            import torch
+            from active.v17.model_stage2_v17 import preserve_ctc_emission_runs
+            with torch.inference_mode():
+                odds, lengths = self.other_preservation.other_log_odds(
+                    torch.from_numpy(features), torch.from_numpy(mask > 0.5),
+                )
+                chosen = preserve_ctc_emission_runs(
+                    torch.from_numpy(chosen.reshape(1, -1, 101).copy()), odds,
+                    lengths, self.other_preservation.margin,
+                ).numpy()
+        return np.asarray(chosen).reshape(-1, chosen.shape[-1])[:length], {
+            "primary_tokens": list(base_tokens),
+            "specialist_tokens": list(specialist_tokens),
+            "specialist_selected": bool(selected),
+            "window_count": len(windows),
+        }
+
+    def decode_frozen_windows(self, windows: list[np.ndarray]) -> dict[str, object]:
+        """Decode up to the model's real eight-window context from retained vision features."""
+        chosen, metadata = self.decode_frozen_logits(windows)
+        tokens, positions = collapse_ctc_path(chosen, len(chosen))
+        other_rejections = tokens.count(101)
+        tokens, positions = supported_ctc_path(tokens, positions)
+        return {
+            "hypothesis": [self.labels[token - 1] for token in tokens],
+            "ctc_tokens": list(tokens),
+            "token_positions": list(positions),
+            "other_rejections": other_rejections,
+            **metadata,
+        }
 
     def classify_window(
         self, observations: list[ObservedFrame], prior: list[np.ndarray]
@@ -573,38 +705,11 @@ class LiveStage2CTC:
         })[self.encoder_output]).reshape(1, MAXIMUM_WINDOWS, 32, FROZEN_FEATURE_DIM)[0, 0]
         encoded = time.perf_counter()
 
-        sequence = [*prior, frozen]
-        features = np.zeros((1, MAXIMUM_WINDOWS, 32, FROZEN_FEATURE_DIM), np.float32)
-        mask = np.zeros((1, MAXIMUM_WINDOWS), np.float32)
-        features[0, :len(sequence)] = np.asarray(sequence)
-        mask[0, :len(sequence)] = 1
-        provider = {"frozen_features": features, "window_mask": mask}
-        primary = np.asarray(self.primary.predict(provider)[self.primary_output])
-        specialist = np.asarray(
-            self.specialist.predict(provider)[self.specialist_output]
-        )
-        length = len(sequence) * TOKENS_PER_WINDOW
-        chosen, selected, base_tokens, specialist_tokens = select_general_ctc_logits(
-            primary,
-            specialist,
-            length,
-            blend_weight=float(self.selector["blend_weight"]),
-            blank_bias=float(self.selector["blank_bias"]),
-            score_margin=float(self.selector["score_margin"]),
-            minimum_tokens=int(self.selector["minimum_tokens"]),
-        )
-        tokens, token_positions = collapse_ctc_path(chosen, length)
+        decoded = self.decode_frozen_windows([*prior, frozen])
         inferred = time.perf_counter()
-        hypothesis = [self.labels[token - 1] for token in tokens]
         return frozen, {
             "accepted": True,
-            "hypothesis": hypothesis,
-            "ctc_tokens": list(tokens),
-            "token_positions": list(token_positions),
-            "primary_tokens": list(base_tokens),
-            "specialist_tokens": list(specialist_tokens),
-            "specialist_selected": bool(selected),
-            "window_count": len(sequence),
+            **decoded,
             "frames": len(observations),
             "start_seconds": observations[0].seconds,
             "end_seconds": observations[-1].seconds,
@@ -1118,6 +1223,7 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--stage2-primary", type=Path, default=DEFAULT_PRIMARY)
     value.add_argument("--stage2-specialist", type=Path, default=DEFAULT_SPECIALIST)
     value.add_argument("--stage2-selector", type=Path, default=DEFAULT_SELECTOR)
+    value.add_argument("--stage2-other-preservation", type=Path)
     value.add_argument("--selector-report", type=Path, default=DEFAULT_SELECTOR_REPORT)
     value.add_argument("--vocabulary", type=Path, default=DEFAULT_VOCABULARY)
     value.add_argument(
