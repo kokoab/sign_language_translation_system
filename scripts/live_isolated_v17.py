@@ -1147,6 +1147,7 @@ class SessionRecorder:
             },
             "models": classifier.provenance(),
             "video": str(self.video_path),
+            "video_source_timestamps_seconds": [],
             "predictions": [],
             "events": [],
             "utterances": [],
@@ -1172,6 +1173,7 @@ class SessionRecorder:
             if not self.writer.isOpened():
                 raise RuntimeError("could not create low-resolution MP4 session video")
         self.writer.write(resized)
+        self.data["video_source_timestamps_seconds"].append(float(seconds))
         self.next_video_seconds += 1.0 / self.args.record_fps
         if self.next_video_seconds <= seconds:
             self.next_video_seconds = seconds + 1.0 / self.args.record_fps
