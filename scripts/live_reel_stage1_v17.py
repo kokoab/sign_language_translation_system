@@ -17,7 +17,9 @@ from dataclasses import dataclass
 import json
 import math
 from pathlib import Path
+import pickle
 import sys
+import tempfile
 import time
 
 import cv2
@@ -30,6 +32,7 @@ if str(REPO) not in sys.path:
 from active.v17.extract_v17 import (
     AppleVisionDetector,
     FrameDetection,
+    HandDetection,
     assign_hands,
     limit_image_side,
     orient_frame,
@@ -69,8 +72,21 @@ from scripts.live_stage2_ctc_v17 import (
     LatestCamera,
     LiveStage2CTC,
     MAXIMUM_WINDOWS,
+    collapse_ctc_path,
     roll_ctc_prefix,
+    observe_stage2_frame,
+    supported_ctc_path,
 )
+from active.v17.streaming_ctc_prefix_v17 import StreamingCTCPrefix
+from active.v17.stage1_window_v17 import (
+    NO_EMIT,
+    STRIDE_SECONDS as STAGE1_WINDOW_STRIDE_SECONDS,
+    WINDOW_SECONDS as STAGE1_WINDOW_SECONDS,
+    Stage1WindowTranscript,
+    load_stage1_window_checkpoint,
+    window_end_times,
+)
+from active.v17.stage1_window_v17 import raw_observation_features, normalize_time_window
 
 
 WINDOW_NAME = "SLT v17 reel-style Stage 1"
@@ -91,10 +107,115 @@ DEFAULT_LIP_MARKER_MODEL = (
 )
 
 
+class Stage1WindowClassifier:
+    """Landmark-only classifier for the separately trained window candidate."""
+
+    def __init__(self, args: argparse.Namespace):
+        import torch
+
+        self.path = args.stage1_window_checkpoint
+        self.device = torch.device("cpu")
+        torch.set_num_threads(2)
+        self.model, self.labels, self.checkpoint = load_stage1_window_checkpoint(
+            self.path, self.device
+        )
+        with torch.inference_mode():
+            self.model(torch.zeros((1, 32, 61, 5), device=self.device))
+
+    def provenance(self) -> dict[str, object]:
+        return {
+            "stage1_window_checkpoint": {
+                "path": str(self.path), "sha256": sha256(self.path),
+                "format": self.checkpoint["format"],
+            },
+            "stage1_window": self.checkpoint["stage1_window"],
+            "landmark_only": True,
+        }
+
+    def classify_window(
+        self, observations: list[ObservedFrame], end_seconds: float,
+    ) -> dict[str, object]:
+        import torch
+
+        started = time.perf_counter()
+        raw, timestamps = raw_observation_features(observations)
+        return self.classify_raw_window(raw, timestamps, end_seconds)
+
+    def classify_raw_window(self, raw, timestamps, end_seconds):
+        import torch
+        started = time.perf_counter()
+        features, diagnostics = normalize_time_window(raw, timestamps, end_seconds)
+        with torch.inference_mode():
+            logits = self.model(
+                torch.from_numpy(features[None]).to(self.device)
+            )[0].float().cpu().numpy()
+        probabilities = np.exp(logits - logits.max())
+        probabilities /= probabilities.sum()
+        order = np.argsort(probabilities)[::-1][:3]
+        label = self.labels[int(order[0])]
+        return {
+            "gloss": label,
+            "candidate_gloss": label,
+            "accepted": label != NO_EMIT,
+            "model_score": float(probabilities[order[0]]),
+            "top3": [
+                {"gloss": self.labels[int(index)],
+                 "model_score": float(probabilities[index])}
+                for index in order
+            ],
+            "start_seconds": max(float(timestamps[0]), end_seconds - STAGE1_WINDOW_SECONDS),
+            "end_seconds": float(end_seconds),
+            "diagnostics": diagnostics,
+            "latency_ms": {"total": 1000.0 * (time.perf_counter() - started)},
+        }
+
+
+def final_stage1_window_decode(
+    classifier, observations: list[tuple[float, np.ndarray]],
+) -> tuple[list[str], list[dict[str, object]]]:
+    if len(observations) < 2:
+        return [], []
+    timestamps = np.asarray([item[0] for item in observations])
+    raw = np.stack([item[1] for item in observations])
+    transcript = Stage1WindowTranscript()
+    results = []
+    for end in window_end_times(timestamps, include_final=True):
+        if transcript.predictions and end - transcript.predictions[-1].end_seconds > STAGE1_WINDOW_STRIDE_SECONDS + 1e-6:
+            transcript.update(NO_EMIT, transcript.predictions[-1].end_seconds + .001)
+        try:
+            result = classifier.classify_raw_window(raw, timestamps, end)
+        except ValueError as error:
+            results.append(dict(gloss=NO_EMIT, end_seconds=end, accepted=False,
+                                rejection_reasons=[str(error)]))
+            transcript.update(NO_EMIT, end)
+            continue
+        results.append(result)
+        transcript.update(str(result["gloss"]), end)
+    return list(transcript.words), results
+
+
+def load_frame_timestamps(path: Path | None) -> list[float] | None:
+    if path is None:
+        return None
+    payload = json.loads(path.read_text())
+    values = payload.get("timestamps") if isinstance(payload, dict) else payload
+    timestamps = np.asarray(values, dtype=np.float64)
+    if (
+        timestamps.ndim != 1 or not len(timestamps)
+        or not np.isfinite(timestamps).all()
+        or (timestamps < 0).any()
+        or (len(timestamps) > 1 and np.any(np.diff(timestamps) <= 0))
+    ):
+        raise ValueError("frame timestamps must be a finite, strictly increasing JSON list")
+    return timestamps.tolist()
+
+
 class ReelCascadeClassifier:
     """Fast landmark proposal with a visual-hand verifier only when required."""
 
-    def __init__(self, args: argparse.Namespace):
+    def __init__(
+        self, args: argparse.Namespace, verifier_class=IsolatedClassifier,
+    ):
         import coremltools as ct
 
         self.args = args
@@ -113,7 +234,7 @@ class ReelCascadeClassifier:
         else:
             fast_args = copy.copy(args)
             fast_args.mode = "fast"
-            self.full = IsolatedClassifier(fast_args)
+            self.full = verifier_class(fast_args)
             self.labels = self.full.labels
         self.orientation = ct.models.MLModel(
             str(args.orientation_coreml), compute_units=ct.ComputeUnit.ALL
@@ -490,6 +611,113 @@ def persistent_auxiliary_detection(
     return visible, body, face
 
 
+def _straight_finger(
+    xy: np.ndarray, wrist: np.ndarray, mcp: int, pip: int, tip: int,
+    palm_axis: np.ndarray,
+) -> bool:
+    """Return whether one non-thumb finger is extended away from the palm."""
+    proximal = xy[pip] - xy[mcp]
+    distal = xy[tip] - xy[pip]
+    scale = float(np.linalg.norm(proximal) * np.linalg.norm(distal))
+    aligned = scale > 1e-6 and float(np.dot(proximal, distal) / scale) > 0.45
+    farther = np.linalg.norm(xy[tip] - wrist) > 1.10 * np.linalg.norm(
+        xy[pip] - wrist
+    )
+    beyond_knuckle = float(np.dot(xy[tip] - xy[pip], palm_axis)) > 0.005
+    return bool(aligned and farther and beyond_knuckle)
+
+
+def is_finish_hand(hand: HandDetection | None) -> bool:
+    """Detect one upright open palm (all five fingers visibly extended)."""
+    if hand is None:
+        return False
+    required = np.array([0, 2, 3, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16,
+                         17, 18, 20])
+    if np.any(hand.confidence[required] <= 0):
+        return False
+    xy = hand.xy
+    wrist = xy[0]
+    palm = xy[9] - wrist
+    palm_length = float(np.linalg.norm(palm))
+    if palm_length < 0.025:
+        return False
+    palm_axis = palm / palm_length
+    if palm_axis[1] > -0.25 or wrist[1] > 0.80:
+        return False
+    fingers_open = all(
+        _straight_finger(xy, wrist, mcp, pip, tip, palm_axis)
+        for mcp, pip, tip in ((5, 6, 8), (9, 10, 12), (13, 14, 16),
+                              (17, 18, 20))
+    )
+    thumb_proximal = xy[3] - xy[2]
+    thumb_distal = xy[4] - xy[3]
+    thumb_scale = float(
+        np.linalg.norm(thumb_proximal) * np.linalg.norm(thumb_distal)
+    )
+    thumb_open = (
+        thumb_scale > 1e-6
+        and float(np.dot(thumb_proximal, thumb_distal) / thumb_scale) > 0.15
+        and np.linalg.norm(xy[4] - wrist) > 1.05 * np.linalg.norm(xy[3] - wrist)
+    )
+    return bool(fingers_open and thumb_open)
+
+
+def is_finish_gesture(
+    assigned: dict[str, HandDetection | None],
+) -> bool:
+    """Detect two separated upright open palms: the ten-finger finish sign."""
+    left, right = assigned["left"], assigned["right"]
+    if not is_finish_hand(left) or not is_finish_hand(right):
+        return False
+    assert left is not None and right is not None
+    return bool(np.linalg.norm(left.xy[0] - right.xy[0]) >= 0.12)
+
+
+@dataclass
+class FinishGesture:
+    """Hold/latch policy that prevents a single noisy frame or repeated finish."""
+
+    hold_seconds: float = 0.4
+    dropout_grace_seconds: float = 0.15
+    started_at: float | None = None
+    last_seen_at: float | None = None
+    active: bool = False
+    latched: bool = False
+    progress: float = 0.0
+
+    def update(
+        self, assigned: dict[str, HandDetection | None], seconds: float,
+    ) -> bool:
+        observed = is_finish_gesture(assigned)
+        if observed:
+            self.last_seen_at = seconds
+            if self.started_at is None:
+                self.started_at = seconds
+        elif (
+            self.last_seen_at is None
+            or seconds - self.last_seen_at > self.dropout_grace_seconds
+        ):
+            self.started_at = None
+            self.last_seen_at = None
+            self.active = False
+            self.latched = False
+            self.progress = 0.0
+            return False
+
+        self.active = True
+        if self.latched:
+            self.progress = 1.0
+            return False
+        started_at = seconds if self.started_at is None else self.started_at
+        elapsed = max(0.0, seconds - started_at)
+        self.progress = min(1.0, elapsed / self.hold_seconds)
+        if elapsed < self.hold_seconds:
+            return False
+        self.latched = True
+        self.progress = 1.0
+        return True
+
+
 def draw_reel_detection(
     frame: np.ndarray, item: ObservedFrame | None, *, mirror: bool
 ) -> np.ndarray:
@@ -530,13 +758,173 @@ def draw_reel_detection(
     return output
 
 
-def run(args: argparse.Namespace) -> dict[str, object]:
-    classifier = ReelCascadeClassifier(args)
-    sequence_arbiter = None if args.no_stage2_arbiter else LiveStage2CTC(args)
+class DeferredWindows:
+    """FIFO for exact observations awaiting Finish, without retaining RGB in RAM.
+
+    Pickle is read only from this process's private temporary file, never a user path.
+    """
+
+    def __init__(self):
+        # ponytail: disk use grows until Finish; compress if long utterances require it.
+        self.file = tempfile.TemporaryFile()
+        self.offsets: deque[int] = deque()
+
+    def append(self, window):
+        self.file.seek(0, 2)
+        offset = self.file.tell()
+        pickle.dump(window, self.file, protocol=pickle.HIGHEST_PROTOCOL)
+        self.offsets.append(offset)
+
+    def popleft(self):
+        self.file.seek(self.offsets.popleft())
+        return pickle.load(self.file)
+
+    def __len__(self):
+        return len(self.offsets)
+
+    def clear(self):
+        self.offsets.clear()
+        self.file.seek(0)
+        self.file.truncate()
+
+    def close(self):
+        self.file.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+
+class RetainedFrozenWindows:
+    """Disk-backed visual features for Finish-time CTC re-decoding."""
+
+    def __init__(self):
+        self.file = tempfile.TemporaryFile()
+        self.offsets: list[int] = []
+
+    def append(self, frozen: np.ndarray) -> None:
+        self.file.seek(0, 2)
+        self.offsets.append(self.file.tell())
+        pickle.dump(np.asarray(frozen, dtype=np.float32), self.file,
+                    protocol=pickle.HIGHEST_PROTOCOL)
+
+    def snapshot(self) -> list[np.ndarray]:
+        values = []
+        for offset in self.offsets:
+            self.file.seek(offset)
+            values.append(pickle.load(self.file))
+        return values
+
+    def clear(self) -> None:
+        self.offsets.clear()
+        self.file.seek(0)
+        self.file.truncate()
+
+    def __len__(self) -> int:
+        return len(self.offsets)
+
+    def close(self) -> None:
+        self.file.close()
+
+
+def _common_prefix_size(left: list[str], right: list[str]) -> int:
+    return next((index for index, pair in enumerate(zip(left, right)) if pair[0] != pair[1]),
+                min(len(left), len(right)))
+
+
+def stitch_revisable_ctc_logits(
+    chunks: list[tuple[int, np.ndarray]], total_steps: int,
+) -> np.ndarray:
+    """Average overlapping visual CTC emissions on their absolute time line."""
+    if not chunks:
+        return np.empty((0, 101), np.float32)
+    classes = chunks[0][1].shape[-1]
+    summed = np.zeros((total_steps, classes), np.float64)
+    counts = np.zeros(total_steps, np.int32)
+    for start_window, logits in chunks:
+        start = start_window * 8
+        end = min(total_steps, start + len(logits))
+        summed[start:end] += logits[:end - start]
+        counts[start:end] += 1
+    if not np.all(counts):
+        raise ValueError("Finish-time visual decoder left an uncovered CTC step")
+    return (summed / counts[:, None]).astype(np.float32)
+
+
+def final_revisable_decode(arbiter, retained: RetainedFrozenWindows) -> dict[str, object]:
+    """Re-run every retained visual window; the model itself supports eight at once."""
+    windows = retained.snapshot()
+    if not windows:
+        return {"hypothesis": [], "chunks": [], "retained_windows": 0}
+    overlap = 2
+    stride = MAXIMUM_WINDOWS - overlap
+    decoded: list[tuple[int, np.ndarray]] = []
+    chunks: list[dict[str, object]] = []
+    for start in range(0, len(windows), stride):
+        window_slice = windows[start:start + MAXIMUM_WINDOWS]
+        if not window_slice:
+            break
+        logits, metadata = arbiter.decode_frozen_logits(window_slice)
+        decoded.append((start, np.asarray(logits, dtype=np.float32)))
+        chunks.append({
+            "start_window": start,
+            "end_window": start + len(window_slice),
+            "ctc_steps": len(logits),
+            "window_count": len(window_slice),
+            "specialist_selected": metadata.get("specialist_selected"),
+        })
+        if start + len(window_slice) == len(windows):
+            break
+    stitched = stitch_revisable_ctc_logits(decoded, len(windows) * 8)
+    tokens, positions = collapse_ctc_path(stitched, len(stitched))
+    tokens, positions = supported_ctc_path(tokens, positions)
+    return {
+        "hypothesis": [arbiter.labels[token - 1] for token in tokens],
+        "token_positions": list(positions),
+        "chunks": chunks,
+        "retained_windows": len(windows),
+        "overlap_windows": overlap,
+    }
+
+
+def run(
+    args: argparse.Namespace, classifier_factory=ReelCascadeClassifier,
+) -> dict[str, object]:
+    window_backend = getattr(args, "transcript_backend", "ctc") == "stage1-window"
+    preserve_pending = getattr(args, "preserve_pending_frames", False)
+    stage2_at_finish = getattr(args, "stage2_at_finish", False)
+    stage2_review_only = getattr(args, "stage2_review_only", False)
+    provisional_glosses = getattr(args, "provisional_glosses", False)
+    sequence_preview = getattr(args, "sequence_preview", False)
+    revisable_transcript = getattr(args, "revisable_transcript", False)
+    if revisable_transcript:
+        sequence_preview = True
+        provisional_glosses = True
+    if sequence_preview:
+        if args.no_stage2_arbiter:
+            raise ValueError("sequence preview requires Stage2")
+        stage2_at_finish = False
+        stage2_review_only = True
+    sequence_arbiter = (
+        None if window_backend or args.no_stage2_arbiter else LiveStage2CTC(args)
+    )
+    classifier = (
+        Stage1WindowClassifier(args) if window_backend
+        else sequence_arbiter if sequence_preview
+        else classifier_factory(args)
+    )
     lip_disambiguator = (
-        None if args.no_lip_marker_verifier
+        None if window_backend or args.no_lip_marker_verifier
         else LipMarkerDisambiguator(args.lip_marker_model)
     )
+    if window_backend:
+        provisional_glosses = True
+        sequence_preview = False
+        revisable_transcript = False
+        stage2_at_finish = False
+        stage2_review_only = False
     naturalizer = make_naturalizer(args)
     speaker = None if args.no_speech else LiveSpeaker()
     source = str(args.video) if args.video else f"camera:{args.camera}"
@@ -545,6 +933,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "format": "slt_live_reel_stage1_v17_session",
         "version": 1,
         "prototype_scope": (
+            "revisable timestamped Stage-1 windows with NO_EMIT"
+            if window_backend else
             "growing activity-anchored Stage-1 candidates with label-stability locks"
         ),
         "score_semantics": "uncalibrated Stage-1 softmax with temporal agreement",
@@ -557,13 +947,19 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "commit_score": args.commit_score,
         "commit_hits": args.commit_hits,
         "instant_commit_score": args.instant_commit_score,
-        "full_visual_verifier": not getattr(
+        "full_visual_verifier": not window_backend and not getattr(
             args, "landmark_only_commit", False
         ),
         "release_hits": args.release_hits,
         "transition_overlap_seconds": args.transition_overlap_seconds,
         "no_hand_release_seconds": args.no_hand_release_seconds,
         "capture_policy": "latest-frame webcam; sequential saved video",
+        "realtime_video": getattr(args, "realtime_video", False),
+        "frame_timestamps": (
+            None if getattr(args, "frame_timestamps", None) is None
+            else str(args.frame_timestamps)
+        ),
+        "exclude_final_frames": getattr(args, "exclude_final_frames", 0),
         "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
         "auxiliary_detection_schedule": (
             "every_processed_frame" if args.dense_model_auxiliary
@@ -578,7 +974,16 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         ),
         "lip_marker_minimum_confidence": args.lip_marker_minimum_confidence,
         "stage2_sequence_arbiter": sequence_arbiter is not None,
+        "preserve_pending_frames": preserve_pending,
+        "provisional_glosses": provisional_glosses,
+        "stage2_at_finish": stage2_at_finish,
+        "sequence_preview": sequence_preview,
+        "revisable_transcript": revisable_transcript or window_backend,
+        "transcript_backend": getattr(args, "transcript_backend", "ctc"),
+        "stage2_review_only": stage2_review_only,
         "stage2_minimum_phrase_seconds": args.stage2_minimum_phrase_seconds,
+        "finish_gesture": not args.no_finish_gesture,
+        "finish_gesture_hold_seconds": args.finish_gesture_hold_seconds,
     })
     if sequence_arbiter is not None:
         recorder.data["models"]["stage2_sequence_arbiter"] = (
@@ -596,10 +1001,29 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     source_fps = capture.get(cv2.CAP_PROP_FPS)
     source_fps = source_fps if np.isfinite(source_fps) and source_fps > 1 else 30.0
+    frame_timestamps = load_frame_timestamps(getattr(args, "frame_timestamps", None))
+    reported_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    if frame_timestamps is not None and len(frame_timestamps) < reported_frames:
+        capture.release()
+        recorder.close()
+        raise ValueError('frame timestamps do not cover the video')
+    available_frames = (
+        min(len(frame_timestamps), reported_frames or len(frame_timestamps)) if frame_timestamps is not None
+        else reported_frames if getattr(args, "exclude_final_frames", 0) else 0
+    )
+    stop_frame = (
+        None if available_frames <= 0
+        else max(0, available_frames - getattr(args, "exclude_final_frames", 0))
+    )
+    if available_frames and args.exclude_final_frames >= available_frames:
+        capture.release()
+        recorder.close()
+        raise ValueError('final-frame exclusion removes the entire video')
     detector = AppleVisionDetector(args.minimum_point_confidence)
     lip_tracker = LipMarkerTracker(enabled=lip_disambiguator is not None or (
         not args.no_display and not args.no_live_lips
     ))
+    finish_gesture = FinishGesture(args.finish_gesture_hold_seconds)
     previous_wrists = {"left": None, "right": None}
     maximum_frames = max(8, math.ceil(args.candidate_maximum_seconds * args.processing_fps))
     observations: deque[ObservedFrame] = deque(maxlen=maximum_frames)
@@ -622,21 +1046,32 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     glosses: list[str] = []
     pending_pair: dict[str, object] | None = None
     ctc_buffer = ElapsedWindowBuffer(args.stage2_window_seconds)
-    ctc_ready: deque[list[ObservedFrame]] = deque()
+    ctc_ready = DeferredWindows() if stage2_at_finish else deque()
     ctc_future: Future | None = None
     ctc_future_epoch = 0
     ctc_prior: list[np.ndarray] = []
     ctc_locked: list[str] = []
+    ctc_locked_positions: list[int] = []
+    ctc_position_offset = 0
+    sequence_prefix = StreamingCTCPrefix()
     ctc_context_hypothesis: list[str] = []
     ctc_context_positions: list[int] = []
     ctc_hypothesis: list[str] = []
     last_stage2_hypothesis: list[str] = []
     ctc_results: list[dict[str, object]] = []
+    retained_frozen = RetainedFrozenWindows()
+    revisable_hypothesis: list[str] = []
+    stage1_window_transcript = Stage1WindowTranscript()
+    stage1_window_retained: list[tuple[float, np.ndarray]] = []
+    stage1_window_results: list[dict[str, object]] = []
+    stage1_next_end: float | None = None
     activity_first_seconds: float | None = None
     activity_last_seconds: float | None = None
     finishing_glosses: list[str] = []
     sentence = ""
     finish_requested = False
+    finish_started_at: float | None = None
+    last_preview: str | None = None
     active = False
     activity_hits = 0
     no_hand_since: float | None = None
@@ -647,14 +1082,17 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     latest_lips: np.ndarray | None = None
     latest_result: dict[str, object] | None = None
     next_process = next_probe = 0.0
+    last_probe_end = float("-inf")
     frame_index = processed = 0
+    last_source_seconds = 0.0
     wall_started = time.perf_counter()
+    capture_elapsed: float | None = None
     camera = None if args.video else LatestCamera(capture, wall_started)
     camera_sequence = dropped_camera_frames = 0
     display_times: deque[float] = deque(maxlen=30)
     ui_actions: deque[tuple[str, float]] = deque()
     display_size = [1280, 720]
-    hud = ReelHud()
+    hud = ReelHud(provisional=provisional_glosses)
     last_button_seconds = {"reset": float("-inf"), "finish": float("-inf")}
     warm_logged = False
 
@@ -675,27 +1113,95 @@ def run(args: argparse.Namespace) -> dict[str, object]:
 
         cv2.setMouseCallback(WINDOW_NAME, on_mouse)
 
-    def clear_candidate(*, keep_after: float | None = None) -> None:
-        nonlocal active, activity_hits, next_probe
+    def clear_candidate(
+        *, keep_after: float | None = None, consumed_until: float | None = None,
+    ) -> None:
+        nonlocal active, activity_hits, next_probe, latest_result, last_preview
         retained = [] if keep_after is None else [
             item for item in observations if item.seconds >= keep_after
         ]
+        if consumed_until is not None:
+            retained = [item for item in observations if item.seconds > consumed_until]
         observations.clear()
         observations.extend(retained)
         active = bool(retained)
         activity_hits = 0
         next_probe = retained[-1].seconds if retained else 0.0
+        if provisional_glosses and not retained:
+            if latest_result and not latest_result.get("committed_gloss"):
+                latest_result = None
+            last_preview = None
+
+    def process_stage1_windows(current_seconds: float) -> None:
+        nonlocal stage1_next_end, latest_result
+        if not window_backend or not stage1_window_retained:
+            return
+        if stage1_next_end is None:
+            stage1_next_end = (
+                stage1_window_retained[0][0] + STAGE1_WINDOW_SECONDS
+            )
+        while stage1_next_end <= current_seconds + 1e-6:
+            end = stage1_next_end
+            stage1_next_end += STAGE1_WINDOW_STRIDE_SECONDS
+            clip = [
+                item for item in stage1_window_retained
+                if end - STAGE1_WINDOW_SECONDS - 1e-9 <= item[0] <= end + 1e-9
+            ]
+            if len(clip) < 2:
+                stage1_window_transcript.update(NO_EMIT, end)
+                continue
+            try:
+                result = classifier.classify_raw_window(
+                    np.stack([v[1] for v in clip]), [v[0] for v in clip], end,
+                )
+            except ValueError as error:
+                recorder.add_event({
+                    "type": "stage1_window_skipped", "end_seconds": end,
+                    "reason": str(error),
+                })
+                stage1_window_transcript.update(NO_EMIT, end)
+                continue
+            previous = list(stage1_window_transcript.words)
+            hypothesis = stage1_window_transcript.update(
+                str(result["gloss"]), end
+            )
+            glosses[:] = hypothesis
+            latest_result = result
+            results.append(result)
+            stage1_window_results.append(result)
+            recorder.add(result)
+            unchanged = _common_prefix_size(previous, hypothesis)
+            recorder.add_event({
+                "type": "stage1_window_transcript_update",
+                "prediction": result["gloss"],
+                "previous": previous,
+                "hypothesis": hypothesis,
+                "unchanged_prefix": unchanged,
+                "replaced_tail": previous[unchanged:],
+                "new_tail": hypothesis[unchanged:],
+                "window_start_seconds": clip[0][0],
+                "window_end_seconds": end,
+                "elapsed_seconds": time.perf_counter() - wall_started,
+                "observed_seconds": current_seconds,
+                "latency_ms": result["latency_ms"],
+            })
 
     def submit() -> None:
         nonlocal future, future_kind, future_clip, future_result
-        nonlocal future_proposal, future_epoch, next_probe
-        if future is not None or not active or finish_requested:
+        nonlocal future_proposal, future_epoch, next_probe, last_probe_end
+        if window_backend or sequence_preview or future is not None or not active or (finish_requested and not preserve_pending):
             return
         clip = list(observations)
         if len(clip) < 4:
             return
         duration = clip[-1].seconds - clip[0].seconds
-        if duration < args.candidate_minimum_seconds or clip[-1].seconds < next_probe:
+        if duration < args.candidate_minimum_seconds:
+            return
+        if finish_requested:
+            # Only new evidence may add a stability hit; never loop on a frozen tail.
+            if clip[-1].seconds <= last_probe_end:
+                return
+        elif clip[-1].seconds < next_probe:
             return
         future_epoch = epoch
         future_clip = clip
@@ -703,14 +1209,21 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         future_proposal = None
         future_kind = "proposal"
         future = classifier_executor.submit(classifier.classify, clip)
+        last_probe_end = clip[-1].seconds
         next_probe = clip[-1].seconds + args.probe_interval_seconds
 
     def submit_ctc() -> None:
         nonlocal ctc_future, ctc_future_epoch
-        nonlocal ctc_locked, ctc_context_hypothesis, ctc_context_positions
+        nonlocal ctc_locked, ctc_context_hypothesis, ctc_context_positions, ctc_position_offset
+        if preserve_pending and finish_requested:
+            submit()
         if sequence_arbiter is None or ctc_future is not None or not ctc_ready:
             return
+        if stage2_at_finish and (not finish_requested or future is not None):
+            return
         if len(ctc_prior) >= MAXIMUM_WINDOWS:
+            ctc_locked_positions.extend(ctc_position_offset + p for p in ctc_context_positions if p < 8)
+            ctc_position_offset += 8
             ctc_locked, ctc_context_hypothesis, ctc_context_positions = (
                 roll_ctc_prefix(
                     ctc_locked, ctc_context_hypothesis, ctc_context_positions
@@ -734,6 +1247,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         ignored = ctc_future_epoch != epoch
         if frozen is not None and not ignored:
             ctc_prior.append(frozen)
+            if revisable_transcript:
+                retained_frozen.append(frozen)
         if result.get("accepted") and not ignored:
             ctc_context_hypothesis = list(result["hypothesis"])
             ctc_context_positions = list(result["token_positions"])
@@ -741,13 +1256,46 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             result["context_hypothesis"] = list(ctc_context_hypothesis)
             result["locked_prefix"] = list(ctc_locked)
             result["hypothesis"] = list(ctc_hypothesis)
+            if revisable_transcript:
+                previous = list(revisable_hypothesis)
+                revisable_hypothesis[:] = ctc_hypothesis
+                glosses[:] = revisable_hypothesis
+                unchanged = _common_prefix_size(previous, revisable_hypothesis)
+                recorder.add_event({
+                    "type": "revisable_transcript_update",
+                    "previous": previous,
+                    "hypothesis": list(revisable_hypothesis),
+                    "unchanged_prefix": unchanged,
+                    "replaced_tail": previous[unchanged:],
+                    "new_tail": revisable_hypothesis[unchanged:],
+                    "retained_windows": len(retained_frozen),
+                    "observed_seconds": None if latest is None else latest.seconds,
+                    "window_end_seconds": result.get("end_seconds"),
+                    "elapsed_seconds": time.perf_counter() - wall_started,
+                })
+            elif sequence_preview:
+                state = sequence_prefix.update(
+                    list(ctc_hypothesis),
+                    [*ctc_locked_positions, *[ctc_position_offset + p for p in ctc_context_positions]],
+                    ctc_position_offset + len(ctc_prior) * 8,
+                )
+                glosses[:] = state["committed"]
+                recorder.add_event({"type": "sequence_prefix_update", **state,
+                    "evidence_end": ctc_position_offset + len(ctc_prior) * 8,
+                    "observed_seconds": None if latest is None else latest.seconds,
+                    "window_end_seconds": result.get("end_seconds"),
+                    "elapsed_seconds": time.perf_counter() - wall_started})
         ctc_results.append(result)
         recorder.add_event({
             "type": "stage2_sequence_update",
+            "after_finish": finish_requested,
             "hypothesis": list(ctc_hypothesis),
             "accepted": bool(result.get("accepted")),
             "ignored_after_reset": ignored,
             "window_count": result.get("window_count"),
+            "token_positions": result.get("token_positions"),
+            "start_seconds": result.get("start_seconds"),
+            "end_seconds": result.get("end_seconds"),
             "latency_ms": result.get("latency_ms"),
         })
         submit_ctc()
@@ -755,6 +1303,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     def collect(wait: bool = False) -> None:
         nonlocal future, future_kind, future_clip, future_result
         nonlocal future_proposal, latest_result, pending_pair
+        nonlocal last_preview
         if future is None or (not wait and not future.done()):
             return
         if future_kind == "proposal":
@@ -763,6 +1312,22 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             proposal = None if ignored else lock.update(result)
             if not ignored:
                 latest_result = result
+                if provisional_glosses and result.get("accepted"):
+                    label = str(result["gloss"])
+                    if label != last_preview and label != lock.suppressed:
+                        recorder.add_event({
+                            "type": "provisional_gloss", "gloss": label,
+                            "start_seconds": result["start_seconds"],
+                            "end_seconds": result["end_seconds"],
+                            "observed_seconds": None if latest is None else latest.seconds,
+                            "elapsed_seconds": time.perf_counter() - wall_started,
+                            "since_activity_seconds": (
+                                None if latest is None or activity_first_seconds is None
+                                else latest.seconds - activity_first_seconds
+                            ),
+                            "latency_ms": result.get("latency_ms"),
+                        })
+                        last_preview = label
             if proposal is not None and future_clip is not None:
                 future_result = result
                 future_proposal = proposal
@@ -845,6 +1410,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             "lock_proposal": proposal,
             "full_verifier": verifier,
             "committed_gloss": emitted,
+            "completed_observed_seconds": None if latest is None else latest.seconds,
+            "completed_elapsed_seconds": time.perf_counter() - wall_started,
         })
         results.append(result)
         recorder.add(result)
@@ -898,8 +1465,17 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             end = float(result["end_seconds"])
             if args.transition_overlap_seconds > 0:
                 clear_candidate(keep_after=end - args.transition_overlap_seconds)
+            elif preserve_pending:
+                clear_candidate(consumed_until=end)
             else:
                 clear_candidate()
+            if preserve_pending:
+                recorder.add_event({
+                    "type": "committed_buffer_retained", "gloss": emitted,
+                    "consumed_until": end, "retained_frames": len(observations),
+                    "retained_start": observations[0].seconds if observations else None,
+                })
+            last_preview = None
 
     def service_language() -> None:
         nonlocal warm_logged, naturalizer_future, naturalizer_context, sentence
@@ -907,6 +1483,9 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         nonlocal ctc_hypothesis, last_stage2_hypothesis
         nonlocal ctc_context_hypothesis, ctc_context_positions
         nonlocal activity_first_seconds, activity_last_seconds
+        nonlocal latest_result, finish_started_at, ctc_position_offset
+        nonlocal stage1_next_end
+        submit_ctc()
         if not warm_logged and warm_future.done():
             warm_logged = True
             recorder.add_event({"type": "naturalizer_warmup", **warm_future.result()})
@@ -937,19 +1516,51 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 len(accepted_ctc) >= 2
                 and accepted_ctc[-1] == accepted_ctc[-2]
             )
-            finished, selection_mode = select_finished_sequence(
-                stage1_finished, last_stage2_hypothesis, active_seconds,
-                args.stage2_minimum_phrase_seconds,
-                stage2_stable=stage2_stable,
-            )
+            final_visual = None
+            if window_backend:
+                finished, final_results = final_stage1_window_decode(
+                    classifier, stage1_window_retained
+                )
+                final_visual = {
+                    "hypothesis": finished,
+                    "windows": len(final_results),
+                    "partial_tail_included": bool(final_results) and not np.isclose(
+                        final_results[-1]["end_seconds"],
+                        stage1_window_results[-1]["end_seconds"]
+                        if stage1_window_results else float("-inf"),
+                    ),
+                }
+                selection_mode = "stage1_window_visual_redecode"
+            elif revisable_transcript:
+                final_visual = final_revisable_decode(sequence_arbiter, retained_frozen)
+                finished = list(final_visual["hypothesis"])
+                selection_mode = "revisable_visual_redecode"
+            elif sequence_preview:
+                finished = stage1_finished
+                selection_mode = "confirmed_ctc_prefix_with_provisional_review"
+            elif stage2_review_only:
+                finished = stage1_finished
+                selection_mode = "stage1_with_stage2_review_candidate"
+            else:
+                finished, selection_mode = select_finished_sequence(
+                    stage1_finished, last_stage2_hypothesis, active_seconds,
+                    args.stage2_minimum_phrase_seconds,
+                    stage2_stable=stage2_stable,
+                )
             recorder.add_event({
                 "type": "finished_sequence_selected",
-                "stage1": stage1_finished,
+                "stage1": [] if sequence_preview else stage1_finished,
+                "confirmed_ctc_prefix": stage1_finished if sequence_preview and not revisable_transcript else None,
                 "stage2": last_stage2_hypothesis,
                 "selected": finished,
                 "selection_mode": selection_mode,
                 "active_seconds": active_seconds,
                 "stage2_stable": stage2_stable,
+                "final_visual_redecode": final_visual,
+                "finish_decode_ms": (
+                    None if finish_started_at is None
+                    else 1000 * (time.perf_counter() - finish_started_at)
+                ),
             })
             finishing_glosses[:] = finished
             glosses.clear()
@@ -957,14 +1568,26 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             commit_lock.reset()
             clear_candidate()
             ctc_buffer.reset()
+            ctc_ready.clear()
             ctc_prior.clear()
             ctc_locked.clear()
+            ctc_locked_positions.clear()
+            ctc_position_offset = 0
+            sequence_prefix.reset()
             ctc_context_hypothesis = []
             ctc_context_positions = []
             ctc_hypothesis = []
             ctc_results.clear()
+            retained_frozen.clear()
+            revisable_hypothesis.clear()
+            stage1_window_transcript.reset()
+            stage1_window_retained.clear()
+            stage1_window_results.clear()
+            stage1_next_end = None
             activity_first_seconds = None
             activity_last_seconds = None
+            if provisional_glosses:
+                latest_result = None
             if not finished:
                 sentence = "No recognized signs to finish."
                 recorder.add_event({"type": "finish_empty"})
@@ -974,7 +1597,9 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                     "requested_utc": utc_now(),
                     "glosses": finished,
                     "epoch": epoch,
+                    "finish_started_at": finish_started_at,
                 }
+                finish_started_at = None
                 naturalizer_future = language_executor.submit(
                     naturalizer.rephrase, finished
                 )
@@ -986,6 +1611,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             utterance = {
                 **(naturalizer_context or {}), **value, "completed_utc": utc_now(),
                 "displayed_and_spoken": visible,
+                "finish_total_ms": (
+                    None if not naturalizer_context or naturalizer_context.get("finish_started_at") is None
+                    else 1000 * (time.perf_counter() - naturalizer_context["finish_started_at"])
+                ),
             }
             recorder.add_utterance(utterance)
             if visible:
@@ -1004,6 +1633,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             return
         while pending_speech:
             item = pending_speech.popleft()
+            if provisional_glosses and item["kind"] != "finished_sentence":
+                continue
             speaker.enqueue(str(item["text"]), str(item["kind"]), item["reference"])
             recorder.add_event({"type": "speech_queued", **item})
         started = speaker.update()
@@ -1015,6 +1646,9 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         nonlocal activity_first_seconds, activity_last_seconds, ctc_hypothesis
         nonlocal ctc_context_hypothesis, ctc_context_positions
         nonlocal latest_result
+        nonlocal last_preview, last_stage2_hypothesis
+        nonlocal last_probe_end, finish_started_at, ctc_position_offset
+        nonlocal stage1_next_end
         epoch += 1
         cleared = list(glosses)
         glosses.clear()
@@ -1027,13 +1661,26 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         ctc_ready.clear()
         ctc_prior.clear()
         ctc_locked.clear()
+        ctc_locked_positions.clear()
+        ctc_position_offset = 0
+        sequence_prefix.reset()
         ctc_context_hypothesis = []
         ctc_context_positions = []
         ctc_hypothesis = []
         ctc_results.clear()
+        retained_frozen.clear()
+        revisable_hypothesis.clear()
+        stage1_window_transcript.reset()
+        stage1_window_retained.clear()
+        stage1_window_results.clear()
+        stage1_next_end = None
         activity_first_seconds = None
         activity_last_seconds = None
         latest_result = None
+        last_preview = None
+        last_probe_end = float("-inf")
+        finish_started_at = None
+        last_stage2_hypothesis = []
         sentence = "Display reset."
         finish_requested = False
         pending_speech.clear()
@@ -1045,8 +1692,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         })
 
     def request_finish(seconds: float, source_name: str) -> None:
-        nonlocal finish_requested, sentence
-        if finish_requested or naturalizer_future is not None:
+        nonlocal finish_requested, sentence, finish_started_at
+        if finish_requested or (naturalizer_future is not None and not preserve_pending):
             sentence = "Finish already in progress."
             recorder.add_event({
                 "type": "finish_ignored_already_pending",
@@ -1054,6 +1701,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             })
             return
         finish_requested = True
+        finish_started_at = time.perf_counter()
         sentence = "Finishing..."
         if sequence_arbiter is not None:
             tail = ctc_buffer.finish()
@@ -1068,11 +1716,20 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     try:
         while True:
             if camera is None:
+                if stop_frame is not None and frame_index >= stop_frame:
+                    break
                 ok, raw = capture.read()
                 if not ok:
                     break
-                seconds = frame_index / source_fps
+                seconds = (
+                    frame_timestamps[frame_index]
+                    if frame_timestamps is not None else frame_index / source_fps
+                )
                 frame_index += 1
+                if getattr(args, "realtime_video", False):
+                    delay = wall_started + seconds - time.perf_counter()
+                    if delay > 0:
+                        time.sleep(delay)
             else:
                 packet = camera.after(camera_sequence)
                 if packet is None:
@@ -1084,45 +1741,52 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 dropped_camera_frames += max(0, sequence - camera_sequence - 1)
                 camera_sequence = sequence
                 frame_index += 1
+            last_source_seconds = seconds
             canonical = orient_frame(raw, args.rotation, args.input_mirrored)
             recorder.write_frame(canonical, seconds)
             collect()
             collect_ctc()
             service_language()
             if not finish_requested and seconds + 1e-6 >= next_process:
-                detection_frame = limit_image_side(canonical, args.detection_image_side)
-                frame = limit_image_side(canonical, args.maximum_image_side)
-                feature_frame = args.dense_model_auxiliary or (
-                    processed % V17Config().face_interval == 0
-                )
-                body_frame = args.dense_model_auxiliary or (
-                    processed % V17Config().body_interval == 0
-                )
-                latest_lips = lip_tracker.detect(detection_frame)
-                detection = detector.detect(
-                    detection_frame,
-                    include_body=body_frame,
-                    include_face=feature_frame,
-                    include_hands=True,
-                )
-                assigned = assign_hands(detection.hands, previous_wrists)
-                model_detection = FrameDetection(
-                    detection.hands,
-                    detection.body_xy if body_frame else np.zeros_like(
-                        detection.body_xy
-                    ),
-                    detection.body_confidence if body_frame else np.zeros_like(
-                        detection.body_confidence
-                    ),
-                    detection.face_xy,
-                    detection.face_confidence,
-                )
-                latest = ObservedFrame(
-                    frame, model_detection, assigned, seconds,
-                    wrist_motion(assigned, previous_wrists),
-                    *observation_quality(detection),
-                    face_for_features=feature_frame,
-                )
+                if sequence_preview or window_backend:
+                    latest = observe_stage2_frame(canonical, seconds, processed, detector, previous_wrists, args)
+                    detection = latest.detection
+                    assigned = latest.assigned
+                    latest_lips = lip_tracker.detect(limit_image_side(canonical, args.detection_image_side))
+                else:
+                    detection_frame = limit_image_side(canonical, args.detection_image_side)
+                    frame = limit_image_side(canonical, args.maximum_image_side)
+                    feature_frame = args.dense_model_auxiliary or (
+                        processed % V17Config().face_interval == 0
+                    )
+                    body_frame = args.dense_model_auxiliary or (
+                        processed % V17Config().body_interval == 0
+                    )
+                    latest_lips = lip_tracker.detect(detection_frame)
+                    detection = detector.detect(
+                        detection_frame,
+                        include_body=body_frame,
+                        include_face=feature_frame,
+                        include_hands=True,
+                    )
+                    assigned = assign_hands(detection.hands, previous_wrists)
+                    model_detection = FrameDetection(
+                        detection.hands,
+                        detection.body_xy if body_frame else np.zeros_like(
+                            detection.body_xy
+                        ),
+                        detection.body_confidence if body_frame else np.zeros_like(
+                            detection.body_confidence
+                        ),
+                        detection.face_xy,
+                        detection.face_confidence,
+                    )
+                    latest = ObservedFrame(
+                        frame, model_detection, assigned, seconds,
+                        wrist_motion(assigned, previous_wrists),
+                        *observation_quality(detection),
+                        face_for_features=feature_frame,
+                    )
                 latest.lip_points = latest_lips
                 visible_detection, display_body, display_face = (
                     persistent_auxiliary_detection(
@@ -1131,58 +1795,80 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 )
                 display_latest = copy.copy(latest)
                 display_latest.detection = visible_detection
-                observations.append(latest)
-                if sequence_arbiter is not None:
-                    ctc_window = ctc_buffer.add(latest)
-                    if ctc_window is not None:
-                        ctc_ready.append(ctc_window)
-                        submit_ctc()
+                gesture_triggered = (
+                    False if args.no_finish_gesture
+                    else finish_gesture.update(assigned, seconds)
+                )
+                gesture_frame = (
+                    not args.no_finish_gesture and finish_gesture.active
+                )
                 processed += 1
                 next_process = max(next_process + 1.0 / args.processing_fps, seconds)
-                if latest.hand_quality > 0:
+                if gesture_frame:
+                    # The control gesture is UI, not vocabulary. Never feed its
+                    # frames to Stage 1 or Stage 2.
                     no_hand_since = None
-                elif no_hand_since is None:
-                    no_hand_since = seconds
-                elif seconds - no_hand_since >= args.no_hand_release_seconds:
-                    lock.no_hands()
-                    clear_candidate()
-                moving = (
-                    latest.hand_quality > 0
-                    and latest.motion >= args.start_motion
-                )
-                if moving:
-                    if activity_first_seconds is None:
-                        activity_first_seconds = seconds
-                    activity_last_seconds = seconds
-                if not active:
-                    activity_hits = activity_hits + 1 if moving else 0
-                    if activity_hits >= args.start_frames:
-                        retained = [
-                            item for item in observations
-                            if item.seconds >= seconds - args.preroll_seconds
-                        ]
-                        observations.clear()
-                        observations.extend(retained)
-                        active = True
-                elif (
-                    observations[-1].seconds - observations[0].seconds
-                    >= args.candidate_maximum_seconds
-                    and future is None
-                ):
-                    recorder.add_event({
-                        "type": "candidate_timeout",
-                        "seconds": seconds,
-                        "suppressed_gloss": lock.suppressed,
-                    })
-                    lock.candidate = None
-                    lock.hits = 0
-                    if args.transition_overlap_seconds > 0:
-                        clear_candidate(
-                            keep_after=seconds - args.transition_overlap_seconds
-                        )
-                    else:
+                    if gesture_triggered:
+                        request_finish(seconds, "ten_finger_gesture")
+                else:
+                    observations.append(latest)
+                    if window_backend:
+                        raw_features, _ = raw_observation_features([latest])
+                        stage1_window_retained.append((latest.seconds, raw_features[0]))
+                        process_stage1_windows(seconds)
+                    if sequence_arbiter is not None:
+                        ctc_window = ctc_buffer.add(latest)
+                        if ctc_window is not None:
+                            ctc_ready.append(ctc_window)
+                            submit_ctc()
+                    if latest.hand_quality > 0:
+                        no_hand_since = None
+                    elif no_hand_since is None:
+                        no_hand_since = seconds
+                    elif seconds - no_hand_since >= args.no_hand_release_seconds:
+                        lock.no_hands()
                         clear_candidate()
-                submit()
+                    moving = (
+                        latest.hand_quality > 0
+                        and latest.motion >= args.start_motion
+                    )
+                    if moving:
+                        if provisional_glosses and finishing_glosses:
+                            finishing_glosses.clear()
+                            last_stage2_hypothesis = []
+                            sentence = ""
+                        if activity_first_seconds is None:
+                            activity_first_seconds = seconds
+                        activity_last_seconds = seconds
+                    if not active:
+                        activity_hits = activity_hits + 1 if moving else 0
+                        if activity_hits >= args.start_frames:
+                            retained = [
+                                item for item in observations
+                                if item.seconds >= seconds - args.preroll_seconds
+                            ]
+                            observations.clear()
+                            observations.extend(retained)
+                            active = True
+                    elif (
+                        observations[-1].seconds - observations[0].seconds
+                        >= args.candidate_maximum_seconds
+                        and future is None and not sequence_preview
+                    ):
+                        recorder.add_event({
+                            "type": "candidate_timeout",
+                            "seconds": seconds,
+                            "suppressed_gloss": lock.suppressed,
+                        })
+                        lock.candidate = None
+                        lock.hits = 0
+                        if args.transition_overlap_seconds > 0:
+                            clear_candidate(
+                                keep_after=seconds - args.transition_overlap_seconds
+                            )
+                        else:
+                            clear_candidate()
+                    submit()
 
             if not args.no_display:
                 now = time.perf_counter()
@@ -1202,14 +1888,23 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                     shown, latest, latest_result, lock, future is not None, active,
                     fps,
                     glosses + (["GOOD/THANKYOU?"] if pending_pair else []),
-                    finishing_glosses, sentence,
+                    finishing_glosses,
+                    (
+                        f"Hold both open hands to finish  "
+                        f"{round(100 * finish_gesture.progress):d}%"
+                        if finish_gesture.active and not finish_requested
+                        else sentence
+                    ),
                     finish_requested or naturalizer_future is not None,
                     None if speaker is None else speaker.current_text,
-                    ctc_hypothesis,
+                    (revisable_hypothesis if revisable_transcript else ctc_hypothesis)
+                    or (last_stage2_hypothesis if stage2_review_only else []),
                     {
                         "dropped": dropped_camera_frames,
                         "observations": processed,
+                        "sequence_review": stage2_review_only and not revisable_transcript,
                     },
+                    revisable_transcript=revisable_transcript or window_backend,
                 )
                 cv2.imshow(WINDOW_NAME, shown)
                 key = cv2.waitKey(1) & 0xFF
@@ -1229,16 +1924,24 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             else:
                 service_speech()
 
+        capture_elapsed = time.perf_counter() - wall_started
         while future is not None:
             collect(wait=True)
         if args.finish_at_eof:
-            request_finish(frame_index / source_fps, "video_eof")
-        while ctc_future is not None or ctc_ready:
-            collect_ctc(wait=True)
-        service_language()
-        if naturalizer_future is not None:
-            naturalizer_future.result()
+            request_finish(last_source_seconds, "video_eof")
+        if stage2_at_finish and not finish_requested:
+            ctc_ready.clear()
+        while True:
             service_language()
+            if future is not None:
+                collect(wait=True)
+            elif ctc_future is not None:
+                collect_ctc(wait=True)
+            elif naturalizer_future is not None:
+                naturalizer_future.result()
+                service_language()
+            elif not finish_requested and not ctc_ready:
+                break
         service_speech()
     finally:
         if camera is None:
@@ -1249,10 +1952,16 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         classifier_executor.shutdown(wait=True)
         ctc_executor.shutdown(wait=True)
         language_executor.shutdown(wait=True)
+        if stage2_at_finish:
+            ctc_ready.close()
+        retained_frozen.close()
         recorder.data["capture_stats"] = {
             "frames_seen": frame_index,
             "landmark_observations": processed,
             "stale_camera_frames_dropped": dropped_camera_frames,
+            "capture_elapsed_seconds": capture_elapsed,
+            "revisable_transcript": revisable_transcript,
+            "transcript_backend": getattr(args, "transcript_backend", "ctc"),
         }
         recorder.close()
         cv2.destroyAllWindows()
@@ -1289,8 +1998,16 @@ def parser() -> argparse.ArgumentParser:
         detection_image_side=640,
     )
     value.add_argument("--candidate-minimum-seconds", type=float, default=0.50)
+    value.add_argument("--transcript-backend", choices=("ctc", "stage1-window"), default="ctc")
+    value.add_argument("--stage1-window-checkpoint", type=Path)
+    value.add_argument("--frame-timestamps", type=Path)
+    value.add_argument("--exclude-final-frames", type=int, default=0)
     value.add_argument("--candidate-maximum-seconds", type=float, default=2.5)
     value.add_argument("--probe-interval-seconds", type=float, default=0.12)
+    value.add_argument(
+        "--realtime-video", action="store_true",
+        help="pace a saved-video replay by its timestamps for live timing comparisons",
+    )
     value.add_argument("--stability-hits", type=int, default=2)
     value.add_argument("--release-hits", type=int, default=1)
     value.add_argument("--commit-score", type=float, default=0.45)
@@ -1339,17 +2056,40 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--stage2-primary", type=Path, default=DEFAULT_PRIMARY)
     value.add_argument("--stage2-specialist", type=Path, default=DEFAULT_SPECIALIST)
     value.add_argument("--stage2-selector", type=Path, default=DEFAULT_SELECTOR)
+    value.add_argument("--stage2-other-preservation", type=Path)
+    value.add_argument("--no-stage2-other-preservation", dest="stage2_other_preservation", action="store_const", const=None)
     value.add_argument(
         "--selector-report", type=Path, default=DEFAULT_SELECTOR_REPORT,
     )
     value.add_argument("--vocabulary", type=Path, default=DEFAULT_VOCABULARY)
+    value.add_argument("--stage2-live-checkpoint", type=Path, default=None, help="experimental matched-input Stage2 adaptation")
+    value.add_argument("--sequence-preview", action="store_true",
+                       help="experimental continuous CTC preview with confirmed prefixes; uncertain endings remain for review")
+    value.add_argument(
+        "--revisable-transcript", action="store_true",
+        help="experimental continuous CTC transcript; it may revise until Finish re-decodes retained visual features",
+    )
     value.add_argument("--expected-sequence", nargs="*", default=())
     value.add_argument("--finish-at-eof", action="store_true")
+    value.add_argument(
+        "--finish-gesture-hold-seconds", type=float, default=0.4,
+        help="seconds both open palms must remain raised before finishing",
+    )
+    value.add_argument(
+        "--no-finish-gesture", action="store_true",
+        help="disable the ten-finger finish gesture; button and F still work",
+    )
     return value
 
 
-def main() -> None:
-    args = parser().parse_args()
+def validate_args(args: argparse.Namespace) -> None:
+    if args.transcript_backend == "stage1-window":
+        if args.stage1_window_checkpoint is None:
+            raise ValueError("stage1-window requires --stage1-window-checkpoint")
+        if args.revisable_transcript or args.sequence_preview or args.stage2_live_checkpoint:
+            raise ValueError("stage1-window cannot combine with CTC experimental flags")
+    if args.exclude_final_frames < 0 or ((args.frame_timestamps or args.exclude_final_frames) and not args.video):
+        raise ValueError("timestamp/exclusion options require a video and nonnegative exclusions")
     positive = (
         args.processing_fps, args.candidate_minimum_seconds,
         args.candidate_maximum_seconds, args.probe_interval_seconds,
@@ -1357,6 +2097,7 @@ def main() -> None:
         args.commit_hits,
         args.no_hand_release_seconds, args.preroll_seconds,
         args.stage2_minimum_phrase_seconds, args.stage2_window_seconds,
+        args.finish_gesture_hold_seconds,
     )
     if min(positive) <= 0:
         raise ValueError("timing, frame, and stability values must be positive")
@@ -1370,6 +2111,11 @@ def main() -> None:
         raise ValueError("commit score must be between zero and one")
     if not args.commit_score <= args.instant_commit_score <= 1.0:
         raise ValueError("instant commit score must be at least the commit score")
+
+
+def main() -> None:
+    args = parser().parse_args()
+    validate_args(args)
     run(args)
 
 
