@@ -1,0 +1,48 @@
+{
+  "format": "slt_stage1_window_data_audit_v17",
+  "version": 1,
+  "status": "supervision_verified_raw_observation_cache_pending",
+  "inputs": {
+    "all_sign_supervision": {
+      "path": "artifacts/reports/stage2_v17_revisable_v1/supervision.json",
+      "sha256": "8d0b9f65fe5b3441dcf65428ff32b029450ba4e9076a85b1b7ef17cf9b86b253"
+    },
+    "frozen_rows": {
+      "path": "artifacts/reports/stage2_v17_live_matched_v1/frozen_inputs.json",
+      "sha256": "a300e66c5c677cef7d4bc63fcd55b575254e470c069d7ecbfc9ec670e7537b61"
+    }
+  },
+  "contract": {
+    "all_signs_including_oov_required": true,
+    "guard_seconds": 0.1,
+    "window_seconds": 0.53,
+    "stride_seconds": 0.13,
+    "training_window_seconds": [0.27, 0.53, 1.07],
+    "equal_partition_ground_truth_used": false
+  },
+  "train": {
+    "annotated_items": 923,
+    "distinct_signers": 3,
+    "distinct_known_signs": 53,
+    "distinct_known_sign_pairs": 41,
+    "guarded_gap_seconds": 386.97383333334466,
+    "potential_full_0_53_second_background_windows": 494
+  },
+  "validation": {
+    "annotated_items": 237,
+    "distinct_signers": 1,
+    "distinct_known_signs": 36,
+    "distinct_known_sign_pairs": 8,
+    "guarded_gap_seconds": 34.39393333333325,
+    "potential_full_0_53_second_background_windows": 16
+  },
+  "split": {
+    "train_signers": ["BENJAMIN_JAMES_BAHAN", "CORY", "RACHEL"],
+    "validation_signers": ["JONATHAN"],
+    "signer_disjoint": true
+  },
+  "blocker": "Existing caches contain resampled Stage-2 windows, not timestamped raw live observations. Candidate preparation must replay source videos through the shared live observer and normalize each selected window independently before training.",
+  "training_launched": false,
+  "citizen_test_accessed": false,
+  "external_evaluation_reserved_accessed": false
+}
