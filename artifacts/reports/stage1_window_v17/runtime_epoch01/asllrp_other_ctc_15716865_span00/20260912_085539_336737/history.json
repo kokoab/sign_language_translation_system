@@ -1,0 +1,1846 @@
+{
+  "format": "slt_live_reel_stage1_v17_session",
+  "version": 1,
+  "prototype_scope": "revisable timestamped Stage-1 windows with NO_EMIT",
+  "started_utc": "2026-09-12T00:55:39.336908+00:00",
+  "source": "data/local/asllrp_other_ctc_v17/spans/validation/asllrp_other_ctc/OTHER_NOW/15716865_span00.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated Stage-1 softmax with temporal agreement",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "candidate_minimum_seconds": 0.5,
+    "candidate_maximum_seconds": 2.5,
+    "probe_interval_seconds": 0.12,
+    "stability_hits": 2,
+    "commit_score": 0.45,
+    "commit_hits": 1,
+    "instant_commit_score": 0.8,
+    "full_visual_verifier": false,
+    "release_hits": 1,
+    "transition_overlap_seconds": 0.0,
+    "no_hand_release_seconds": 0.2,
+    "capture_policy": "latest-frame webcam; sequential saved video",
+    "realtime_video": true,
+    "frame_timestamps": null,
+    "exclude_final_frames": 0,
+    "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+    "auxiliary_detection_schedule": "training_sparse_every_eighth_frame_with_display_hold",
+    "auxiliary_model_schedule": "training_sparse_every_eighth_frame",
+    "lip_marker_model": null,
+    "lip_marker_minimum_confidence": 0.999,
+    "stage2_sequence_arbiter": false,
+    "preserve_pending_frames": true,
+    "provisional_glosses": true,
+    "stage2_at_finish": false,
+    "sequence_preview": false,
+    "revisable_transcript": true,
+    "transcript_backend": "stage1-window",
+    "stage2_review_only": false,
+    "stage2_minimum_phrase_seconds": 1.6,
+    "finish_gesture": false,
+    "finish_gesture_hold_seconds": 0.4
+  },
+  "models": {
+    "stage1_window_checkpoint": {
+      "path": "artifacts/models/stage1_window_v17_seed17111/epoch_01.pth",
+      "sha256": "b3916056ec2f755c69b9c71ee167fa2018c923db0f91843639db1efc2839dc0a",
+      "format": "slt_stage1_window_v17"
+    },
+    "stage1_window": {
+      "base_checkpoint": "artifacts/models/stage1_v17_phrase_adapt_reel_v2/best_model.pth",
+      "base_sha256": "25a4e0551b190890712c79be549ed2381386d72d7c6c0611565e8b538125db3c",
+      "development_freeze_sha256": "e1dbac6727bd1b25b638a094b23c8146988b27491187b3ea4c37212693e05a15",
+      "window_seconds": 0.53,
+      "stride_seconds": 0.13,
+      "training_window_seconds": [
+        0.27,
+        0.53,
+        1.07
+      ],
+      "frames": 32,
+      "no_emit_index": 100,
+      "data_audit": {
+        "format": "slt_stage1_window_data_audit_v17",
+        "version": 1,
+        "supervision": "artifacts/reports/stage1_window_v17/supervision_manifest.json",
+        "supervision_sha256": "108c203106c0d3e0604e6a5e93f1b3cf6797fea3de741cd39f07ca18c0f90f67",
+        "train": {
+          "role": "train",
+          "rows": 923,
+          "context_windows": 5814,
+          "background_windows": 494,
+          "distinct_signs": 53,
+          "distinct_sign_pairs": 41,
+          "distinct_signers": 3,
+          "duration_windows": {
+            "0.27": 1281,
+            "0.53": 1197,
+            "0.53_schedule": 2528,
+            "1.07": 808
+          },
+          "annotation_coverage": 0.5471569628873,
+          "guard_seconds": 0.1,
+          "equal_partition_ground_truth_used": false,
+          "rejected_windows": {}
+        },
+        "validation": {
+          "role": "validation",
+          "rows": 237,
+          "context_windows": 1331,
+          "background_windows": 16,
+          "distinct_signs": 36,
+          "distinct_sign_pairs": 8,
+          "distinct_signers": 1,
+          "duration_windows": {
+            "0.27": 308,
+            "0.53": 286,
+            "0.53_schedule": 578,
+            "1.07": 159
+          },
+          "annotation_coverage": 0.565758891373942,
+          "guard_seconds": 0.1,
+          "equal_partition_ground_truth_used": false,
+          "rejected_windows": {}
+        },
+        "train_validation_signer_disjoint": true,
+        "schedule": {
+          "window_seconds": 0.53,
+          "stride_seconds": 0.13,
+          "training_window_seconds": [
+            0.27,
+            0.53,
+            1.07
+          ],
+          "frames": 32
+        },
+        "category_shares": {
+          "replay": 0.5,
+          "context": 0.3,
+          "background": 0.2
+        },
+        "citizen_test_accessed": false
+      },
+      "isolated_validation_baseline": {
+        "citizen": 0.9523809523809523,
+        "semlex": 0.852760736196319
+      },
+      "isolated_validation_current": {
+        "citizen": 0.9444444444444444,
+        "semlex": 0.8517382413087935
+      },
+      "selection_status": "unselected_pending_complete_streaming_evaluation",
+      "recipe": {
+        "seed": 17111,
+        "epochs": 12,
+        "samples_per_epoch": 3000,
+        "batch_size": 64,
+        "optimizer": "AdamW",
+        "learning_rate": 2e-05,
+        "weight_decay": 0.0001,
+        "scheduler": "cosine",
+        "gradient_clip": 1.0,
+        "loss_weights": {
+          "window": 1.0,
+          "foreground": 0.5,
+          "replay": 1.0
+        },
+        "category_shares": {
+          "replay": 0.5,
+          "context": 0.3,
+          "background": 0.2
+        }
+      },
+      "epoch_optimizer_updates": 47,
+      "completed_optimizer_updates": 47
+    },
+    "landmark_only": true
+  },
+  "video": "artifacts/reports/stage1_window_v17/runtime_epoch01/asllrp_other_ctc_15716865_span00/20260912_085539_336737/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06673333333333334,
+    0.13346666666666668,
+    0.20020000000000002,
+    0.26693333333333336,
+    0.33366666666666667,
+    0.40040000000000003,
+    0.46713333333333334,
+    0.5338666666666667,
+    0.6006,
+    0.6673333333333333,
+    0.7340666666666666,
+    0.8008000000000001,
+    0.8675333333333334,
+    0.9342666666666667,
+    1.0010000000000001,
+    1.0677333333333334,
+    1.1344666666666667,
+    1.2012,
+    1.2679333333333334,
+    1.3346666666666667,
+    1.4014,
+    1.4681333333333333,
+    1.5348666666666666,
+    1.6016000000000001,
+    1.6683333333333334,
+    1.7350666666666668,
+    1.8018,
+    1.8685333333333334,
+    1.9352666666666667,
+    2.0020000000000002,
+    2.0687333333333333,
+    2.135466666666667,
+    2.2022,
+    2.2689333333333335,
+    2.3356666666666666,
+    2.4024,
+    2.469133333333333,
+    2.5358666666666667,
+    2.6026000000000002,
+    2.6693333333333333,
+    2.736066666666667,
+    2.8028,
+    2.8695333333333335,
+    2.9362666666666666,
+    3.003,
+    3.069733333333333,
+    3.1364666666666667,
+    3.2032000000000003,
+    3.2699333333333334,
+    3.336666666666667,
+    3.4034,
+    3.4701333333333335,
+    3.5368666666666666,
+    3.6036,
+    3.6703333333333332,
+    3.7370666666666668,
+    3.8038
+  ],
+  "predictions": [
+    {
+      "gloss": "SAD",
+      "candidate_gloss": "SAD",
+      "accepted": true,
+      "model_score": 0.4849914014339447,
+      "top3": [
+        {
+          "gloss": "SAD",
+          "model_score": 0.4849914014339447
+        },
+        {
+          "gloss": "HELLO",
+          "model_score": 0.0745086520910263
+        },
+        {
+          "gloss": "READY",
+          "model_score": 0.03842361271381378
+        }
+      ],
+      "start_seconds": 0.0,
+      "end_seconds": 0.53,
+      "diagnostics": {
+        "normalization_scale": 0.16969043016433716,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9620535969734192
+      },
+      "latency_ms": {
+        "total": 29.63649999999962
+      }
+    },
+    {
+      "gloss": "SAD",
+      "candidate_gloss": "SAD",
+      "accepted": true,
+      "model_score": 0.6820480227470398,
+      "top3": [
+        {
+          "gloss": "SAD",
+          "model_score": 0.6820480227470398
+        },
+        {
+          "gloss": "FAMILY",
+          "model_score": 0.024702955037355423
+        },
+        {
+          "gloss": "READY",
+          "model_score": 0.02294127456843853
+        }
+      ],
+      "start_seconds": 0.16683333333333333,
+      "end_seconds": 0.66,
+      "diagnostics": {
+        "normalization_scale": 0.15632693469524384,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 1.0
+      },
+      "latency_ms": {
+        "total": 29.90254200000031
+      }
+    },
+    {
+      "gloss": "READY",
+      "candidate_gloss": "READY",
+      "accepted": true,
+      "model_score": 0.16550439596176147,
+      "top3": [
+        {
+          "gloss": "READY",
+          "model_score": 0.16550439596176147
+        },
+        {
+          "gloss": "SMALL",
+          "model_score": 0.13374987244606018
+        },
+        {
+          "gloss": "SAD",
+          "model_score": 0.08805441111326218
+        }
+      ],
+      "start_seconds": 0.26693333333333336,
+      "end_seconds": 0.79,
+      "diagnostics": {
+        "normalization_scale": 0.15632693469524384,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 1.0
+      },
+      "latency_ms": {
+        "total": 28.90604200000002
+      }
+    },
+    {
+      "gloss": "READ",
+      "candidate_gloss": "READ",
+      "accepted": true,
+      "model_score": 0.1277824491262436,
+      "top3": [
+        {
+          "gloss": "READ",
+          "model_score": 0.1277824491262436
+        },
+        {
+          "gloss": "READY",
+          "model_score": 0.12387707829475403
+        },
+        {
+          "gloss": "FIND",
+          "model_score": 0.11811903119087219
+        }
+      ],
+      "start_seconds": 0.40040000000000003,
+      "end_seconds": 0.92,
+      "diagnostics": {
+        "normalization_scale": 0.16340360045433044,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 1.0
+      },
+      "latency_ms": {
+        "total": 24.28770800000013
+      }
+    },
+    {
+      "gloss": "MOTHER",
+      "candidate_gloss": "MOTHER",
+      "accepted": true,
+      "model_score": 0.2751687467098236,
+      "top3": [
+        {
+          "gloss": "MOTHER",
+          "model_score": 0.2751687467098236
+        },
+        {
+          "gloss": "FIND",
+          "model_score": 0.07083060592412949
+        },
+        {
+          "gloss": "MORNING",
+          "model_score": 0.05536376312375069
+        }
+      ],
+      "start_seconds": 0.5672333333333334,
+      "end_seconds": 1.05,
+      "diagnostics": {
+        "normalization_scale": 0.17069247364997864,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.988095223903656
+      },
+      "latency_ms": {
+        "total": 23.612750000000293
+      }
+    },
+    {
+      "gloss": "WOMAN",
+      "candidate_gloss": "WOMAN",
+      "accepted": true,
+      "model_score": 0.09261468797922134,
+      "top3": [
+        {
+          "gloss": "WOMAN",
+          "model_score": 0.09261468797922134
+        },
+        {
+          "gloss": "MORNING",
+          "model_score": 0.09180023521184921
+        },
+        {
+          "gloss": "SLEEP",
+          "model_score": 0.056605014950037
+        }
+      ],
+      "start_seconds": 0.6673333333333333,
+      "end_seconds": 1.1800000000000002,
+      "diagnostics": {
+        "normalization_scale": 0.17069247364997864,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9828869104385376
+      },
+      "latency_ms": {
+        "total": 27.38466599999967
+      }
+    },
+    {
+      "gloss": "MORNING",
+      "candidate_gloss": "MORNING",
+      "accepted": true,
+      "model_score": 0.10815223306417465,
+      "top3": [
+        {
+          "gloss": "MORNING",
+          "model_score": 0.10815223306417465
+        },
+        {
+          "gloss": "STOP",
+          "model_score": 0.09808269888162613
+        },
+        {
+          "gloss": "USE",
+          "model_score": 0.047848623245954514
+        }
+      ],
+      "start_seconds": 0.8008000000000001,
+      "end_seconds": 1.31,
+      "diagnostics": {
+        "normalization_scale": 0.17338286340236664,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9233630895614624
+      },
+      "latency_ms": {
+        "total": 21.73829199999977
+      }
+    },
+    {
+      "gloss": "HOT",
+      "candidate_gloss": "HOT",
+      "accepted": true,
+      "model_score": 0.42780226469039917,
+      "top3": [
+        {
+          "gloss": "HOT",
+          "model_score": 0.42780226469039917
+        },
+        {
+          "gloss": "SAD",
+          "model_score": 0.04696018248796463
+        },
+        {
+          "gloss": "GOOD",
+          "model_score": 0.035314712673425674
+        }
+      ],
+      "start_seconds": 0.9676333333333333,
+      "end_seconds": 1.44,
+      "diagnostics": {
+        "normalization_scale": 0.1761023998260498,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9940476417541504
+      },
+      "latency_ms": {
+        "total": 26.714458000000274
+      }
+    },
+    {
+      "gloss": "HOT",
+      "candidate_gloss": "HOT",
+      "accepted": true,
+      "model_score": 0.1667550653219223,
+      "top3": [
+        {
+          "gloss": "HOT",
+          "model_score": 0.1667550653219223
+        },
+        {
+          "gloss": "BAD",
+          "model_score": 0.05990076810121536
+        },
+        {
+          "gloss": "SLEEP",
+          "model_score": 0.046926796436309814
+        }
+      ],
+      "start_seconds": 1.0677333333333334,
+      "end_seconds": 1.5699999999999998,
+      "diagnostics": {
+        "normalization_scale": 0.1761023998260498,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 1.0
+      },
+      "latency_ms": {
+        "total": 24.895042000000256
+      }
+    },
+    {
+      "gloss": "SCHOOL",
+      "candidate_gloss": "SCHOOL",
+      "accepted": true,
+      "model_score": 0.5432007312774658,
+      "top3": [
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.5432007312774658
+        },
+        {
+          "gloss": "SAME",
+          "model_score": 0.06176631897687912
+        },
+        {
+          "gloss": "HELP",
+          "model_score": 0.02569885365664959
+        }
+      ],
+      "start_seconds": 1.2012,
+      "end_seconds": 1.6999999999999997,
+      "diagnostics": {
+        "normalization_scale": 0.17179280519485474,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.9,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9754464030265808
+      },
+      "latency_ms": {
+        "total": 27.990458000000107
+      }
+    },
+    {
+      "gloss": "SCHOOL",
+      "candidate_gloss": "SCHOOL",
+      "accepted": true,
+      "model_score": 0.7365537881851196,
+      "top3": [
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.7365537881851196
+        },
+        {
+          "gloss": "SAME",
+          "model_score": 0.05384768918156624
+        },
+        {
+          "gloss": "DOCTOR",
+          "model_score": 0.01674780622124672
+        }
+      ],
+      "start_seconds": 1.3013000000000001,
+      "end_seconds": 1.8299999999999996,
+      "diagnostics": {
+        "normalization_scale": 0.16752907633781433,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.8794642686843872
+      },
+      "latency_ms": {
+        "total": 28.047667000000054
+      }
+    },
+    {
+      "gloss": "NO_EMIT",
+      "candidate_gloss": "NO_EMIT",
+      "accepted": false,
+      "model_score": 0.08240332454442978,
+      "top3": [
+        {
+          "gloss": "NO_EMIT",
+          "model_score": 0.08240332454442978
+        },
+        {
+          "gloss": "DOCTOR",
+          "model_score": 0.07440009713172913
+        },
+        {
+          "gloss": "SAME",
+          "model_score": 0.05642029270529747
+        }
+      ],
+      "start_seconds": 1.4681333333333333,
+      "end_seconds": 1.9599999999999995,
+      "diagnostics": {
+        "normalization_scale": 0.16752907633781433,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.898809552192688
+      },
+      "latency_ms": {
+        "total": 18.278958000000234
+      }
+    },
+    {
+      "gloss": "WRITE",
+      "candidate_gloss": "WRITE",
+      "accepted": true,
+      "model_score": 0.5828484892845154,
+      "top3": [
+        {
+          "gloss": "WRITE",
+          "model_score": 0.5828484892845154
+        },
+        {
+          "gloss": "HELP",
+          "model_score": 0.04233862832188606
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.027414657175540924
+        }
+      ],
+      "start_seconds": 1.5682333333333334,
+      "end_seconds": 2.0899999999999994,
+      "diagnostics": {
+        "normalization_scale": 0.1707160323858261,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9977678656578064
+      },
+      "latency_ms": {
+        "total": 25.840333999999743
+      }
+    },
+    {
+      "gloss": "TIRED",
+      "candidate_gloss": "TIRED",
+      "accepted": true,
+      "model_score": 0.5274614691734314,
+      "top3": [
+        {
+          "gloss": "TIRED",
+          "model_score": 0.5274614691734314
+        },
+        {
+          "gloss": "NO_EMIT",
+          "model_score": 0.029013466089963913
+        },
+        {
+          "gloss": "TRY",
+          "model_score": 0.027287619188427925
+        }
+      ],
+      "start_seconds": 1.7017,
+      "end_seconds": 2.2199999999999993,
+      "diagnostics": {
+        "normalization_scale": 0.1740184724330902,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.988095223903656
+      },
+      "latency_ms": {
+        "total": 23.696207999999608
+      }
+    },
+    {
+      "gloss": "HAVE",
+      "candidate_gloss": "HAVE",
+      "accepted": true,
+      "model_score": 0.4783041477203369,
+      "top3": [
+        {
+          "gloss": "HAVE",
+          "model_score": 0.4783041477203369
+        },
+        {
+          "gloss": "TIRED",
+          "model_score": 0.10618241131305695
+        },
+        {
+          "gloss": "NO_EMIT",
+          "model_score": 0.043782349675893784
+        }
+      ],
+      "start_seconds": 1.8685333333333334,
+      "end_seconds": 2.349999999999999,
+      "diagnostics": {
+        "normalization_scale": 0.1740184724330902,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9858630895614624
+      },
+      "latency_ms": {
+        "total": 20.281833000000304
+      }
+    },
+    {
+      "gloss": "COME",
+      "candidate_gloss": "COME",
+      "accepted": true,
+      "model_score": 0.12253643572330475,
+      "top3": [
+        {
+          "gloss": "COME",
+          "model_score": 0.12253643572330475
+        },
+        {
+          "gloss": "TOMORROW",
+          "model_score": 0.0942113846540451
+        },
+        {
+          "gloss": "TIRED",
+          "model_score": 0.07284467667341232
+        }
+      ],
+      "start_seconds": 1.9686333333333335,
+      "end_seconds": 2.479999999999999,
+      "diagnostics": {
+        "normalization_scale": 0.16951222717761993,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 1.0
+      },
+      "latency_ms": {
+        "total": 23.003958000000324
+      }
+    },
+    {
+      "gloss": "HUNGRY",
+      "candidate_gloss": "HUNGRY",
+      "accepted": true,
+      "model_score": 0.2198960781097412,
+      "top3": [
+        {
+          "gloss": "HUNGRY",
+          "model_score": 0.2198960781097412
+        },
+        {
+          "gloss": "NO_EMIT",
+          "model_score": 0.051019493490457535
+        },
+        {
+          "gloss": "TIRED",
+          "model_score": 0.04959936812520027
+        }
+      ],
+      "start_seconds": 2.1021,
+      "end_seconds": 2.609999999999999,
+      "diagnostics": {
+        "normalization_scale": 0.16524599492549896,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9977678656578064
+      },
+      "latency_ms": {
+        "total": 24.466416000000102
+      }
+    },
+    {
+      "gloss": "DRINK",
+      "candidate_gloss": "DRINK",
+      "accepted": true,
+      "model_score": 0.4920746386051178,
+      "top3": [
+        {
+          "gloss": "DRINK",
+          "model_score": 0.4920746386051178
+        },
+        {
+          "gloss": "BAD",
+          "model_score": 0.05049506202340126
+        },
+        {
+          "gloss": "NO_EMIT",
+          "model_score": 0.04239080473780632
+        }
+      ],
+      "start_seconds": 2.2689333333333335,
+      "end_seconds": 2.739999999999999,
+      "diagnostics": {
+        "normalization_scale": 0.16524599492549896,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9955357313156128
+      },
+      "latency_ms": {
+        "total": 25.097666999999824
+      }
+    },
+    {
+      "gloss": "SAME",
+      "candidate_gloss": "SAME",
+      "accepted": true,
+      "model_score": 0.1419447511434555,
+      "top3": [
+        {
+          "gloss": "SAME",
+          "model_score": 0.1419447511434555
+        },
+        {
+          "gloss": "NIGHT",
+          "model_score": 0.11686592549085617
+        },
+        {
+          "gloss": "DOCTOR",
+          "model_score": 0.0718201994895935
+        }
+      ],
+      "start_seconds": 2.3690333333333333,
+      "end_seconds": 2.8699999999999988,
+      "diagnostics": {
+        "normalization_scale": 0.16768492758274078,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.953125
+      },
+      "latency_ms": {
+        "total": 26.980958999999416
+      }
+    },
+    {
+      "gloss": "NIGHT",
+      "candidate_gloss": "NIGHT",
+      "accepted": true,
+      "model_score": 0.3846445083618164,
+      "top3": [
+        {
+          "gloss": "NIGHT",
+          "model_score": 0.3846445083618164
+        },
+        {
+          "gloss": "SAME",
+          "model_score": 0.05447019264101982
+        },
+        {
+          "gloss": "NO_EMIT",
+          "model_score": 0.04288545250892639
+        }
+      ],
+      "start_seconds": 2.5025,
+      "end_seconds": 2.9999999999999987,
+      "diagnostics": {
+        "normalization_scale": 0.1702464073896408,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9821428656578064
+      },
+      "latency_ms": {
+        "total": 25.218499999999366
+      }
+    },
+    {
+      "gloss": "NIGHT",
+      "candidate_gloss": "NIGHT",
+      "accepted": true,
+      "model_score": 0.23226162791252136,
+      "top3": [
+        {
+          "gloss": "NIGHT",
+          "model_score": 0.23226162791252136
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.07586663961410522
+        },
+        {
+          "gloss": "HOW",
+          "model_score": 0.06092359125614166
+        }
+      ],
+      "start_seconds": 2.6026000000000002,
+      "end_seconds": 3.1299999999999986,
+      "diagnostics": {
+        "normalization_scale": 0.1702464073896408,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9122023582458496
+      },
+      "latency_ms": {
+        "total": 43.40687500000051
+      }
+    },
+    {
+      "gloss": "SCHOOL",
+      "candidate_gloss": "SCHOOL",
+      "accepted": true,
+      "model_score": 0.3698551654815674,
+      "top3": [
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.3698551654815674
+        },
+        {
+          "gloss": "SAME",
+          "model_score": 0.06832662969827652
+        },
+        {
+          "gloss": "HELP",
+          "model_score": 0.04159152880311012
+        }
+      ],
+      "start_seconds": 2.769433333333333,
+      "end_seconds": 3.2599999999999985,
+      "diagnostics": {
+        "normalization_scale": 0.17135432362556458,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.9,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9985119104385376
+      },
+      "latency_ms": {
+        "total": 29.685500000000253
+      }
+    },
+    {
+      "gloss": "SCHOOL",
+      "candidate_gloss": "SCHOOL",
+      "accepted": true,
+      "model_score": 0.9573324918746948,
+      "top3": [
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.9573324918746948
+        },
+        {
+          "gloss": "STOP",
+          "model_score": 0.0019424327183514833
+        },
+        {
+          "gloss": "HUNGRY",
+          "model_score": 0.001778776291757822
+        }
+      ],
+      "start_seconds": 2.8695333333333335,
+      "end_seconds": 3.3899999999999983,
+      "diagnostics": {
+        "normalization_scale": 0.17251938581466675,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9665178656578064
+      },
+      "latency_ms": {
+        "total": 32.73333400000045
+      }
+    },
+    {
+      "gloss": "EASY",
+      "candidate_gloss": "EASY",
+      "accepted": true,
+      "model_score": 0.18604041635990143,
+      "top3": [
+        {
+          "gloss": "EASY",
+          "model_score": 0.18604041635990143
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.07790319621562958
+        },
+        {
+          "gloss": "HELP",
+          "model_score": 0.05768822878599167
+        }
+      ],
+      "start_seconds": 3.003,
+      "end_seconds": 3.5199999999999982,
+      "diagnostics": {
+        "normalization_scale": 0.17251938581466675,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9799107313156128
+      },
+      "latency_ms": {
+        "total": 29.611166000000466
+      }
+    },
+    {
+      "gloss": "EASY",
+      "candidate_gloss": "EASY",
+      "accepted": true,
+      "model_score": 0.2518587112426758,
+      "top3": [
+        {
+          "gloss": "EASY",
+          "model_score": 0.2518587112426758
+        },
+        {
+          "gloss": "WAIT",
+          "model_score": 0.05566854029893875
+        },
+        {
+          "gloss": "ANGRY",
+          "model_score": 0.03688715025782585
+        }
+      ],
+      "start_seconds": 3.1698333333333335,
+      "end_seconds": 3.649999999999998,
+      "diagnostics": {
+        "normalization_scale": 0.17524529993534088,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.9,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.996279776096344
+      },
+      "latency_ms": {
+        "total": 30.408707999999507
+      }
+    },
+    {
+      "gloss": "NOW",
+      "candidate_gloss": "NOW",
+      "accepted": true,
+      "model_score": 0.40944570302963257,
+      "top3": [
+        {
+          "gloss": "NOW",
+          "model_score": 0.40944570302963257
+        },
+        {
+          "gloss": "ANGRY",
+          "model_score": 0.2160688191652298
+        },
+        {
+          "gloss": "EXCITED",
+          "model_score": 0.03254362568259239
+        }
+      ],
+      "start_seconds": 3.2699333333333334,
+      "end_seconds": 3.779999999999998,
+      "diagnostics": {
+        "normalization_scale": 0.1779712736606598,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9799107313156128
+      },
+      "latency_ms": {
+        "total": 23.560124999999488
+      }
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-12T00:55:39.404171+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:40.004055+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SAD",
+      "previous": [],
+      "hypothesis": [],
+      "unchanged_prefix": 0,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.0,
+      "window_end_seconds": 0.53,
+      "elapsed_seconds": 0.6101954169999997,
+      "observed_seconds": 0.5672333333333334,
+      "latency_ms": {
+        "total": 29.63649999999962
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:40.107542+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SAD",
+      "previous": [],
+      "hypothesis": [
+        "SAD"
+      ],
+      "unchanged_prefix": 0,
+      "replaced_tail": [],
+      "new_tail": [
+        "SAD"
+      ],
+      "window_start_seconds": 0.16683333333333333,
+      "window_end_seconds": 0.66,
+      "elapsed_seconds": 0.713684,
+      "observed_seconds": 0.6673333333333333,
+      "latency_ms": {
+        "total": 29.90254200000031
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:40.251407+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "READY",
+      "previous": [
+        "SAD"
+      ],
+      "hypothesis": [
+        "SAD"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.26693333333333336,
+      "window_end_seconds": 0.79,
+      "elapsed_seconds": 0.8575507919999998,
+      "observed_seconds": 0.8008000000000001,
+      "latency_ms": {
+        "total": 28.90604200000002
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:40.398429+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "READ",
+      "previous": [
+        "SAD"
+      ],
+      "hypothesis": [
+        "SAD"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.40040000000000003,
+      "window_end_seconds": 0.92,
+      "elapsed_seconds": 1.004572792,
+      "observed_seconds": 0.9676333333333333,
+      "latency_ms": {
+        "total": 24.28770800000013
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:40.502275+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "MOTHER",
+      "previous": [
+        "SAD"
+      ],
+      "hypothesis": [
+        "SAD"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.5672333333333334,
+      "window_end_seconds": 1.05,
+      "elapsed_seconds": 1.108420375,
+      "observed_seconds": 1.0677333333333334,
+      "latency_ms": {
+        "total": 23.612750000000293
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:40.650452+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "WOMAN",
+      "previous": [
+        "SAD"
+      ],
+      "hypothesis": [
+        "SAD"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.6673333333333333,
+      "window_end_seconds": 1.1800000000000002,
+      "elapsed_seconds": 1.2565975,
+      "observed_seconds": 1.2012,
+      "latency_ms": {
+        "total": 27.38466599999967
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:40.796574+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "MORNING",
+      "previous": [
+        "SAD"
+      ],
+      "hypothesis": [
+        "SAD"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.8008000000000001,
+      "window_end_seconds": 1.31,
+      "elapsed_seconds": 1.402721458,
+      "observed_seconds": 1.3680333333333334,
+      "latency_ms": {
+        "total": 21.73829199999977
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:40.904656+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "HOT",
+      "previous": [
+        "SAD"
+      ],
+      "hypothesis": [
+        "SAD"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.9676333333333333,
+      "window_end_seconds": 1.44,
+      "elapsed_seconds": 1.5108046249999998,
+      "observed_seconds": 1.4681333333333333,
+      "latency_ms": {
+        "total": 26.714458000000274
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:41.053353+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "HOT",
+      "previous": [
+        "SAD"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [
+        "HOT"
+      ],
+      "window_start_seconds": 1.0677333333333334,
+      "window_end_seconds": 1.5699999999999998,
+      "elapsed_seconds": 1.659479875,
+      "observed_seconds": 1.6016000000000001,
+      "latency_ms": {
+        "total": 24.895042000000256
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:41.134560+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SCHOOL",
+      "previous": [
+        "SAD",
+        "HOT"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT"
+      ],
+      "unchanged_prefix": 2,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 1.2012,
+      "window_end_seconds": 1.6999999999999997,
+      "elapsed_seconds": 1.7407080829999997,
+      "observed_seconds": 1.7017,
+      "latency_ms": {
+        "total": 27.990458000000107
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:41.311064+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SCHOOL",
+      "previous": [
+        "SAD",
+        "HOT"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 2,
+      "replaced_tail": [],
+      "new_tail": [
+        "SCHOOL"
+      ],
+      "window_start_seconds": 1.3013000000000001,
+      "window_end_seconds": 1.8299999999999996,
+      "elapsed_seconds": 1.9172148749999998,
+      "observed_seconds": 1.8685333333333334,
+      "latency_ms": {
+        "total": 28.047667000000054
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:41.397933+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "NO_EMIT",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 1.4681333333333333,
+      "window_end_seconds": 1.9599999999999995,
+      "elapsed_seconds": 2.004083292,
+      "observed_seconds": 1.9686333333333335,
+      "latency_ms": {
+        "total": 18.278958000000234
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:41.532645+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "WRITE",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 1.5682333333333334,
+      "window_end_seconds": 2.0899999999999994,
+      "elapsed_seconds": 2.138796125,
+      "observed_seconds": 2.1021,
+      "latency_ms": {
+        "total": 25.840333999999743
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:41.701321+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "TIRED",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 1.7017,
+      "window_end_seconds": 2.2199999999999993,
+      "elapsed_seconds": 2.3074746249999993,
+      "observed_seconds": 2.2689333333333335,
+      "latency_ms": {
+        "total": 23.696207999999608
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:41.796919+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "HAVE",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 1.8685333333333334,
+      "window_end_seconds": 2.349999999999999,
+      "elapsed_seconds": 2.4030727499999998,
+      "observed_seconds": 2.3690333333333333,
+      "latency_ms": {
+        "total": 20.281833000000304
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:41.938752+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "COME",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 1.9686333333333335,
+      "window_end_seconds": 2.479999999999999,
+      "elapsed_seconds": 2.5449055829999994,
+      "observed_seconds": 2.5025,
+      "latency_ms": {
+        "total": 23.003958000000324
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:42.105923+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "HUNGRY",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 2.1021,
+      "window_end_seconds": 2.609999999999999,
+      "elapsed_seconds": 2.712078375,
+      "observed_seconds": 2.6693333333333333,
+      "latency_ms": {
+        "total": 24.466416000000102
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:42.199681+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "DRINK",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 2.2689333333333335,
+      "window_end_seconds": 2.739999999999999,
+      "elapsed_seconds": 2.8058358749999996,
+      "observed_seconds": 2.769433333333333,
+      "latency_ms": {
+        "total": 25.097666999999824
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:42.340384+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SAME",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 2.3690333333333333,
+      "window_end_seconds": 2.8699999999999988,
+      "elapsed_seconds": 2.946539958,
+      "observed_seconds": 2.9029000000000003,
+      "latency_ms": {
+        "total": 26.980958999999416
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:42.436581+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "NIGHT",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 2.5025,
+      "window_end_seconds": 2.9999999999999987,
+      "elapsed_seconds": 3.042738375,
+      "observed_seconds": 3.003,
+      "latency_ms": {
+        "total": 25.218499999999366
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:42.625475+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "NIGHT",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT"
+      ],
+      "unchanged_prefix": 3,
+      "replaced_tail": [],
+      "new_tail": [
+        "NIGHT"
+      ],
+      "window_start_seconds": 2.6026000000000002,
+      "window_end_seconds": 3.1299999999999986,
+      "elapsed_seconds": 3.2316327499999993,
+      "observed_seconds": 3.1698333333333335,
+      "latency_ms": {
+        "total": 43.40687500000051
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:42.726229+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SCHOOL",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT"
+      ],
+      "unchanged_prefix": 4,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 2.769433333333333,
+      "window_end_seconds": 3.2599999999999985,
+      "elapsed_seconds": 3.3323881669999995,
+      "observed_seconds": 3.2699333333333334,
+      "latency_ms": {
+        "total": 29.685500000000253
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:42.846345+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SCHOOL",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 4,
+      "replaced_tail": [],
+      "new_tail": [
+        "SCHOOL"
+      ],
+      "window_start_seconds": 2.8695333333333335,
+      "window_end_seconds": 3.3899999999999983,
+      "elapsed_seconds": 3.45250375,
+      "observed_seconds": 3.4034,
+      "latency_ms": {
+        "total": 32.73333400000045
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:43.012203+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "EASY",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL"
+      ],
+      "unchanged_prefix": 5,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 3.003,
+      "window_end_seconds": 3.5199999999999982,
+      "elapsed_seconds": 3.618361792,
+      "observed_seconds": 3.5702333333333334,
+      "latency_ms": {
+        "total": 29.611166000000466
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:43.110100+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "EASY",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL",
+        "EASY"
+      ],
+      "unchanged_prefix": 5,
+      "replaced_tail": [],
+      "new_tail": [
+        "EASY"
+      ],
+      "window_start_seconds": 3.1698333333333335,
+      "window_end_seconds": 3.649999999999998,
+      "elapsed_seconds": 3.716260083,
+      "observed_seconds": 3.6703333333333332,
+      "latency_ms": {
+        "total": 30.408707999999507
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:43.241121+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "NOW",
+      "previous": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL",
+        "EASY"
+      ],
+      "hypothesis": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL",
+        "EASY"
+      ],
+      "unchanged_prefix": 6,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 3.2699333333333334,
+      "window_end_seconds": 3.779999999999998,
+      "elapsed_seconds": 3.847284042,
+      "observed_seconds": 3.8038,
+      "latency_ms": {
+        "total": 23.560124999999488
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:43.244410+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 3.8371666666666666,
+      "active_glosses": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL",
+        "EASY"
+      ],
+      "classifier_pending": false
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:43.907671+00:00",
+      "type": "finished_sequence_selected",
+      "stage1": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL",
+        "EASY"
+      ],
+      "confirmed_ctc_prefix": null,
+      "stage2": [],
+      "selected": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL",
+        "EASY",
+        "NOW"
+      ],
+      "selection_mode": "stage1_window_visual_redecode",
+      "active_seconds": 3.8038,
+      "stage2_stable": false,
+      "final_visual_redecode": {
+        "hypothesis": [
+          "SAD",
+          "HOT",
+          "SCHOOL",
+          "NIGHT",
+          "SCHOOL",
+          "EASY",
+          "NOW"
+        ],
+        "windows": 27,
+        "partial_tail_included": true
+      },
+      "finish_decode_ms": 663.2629579999998
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "reel-0001",
+      "requested_utc": "2026-09-12T00:55:43.910466+00:00",
+      "glosses": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL",
+        "EASY",
+        "NOW"
+      ],
+      "epoch": 0,
+      "finish_started_at": 5.747092875,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"SAD\", \"HOT\", \"SCHOOL\", \"NIGHT\", \"SCHOOL\", \"EASY\", \"NOW\"]",
+      "input_glosses": [
+        "SAD",
+        "HOT",
+        "SCHOOL",
+        "NIGHT",
+        "SCHOOL",
+        "EASY",
+        "NOW"
+      ],
+      "literal_sentence": "Sad hot school night school easy now.",
+      "fallback_sentence": "Sad hot school night school easy now.",
+      "fallback_mode": "literal_fallback",
+      "sentence": "Sad hot school night school easy now.",
+      "rendering_mode": "literal_fallback",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.025207999999388164,
+      "completed_utc": "2026-09-12T00:55:43.910592+00:00",
+      "displayed_and_spoken": true,
+      "finish_total_ms": 666.1930830000005
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_seen": 116,
+    "landmark_observations": 77,
+    "stale_camera_frames_dropped": 0,
+    "capture_elapsed_seconds": 3.850572625,
+    "revisable_transcript": false,
+    "transcript_backend": "stage1-window"
+  },
+  "finished_utc": "2026-09-12T00:55:43.913351+00:00"
+}

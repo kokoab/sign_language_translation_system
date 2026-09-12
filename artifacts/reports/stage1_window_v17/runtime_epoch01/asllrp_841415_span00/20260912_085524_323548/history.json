@@ -1,0 +1,428 @@
+{
+  "format": "slt_live_reel_stage1_v17_session",
+  "version": 1,
+  "prototype_scope": "revisable timestamped Stage-1 windows with NO_EMIT",
+  "started_utc": "2026-09-12T00:55:24.323753+00:00",
+  "source": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_NOW/841415_span00.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated Stage-1 softmax with temporal agreement",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "candidate_minimum_seconds": 0.5,
+    "candidate_maximum_seconds": 2.5,
+    "probe_interval_seconds": 0.12,
+    "stability_hits": 2,
+    "commit_score": 0.45,
+    "commit_hits": 1,
+    "instant_commit_score": 0.8,
+    "full_visual_verifier": false,
+    "release_hits": 1,
+    "transition_overlap_seconds": 0.0,
+    "no_hand_release_seconds": 0.2,
+    "capture_policy": "latest-frame webcam; sequential saved video",
+    "realtime_video": true,
+    "frame_timestamps": null,
+    "exclude_final_frames": 0,
+    "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+    "auxiliary_detection_schedule": "training_sparse_every_eighth_frame_with_display_hold",
+    "auxiliary_model_schedule": "training_sparse_every_eighth_frame",
+    "lip_marker_model": null,
+    "lip_marker_minimum_confidence": 0.999,
+    "stage2_sequence_arbiter": false,
+    "preserve_pending_frames": true,
+    "provisional_glosses": true,
+    "stage2_at_finish": false,
+    "sequence_preview": false,
+    "revisable_transcript": true,
+    "transcript_backend": "stage1-window",
+    "stage2_review_only": false,
+    "stage2_minimum_phrase_seconds": 1.6,
+    "finish_gesture": false,
+    "finish_gesture_hold_seconds": 0.4
+  },
+  "models": {
+    "stage1_window_checkpoint": {
+      "path": "artifacts/models/stage1_window_v17_seed17111/epoch_01.pth",
+      "sha256": "b3916056ec2f755c69b9c71ee167fa2018c923db0f91843639db1efc2839dc0a",
+      "format": "slt_stage1_window_v17"
+    },
+    "stage1_window": {
+      "base_checkpoint": "artifacts/models/stage1_v17_phrase_adapt_reel_v2/best_model.pth",
+      "base_sha256": "25a4e0551b190890712c79be549ed2381386d72d7c6c0611565e8b538125db3c",
+      "development_freeze_sha256": "e1dbac6727bd1b25b638a094b23c8146988b27491187b3ea4c37212693e05a15",
+      "window_seconds": 0.53,
+      "stride_seconds": 0.13,
+      "training_window_seconds": [
+        0.27,
+        0.53,
+        1.07
+      ],
+      "frames": 32,
+      "no_emit_index": 100,
+      "data_audit": {
+        "format": "slt_stage1_window_data_audit_v17",
+        "version": 1,
+        "supervision": "artifacts/reports/stage1_window_v17/supervision_manifest.json",
+        "supervision_sha256": "108c203106c0d3e0604e6a5e93f1b3cf6797fea3de741cd39f07ca18c0f90f67",
+        "train": {
+          "role": "train",
+          "rows": 923,
+          "context_windows": 5814,
+          "background_windows": 494,
+          "distinct_signs": 53,
+          "distinct_sign_pairs": 41,
+          "distinct_signers": 3,
+          "duration_windows": {
+            "0.27": 1281,
+            "0.53": 1197,
+            "0.53_schedule": 2528,
+            "1.07": 808
+          },
+          "annotation_coverage": 0.5471569628873,
+          "guard_seconds": 0.1,
+          "equal_partition_ground_truth_used": false,
+          "rejected_windows": {}
+        },
+        "validation": {
+          "role": "validation",
+          "rows": 237,
+          "context_windows": 1331,
+          "background_windows": 16,
+          "distinct_signs": 36,
+          "distinct_sign_pairs": 8,
+          "distinct_signers": 1,
+          "duration_windows": {
+            "0.27": 308,
+            "0.53": 286,
+            "0.53_schedule": 578,
+            "1.07": 159
+          },
+          "annotation_coverage": 0.565758891373942,
+          "guard_seconds": 0.1,
+          "equal_partition_ground_truth_used": false,
+          "rejected_windows": {}
+        },
+        "train_validation_signer_disjoint": true,
+        "schedule": {
+          "window_seconds": 0.53,
+          "stride_seconds": 0.13,
+          "training_window_seconds": [
+            0.27,
+            0.53,
+            1.07
+          ],
+          "frames": 32
+        },
+        "category_shares": {
+          "replay": 0.5,
+          "context": 0.3,
+          "background": 0.2
+        },
+        "citizen_test_accessed": false
+      },
+      "isolated_validation_baseline": {
+        "citizen": 0.9523809523809523,
+        "semlex": 0.852760736196319
+      },
+      "isolated_validation_current": {
+        "citizen": 0.9444444444444444,
+        "semlex": 0.8517382413087935
+      },
+      "selection_status": "unselected_pending_complete_streaming_evaluation",
+      "recipe": {
+        "seed": 17111,
+        "epochs": 12,
+        "samples_per_epoch": 3000,
+        "batch_size": 64,
+        "optimizer": "AdamW",
+        "learning_rate": 2e-05,
+        "weight_decay": 0.0001,
+        "scheduler": "cosine",
+        "gradient_clip": 1.0,
+        "loss_weights": {
+          "window": 1.0,
+          "foreground": 0.5,
+          "replay": 1.0
+        },
+        "category_shares": {
+          "replay": 0.5,
+          "context": 0.3,
+          "background": 0.2
+        }
+      },
+      "epoch_optimizer_updates": 47,
+      "completed_optimizer_updates": 47
+    },
+    "landmark_only": true
+  },
+  "video": "artifacts/reports/stage1_window_v17/runtime_epoch01/asllrp_841415_span00/20260912_085524_323548/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06673333333333334,
+    0.13346666666666668,
+    0.20020000000000002,
+    0.26693333333333336,
+    0.33366666666666667,
+    0.40040000000000003,
+    0.46713333333333334,
+    0.5338666666666667,
+    0.6006,
+    0.6673333333333333,
+    0.7340666666666666,
+    0.8008000000000001
+  ],
+  "predictions": [
+    {
+      "gloss": "FRIEND",
+      "candidate_gloss": "FRIEND",
+      "accepted": true,
+      "model_score": 0.9313358068466187,
+      "top3": [
+        {
+          "gloss": "FRIEND",
+          "model_score": 0.9313358068466187
+        },
+        {
+          "gloss": "WHEN",
+          "model_score": 0.012687153182923794
+        },
+        {
+          "gloss": "MAKE",
+          "model_score": 0.00227272417396307
+        }
+      ],
+      "start_seconds": 0.0,
+      "end_seconds": 0.53,
+      "diagnostics": {
+        "normalization_scale": 0.17396193742752075,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9732142686843872
+      },
+      "latency_ms": {
+        "total": 29.818750000000005
+      }
+    },
+    {
+      "gloss": "FRIEND",
+      "candidate_gloss": "FRIEND",
+      "accepted": true,
+      "model_score": 0.901808500289917,
+      "top3": [
+        {
+          "gloss": "FRIEND",
+          "model_score": 0.901808500289917
+        },
+        {
+          "gloss": "ANSWER",
+          "model_score": 0.008257375098764896
+        },
+        {
+          "gloss": "SIGN",
+          "model_score": 0.006840716116130352
+        }
+      ],
+      "start_seconds": 0.16683333333333333,
+      "end_seconds": 0.66,
+      "diagnostics": {
+        "normalization_scale": 0.16831110417842865,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 1.0
+      },
+      "latency_ms": {
+        "total": 25.521707999999865
+      }
+    },
+    {
+      "gloss": "FRIEND",
+      "candidate_gloss": "FRIEND",
+      "accepted": true,
+      "model_score": 0.7771893739700317,
+      "top3": [
+        {
+          "gloss": "FRIEND",
+          "model_score": 0.7771893739700317
+        },
+        {
+          "gloss": "SIGN",
+          "model_score": 0.03006446547806263
+        },
+        {
+          "gloss": "ANSWER",
+          "model_score": 0.021228095516562462
+        }
+      ],
+      "start_seconds": 0.26693333333333336,
+      "end_seconds": 0.79,
+      "diagnostics": {
+        "normalization_scale": 0.16831110417842865,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.996279776096344
+      },
+      "latency_ms": {
+        "total": 21.34383400000006
+      }
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-12T00:55:24.410937+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:25.126997+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "FRIEND",
+      "previous": [],
+      "hypothesis": [],
+      "unchanged_prefix": 0,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.0,
+      "window_end_seconds": 0.53,
+      "elapsed_seconds": 0.731362625,
+      "observed_seconds": 0.5672333333333334,
+      "latency_ms": {
+        "total": 29.818750000000005
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:25.181660+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "FRIEND",
+      "previous": [],
+      "hypothesis": [
+        "FRIEND"
+      ],
+      "unchanged_prefix": 0,
+      "replaced_tail": [],
+      "new_tail": [
+        "FRIEND"
+      ],
+      "window_start_seconds": 0.16683333333333333,
+      "window_end_seconds": 0.66,
+      "elapsed_seconds": 0.7860256250000002,
+      "observed_seconds": 0.6673333333333333,
+      "latency_ms": {
+        "total": 25.521707999999865
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:25.254809+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "FRIEND",
+      "previous": [
+        "FRIEND"
+      ],
+      "hypothesis": [
+        "FRIEND"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.26693333333333336,
+      "window_end_seconds": 0.79,
+      "elapsed_seconds": 0.8591743750000003,
+      "observed_seconds": 0.8008000000000001,
+      "latency_ms": {
+        "total": 21.34383400000006
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:25.255749+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 0.8008000000000001,
+      "active_glosses": [
+        "FRIEND"
+      ],
+      "classifier_pending": false
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:25.363227+00:00",
+      "type": "finished_sequence_selected",
+      "stage1": [
+        "FRIEND"
+      ],
+      "confirmed_ctc_prefix": null,
+      "stage2": [],
+      "selected": [
+        "FRIEND"
+      ],
+      "selection_mode": "stage1_window_visual_redecode",
+      "active_seconds": 0.8008000000000001,
+      "stage2_stable": false,
+      "final_visual_redecode": {
+        "hypothesis": [
+          "FRIEND"
+        ],
+        "windows": 4,
+        "partial_tail_included": true
+      },
+      "finish_decode_ms": 107.47749999999989
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "reel-0001",
+      "requested_utc": "2026-09-12T00:55:25.364550+00:00",
+      "glosses": [
+        "FRIEND"
+      ],
+      "epoch": 0,
+      "finish_started_at": 2.889584666,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"FRIEND\"]",
+      "input_glosses": [
+        "FRIEND"
+      ],
+      "literal_sentence": "Friend.",
+      "fallback_sentence": "Friend.",
+      "fallback_mode": "literal_fallback",
+      "sentence": "Friend.",
+      "rendering_mode": "literal_fallback",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.02199999999996649,
+      "completed_utc": "2026-09-12T00:55:25.364662+00:00",
+      "displayed_and_spoken": true,
+      "finish_total_ms": 108.92274999999962
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_seen": 25,
+    "landmark_observations": 17,
+    "stale_camera_frames_dropped": 0,
+    "capture_elapsed_seconds": 0.860115542,
+    "revisable_transcript": false,
+    "transcript_backend": "stage1-window"
+  },
+  "finished_utc": "2026-09-12T00:55:25.366334+00:00"
+}

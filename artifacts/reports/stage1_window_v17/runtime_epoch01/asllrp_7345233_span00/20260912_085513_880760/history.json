@@ -1,0 +1,837 @@
+{
+  "format": "slt_live_reel_stage1_v17_session",
+  "version": 1,
+  "prototype_scope": "revisable timestamped Stage-1 windows with NO_EMIT",
+  "started_utc": "2026-09-12T00:55:13.880935+00:00",
+  "source": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_MAYBE/7345233_span00.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated Stage-1 softmax with temporal agreement",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": true,
+    "candidate_minimum_seconds": 0.5,
+    "candidate_maximum_seconds": 2.5,
+    "probe_interval_seconds": 0.12,
+    "stability_hits": 2,
+    "commit_score": 0.45,
+    "commit_hits": 1,
+    "instant_commit_score": 0.8,
+    "full_visual_verifier": false,
+    "release_hits": 1,
+    "transition_overlap_seconds": 0.0,
+    "no_hand_release_seconds": 0.2,
+    "capture_policy": "latest-frame webcam; sequential saved video",
+    "realtime_video": true,
+    "frame_timestamps": null,
+    "exclude_final_frames": 0,
+    "auxiliary_display_schedule": "every_processed_frame_with_last-valid_hold",
+    "auxiliary_detection_schedule": "training_sparse_every_eighth_frame_with_display_hold",
+    "auxiliary_model_schedule": "training_sparse_every_eighth_frame",
+    "lip_marker_model": null,
+    "lip_marker_minimum_confidence": 0.999,
+    "stage2_sequence_arbiter": false,
+    "preserve_pending_frames": true,
+    "provisional_glosses": true,
+    "stage2_at_finish": false,
+    "sequence_preview": false,
+    "revisable_transcript": true,
+    "transcript_backend": "stage1-window",
+    "stage2_review_only": false,
+    "stage2_minimum_phrase_seconds": 1.6,
+    "finish_gesture": false,
+    "finish_gesture_hold_seconds": 0.4
+  },
+  "models": {
+    "stage1_window_checkpoint": {
+      "path": "artifacts/models/stage1_window_v17_seed17111/epoch_01.pth",
+      "sha256": "b3916056ec2f755c69b9c71ee167fa2018c923db0f91843639db1efc2839dc0a",
+      "format": "slt_stage1_window_v17"
+    },
+    "stage1_window": {
+      "base_checkpoint": "artifacts/models/stage1_v17_phrase_adapt_reel_v2/best_model.pth",
+      "base_sha256": "25a4e0551b190890712c79be549ed2381386d72d7c6c0611565e8b538125db3c",
+      "development_freeze_sha256": "e1dbac6727bd1b25b638a094b23c8146988b27491187b3ea4c37212693e05a15",
+      "window_seconds": 0.53,
+      "stride_seconds": 0.13,
+      "training_window_seconds": [
+        0.27,
+        0.53,
+        1.07
+      ],
+      "frames": 32,
+      "no_emit_index": 100,
+      "data_audit": {
+        "format": "slt_stage1_window_data_audit_v17",
+        "version": 1,
+        "supervision": "artifacts/reports/stage1_window_v17/supervision_manifest.json",
+        "supervision_sha256": "108c203106c0d3e0604e6a5e93f1b3cf6797fea3de741cd39f07ca18c0f90f67",
+        "train": {
+          "role": "train",
+          "rows": 923,
+          "context_windows": 5814,
+          "background_windows": 494,
+          "distinct_signs": 53,
+          "distinct_sign_pairs": 41,
+          "distinct_signers": 3,
+          "duration_windows": {
+            "0.27": 1281,
+            "0.53": 1197,
+            "0.53_schedule": 2528,
+            "1.07": 808
+          },
+          "annotation_coverage": 0.5471569628873,
+          "guard_seconds": 0.1,
+          "equal_partition_ground_truth_used": false,
+          "rejected_windows": {}
+        },
+        "validation": {
+          "role": "validation",
+          "rows": 237,
+          "context_windows": 1331,
+          "background_windows": 16,
+          "distinct_signs": 36,
+          "distinct_sign_pairs": 8,
+          "distinct_signers": 1,
+          "duration_windows": {
+            "0.27": 308,
+            "0.53": 286,
+            "0.53_schedule": 578,
+            "1.07": 159
+          },
+          "annotation_coverage": 0.565758891373942,
+          "guard_seconds": 0.1,
+          "equal_partition_ground_truth_used": false,
+          "rejected_windows": {}
+        },
+        "train_validation_signer_disjoint": true,
+        "schedule": {
+          "window_seconds": 0.53,
+          "stride_seconds": 0.13,
+          "training_window_seconds": [
+            0.27,
+            0.53,
+            1.07
+          ],
+          "frames": 32
+        },
+        "category_shares": {
+          "replay": 0.5,
+          "context": 0.3,
+          "background": 0.2
+        },
+        "citizen_test_accessed": false
+      },
+      "isolated_validation_baseline": {
+        "citizen": 0.9523809523809523,
+        "semlex": 0.852760736196319
+      },
+      "isolated_validation_current": {
+        "citizen": 0.9444444444444444,
+        "semlex": 0.8517382413087935
+      },
+      "selection_status": "unselected_pending_complete_streaming_evaluation",
+      "recipe": {
+        "seed": 17111,
+        "epochs": 12,
+        "samples_per_epoch": 3000,
+        "batch_size": 64,
+        "optimizer": "AdamW",
+        "learning_rate": 2e-05,
+        "weight_decay": 0.0001,
+        "scheduler": "cosine",
+        "gradient_clip": 1.0,
+        "loss_weights": {
+          "window": 1.0,
+          "foreground": 0.5,
+          "replay": 1.0
+        },
+        "category_shares": {
+          "replay": 0.5,
+          "context": 0.3,
+          "background": 0.2
+        }
+      },
+      "epoch_optimizer_updates": 47,
+      "completed_optimizer_updates": 47
+    },
+    "landmark_only": true
+  },
+  "video": "artifacts/reports/stage1_window_v17/runtime_epoch01/asllrp_7345233_span00/20260912_085513_880760/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06673333333333334,
+    0.13346666666666668,
+    0.20020000000000002,
+    0.26693333333333336,
+    0.33366666666666667,
+    0.40040000000000003,
+    0.46713333333333334,
+    0.5338666666666667,
+    0.6006,
+    0.6673333333333333,
+    0.7340666666666666,
+    0.8008000000000001,
+    0.8675333333333334,
+    0.9342666666666667,
+    1.0010000000000001,
+    1.0677333333333334,
+    1.1344666666666667,
+    1.2012,
+    1.2679333333333334,
+    1.3346666666666667,
+    1.4014,
+    1.4681333333333333,
+    1.5348666666666666,
+    1.6016000000000001,
+    1.6683333333333334,
+    1.7350666666666668
+  ],
+  "predictions": [
+    {
+      "gloss": "FRIEND",
+      "candidate_gloss": "FRIEND",
+      "accepted": true,
+      "model_score": 0.21868233382701874,
+      "top3": [
+        {
+          "gloss": "FRIEND",
+          "model_score": 0.21868233382701874
+        },
+        {
+          "gloss": "I",
+          "model_score": 0.18464340269565582
+        },
+        {
+          "gloss": "MAKE",
+          "model_score": 0.15322507917881012
+        }
+      ],
+      "start_seconds": 0.0,
+      "end_seconds": 0.53,
+      "diagnostics": {
+        "normalization_scale": 0.1747477948665619,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9888392686843872
+      },
+      "latency_ms": {
+        "total": 26.760584000000254
+      }
+    },
+    {
+      "gloss": "FRIEND",
+      "candidate_gloss": "FRIEND",
+      "accepted": true,
+      "model_score": 0.11207857728004456,
+      "top3": [
+        {
+          "gloss": "FRIEND",
+          "model_score": 0.11207857728004456
+        },
+        {
+          "gloss": "WORK",
+          "model_score": 0.09172842651605606
+        },
+        {
+          "gloss": "MAKE",
+          "model_score": 0.0887250155210495
+        }
+      ],
+      "start_seconds": 0.16683333333333333,
+      "end_seconds": 0.66,
+      "diagnostics": {
+        "normalization_scale": 0.1746305525302887,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9895833134651184
+      },
+      "latency_ms": {
+        "total": 26.53649999999974
+      }
+    },
+    {
+      "gloss": "NO_EMIT",
+      "candidate_gloss": "NO_EMIT",
+      "accepted": false,
+      "model_score": 0.08979243785142899,
+      "top3": [
+        {
+          "gloss": "NO_EMIT",
+          "model_score": 0.08979243785142899
+        },
+        {
+          "gloss": "LEARN",
+          "model_score": 0.06920240819454193
+        },
+        {
+          "gloss": "SAME",
+          "model_score": 0.05619066581130028
+        }
+      ],
+      "start_seconds": 0.26693333333333336,
+      "end_seconds": 0.79,
+      "diagnostics": {
+        "normalization_scale": 0.1746305525302887,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.992559552192688
+      },
+      "latency_ms": {
+        "total": 22.37545799999996
+      }
+    },
+    {
+      "gloss": "SAME",
+      "candidate_gloss": "SAME",
+      "accepted": true,
+      "model_score": 0.16058820486068726,
+      "top3": [
+        {
+          "gloss": "SAME",
+          "model_score": 0.16058820486068726
+        },
+        {
+          "gloss": "TALK",
+          "model_score": 0.1260237693786621
+        },
+        {
+          "gloss": "NIGHT",
+          "model_score": 0.07601143419742584
+        }
+      ],
+      "start_seconds": 0.40040000000000003,
+      "end_seconds": 0.92,
+      "diagnostics": {
+        "normalization_scale": 0.17536287009716034,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.9933035969734192
+      },
+      "latency_ms": {
+        "total": 26.95858299999987
+      }
+    },
+    {
+      "gloss": "STOP",
+      "candidate_gloss": "STOP",
+      "accepted": true,
+      "model_score": 0.22147047519683838,
+      "top3": [
+        {
+          "gloss": "STOP",
+          "model_score": 0.22147047519683838
+        },
+        {
+          "gloss": "NIGHT",
+          "model_score": 0.08573154360055923
+        },
+        {
+          "gloss": "WOMAN",
+          "model_score": 0.05909629166126251
+        }
+      ],
+      "start_seconds": 0.5672333333333334,
+      "end_seconds": 1.05,
+      "diagnostics": {
+        "normalization_scale": 0.17609597742557526,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9776785969734192
+      },
+      "latency_ms": {
+        "total": 22.23787499999963
+      }
+    },
+    {
+      "gloss": "STOP",
+      "candidate_gloss": "STOP",
+      "accepted": true,
+      "model_score": 0.17927739024162292,
+      "top3": [
+        {
+          "gloss": "STOP",
+          "model_score": 0.17927739024162292
+        },
+        {
+          "gloss": "SCHOOL",
+          "model_score": 0.11647679656744003
+        },
+        {
+          "gloss": "DOCTOR",
+          "model_score": 0.05194004252552986
+        }
+      ],
+      "start_seconds": 0.6673333333333333,
+      "end_seconds": 1.1800000000000002,
+      "diagnostics": {
+        "normalization_scale": 0.17609597742557526,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 1.0
+      },
+      "latency_ms": {
+        "total": 27.78975000000017
+      }
+    },
+    {
+      "gloss": "FRIEND",
+      "candidate_gloss": "FRIEND",
+      "accepted": true,
+      "model_score": 0.110622338950634,
+      "top3": [
+        {
+          "gloss": "FRIEND",
+          "model_score": 0.110622338950634
+        },
+        {
+          "gloss": "LIKE",
+          "model_score": 0.09414307773113251
+        },
+        {
+          "gloss": "TIME",
+          "model_score": 0.06793978065252304
+        }
+      ],
+      "start_seconds": 0.8008000000000001,
+      "end_seconds": 1.31,
+      "diagnostics": {
+        "normalization_scale": 0.1759663075208664,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.8181818181818182,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 0.991815447807312
+      },
+      "latency_ms": {
+        "total": 21.597958000000084
+      }
+    },
+    {
+      "gloss": "SAME",
+      "candidate_gloss": "SAME",
+      "accepted": true,
+      "model_score": 0.1472616046667099,
+      "top3": [
+        {
+          "gloss": "SAME",
+          "model_score": 0.1472616046667099
+        },
+        {
+          "gloss": "WRITE",
+          "model_score": 0.10907081514596939
+        },
+        {
+          "gloss": "NO_EMIT",
+          "model_score": 0.05261516571044922
+        }
+      ],
+      "start_seconds": 0.9676333333333333,
+      "end_seconds": 1.44,
+      "diagnostics": {
+        "normalization_scale": 0.17590296268463135,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.1,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9985119104385376
+      },
+      "latency_ms": {
+        "total": 25.885665999999752
+      }
+    },
+    {
+      "gloss": "TIRED",
+      "candidate_gloss": "TIRED",
+      "accepted": true,
+      "model_score": 0.19143728911876678,
+      "top3": [
+        {
+          "gloss": "TIRED",
+          "model_score": 0.19143728911876678
+        },
+        {
+          "gloss": "GIVE",
+          "model_score": 0.0914473757147789
+        },
+        {
+          "gloss": "SAME",
+          "model_score": 0.05176243558526039
+        }
+      ],
+      "start_seconds": 1.0677333333333334,
+      "end_seconds": 1.5699999999999998,
+      "diagnostics": {
+        "normalization_scale": 0.17590296268463135,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.09090909090909091,
+        "source_frames": 11,
+        "observed_hand_frames": 11,
+        "hand_presence_fraction": 1.0
+      },
+      "latency_ms": {
+        "total": 20.65516700000014
+      }
+    },
+    {
+      "gloss": "MAYBE",
+      "candidate_gloss": "MAYBE",
+      "accepted": true,
+      "model_score": 0.1300085186958313,
+      "top3": [
+        {
+          "gloss": "MAYBE",
+          "model_score": 0.1300085186958313
+        },
+        {
+          "gloss": "TOMORROW",
+          "model_score": 0.08800680190324783
+        },
+        {
+          "gloss": "SAME",
+          "model_score": 0.047168031334877014
+        }
+      ],
+      "start_seconds": 1.2012,
+      "end_seconds": 1.6999999999999997,
+      "diagnostics": {
+        "normalization_scale": 0.17957469820976257,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.9,
+        "source_frames": 10,
+        "observed_hand_frames": 10,
+        "hand_presence_fraction": 0.9732142686843872
+      },
+      "latency_ms": {
+        "total": 29.04725000000008
+      }
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-12T00:55:13.950228+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:14.553979+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "FRIEND",
+      "previous": [],
+      "hypothesis": [],
+      "unchanged_prefix": 0,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.0,
+      "window_end_seconds": 0.53,
+      "elapsed_seconds": 0.6144119590000001,
+      "observed_seconds": 0.5672333333333334,
+      "latency_ms": {
+        "total": 26.760584000000254
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:14.654937+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "FRIEND",
+      "previous": [],
+      "hypothesis": [
+        "FRIEND"
+      ],
+      "unchanged_prefix": 0,
+      "replaced_tail": [],
+      "new_tail": [
+        "FRIEND"
+      ],
+      "window_start_seconds": 0.16683333333333333,
+      "window_end_seconds": 0.66,
+      "elapsed_seconds": 0.715374,
+      "observed_seconds": 0.6673333333333333,
+      "latency_ms": {
+        "total": 26.53649999999974
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:14.789655+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "NO_EMIT",
+      "previous": [
+        "FRIEND"
+      ],
+      "hypothesis": [
+        "FRIEND"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.26693333333333336,
+      "window_end_seconds": 0.79,
+      "elapsed_seconds": 0.8500915419999997,
+      "observed_seconds": 0.8008000000000001,
+      "latency_ms": {
+        "total": 22.37545799999996
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:14.953379+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SAME",
+      "previous": [
+        "FRIEND"
+      ],
+      "hypothesis": [
+        "FRIEND"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.40040000000000003,
+      "window_end_seconds": 0.92,
+      "elapsed_seconds": 1.013817417,
+      "observed_seconds": 0.9676333333333333,
+      "latency_ms": {
+        "total": 26.95858299999987
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:15.045906+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "STOP",
+      "previous": [
+        "FRIEND"
+      ],
+      "hypothesis": [
+        "FRIEND"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.5672333333333334,
+      "window_end_seconds": 1.05,
+      "elapsed_seconds": 1.106344959,
+      "observed_seconds": 1.0677333333333334,
+      "latency_ms": {
+        "total": 22.23787499999963
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:15.198954+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "STOP",
+      "previous": [
+        "FRIEND"
+      ],
+      "hypothesis": [
+        "FRIEND",
+        "STOP"
+      ],
+      "unchanged_prefix": 1,
+      "replaced_tail": [],
+      "new_tail": [
+        "STOP"
+      ],
+      "window_start_seconds": 0.6673333333333333,
+      "window_end_seconds": 1.1800000000000002,
+      "elapsed_seconds": 1.2593927089999999,
+      "observed_seconds": 1.2012,
+      "latency_ms": {
+        "total": 27.78975000000017
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:15.341201+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "FRIEND",
+      "previous": [
+        "FRIEND",
+        "STOP"
+      ],
+      "hypothesis": [
+        "FRIEND",
+        "STOP"
+      ],
+      "unchanged_prefix": 2,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.8008000000000001,
+      "window_end_seconds": 1.31,
+      "elapsed_seconds": 1.4016410839999998,
+      "observed_seconds": 1.3680333333333334,
+      "latency_ms": {
+        "total": 21.597958000000084
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:15.454037+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "SAME",
+      "previous": [
+        "FRIEND",
+        "STOP"
+      ],
+      "hypothesis": [
+        "FRIEND",
+        "STOP"
+      ],
+      "unchanged_prefix": 2,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 0.9676333333333333,
+      "window_end_seconds": 1.44,
+      "elapsed_seconds": 1.514478459,
+      "observed_seconds": 1.4681333333333333,
+      "latency_ms": {
+        "total": 25.885665999999752
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:15.589023+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "TIRED",
+      "previous": [
+        "FRIEND",
+        "STOP"
+      ],
+      "hypothesis": [
+        "FRIEND",
+        "STOP"
+      ],
+      "unchanged_prefix": 2,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 1.0677333333333334,
+      "window_end_seconds": 1.5699999999999998,
+      "elapsed_seconds": 1.6494647089999999,
+      "observed_seconds": 1.6016000000000001,
+      "latency_ms": {
+        "total": 20.65516700000014
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:15.689229+00:00",
+      "type": "stage1_window_transcript_update",
+      "prediction": "MAYBE",
+      "previous": [
+        "FRIEND",
+        "STOP"
+      ],
+      "hypothesis": [
+        "FRIEND",
+        "STOP"
+      ],
+      "unchanged_prefix": 2,
+      "replaced_tail": [],
+      "new_tail": [],
+      "window_start_seconds": 1.2012,
+      "window_end_seconds": 1.6999999999999997,
+      "elapsed_seconds": 1.7496726669999998,
+      "observed_seconds": 1.7017,
+      "latency_ms": {
+        "total": 29.04725000000008
+      }
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:15.717180+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 1.7684333333333333,
+      "active_glosses": [
+        "FRIEND",
+        "STOP"
+      ],
+      "classifier_pending": false
+    },
+    {
+      "recorded_utc": "2026-09-12T00:55:15.983881+00:00",
+      "type": "finished_sequence_selected",
+      "stage1": [
+        "FRIEND",
+        "STOP"
+      ],
+      "confirmed_ctc_prefix": null,
+      "stage2": [],
+      "selected": [
+        "FRIEND",
+        "STOP"
+      ],
+      "selection_mode": "stage1_window_visual_redecode",
+      "active_seconds": 1.7684333333333333,
+      "stage2_stable": false,
+      "final_visual_redecode": {
+        "hypothesis": [
+          "FRIEND",
+          "STOP"
+        ],
+        "windows": 11,
+        "partial_tail_included": true
+      },
+      "finish_decode_ms": 266.703208
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "reel-0001",
+      "requested_utc": "2026-09-12T00:55:15.985368+00:00",
+      "glosses": [
+        "FRIEND",
+        "STOP"
+      ],
+      "epoch": 0,
+      "finish_started_at": 3.46055975,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"FRIEND\", \"STOP\"]",
+      "input_glosses": [
+        "FRIEND",
+        "STOP"
+      ],
+      "literal_sentence": "Friend stop.",
+      "fallback_sentence": "Friend stop.",
+      "fallback_mode": "literal_fallback",
+      "sentence": "Friend stop.",
+      "rendering_mode": "literal_fallback",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.021332999999845725,
+      "completed_utc": "2026-09-12T00:55:15.985487+00:00",
+      "displayed_and_spoken": true,
+      "finish_total_ms": 268.3157500000002
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_seen": 54,
+    "landmark_observations": 36,
+    "stale_camera_frames_dropped": 0,
+    "capture_elapsed_seconds": 1.777622667,
+    "revisable_transcript": false,
+    "transcript_backend": "stage1-window"
+  },
+  "finished_utc": "2026-09-12T00:55:15.987527+00:00"
+}
