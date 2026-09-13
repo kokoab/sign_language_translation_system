@@ -10,6 +10,7 @@ targeted form (`jq .field`, `head`, `rg`, `wc`) passes untouched.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import sys
@@ -49,13 +50,27 @@ def _dumps_whole_file(tokens: list[str]) -> bool:
     return False
 
 
+_VAR = re.compile(r"\$\{(\w+)\}|\$(\w+)")
+
+
+def _expand(tokens: list[str], env: dict[str, str]) -> list[str]:
+    """Resolve $NAME / ${NAME} so `F=big.json; cat $F` is seen as `cat big.json`."""
+    return [_VAR.sub(lambda m: env.get(m.group(1) or m.group(2), m.group(0)), t) for t in tokens]
+
+
 def check(command: str, root: Path) -> str | None:
     """Return a refusal reason, or None to allow."""
-    for part in re.split(r"\|\||&&|[|;]", command):
+    # ponytail: literal NAME=value assignments plus the environment only — no
+    # command substitution or quoting edge cases. Covers how agents actually write it.
+    env = dict(os.environ)
+    for name, value in re.findall(r"(?:^|[\s;&|])([A-Za-z_]\w*)=([^\s;&|]+)", command):
+        env[name] = _expand([value.strip("'\"")], env)[0]
+    for part in re.split(r"\|\||&&|[|;\n]", command):
         try:
             tokens = shlex.split(part)
         except ValueError:
             continue
+        tokens = _expand(tokens, env)
         if not tokens or not _dumps_whole_file(tokens):
             continue
         big = _big_files(tokens, root)
@@ -66,7 +81,7 @@ def check(command: str, root: Path) -> str | None:
 
 
 def selftest() -> None:
-    import tempfile, os
+    import tempfile
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
         big = root / "big.json"
@@ -79,6 +94,12 @@ def selftest() -> None:
         assert check("jq -r '.[]' big.json", root)
         assert check(f"cat {big}", root)
         assert check("ls && cat big.json", root)
+        assert check("F=big.json; cat $F", root)
+        assert check("F=big.json\ncat ${F} | wc -c", root)
+        assert check(f"D={root}\ncat $D/big.json | wc -c", root)
+        assert check("F=big.json; jq . \"$F\"", root)
+        assert check("F=big.json; jq '.acc' $F", root) is None
+        assert check("cat $UNSET_VAR_XYZ", root) is None
         # these must all pass
         assert check("cat small.json", root) is None
         assert check("jq '.acc' big.json", root) is None
