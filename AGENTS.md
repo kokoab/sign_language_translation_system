@@ -6,15 +6,30 @@ Read this file and `PROJECT_GROUND_TRUTH.md`, then inspect only task-relevant fi
 the current git diff. Do not rescan the repository or reread large historical documents
 unless the task specifically needs them.
 
+`PROJECT_GROUND_TRUTH.md` is current state only (~11 KB). Project history lives in
+`docs/ground_truth/`, split by topic — 354 dated entries. Never read that archive
+start-to-finish; `rg <term> docs/ground_truth/` when you need history, and check
+`<topic>/log.md` before re-running an experiment to see whether it already failed.
+`docs/ground_truth/MAP.md` is the file map.
+
 Keep simple work in the main thread. Use a subagent only for an independent, materially
 useful task; give it exact paths, a stopping condition, minimal steps, and a concise
 evidence-only return format.
 
 Prefer `rg`/`rg --files` and targeted reads. Do not paste large files or raw command
-output into handoffs. Record changed files, decisions, measured results, failures, and
-the next safe action in `PROJECT_GROUND_TRUTH.md`. That file is the only canonical,
-timestamped project handoff and must be updated after every material decision,
-code/data action, experiment, or validation result.
+output into handoffs.
+
+**Never read a result file under `artifacts/` whole.** The largest are several MB — one
+read is ~1M tokens and ends the session. `artifacts/LARGE_FILES.md` indexes every file
+over 1 MB with its top-level keys and metrics; consult it, then extract only what you
+need (`jq '.field' <file>`, `jq -r 'keys[]' <file>`, `head -5 <file.csv>`). Regenerate
+the index with `venv/bin/python scripts/index_large_artifacts_v17.py` after producing new
+reports. The same applies to reading a report directory: `ls` it first, never `cat -r`. Record changed files, decisions, measured results, failures, and
+the next safe action after every material decision, code/data action, experiment, or
+validation result. Append the dated entry to the matching `docs/ground_truth/<topic>/log.md`
+(newest first), and update `PROJECT_GROUND_TRUTH.md` only for what changes current state.
+Promote an entry to `<topic>/high.md` when it establishes something that binds future
+work. `PROJECT_GROUND_TRUTH.md` is canonical: on any conflict, it wins.
 
 Preserve unrelated user changes. This worktree contains a large pre-existing,
 uncommitted reorganization; never revert or clean it as part of v17 work.
@@ -33,6 +48,8 @@ cross-cutting change, or before handoff. Run `git diff --check` before a code ha
 | v16 compatibility | `src_v16/` | keep old imports and mobile export working |
 | dataset utilities | `scripts/` | run the affected script against the smallest sample |
 | generated reports | `artifacts/reports/` | inspect the generated Markdown/CSV/JSON |
+| project history | `docs/ground_truth/` | `rg` only; never read start-to-finish |
+| oversized artifacts | `artifacts/LARGE_FILES.md` | index of >1 MB files; `jq` them, never read whole |
 | local datasets | `data/local/` | never commit or delete without explicit request |
 | legacy code | `src/`, `legacy/` | do not touch unless explicitly in scope |
 
