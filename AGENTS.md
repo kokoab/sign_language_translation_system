@@ -28,9 +28,10 @@ reports. The same applies to reading a report directory: `ls` it first, never `c
 
 This is enforced, not just advised: `tools/slt-guard/` is a local plugin whose PreToolUse
 hook refuses any Bash command that reads a >1 MB file end-to-end. One script serves both
-harnesses — Claude Code loads it via `.claude/settings.json`, Codex via
-`tools/slt-guard/.claude-plugin/`. Run its `--selftest` after editing it. Record changed files, decisions, measured results, failures, and
-the next safe action after every material decision, code/data action, experiment, or
+harnesses — Claude Code loads it via `.claude/settings.json`, Codex via the
+local marketplace at `tools/slt-guard/`. Run its `--selftest` after editing it.
+
+Record changed files, decisions, measured results, failures, and the next safe action after every material decision, code/data action, experiment, or
 validation result. Append the dated entry to the matching `docs/ground_truth/<topic>/log.md`
 (newest first), and update `PROJECT_GROUND_TRUTH.md` only for what changes current state.
 Promote an entry to `<topic>/high.md` when it establishes something that binds future
