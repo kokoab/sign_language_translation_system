@@ -24,7 +24,12 @@ read is ~1M tokens and ends the session. `artifacts/LARGE_FILES.md` indexes ever
 over 1 MB with its top-level keys and metrics; consult it, then extract only what you
 need (`jq '.field' <file>`, `jq -r 'keys[]' <file>`, `head -5 <file.csv>`). Regenerate
 the index with `venv/bin/python scripts/index_large_artifacts_v17.py` after producing new
-reports. The same applies to reading a report directory: `ls` it first, never `cat -r`. Record changed files, decisions, measured results, failures, and
+reports. The same applies to reading a report directory: `ls` it first, never `cat -r`.
+
+This is enforced, not just advised: `tools/slt-guard/` is a local plugin whose PreToolUse
+hook refuses any Bash command that reads a >1 MB file end-to-end. One script serves both
+harnesses — Claude Code loads it via `.claude/settings.json`, Codex via
+`tools/slt-guard/.claude-plugin/`. Run its `--selftest` after editing it. Record changed files, decisions, measured results, failures, and
 the next safe action after every material decision, code/data action, experiment, or
 validation result. Append the dated entry to the matching `docs/ground_truth/<topic>/log.md`
 (newest first), and update `PROJECT_GROUND_TRUTH.md` only for what changes current state.
