@@ -7,6 +7,192 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-14 — train-only probability diagnosis separates CTC marginal and greedy collapse
+
+First direct-positive repair is still training; epoch4 recovers0/1,291known continuous
+training signs and9/1,901isolated train clips. A16-training-clip epoch3 probe measures
+mean blank0.9660/target0.02745; correct transcript marginal beats empty8/16, but greedy
+is empty16/16. A controlled stationary32-frame CTC calculation has a blank-dominated
+local basin near target probability0.03 (loss0.95464); uniform increase to0.10 raises
+loss1.98916. These are training-only diagnostics, not held-out selection or a decoder
+change. Evidence in joint_ctc_repair_v17_20260914/DIAGNOSIS.md and corresponding JSONs.
+Next action: complete fixed first repair and judge full training recognition, not loss.
+
+## 2026-09-14 — positive-CTC repair reviewed and training launched
+
+Independent review clears training loss routing, pooled-forward equivalence and
+optimizer recovery. Added the requested pre-evaluation recipe/checkpoint identity
+validation before freezing the run. Corrected joint training is now running for
+12epochs from the original seed17111 initialization; data, architecture, learning
+rates and full-coverage schedules remain unchanged. New direct replay/core CTC losses
+are the sole objective correction. Full-training known-sign recovery and all1,901
+isolated CTC training outputs are evaluated every epoch; held-out results remain
+uninspected until this bounded training run completes. Next action: inspect training
+fitting, then evaluate or continue training-only diagnosis if collapse persists.
+
+## 2026-09-14 — failed-checkpoint probe confirms missing positive CTC gradient route
+
+On the final failed joint checkpoint and16training replay clips, pooled CE has no
+CTC-head gradient. Direct one-token CTC gives blank-bias gradient+0.054630 (gradient
+descent lowers blank), while verified-background CE gives-0.017992 (raises blank).
+Training transcripts contain1,291known and6,089OTHER targets across236,988tokens.
+This establishes a missing direct positive route, not that it is the sole cause.
+
+Added `active/v17/joint_ctc_supervision_v17.py`, two red/green regression tests and
+report-local `joint_ctc_repair_v17_20260914/run_repair.py`. Twelve focused CTC tests
+pass. Repair retains original losses and adds single-token CTC on replay and exact
+cores, sharing encoding with pooled CE. Checkpoints now retain optimizer state and
+recover an interrupted summary write; previous frozen files are untouched. Next:
+independent bounded review, then fixed12epochs with full training recognition measured.
+
+## 2026-09-14 — user authorized repairing CTC blank collapse
+
+Code trace identifies a candidate missing route: pooled replay/core losses update
+Stage1 only, whereas verified-gap CE directly teaches the CTC head blank. Measure its
+gradient consequences before changing the objective. New bounded plan:
+`artifacts/reports/joint_ctc_repair_v17_20260914/PLAN.md`; reuse frozen data, architecture,
+seed/schedules/learning rates, add direct single-token CTC on isolated/core positives,
+and require full-training recognition diagnostics. No held-out target changes,
+decoder bias tuning or previous artifact mutation. Next action: gradient probe/tests.
+
+## 2026-09-14 — both joint-CTC arms complete; blank collapse fails every epoch
+
+Completed12frozen+12joint seed17111 epochs,1,320updates each,8,016 evaluations across
+the same334 recordings. Every epoch yields no known development signs: connected100%
+WER/284deletions, familiar100%WER/259deletions, contiguous24/24deletions. Zero verified
+gap emissions is silence, not useful rejection. Final joint pooled isolated accuracy
+95.50%Citizen/85.99%SemLex retains the baseline95.24%/85.28%. O5S5 raw-core train
+accuracy rises74/199→186/199 (37.19%→93.47%); LG stays12/57 (21.05%).
+
+Post-run final-checkpoint inference on every complete ASLLRP training sequence finds
+frozen0/1,291 and joint2/1,291known signs recovered. Joint236,988training token decisions
+are236,974blank,10OTHER,4known (two collapsed signs). Both final models choose blank
+on every ASLLRP validation token. Separate single-clip CTC diagnostic scores frozen
+4/378Citizen,18/978SemLex; joint0/378,0/978. Pooled retention does not imply CTC retention.
+
+Verified all4,520input hashes,24checkpoint hashes, unchanged frozen/changed joint
+encoders, identical starting head/encoder and per-epoch schedules/coverage. Each epoch
+covers923complete sequences,199cores,1,901replay,494background. Recomputed recording edit
+counts/gates;24focused tests pass. Final CPU/MPS628/628tokens agree per arm; max logit
+error4.77e-6. Successful training724.62s excludes preparation/evaluation and the
+preserved8-epoch Metal-aborted attempt. Complete retry used unchanged original recipe.
+
+No confirmation, runtime/device gate, export or promotion ran. All296temporally scored
+signs missed; cached CPU timings exclude extraction/scheduling and are not live latency.
+Decision: next model work must diagnose training CTC blank collapse before another
+generalization comparison; more data alone is not a measured fix. Signer/variant/phone
+coverage remains necessary separately. Do not scale the same failed recipe or tune
+blank suppression from LG. Result/report scripts and verification are in
+`artifacts/reports/joint_ctc_v17_20260914/`; PROJECT_GROUND_TRUTH.md updated. Next safe
+action: return the completed negative result. Final handoff checks passed:24tests,
+compilation, tracked/new-file whitespace, report assertions and large-artifact index.
+Binding evidence promoted to live-streaming/high.md; no required experiment work remains.
+
+## 2026-09-14 — Metal runtime aborted frozen arm after epoch8; recipe unchanged
+
+Authoritative process inspection shows no surviving training process. The frozen log
+ends with Apple M4 Metal command-buffer Internal Error(00000001), after eight complete
+epoch checkpoints/evaluations; joint has not launched. All eight froze isolated accuracy
+and emitted no known connected signs (100%WER,284deletions), failing gates. This is not
+a completed experiment. Preserve partial files as frozen_interrupted and restart the
+same arm from original initialization because checkpoints lack optimizer state. No
+hyperparameter or data change is permitted from the observed development results.
+Next action: MPS smoke check, caffeinate-protected same-recipe retry, then joint arm.
+
+## 2026-09-14 — final preflight passed; matched CTC training launched
+
+Final preparation retains all923train/237validation complete ASLLRP sequences,
+199train/57LG cores (four static one-observation cores), 1,901/1,356 isolated replay,
+494/16 verified backgrounds and all334 development recordings. All4,520 inputs match
+their frozen hashes. Final9,239 chunks have max duration0.5005s, max sequence528tokens.
+Train-only preflight again reaches4/4 exact at70updates/loss0.04293; encoder gradient
+L1>0, frozen gradients absent, initialized CPU/MPS token predictions agree256/256.
+Independent reviewer reports no remaining blocking issue;24focused tests and diff
+check pass. Recipe and dependency hashes are sealed in training_freeze.json.
+
+Frozen then joint12-epoch arms launched sequentially; no inference-mode encoder cache
+used for sequence training. Current experiments remain research-only and no checkpoint
+is eligible until all gates pass. Raw-core original-base probe gives74/199train and
+12/57LG versus contextual-core52/199 and16/57 on one result per original event.
+These differ from previous overlapping-window metrics and are not interchangeable.
+Next action: collect all24 epoch evaluations and compare matched coverage, retention,
+deletions and event-level LG; do not alter recipe after observing development results.
+
+## 2026-09-14 — reviewed chunk-duration correction before full training
+
+Independent review found wall-grid chunk boundaries could exceed0.53s when observation
+times undershoot successive boundaries. Reproduced with a failing30-frame10Hz test,
+then anchored each next endpoint to the preceding observed endpoint+0.53s. Ten focused
+CTC tests now pass, including full-sequence/available-prefix equality and timing bound.
+Prepared caches before this correction are retained as data_initial195.pt and
+data_initial_grid.pt; final cache is being regenerated and will report maximum duration.
+The corrected199-core preflight had already repeated4/4 tiny-fit success at step70;
+it will rerun after timing correction. CPU/MPS initialized-token predictions agree256/256,
+max logit difference2.86e-6. All16 validation background feature arrays exactly match
+the frozen baseline gate. No full arm has started; next action final freeze/preflight.
+
+## 2026-09-14 — joint CTC preflight fits train-only sequences; one-frame cores retained
+
+Added `active/v17/joint_ctc_v17.py`, four focused contract tests, and report-local
+`joint_ctc_v17_20260914/run_experiment.py`. Eight new/existing CTC tests pass after
+observed red tests for the new module and single-observation core helper. First cache
+contains 923/237 train/validation complete sequences, 1,901/1,356 replay clips,
+494/16 verified backgrounds and all 334 development recordings. Sequence encoding
+has 8,875 chunks, max 528 owned tokens; no sequence rejection occurred.
+
+Train-only preflight: four distinct transcripts fit exactly by update70, CTC loss
+0.04293; encoder gradient L1 162621.20, frozen encoder gradients absent. Initial
+preparation excluded four one-observation O5S5 cores; corrected to repeat their observed
+static pose, with no invented trajectory, so all199 events can participate. Zero-frame
+cores still reject. Initial195 cache/reports retained under renamed paths; corrected
+preparation and preflight will rerun before full training. Both arms explicitly use
+eval-mode encoders so gradient enablement, not encoder dropout, differs. Independent
+review underway. Next action: validate corrected preparation, then matched12-epoch arms.
+
+## 2026-09-14 — frozen-versus-joint experiment authorized and recipe fixed
+
+User explicitly requested execution through measured results. Plan is frozen before
+training at `artifacts/reports/joint_ctc_v17_20260914/PLAN.md`: existing causal CTC
+blocks, differentiable frame encoding, timestamped <=0.53s chunks, complete ASLLRP
+sequence CTC, positive-only O5S5 cores, isolated retention and verified-gap blank loss.
+Compare frozen and joint arms for 12 seed-17111 epochs with matched coverage/updates,
+after gradient/alignment/tiny-fit preflight. Reuse existing development gates and
+frozen replay identities; no official Citizen test, default changes or acquisition.
+Free disk at start: approximately 12 GiB. Next action: focused tests and implementation.
+
+## 2026-09-14 — independent next-step review qualifies the CTC recommendation
+
+Fresh 14-test run passes. Streamed saved CSV reductions reproduce 8,978 windows,
+positive-window exposure deficits, 29.0891% long-window O5S5 foreground, 199/57
+O5S5 train/LG events, and 23/49 one-signer classes; combined manifest hash matches.
+Stored core metrics were checked, not rerun inference. Initial verification assumptions
+about globally unique IDs and one model_summaries row per model failed: the latter is
+a grouped metric list; isolated has 15 model entries. Background IDs collide in 52
+groups/57 extra rows because per-gap ordinal resets; features differ, targets agree,
+and positive context IDs are unique. Include gap/timestamp in future coverage identities.
+
+Code inspection qualifies the prior recommendation: core pooling follows full-window
+noncausal encoding, so it is not a raw-core oracle. The encoder has unmasked attention,
+symmetric convolution and a 32-position table. Causal head alone does not establish
+causal streaming. Existing UnifiedStreamingCTCHeadV17 already provides shallow dilated
+blocks; its trainer caches inference-mode features. Existing window training also
+already has foreground CE and replay KL. CTC needs 102 outputs, including OTHER.
+
+Decision: next model experiment should first pass gradient/alignment/timing and tiny-fit
+preflights, then compare reuse of that head with frozen versus joint encoder training
+under matched corrected supervision/coverage. Defer multi-level/shared-head additions.
+Fresh portrait-iPhone signer groups and targeted per-class coverage remain necessary.
+Primary-source research supports shallow temporal/visual auxiliary learning, but the
+2025 pose paper tests unseen sentences, not this project's ASL signer/iPhone setting.
+CVF direct fetches failed 403; official indexed paper text supplied reviewed details.
+
+Changed report: `artifacts/reports/stage2_data_learnability_audit_v17/NEXT_STEP_REVIEW.md`;
+current-state frontier/actions clarified in PROJECT_GROUND_TRUTH.md. No pipeline code,
+checkpoint, runtime, dataset or external message changed; Citizen test stayed sealed.
+Next safe action is the bounded preflight/comparison described in the report, not a
+new architecture sweep. Validation: large-artifact index regenerated (23,525 bytes),
+review/current-state/history reference assertions pass, and git diff --check passes.
+
 ## 2026-09-14 — exhaustive supervision audit separates window dilution from LG generalization
 
 Audited every 8,978 continuous window and all 3,257 isolated replay clips against the
