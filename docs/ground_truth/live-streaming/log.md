@@ -7,6 +7,111 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-14 — exhaustive supervision audit separates window dilution from LG generalization
+
+Audited every 8,978 continuous window and all 3,257 isolated replay clips against the
+original model, all 12 O5S5 checkpoints and prior no-O5S5 comparators. Data extraction
+is globally healthy (98.68% O5S5-train and 100% LG any-hand frame coverage), exact
+feature conflicts are absent, and O5S5 is not uniquely fast: median target duration is
+0.259s versus 0.267s for ASLLRP OTHER; LG is slower at 0.340s but remains weak.
+
+The training contract is the measured bottleneck. Across 12 epochs the source-balanced
+sampler never selected 3,516/5,515 ASLLRP OTHER windows or 154/1,005 O5S5 windows.
+O5S5 targets occupy only 29.1% of a 1.07s window on average. Exact-core pooling raises
+epoch-12 O5S5-train accuracy from 54.03% known-window to 61.09%, but LG remains
+27.67%, so segmentation is only part of the failure. O5S5 per-class signer support is
+thin: 23/49 train classes have one signer, and three LG classes are absent from O5S5
+train. The underlying isolated classifier remains 87.68% on its full validation replay
+at epoch 12, confirming that continuous recognition is the main failure while Citizen
+retention still regresses.
+
+Decision: do not repeat pooled 1.07s target classification or call unverified O5S5
+surrounding signing blank. Next candidate is a shared frame encoder with isolated
+auxiliary CE and a shallow temporal CTC head, deterministic full-pool coverage and
+exact-core O5S5 supervision. No model, runtime or default changed; Citizen test was not
+accessed. Reports: `artifacts/reports/stage2_data_learnability_audit_v17/`.
+
+## 2026-09-14 — O5S5 final verification passed; negative result sealed
+
+`o5s5_augmented_v17_20260914/verification.json` records 14 passing focused tests,
+clean `git diff --check`, identical recomputed selection, unchanged original manifest,
+4,520 verified frozen inputs and 12 checkpoint hashes. All 4,008 recording evaluations
+(86,544 scheduled predictions) and held-out LG checks completed. The first-run gates
+failed; confirmation was not launched. Report and CSV comparisons are complete.
+Next safe action remains retention/deletion analysis under a separately bounded scope;
+no further run is queued by this experiment.
+
+## 2026-09-14 — O5S5 augmentation completed; no eligible candidate
+
+Frozen manifest SHA256 `6b506552f7d35014e539e5df9f5e9d8d40a8e227544974ddb407f8d52cae4178`.
+Fresh original-base seed17111, paired with the prior data-only comparison, completed
+all12epochs/564updates in108.43s. Added1,005 O5S5 context windows while retaining
+1,901 isolated training replay clips and494 verified ASLLRP background windows.
+All12checkpoints evaluated on334 development recordings/7,212windows each, plus318
+LG positive windows. No Citizen test access, acquisition or MediaPipe conversion.
+
+Best connected checkpoint epoch3:123.5915% WER,113S/42D/196I over284 signs, versus
+frozen CTC168.3099%,144S/11D/323I. WER improves26.57% relative, but deletions fail.
+Familiar WER111.9691% versus56.3707%; Citizen93.3862% versus95.2381% own start;
+SemLex84.2536% versus85.2761%. Both isolated drops exceed1point. Verified gap
+emissions improve15→6/16. Prior no-O5S5 best was146.1268% WER/33D/258I.
+Only epoch1 preserves both isolated accuracies, but fails connected311.6197% WER,
+768 insertions, familiar128.5714%, and16/16gap emissions. All epochs fail measured
+gates. Runtime-inclusive latency remains unverified; raw/phone replay was not run
+after accuracy rejection. No confirmation17112, export, promotion or default changes.
+
+LG positive-window accuracy: original base76/318=23.90%, prior epoch1 73/318=22.96%,
+new epoch1 82/318=25.79%, new best-connected epoch3 67/318=21.07%. No full-narrative
+LG WER because annotations are incomplete; windows overlap and are not independent.
+CPU/MPS labels agree636/636 across LG epochs1/3. Fourteen focused tests passed.
+All4,520 frozen raw/replay hashes,12checkpoint hashes and exact isolated replay
+identities reverified; encoder/classifier updates confirmed. Initial sandbox MPS
+launch failed before optimizer updates; authorized MPS run succeeded.
+
+Artifacts: `artifacts/reports/o5s5_augmented_v17_20260914/` contains README, frozen
+manifest, development freeze, all-epoch evaluations, LG predictions, selection,
+CSV comparisons/error examples, parity and provenance. Checkpoints:
+`artifacts/models/stage1_window_o5s5_v17_seed17111/`. Changed only report-local
+evaluation orchestration, reports/index and current/history documentation.
+Next safe action: retain rejected artifacts and accepted defaults. Do not run
+confirmation merely on aggregate WER improvement; the retention/deletion gate failed.
+
+## 2026-09-14 — all12 O5S5 epochs completed; streaming evaluation underway
+
+Fresh original-base seed17111 completed all12epochs in108.43s, saving every checkpoint
+under `artifacts/models/stage1_window_o5s5_v17_seed17111/`. Training audit confirms
+6,819 contextual positives and494 verified ASLLRP background windows, with no O5S5
+background. Epoch1 reaches Citizen94.9735%/SemLex85.4806%; epochs2–12 fail at least
+Citizen's94.2381% retention floor. First LG comparison: original base76/318 (23.90%),
+prior no-O5S5 epoch1 73/318 (22.96%), new epoch1 82/318 (25.79%). These are correlated
+positive-window diagnostics, not full-narrative WER. Full334-recording evaluation is
+running for all12epochs. Next: freeze complete error/gate results; do not confirm
+merely on LG window gains. Citizen test remains untouched.
+
+## 2026-09-14 — O5S5 training launched on MPS after sandbox failure
+
+Initial sandbox attempt failed at `model.to(mps)` before optimizer updates or checkpoint
+creation. Original failure log retained. Authorized escalated command started normally;
+first five epochs show isolated-retention regression after epoch1. Added report-local
+`evaluate_experiment.py` reusing the frozen full-stream evaluator and MPS adapter, with
+assertions for all334 recordings/284 connected tokens and318 LG positives. No production
+code changed. A compile check hit the system Python cache sandbox restriction and was
+rerun with the existing approved compile permission. Next: finish all12epochs and
+evaluate every checkpoint; no gate/threshold changes.
+
+## 2026-09-14 — bounded O5S5 augmentation frozen before training
+
+User authorized one fresh development run and conditional confirmation, without further
+acquisition or Citizen test access. Frozen byte-identical combined supervision under
+`artifacts/reports/o5s5_augmented_v17_20260914/`; original manifest unchanged.
+Pinned all 4,514 prior raw/replay inputs plus six O5S5 archives. Prior baseline artifacts
+are unchanged; trainer differs only by previously implemented positive-only loading.
+Use fresh original-base initialization and paired seed17111, unchanged 12-epoch
+50/30/20 recipe. O5S5 adds 1,005 train positives; LG's 318 positives are validation-only.
+Incomplete LG annotation prohibits full-narrative WER; report positive-window accuracy.
+Fourteen focused training/selection/O5S5 tests passed. Next: train all12 epochs, evaluate
+334 existing recordings plus LG, then apply unchanged gates before any confirmation.
+
 ## 2026-09-12 — Stage-1 window final handoff verification passed
 
 Final verification.json records 61 passing focused tests, successful compilation and

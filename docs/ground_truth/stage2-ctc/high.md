@@ -7,6 +7,23 @@ stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
 ---
 
+## 2026-09-14 — future Stage-2 training must fix coverage and supervision geometry
+
+The exhaustive O5S5 post-run audit is binding for future experiments. Source-balanced
+sampling by source name did not cover the admitted pool: 63.75% of ASLLRP OTHER and
+15.32% of O5S5 windows were never drawn in 12 epochs. Fixed 1.07s target classification
+dilutes O5S5 targets to 29.1% annotated foreground on average. O5S5 is not uniquely
+too fast, and exact-core pooling does not repair held-out LG, so neither slower playback
+nor tighter crops alone addresses the failure. Per-class signer support, rather than six
+aggregate signer IDs, is the relevant coverage statistic.
+
+Do not reuse whole-window target CE for long mixed context, treat unverified O5S5 gaps
+as blank, or repeat source-balanced random subsampling without full-pool coverage.
+Preserve isolated replay while allowing sequence loss to adapt frame features. The next
+candidate should use a shallow temporal CTC head on unpooled Stage-1 features, with
+O5S5 exact-core supervision and blank labels only where ASLLRP annotation verifies the
+gap. Evidence: `artifacts/reports/stage2_data_learnability_audit_v17/`.
+
 ## 2026-09-10 09:10 PHT — approved continuous-path implementation and matched adaptation plan
 
 User authorized the diagnosis recommendations before a later discussion of returning

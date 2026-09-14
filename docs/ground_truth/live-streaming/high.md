@@ -7,6 +7,14 @@ stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
 ---
 
+## 2026-09-14 — O5S5 WER improvement does not pass the continuation gate
+
+The bounded O5S5 augmentation reduced connected WER168.31→123.59%, but increased
+deletions11→42 and failed familiar/isolated retention. All12checkpoints fail measured
+gates; LG positive-window accuracy remains weak. Do not run the conditional confirmation
+seed or export this candidate on WER alone. Runtime latency was not certified.
+Report: `artifacts/reports/o5s5_augmented_v17_20260914/README.md`.
+
 ## 2026-09-12 — Stage-1 window seed 17111 rejected; no promotion or confirmation
 
 The complete bounded 12-epoch experiment is recorded in

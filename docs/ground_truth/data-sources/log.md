@@ -3,9 +3,70 @@
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
 `rg` this file before re-running an experiment to see if it already failed.
 
-40 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+42 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-09-14 — O5S5 exact positives materialized with Apple Vision
+
+Resolved the O5S5/Citizen label gate without English normalization or visual guessing.
+O5S5 `RightHand_IDg`/`LeftHand_IDg` values use ASL Signbank IDs; the frozen Citizen
+ASL-LEX codes resolve through the official ASL-LEX table to `SignBankAnnotationID`.
+Exact equality admits 386 hand-tier events across 53 locked classes. One-to-one
+cross-hand overlap pairing removes 130 duplicate two-hand copies, leaving 256 unique
+positive occurrences. Nine frozen classes have no ASL-LEX Signbank ID and are rejected.
+LG is reserved as a whole validation signer; CK, Doug Ridloff, JAH, LR and RD are
+training-only.
+
+Replayed all six original videos through the existing live Apple Vision observer and
+wrote 26,079 timestamped raw observations under
+`data/local/stage1_window_o5s5_v17/raw_observations/`. Apple Vision hands occur in all
+256 exact targets. The initial long-video run retained every resized pixel frame and
+reached an 18.6 GB footprint; added opt-in pixel discard after detection, preserving
+frame geometry and reducing the run to roughly 0.5 GB. RD reports 14,972 container
+frames but OpenCV decodes 14,965; the existing seven-frame tail exclusion is pinned,
+and the last annotation ends 0.91 seconds before file duration.
+
+Stage-1 context loading now accepts incomplete rows as positive-only while continuing
+to derive background solely from `all_signs_annotated=true` rows. The ready combined
+ASLLRP+O5S5 manifest yields 6,819 training context windows across 73 classes plus 494
+verified background windows. O5S5 contributes 1,005 train windows across 49 classes
+and 318 signer-held-out validation windows across 27 classes, with zero O5S5 background.
+All preparation, Apple Vision, loader and provenance reports are in
+`artifacts/reports/o5s5_citizen100_v17/`. No model training or protected-test access.
+
+---
+
+## 2026-09-13 — better no-account continuous ASL acquired and verified
+
+User visually rejected SoMe ASL as predominantly one-handed and unsuitable; it is
+now explicitly excluded from training while its downloaded files remain preserved.
+Acquired every O5S5 narrative with a currently public ELAN transcript: six paired raw
+videos/EAFs, six signers, 2,586,024,974 video bytes, 21.73 minutes, 60,944 fully
+decoded frames from 540p through 4K, and 3,959 timed hand annotations (2,601 right,
+1,358 left). The EAFs contain 591 distinct gloss strings; 34 exactly match frozen
+Citizen raw-label strings across 290 tier events. All annotation endpoints fit their
+paired video durations. Visual QA confirms frontal upper-body framing and both hands
+across all six sources. Gallaudet publishes O5S5 open access under CC BY-NC-SA 4.0;
+it is a research/noncommercial auxiliary-temporal training source, while direct
+locked-head use still requires exact ASL-LEX visual-variant review.
+
+Also acquired all 201 official RWTH-BOSTON-104 MPEG videos plus 42 corpus, lexicon,
+language-model and readme files. All 15,746 frames decode; the videos total 80,759,696
+bytes and 525.78 seconds. Sentence annotations contain 888 tokens and 113 gloss
+strings from three signers; 19 frozen raw-label strings occur 148 times. The official
+161/40 split reuses all three signers and the 336x312 grayscale video is low-resolution,
+so RWTH is supplemental training-only sequence supervision, not generalization evidence.
+
+Created a 290-row O5S5 variant-review manifest and a 201-row RWTH sentence manifest.
+Initial whole-archive RWTH transfer was stopped after finding that the 685 MB archive
+mostly duplicated published frames; its partial is preserved, and the 80.8 MB official
+individual videos were verified instead. Initial serial O5S5 transfers were slow;
+public byte-range resumes completed the same official files. Two guessed Drive IDs
+returned clean 404s before IDs were extracted from the official folder listing; no
+incorrect payload was retained. Final acquisition audit, hashes, timing checks,
+full-frame decodes, manifest counts, Python compilation and visual contact sheet all
+pass. Report: `artifacts/reports/open_asl_alternatives_20260913/README.md`.
 
 ## 2026-09-13 — resumed blocker threshold reached (3/3)
 

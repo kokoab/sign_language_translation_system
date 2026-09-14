@@ -3,9 +3,22 @@
 Dated evidence for constraints that still bind. The constraints themselves are
 stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
-9 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+10 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-09-14 — O5S5 exact direct positives; SoMe excluded; RWTH auxiliary-only
+
+User visual review excludes SoMe ASL from all training because its predominantly
+one-handed material is unsuitable for the intended recognizer. Preserve the files;
+do not silently re-admit them. O5S5 exact ID-gloss equality through official ASL-LEX
+`SignBankAnnotationID` admits direct positive contextual supervision: 256 deduplicated
+occurrences across 53 locked classes, with all 256 containing Apple Vision hands.
+Keep LG validation-only and the other five O5S5 signers training-only. O5S5 gaps are
+never background because annotation completeness is unproven. RWTH-BOSTON-104 remains
+training-only auxiliary data: it is low-resolution and its split reuses all three
+signers. Neither source proves portrait-iPhone generalization. Evidence:
+`artifacts/reports/o5s5_citizen100_v17/README.md`.
 
 ## 2026-09-13 — acquired continuous sources do not bypass schema or lexical gates
 

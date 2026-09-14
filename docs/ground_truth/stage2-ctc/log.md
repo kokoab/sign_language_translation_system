@@ -7,6 +7,26 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-14 — full data audit and architecture research completed
+
+Post-run analysis evaluated all 8,978 continuous windows, all 3,257 isolated replay
+clips, exact annotated foreground cores and actual 12-epoch sampler exposure. O5S5 is
+not uniquely too fast or globally unextractable. The bounded run left 63.75% of ASLLRP
+OTHER and 15.32% of O5S5 windows unseen, diluted short targets inside fixed windows,
+and had only one O5S5 training signer for 23/49 covered classes. Exact-core pooling
+helps O5S5 train but not held-out LG, proving both an alignment/window problem and a
+separate signer/domain generalization problem. Report and machine evidence:
+`artifacts/reports/stage2_data_learnability_audit_v17/`.
+
+Primary-source architecture review supports keeping the Squeezeformer visual encoder
+but exposing its unpooled frame sequence to a shallow temporal module and CTC. The next
+bounded design is region-aware left/right-hand/body features, causal multi-scale Conv1D,
+a shared fine/coarse CTC classifier, isolated auxiliary CE and exact-core alignment.
+Sequence loss must reach the visual encoder; O5S5 stays positive-only and ASLLRP alone
+supplies verified blank gaps. Full RGB/keypoint two-stream fusion is a later fallback if
+the landmark-only experiment proves a representation ceiling. No model was trained and
+no accepted runtime changed in this research step.
+
 ## 2026-09-09 — matched transition-adaptation experiment failed retention gates
 
 The fixed MPS comparison completed normally for both arms and both seeds; training

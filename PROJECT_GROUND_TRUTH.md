@@ -1,6 +1,6 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-13 PHT (+0800, Asia/Manila)
+**Last updated:** 2026-09-14 PHT (+0800, Asia/Manila)
 
 This file is the current state of the project, and it is the only file you must read
 before changing the pipeline. It states what is true and what binds you now.
@@ -74,6 +74,33 @@ background and phone coverage prevents reliability claims. Recent-tail replaceme
 tested, but no useful spontaneous online corrections were demonstrated. Matched HUNGRY
 diagnostics found strong window sensitivity and no OTHER-suppression explanation.
 Report: `artifacts/reports/stage1_window_v17/README.md`.
+
+The bounded O5S5-augmented follow-up completed all 12 fresh original-base seed 17111
+epochs and failed promotion. Best connected WER is 123.59% (epoch 3), versus 168.31%
+CTC and 146.13% prior no-O5S5 best, but deletions rise 11→42, familiar WER is 111.97%,
+and Citizen 93.39%/SemLex 84.25% fail isolated retention. Only epoch 1 retains isolated
+accuracy; its connected WER is 311.62%. All 12 checkpoints were evaluated on 334
+recordings plus 318 held-out LG positive windows. LG reaches 25.79% at epoch 1 versus
+23.90% original base, but falls to 21.07% at best-connected epoch 3. LG annotation is
+incomplete, so no full-narrative WER is claimed. No checkpoint passed; runtime latency
+remains unverified, and no confirmation seed, export or iPhone test ran. Report:
+`artifacts/reports/o5s5_augmented_v17_20260914/README.md`.
+
+The exhaustive post-run audit covers every 8,978 continuous supervision window and all
+3,257 isolated replay clips across the original model, all 12 O5S5 checkpoints and the
+prior no-O5S5 comparators. It rejects a global extraction failure and rejects O5S5 as
+uniquely too fast: O5S5 train targets have 0.259s median duration versus 0.267s for
+ASLLRP OTHER, while held-out LG is slower at 0.340s yet remains weak. The actual
+seed-17111 sampler never used 63.75% of ASLLRP OTHER windows or 15.32% of O5S5 windows.
+The 1.07s target windows contain only 29.1% annotated O5S5 foreground on average, and
+23/49 O5S5 training classes have only one training signer. Exact-core pooling raises
+O5S5-train top-1 to 61.09% but leaves LG at 27.67%, separating window dilution from a
+held-signer/domain generalization failure. No exact feature/target conflicts were found.
+Next model work should expose the Stage-1 frame sequence to a shallow temporal CTC head,
+retain isolated classification as an auxiliary loss, cover all admitted windows before
+repeats, and supervise O5S5 only on verified positive cores. Do not repeat 1.07s
+whole-window target CE or label unverified O5S5 context as blank. Reports:
+`artifacts/reports/stage2_data_learnability_audit_v17/`.
 
 Default runtime and checkpoints are unchanged. `--sequence-preview`,
 `--stage2-live-checkpoint` and `--revisable-transcript` are explicit experimental flags.
@@ -153,8 +180,8 @@ image side.
 
 ## Data and storage state
 
-- Broader data-sufficiency goal is blocked pending corpus access, exact-variant
-  review and independent phone recordings. See
+- The bounded O5S5-augmented continuous-development experiment completed and failed
+  promotion. Broader 100-class coverage and independent phone recordings remain open. See
   `artifacts/reports/continuous_asl_acquisition_20260912/DATA_NEEDED.md`.
   Three corpus access inquiries are prepared in the same report folder as
   `ACCESS_REQUESTS.md`; none sent. New MoLo interview and Daily Moth EAF checks
@@ -170,13 +197,27 @@ image side.
   RIT adds a 6.5-second public fluent-coded sample. These remain outside training
   pending annotation completeness, alignment and exact visual-variant review;
   unannotated/OOV spans are not background. No phone-generalization claim follows.
+- Better no-account continuous data was acquired 2026-09-13 under
+  `data/local/open_asl_alternatives_20260913/`; measured report:
+  `artifacts/reports/open_asl_alternatives_20260913/README.md`. O5S5 contributes six
+  frontal paired raw-video/EAF narratives, 21.73 minutes, six signers and 3,959 timed
+  hand-tier annotations. Exact equality from each frozen Citizen ASL-LEX code through
+  official `SignBankAnnotationID` to the O5S5 ID gloss admits 256 deduplicated positives
+  across 53 classes. Real Apple Vision replay produced 26,079 observations and detected
+  hands in 256/256 targets. LG is validation-only; the other five signers are train-only.
+  Combined ASLLRP+O5S5 loading yields 6,819 train context windows across 73/100 classes;
+  O5S5 supplies 1,005 across 49 classes. Its gaps are never background because transcript
+  completeness is unproven. Ready manifest and audits:
+  `artifacts/reports/o5s5_citizen100_v17/`. RWTH-BOSTON-104 remains low-resolution
+  auxiliary sequence data because its official split reuses all three signers. SoMe ASL
+  is excluded by user visual review and must not enter training.
 - Raw/local datasets go only under `data/local/`. Generated reports under
   `artifacts/reports/`, disposable outputs under `artifacts/generated/`.
 - Never commit or delete datasets, checkpoints, reports, or metrics without an explicit
   request.
 - PopSign is ~1.1 TB in full — never download wholesale. One sign/split archive at a
   time, check free space before transfer, preserve license provenance.
-- Free space was ~13 GiB at last measurement (2026-08-09).
+- Free space was ~7.1 GiB after the 2026-09-13 acquisitions.
 
 ## Environment
 
@@ -190,11 +231,11 @@ image side.
 
 ## Immediate next actions
 
-1. Review the completed revisable-transcription report. The user has chosen continuous
-   transcription with provisional revisions. Further research must address temporal
-   alignment, missed signs, and latency; do not repeat the completed gap/prefix/core
-   experiments or substitute hold-until-lock behavior. Use independently checked
-   boundary/hold/repetition evidence before claiming transition robustness.
+1. If another bounded model experiment is authorized, jointly train the existing
+   Stage-1 frame encoder and a shallow causal multi-scale Conv1D CTC head. Retain the
+   isolated head/loss, use deterministic full-pool coverage, use exact-core supervision
+   for positive-only O5S5, and keep blank supervision restricted to verified ASLLRP
+   gaps. Apply the existing connected, deletion, insertion, isolated and latency gates.
 2. Collect a new portrait-iPhone signer-disjoint evaluation set. This is the only valid
    dataset for measuring future model changes without contaminating the consumed Citizen
    test.
@@ -202,9 +243,7 @@ image side.
    real low/medium-spec iPhones.
 4. Design UNKNOWN / out-of-vocabulary rejection and evaluate it on independently held-out
    nonsign clips before presenting the classifier as an app feature.
-5. Materialize the 111 frozen ASL STEM Wiki spans (participant-disjoint split) and run a
-   bounded Stage-2 adaptation with existing replay and retention gates.
-6. Obtain ASL-fluent review of the raw-gloss/ASL-LEX mappings and frequent confusions.
+5. Obtain ASL-fluent review of the raw-gloss/ASL-LEX mappings and frequent confusions.
 
 ## Known boundary
 
