@@ -1,0 +1,834 @@
+Adaptive Simultaneous Sign Language Translation with Confident
+                 Translation Length Estimation
+
+         Tong Sun1,2⇤ , Biao Fu1,2⇤ , Cong Hu1,2 , Liang Zhang1,2 , Ruiquan Zhang1,2 ,
+                     Xiaodong Shi1,2 , Jinsong Su1,2 , Yidong Chen1,2†
+                                School of Informatics, Xiamen University, China
+                                1
+    2
+        Key Laboratory of Digital Protection and Intelligent Processing of Intangible Cultural Heritage of
+               Fujian and Taiwan (Xiamen University), Ministry of Culture and Tourism, China
+                               tongsun@stu.xmu.edu.cn, ydchen@xmu.edu.cn
+
+                                                        Abstract
+Traditional non-simultaneous Sign Language Translation (SLT) methods, while effective for pre-recorded videos,
+face challenges in real-time scenarios due to inherent inference delays. The emerging field of simultaneous
+SLT aims to address this issue by progressively translating incrementally received sign videos. However, the
+sole existing work in simultaneous SLT adopts a fixed gloss-based policy, which suffers from limitations in
+boundary prediction and contextual comprehension. In this paper, we delve deeper into this area and propose
+an adaptive policy for simultaneous SLT. Our approach introduces the concept of "confident translation length",
+denoting the maximum accurate translation achievable from current input. An estimator measures this length
+for streaming sign video, enabling the model to make informed decisions on whether to wait for more input
+or proceed with translation. To train the estimator, we construct training data of confident translation length
+based on the longest common prefix between translations of partial and complete inputs. Furthermore, we
+incorporate adaptive training, utilizing pseudo prefix pairs to refine the offline translation model for optimal
+performance in simultaneous scenarios. Experimental results on PHOENIX2014T and CSL-Daily demonstrate the su-
+periority of our adaptive policy over existing methods, particularly excelling in situations requiring extremely low latency.
+
+Keywords: Sign Language Translation, Simultaneous Translation, Real-time Translation
+
+                  1. Introduction                               make it suboptimal for such applications.
+                                                                   Simultaneous SLT, as an alternative, differs from
+Sign language is a type of visual language that con-            its full-sentence counterpart in that it gradually gen-
+veys meaning through gestures and employed by                   erates a translation of an incrementally received
+deaf and hard-of-hearing people to communicate                  input (Figure 1). This approach requires a well-
+in everyday life (Yin et al., 2021b). Sign language             designed policy that allows the model to decide
+translation (SLT) (Camgoz et al., 2018), which aims             whether to wait for more video input (i.e. READ) or
+to convert a sign language video into its correspond-           to continue translating (i.e. WRITE), thus achieving
+ing natural sentence, can bridge the communica-                 a balance between translation quality and latency
+tion gap between the deaf and the hearing and                   (Gu et al., 2017). Despite its potential, simulta-
+therefore received widespread attention in recent               neous SLT is also more challenging, resulting in
+years (Camgoz et al., 2020b; Zhou et al., 2021a;                limited research on this front. Yin et al. (2021a)
+Chen et al., 2022a,b; Zhang et al., 2022a; Fu et al.,           pioneered research in this task and proposed a
+2023b; Yu et al., 2023; Gan et al., 2023).                      fixed gloss-based policy that first divides the sign
+   Currently, research efforts in the domain of                 video into segments corresponding to gloss1 by
+SLT have been directed towards non-simultaneous                 a boundary predictor and then generates a target
+translation methods (Camgoz et al., 2020b; Zhou                 token every time a new gloss is detected. Nonethe-
+et al., 2021a; Chen et al., 2022a; Zhang et al.,                less, this approach exhibits three limitations: 1)
+2022a), commonly referred to as full-sentence SLT.              Its translation quality primarily relies on the perfor-
+In this approach, model needs to wait for the com-              mance of the boundary predictor. However, the
+plete input of sign video before translation can take           predictor is optimized from a weak supervision sig-
+place. While this method may work well for pre-                 nal (the total length of the gloss sequence) and
+recorded video, it poses challenges in real-time                is not guaranteed to align each gloss with the de-
+communication environments, especially in low-                  tected boundary during streaming inference; 2) The
+latency scenarios(Yin et al., 2021a). The inher-                dependence of gloss annotations for training the
+ent inference delays of the full-sentence approach              boundary predictor restricts its applicability in more
+                                                                realistic scenarios due to the labor-intensive and
+    * Equal contribution.
+                                                                    1
+    † Corresponding author.                                             Glosses represent written descriptions of signs
+
+                                                            372
+                                         LREC-COLING 2024, pages 372–384
+                     20-25 May, 2024. © 2024 ELRA Language Resource Association: CC BY-NC 4.0
+                                           complete input (full)
+
+
+                                           complete input (full)
+
+
+
+
+                                                   im    osten       schnee     oder      schneeregen     .
+               (a) Full-sentence   SLT begins translation after receiving the complete sign video,
+                     partial input (prefix)
+               meaning that all target tokens im
+                                               translated
+                                                      ostenhave schnee
+                                                                access to the
+                                                                          oderentireschneeregen
+                                                                                     input.      .
+
+                      partial input (prefix)
+
+
+
+                                    im         osten    schnee       oder     schneeregen     .
+
+
+                                    im         osten    schnee       oder     schneeregen     .
+               (b) Simultaneous SLT begins translation before receiving the complete sign video,
+               with target tokens having access only to the input prefix as they are being generated.
+
+Figure 1: Differences between full-sentence SLT and simultaneous SLT. The translation of the target
+sentence in the example is "In the east, snow or sleet."
+
+
+time-consuming nature of annotating glosses. 3)                    it does not rely on additional gloss information.
+The detection of one new gloss is not an appro-                       Given that SimulSLT (Yin et al., 2021a) has
+priate translation timing for one new target token,                yet to release implementation of the latency mea-
+since it lacks adequate contextual consideration.                  surement, the evaluation toolkit, SimulEval (Ma
+                                                                   et al., 2020a), traditionally utilized for simultane-
+   In this paper, we propose an adaptive policy for
+                                                                   ous translation, remains exclusively suited for text
+simultaneous sign language translation. Our policy
+                                                                   and speech. In order to provide researchers with
+is guided by the concept of "confident translation
+                                                                   a standard and unified evaluation method for si-
+length", which denotes the maximum number of
+                                                                   multaneous SLT systems, we augment the SimulE-
+target-side tokens that can be accurately translated
+                                                                   val toolkit to extend its applicability to video inputs
+from the current input. Specifically, we introduce
+                                                                   (called SimulEval-SLT2 ), which will facilitate future
+an estimator to measure the confident translation
+                                                                   research in simultaneous SLT.
+length for the streaming sign video input. If the
+confident length is greater than the length of the
+translation history, the model makes a write deci-                    2. Background and Related Work
+sion, otherwise, the model continues to wait for
+more video frames. To train the estimator, we con-                 SLT systems can be divided into two types: non-
+struct training data of confident translation length by            simultaneous and simultaneous. In terms of in-
+calculating the length of the longest common prefix                ference mode, the former emphasizes accuracy,
+between translations of partial and complete inputs.               while the latter focuses on low latency and fluency.
+Our policy is more reasonable than simply detect-                  Nevertheless, SLT models typically employ the
+ing boundaries for individual gloss segments in the                encoder-decoder architecture and are trained on
+translation because it focuses more on the content                 a corpus D = {x, y}, where x = {x1 , ..., xt , ..., xT }
+of the sign video and aims to convey as much trans-                and y = {y1 , ..., yj , ..., yJ } denote a sign video and
+lation information as possible within a limited time.              its corresponding target translation, respectively.
+Furthermore, we conduct adaptive training for the                     Sign Language Translation. Camgoz et al.
+translation model by generating pseudo prefix pairs.               (2018) first formulated SLT as a neural machine
+The goal is to adapt our original offline translation              translation (NMT) problem. Most existing meth-
+model to simultaneous scenarios.                                   ods (Camgoz et al., 2020b; Zhou et al., 2021a;
+                                                                   Chen et al., 2022a; Zhang et al., 2022a) are non-
+  We conduct experiments on PHOENIX2014T                           simultaneous and thus require an entire sign video
+and CSL-Daily datasets. Experimental results                       input. They mostly adopt an autoregressive mech-
+demonstrate that our method outperforms strong                     anism and the decoding process is defined as:
+baselines, especially in scenarios with extremely
+low latency. Moreover, our policy can be applied to                   2
+                                                                        Codes of our method and SimulEval-SLT are avail-
+more SLT datasets without gloss annotations since                  able at https://github.com/tongsun99/CTL
+
+                                                            373
+                                                          els (Zhang et al., 2020, 2022b; Guo et al., 2023),
+                         J
+                         Y                                etc.
+            p(y | x) =         p (yj | x, y<j )    (1)       We are the first to attempt an adaptive policy
+                         j=1
+                                                          in simultaneous SLT and the translation timing is
+   New techniques and information have been in-           determined by an external learned length estima-
+troduced in SLT recently to further improve the           tor. Although our approach shares similarities with
+translation performance of the systems, including         MU-ST (Zhang et al., 2022b), there are significant
+multi-task learning (Camgoz et al., 2020a; Zhang          differences: 1) Our approach attempts to learn the
+et al., 2022a), transfer learning (Chen et al., 2022a;    translation paths derived from the longest common
+Hu et al., 2023), contrastive learning (Fu et al.,        prefix algorithm. In theory, this is much faster than
+2023b; Gan et al., 2023), data augmentation (Zhou         the translation paths learned by MU-ST, as MU-
+et al., 2021a), multi-cue fusion (Camgoz et al.,          ST employs a strict prefix-matching algorithm; 2)
+2020a; Zhou et al., 2021b; Chen et al., 2022b), non-      Our decision model comprehends the content of
+autoregressive decoder (Yu et al., 2023), signer-         the current sign video by modeling based on target
+independent settings (Jin and Zhao, 2021; Jin et al.,     length. Compared to a simple binary classification
+2022) and variational autoencoder (Zhao et al.,           (clear or not clear), it offers a more detailed and
+2024).                                                    comprehensive understanding of the video, which
+   Simultaneous Translation. A simultaneous               should lead to better performance.
+translation system generates the j-th target token
+based on streaming input prefix xg(j) and the                            3. Methodology
+previous tokens y<j , where g(j) is a monotonic
+non-decreasing function based on a READ/WRITE             In this section, we will provide a detailed explana-
+policy. The decoding probability is calculated as:        tion of our newly proposed policy for simultane-
+                                                          ous sign language translation. Our approach deter-
+                                                          mines READ/WRITE by estimating the confident
+                      J
+                      Y
+         p(y | x) =         p yj | xg(j) , y<j    (2)
+                                                          translation length. The overall framework of our pol-
+                                                          icy is illustrated in Figure 2. Given a streaming sign
+                      j=1
+
+   Existing policies can be broadly classified into       video x, we incrementally estimate the confident
+two categories: Fixed and Adaptive. Fixed policy          translation length of current input xt (t = 1, 2, . . .)
+generates translation based on predefined rules           by a trained network, where xt represents the first
+and the most representative method is Wait-k (Ma          tF frames of the video and F is the detection in-
+et al., 2019a), which first awaits k segments and         terval. We compare the predicted length l with the
+then starts to alternate between writing a token and      length of the translation history lp at each iteration
+waiting for a new segment. A segment can be de-           t. If l is not greater than lp , the model chooses to
+fined as a character (Zhang and Feng, 2021a) or           wait for the next F frames to be read. Otherwise, it
+word/subword (Ma et al., 2019a) in text, whereas in       proceeds with translation and writes until the length
+speech, it might be based on fixed length (Ma et al.,     of translation y is equal to l or the end-of-sentence
+2020b), Connection Temporal Classification (Ren           (EOS) token is emitted, with the translation history
+et al., 2020; Zeng et al., 2021), ASR outputs (Chen       yp force decoded as a translation prefix.
+et al., 2021) and Integrate-and-Fire (Dong et al.,           In the following, we will first introduce the architec-
+2022). In simultaneous SLT, the sole existing work        ture and training of the translation model (Section
+(Yin et al., 2021a) considers a segment as a gloss.       3.1). Then, we will explain the concept of confident
+Based on its simplicity, recent efforts have em-          translation length in our policy and demonstrate
+ployed various methods to enhance Wait-k, such as         how to construct corresponding training data (Sec-
+mixture-of-experts (Zhang and Feng, 2021b), multi-        tion 3.2). After that, we will show how we utilize
+path training (Elbayad et al., 2020), and future infor-   the generated data to train a confident translation
+mation utilization (Zhang et al., 2021; Zhang and         length estimator (Section 3.3). Finally, we will give
+Feng, 2022c; Fu et al., 2023a). However, no mat-          a detailed description of our adaptive training with
+ter what, fixed policies are always limited by their      pseudo prefix pairs. (Section 3.4).
+inherent inability to adjust according to complex
+inputs. Adaptive policy, in contrast, dynamically           3.1. Translation Model Architecture
+translates based on the current situation through
+learned decision modules. Previous works in this            Many previous works (Ma et al., 2019a; Ren et al.,
+category design policies based on attention (Ari-           2020; Liu et al., 2021; Yin et al., 2021a) addressed
+vazhagan et al., 2019; Ma et al., 2019b; Liu et al.,        diverse latency requirements by training multiple
+2021; Zhang and Feng, 2022a; Papi et al., 2023),            streaming models, which are effective yet often
+information modeling (Zhang et al., 2022c; Zhang            computationally expensive. Recent researches
+and Feng, 2022b), externally trained decision mod-          suggest that a single offline model can also ef-
+
+                                                      374
+        No, READ more frames                                           Yes, WRITE (l - lp) tokens
+                                                    l > lp?
+
+                  l
+
+
+                                                                                       lp                    l - lp
+                       Confident Translation Length Estimator
+
+
+               hcls          h1        h2      h3         ht
+                                                                                 im     osten schnee oder schneeregen
+
+                                   Semantic Encoder
+
+             Encoder
+                             Convolutional Subsampler                  Decoder
+                              Visual Feature Extractor
+
+                                                                                 <s>        im   osten schnee         oder schneeregen
+
+
+                                  streaming sign video                                       (in the east)       (snow or sleet)
+
+Figure 2: The overall framework of our policy. The estimator is used to measure the confidence translation
+length for streaming sign video. If this length exceeds the length of the translation history, a write action is
+triggered to emit (l lp ) tokens; otherwise, the model retains its waiting status for additional video frames.
+
+
+fectively meet the demands of streaming scenar-                      interpreters. Specifically, when interpreters have a
+ios (Papi et al., 2022; Fu et al., 2023a). Aligned                   deep and accurate understanding of current input
+with this perspective, our approach also involves                    during simultaneous translation and are confident
+training only one offline SLT model, thereby signifi-                in the translation result, they may tend to provide a
+cantly reducing training costs compared to Yin et al.                more detailed and comprehensive translation. In
+(2021a). The architecture consists of an encoder                     such cases, the translation length is relatively long.
+and a decoder, where the encoder comprises a vi-                     Conversely, if the interpreter has a lower level of
+sual feature extractor, a convolutional subsampler,                  understanding of the current input or lacks confi-
+and a semantic encoder, as illustrated in Figure 2.                  dence in the translation result, they may choose
+We first pass the input sign video x through a pre-                  to simplify the translation, retaining only the most
+trained CNN-based visual feature extractor (Cam-                     crucial information, resulting in a shorter translation
+goz et al., 2020b) to obtain time-agnostic visual                    length. Therefore, we denote the confident transla-
+features. Then, the 1D convolutional subsampling                     tion length as the maximum number of target-side
+layer helps the model effectively capture short-term                 tokens that can be accurately translated from the
+information while reducing the computational com-                    current input. It highlights the correlation between
+plexity. Finally, the semantic encoder consists of                   understanding the source-side input and express-
+multiple Transformer (Vaswani et al., 2017) encoder                  ing the target-side translation and reflects the inter-
+layers, capturing long-term information in the visual                preter’s confidence level during translation.
+features.                                                               Given the absence of standard corpora for con-
+   The translation decoder generates each token                      fident translation length and its inherent nature,
+in an autoregressive way based on the previously                     we propose a straightforward method to generate
+generated tokens as well as the source sign video                    pseudo data. The method measures the translation
+representations. The translation loss is defined as:                 confidence of our model through the Longest Com-
+                            J
+                                                                     mon Prefix (LCP) algorithm, allowing us to train our
+                            X                                        confident translation length estimator.
+          LSLT =                   log p (yj | x, y<j )        (3)
+                            j=1                                         The whole process is described in Algorithm 1.
+                                                                     The algorithm iteratively reads in a fixed number of
+3.2. Constructing Confident Translation                              F frames until the end of the video (Line 3). We ap-
+                                                                     ply an offline-trained SLT model Mslt , as described
+     Length Training Data
+                                                                     in Section 3.1, to translate the current input xt
+The concept of confident translation length is mo-                   (Line 4). Then, we extract the longest common
+tivated by the translation strategy of simultaneous                  prefix between the translation result yt and the full
+
+                                                                 375
+ Algorithm 1: Constructing Training Data                    Algorithm 2: Generating Prefix Pairs
+    Input: x = {x1 , x2 , ..., xT }                            Input: x = {x1 , x2 , ..., xT }
+    Output: S = {(xt , lt ) | 1  t  T }                    Output: P = {(xt , yt ) | 1  t  T }
+  1 S = {}, yp = {hsi}                                       1 S = {}, yp = {hsi}
+  2 ỹ = Mslt (src = x, tgt = yp )                           2 ỹ = Mslt (src = x, tgt = yp )
+  3 for t = 1, 2, ..., T do                                  3 for t = 1, 2, ..., T do
+  4     yt = Mslt (src = xt , tgtf orce = yp )              4     yt = Mslt (src = xt , tgtf orce = yp )
+  5     yp = LCP (yt , ỹ)                                   5     if |LCP (yt , ỹ)| > |yp | then
+  6     S = S [ (xt , |yp |)                                6          P = P [ (xt , LCP (yt , ỹ))
+  7 end                                                      7     end
+  8 return S                                                 8     yp = LCP (yt , ỹ)
+                                                             9 end
+                                                            10 return P
+input’s translation ỹ, using it as the forced decoding
+prefix for the next round of translation (Line 5). Its
+length can be understood as the number of target-         during training, the model has access to the com-
+side tokens confidently translatable from the current     plete input, while during inference, only partial input
+input, with no need for additional video frames. This     is available (Fu et al., 2023a). Therefore, we further
+step maintains consistency with the inference stage.      utilize pseudo prefix pairs to train our translation
+Finally, we obtain a data pair (xt , |yp |) consisting   model. By training in simulated inference scenar-
+of the current input and the model’s confident trans-     ios, our translation model becomes more adapted
+lation length. (Line 6).                                  to actual inference and should achieve better per-
+                                                          formance.
+3.3. Confident Translation Length                            The process of generating prefix pairs is similar
+     Estimator                                            to the construction of confident translation length
+With the training data extracted in Section 3.2, we       training data and can be carried out concurrently.
+now can proceed to train our confident translation        The generation method is described in Algorithm
+length estimator. Our estimator consists of a Trans-      2. The difference starts from Line 5, where we
+former encoder layer and a length prediction head.        check whether the length of translation to be gener-
+The estimator first extracts the output of the trans-     ated at time t is greater than the already translated
+lation model’s encoder.                                   length. In other words, it checks if new correct
+                                                          words have been translated. If so, a prefix pair
+               ht = Encoder(xt )                 (4)    (xt , LCP (yt , ỹ)) is obtained, containing partial in-
+                                                          put and its corresponding translation.
+  It then concatenates this output with a learnable          After obtaining all the prefix pairs, we mix them
+hCLSi token. Subsequently, after passing through          with full sentence pairs in a certain ratio to create
+a Transformer encoder layer, it extracts the vector       new data for training the translation model. The SLT
+corresponding to the hCLSi token and feeds it into        model is optimized on the mixed data by the loss
+a multi-layer fully connected neural network (the         LSLT as defined in the Equation 3. We employ
+prediction head) to predict the final length.             this model, which is more adaptive to streaming
+                                                          scenarios, for inference.
+              0
+             lt = fc (E([hcls ; ht ])[0])        (5)
+  Then the estimator is optimized through Mean
+Square Error (MSE) loss as a regression problem.                          4. Experiments
+
+                    1X 0
+                        T                                   4.1. Experimental Settings
+                                                   (6)
+                                         2
+              L=          l        lt
+                    T t=1 t                              Datasets. We validate our approach on two widely
+  To maintain consistency between estimator train-        used SLT datasets: PHOENIX2014T (Camgoz
+ing and translation decoding, no gradient is back-        et al., 2018) and CSL-Daily (Zhou et al., 2021a).
+propagated to the encoder and decoder of the SLT          PHOENIX2014T is a German Sign Language
+model.                                                    (DGS) translation dataset with the topic of weather
+                                                          forecasting. CSL-Daily is a Chinese Sign Language
+                                                          (CSL) translation dataset focusing on the daily life
+3.4. Adaptive Training with Prefix Pairs
+                                                          of the deaf community.
+During the inference stage, we employ an offline-            Model Configuration. For our translation model,
+trained SLT model to incrementally generate trans-        the convolution subsampler has 1 1D-convolutional
+lation. However, there exists a mismatch, where           layer with kernel size 5, stride size 2, padding 2,
+
+                                                      376
+                  (a) PHOENIX2014T                                              (b) CSL-Daily
+
+Figure 3: Quality-latency results on PHOENIX2014T and CSL-Daily. The observed points on the SimulSLT
+curve correspond to k = {1, 3, 5, 7}. Points on the Wait-k correspond to k = {1, 3, 5, 7, 9, 11}. Points on the
+MU-ST correspond to = {0.3, 0.5, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0}. Points on the CTL and CTL++ correspond
+to m = {0, 2, 4, 6, 8, 10, 14, 18}. All results are based on our own implementation. Numeric results can be
+found in Appendix A.
+
+
+and 1024 filters. We use 3 layers for the semantic           4.2. System Settings
+encoder and the translation decoder, with 8 atten-
+                                                           We compare our method with several simultaneous
+tion heads and 512 hidden units. The target vo-
+                                                           translation approaches.
+cabularies are learned with SentencePiece3 (Kudo
+and Richardson, 2018) and the size are separately              • SimulSLT (Yin et al., 2021a) is currently the
+set to 4500 and 3000 for PHOENIX2014T and CSL-                   only existing method applied to simultaneous
+Daily. For our confident translation length estimator,           sign language translation. It uses the integrate-
+we use 1 layer of Transformer (Vaswani et al., 2017)             and-fire method to segment the sign video to
+encoder with 8 attention heads and 512 hidden                    glosses and outputs one translation token for
+units. Our estimator’s prediction head comprises                 each detected gloss.
+two linear layers with input dimension 512, hidden
+dimension 512, and output dimension 1.                         • Wait-k (Ma et al., 2019a) divides the sign video
+   Training Details. We implement our models                     into segments of fixed length, with one token
+with Fairseq4 (Ott et al., 2019). For our translation            being output for every segment.
+model, we use an Adam optimizer with learning rate             • MU-ST (Zhang et al., 2022b) segments the
+1e-3, warmup step 5000 and an inverse square root                sign video based on meaningful units and
+scheduler. For our confident translation length esti-            trains a binary classification model to decide
+mator, the learning rate is set to 2e-5 with a tri-stage         when to translate.
+scheduler with phase ratio (0.1, 0.0, 0.9). We per-
+form min-max normalization on the length label and             • CTL is our proposed policy based on estimat-
+the batch size is 32. The detection interval F is set            ing the confident translation length but utilizes
+to 10 frames. During the adaptive training process,              a translation model without adaptive training.
+the ratio of prefix pairs to full sentence pairs in the
+                                                               • CTL++ is our complete policy based on es-
+training data is set to 0.5:1 for PHOENIX2014T and
+                                                                 timating the confident translation length and
+0.25:1 for CSL-Daily.
+                                                                 utilizes a translation model with adaptive train-
+   Evaluation. We use SacreBLEU5 to measure                      ing.
+the translation quality. The latency is evaluated
+with Average Lagging (AL) (Ma et al., 2019a) in our             Note that all these methods incorporate latency
+SimulEval-SLT.                                               control feature to adapt to various project require-
+                                                             ments. SimulSLT /Wait-k first waits for the detec-
+                                                             tion of k glosses/segments before translation and
+   3
+    https://github.com/google/                               achieves this by adjusting k. MU-ST adjusts the
+sentencepiece                                                threshold of the MU detector to correspond to
+  4
+    https://github.com/facebookresearch/                     different latencies, with 6 and 2 truncated words for
+fairseq                                                      PHOENIX2014T and CSL-Daily. Our CTL/CTL++
+  5
+    https://github.com/mjpost/sacrebleu                      achieves this by removing m tokens attempted at
+
+                                                       377
+each step as the actual translation, serving as a            4.4.1. The Impact of Different Estimator
+more conservative translation, corresponding to                     Architectures
+higher latency but better quality.
+                                                             To measure the confidence translation length, we
+                                                             explore three architectures of estimator.
+4.3. Main Results                                               "Xfmr-Avg" feeds the output of the translation
+                                                             model’s encoder into a Transformer encoder layer
+Figure 3 shows the trade-off between translation             and then averages them before feeding into a multi-
+quality and latency on PHOENIX2014T and CSL-                 layer fully connected neural network to obtain the
+Daily. We observe that:                                      final length prediction.
+
+  • Our method outperforms all baselines in                                  0
+                                                                            lt = fc (avg(E(ht )))             (7)
+    terms of translation accuracy and latency
+                                                                "Avg" directly averages the output of the transla-
+    for PHOENIX2014T and CSL-Daily. Espe-
+                                                             tion model’s encoder and feeds it into a multi-layer
+    cially at extremely low latency (when AL is
+                                                             fully connected neural network to obtain the final
+    around 1000ms), our method outperforms
+                                                             length prediction.
+    Wait-k by 3.0 BLEU4 on PHOENIX2014T and
+    2.6 BLEU4 on CSL-Daily.                                                    0
+                                                                              lt = fc (avg(ht ))              (8)
+  • As m increases, the quality and latency of CTL             "Xfmr-Cls" is the architecture we use, as de-
+    increases accordingly, while CTL++ exhibits a            scribed in Equation 5. The experimental results are
+    slight decrease in quality at high latency. We           shown in Table 1. We can observe that the smaller
+    consider this reasonable, as adaptive training           the prediction error, the better the performance, at
+    may trade a slight decrease in offline perfor-           low latency. The "Xfmr-Cls" architecture we use
+    mance for improved low-latency performance.              has the smallest prediction error and achieves the
+                                                             best translation quality. This result is within our
+  • Our adaptive policy based on confident trans-            expectations because our length estimator not only
+    lation length has certain advantages in per-             guides the READ/WRITE actions but also directly
+    formance compared to MU-ST, especially on                decides how many tokens are written. Deviations
+    CSL-Daily. This can be attributed to our pol-            predicted at each time step accumulate, leading to
+    icy’s superiority as mentioned in Section 2. We          a decrease in the overall translation quality of the
+    also provide a translation example in Section            sentence.
+    4.5 to understand our advantages over MU-ST.
+
+  • Compared to CTL, CTL++ achieves higher
+    translation quality at medium to low latency,
+    with a slight increase in latency, demonstrating
+    the effectiveness of adaptive training.
+
+
+4.4. Ablation Study
+We conduct experiments concerning various as-
+pects of our approach in this section. All ablation re-
+sults are trained and evaluated on PHOENIX2014T.
+
+ Method      Estimator      MSE      BLEU4       AL
+              Xfmr-Avg     22.39     19.29      944
+ CTL            Avg        21.11     19.35      882
+              Xfmr-Cls     20.57     20.43      975
+              Xfmr-Avg     22.39     20.63      1003
+ CTL++          Avg        21.11     20.71       958         Figure 4: Performance of different prefix-full
+              Xfmr-Cls     20.57     21.84      1033         ratios for adaptive training stage evaluated
+                                                             on PHOENIX2014T. The best performance is
+Table 1: Performance of different estimator architec-        achieved at a ratio of 0.5:1. Note that "inf:1" refers
+tures at low latency evaluated on PHOENIX2014T.              to training data that only includes prefix pairs, with-
+Xmfr is an abbreviation for Transformer.                     out full pairs.
+
+
+
+                                                       378
+ Sign Video
+
+  Reference   an der ostseeküste heute nacht minus zwei am alpenrand bis minus fünfzehn grad .
+    English   on the Baltic Sea coast tonight minus two on the edge of the Alps to minus fifteen degrees.
+  MU-ST (BLEU: 11.31 AL: 1012)
+
+ Sign Video
+
+                                                     im osten heute nacht minus minus minus minus                   zwei grad an
+Translation                                                                                                         den alpen .
+    English   in east tonight minus minus minus minus two degrees on the Alps.
+  CTL++ (BLEU: 47.03 AL: 779)
+
+ Sign Video
+
+                                 an            der   ostsee heute nacht minus zwei grad
+                                                                                    am
+                                                                                             alpenrand
+Translation                                                                                        bis   minus fünfzehn
+                                                                                                               grad
+                                                                                                                     .
+    English   On the Baltic Sea tonight minus two degrees on the edge of the Alps to minus fifteen degrees.
+
+
+Figure 5: An example in the PHOENIX2014T test set, which demonstrates the effectiveness of our CTL++.
+
+
+4.4.2. The Impact of Different Prefix-Full                           sponding to the current input surpasses the length
+       Ratios in Adaptive Training                                   of the translation history, offering faster real-time
+                                                                     translations and making it more efficient in simulta-
+We explore the impact of the ratio of prefix pairs to
+                                                                     neous scenarios. (2) In situations where the sign
+full sentence pairs in the training data during the
+                                                                     language sequences in the streaming video are
+adaptive training stage on the final results. The ex-
+                                                                     yet to be fully rendered, the MU-ST model demon-
+perimental result is illustrated in Figure 4. The result
+                                                                     strates a propensity to prematurely translate these
+indicates that with an increase in the ratio of prefix
+                                                                     incomplete actions. This often leads to inaccurate
+pairs, the performance improves and reaches an
+                                                                     translations due to the absence of video semantics,
+optimal level at a certain ratio. This aligns with our
+                                                                     such as the repetition of word "minus" in the figure
+hypothesis because the translation model learns
+                                                                     above. In contrast, CTL++ can effectively avoid
+the ability to output the correct translation prefix
+                                                                     this error. By relying on the constraint of confident
+based on only partial input. However, too many pre-
+                                                                     translation length, it ensures that only gestures with
+fix pairs will affect translation quality, especially un-
+                                                                     sufficient confidence, indicative of their complete-
+der medium latency. This is because our adapted
+                                                                     ness, are translated, thereby eliminating potential
+translation model should not deviate too far from
+                                                                     translation anomalies.
+the original model, as our length estimator used
+for READ/WRITE decisions is based on the offline
+translation model. In the most extreme case, train-                                     5. Conclusion
+ing a translation model exclusively on prefix pairs
+predictably results in significant performance degra-                In this paper, we further explore the field of simulta-
+dation across various latency scenarios.                             neous sign language translation and adopt an adap-
+                                                                     tive policy for the first time in this task. Our newly
+                                                                     proposed policy introduces the concept of confident
+4.5. Case Study
+                                                                     translation length and determines when and how
+We conduct case study to demonstrate the superior-                   to write translations by training an external length
+ity of CTL++ model over MU-ST model. As shown                        estimator. Additionally, we generate pseudo prefix
+in the Figure 5, we can observe that: (1) MU-ST of-                  pairs through the longest common prefix algorithm,
+ten needs to wait for more video frames before start-                further adapting our translation model to streaming
+ing translation as its READ/WRITE decisions hinge                    inference. Our policy places a greater emphasis
+on meaningful units, thus introducing a higher la-                   on understanding the current sign video content
+tency. Conversely, the CTL++ model initiates trans-                  and can be applied to more SLT datasets without
+lations once the confident translation length corre-                 gloss annotation. We conduct comprehensive ex-
+
+                                                               379
+periments using our SimulEval-SLT toolkit and re-           Necati Cihan Camgoz, Oscar Koller, Simon Had-
+sults on PHOENIX2014T and CSL-Daily show the                 field, and Richard Bowden. 2020a. Multi-channel
+superiority of our policy, especially in low-latency         Transformers for Multi-articulatory Sign Lan-
+scenarios.                                                   guage Translation. In European Conference on
+   We hope our work can inspire future studies on            Computer Vision, pages 301–319.
+simultaneous SLT and relevant tasks. In the future,
+                                                            Necati Cihan Camgoz, Oscar Koller, Simon Had-
+we are interested in leveraging more powerful and
+                                                             field, and Richard Bowden. 2020b. Sign lan-
+efficient sign video encoders, utilizing prior knowl-
+                                                             guage transformers: Joint end-to-end sign lan-
+edge of sign language to assist READ/WRITE de-
+                                                             guage recognition and translation. In Proceed-
+cisions, and other methods to enhance our system.
+                                                             ings of the IEEE/CVF conference on computer
+                                                             vision and pattern recognition, pages 10023–
+                6. Limitations                               10033.
+                                                            Junkun Chen, Mingbo Ma, Renjie Zheng, and Liang
+This paper focuses on simultaneous sign lan-
+                                                              Huang. 2021. Direct Simultaneous Speech-
+guage translation, which performs translation syn-
+                                                              to-Text Translation Assisted by Synchronized
+chronously during the reception of the sign video.
+                                                              Streaming ASR. In Findings of the Association
+Its low-latency feature can facilitate seamless com-
+                                                              for Computational Linguistics: ACL-IJCNLP 2021,
+munication between sign language users and spo-
+                                                              pages 4618–4624.
+ken language users. While our work has made
+some progress, it is evident that there is still a long     Yutong Chen, Fangyun Wei, Xiao Sun, Zhirong Wu,
+road ahead. It is important to note that this research        and Stephen Lin. 2022a. A simple multi-modality
+is limited to public datasets with a restricted number        transfer learning baseline for sign language trans-
+of samples collected under constrained conditions.            lation. In Proceedings of the IEEE/CVF Confer-
+As a result, the findings may not directly apply to           ence on Computer Vision and Pattern Recogni-
+more complex real-world applications. When us-                tion, pages 5120–5130.
+ing this technology to make critical decisions, it is
+crucial to incorporate domain expertise and human           Yutong Chen, Ronglai Zuo, Fangyun Wei, Yu Wu,
+supervision, as there is a possibility of generating          Shujie Liu, and Brian Mak. 2022b. Two-stream
+erroneous or potentially harmful translations.                network for sign language recognition and trans-
+                                                              lation. Advances in Neural Information Process-
+                                                              ing Systems, 35:17043–17056.
+          7. Acknowledgements
+                                                            Qian Dong, Yaoming Zhu, Mingxuan Wang, and Lei
+We would like to thank all the anonymous review-              Li. 2022. Learning When to Translate for Stream-
+ers for their insightful and valuable comments. This          ing Speech. In Proceedings of the 60th Annual
+work was supported in part by the National Natu-              Meeting of the Association for Computational Lin-
+ral Science Foundation of China under Grant No.               guistics (Volume 1: Long Papers), pages 680–
+62076211 and in part by the University-Industry               694.
+Cooperation Programs of Fujian Province of China            Maha Elbayad, Laurent Besacier, and Jakob Ver-
+under Grant No. 2023H6001.                                   beek. 2020. Efficient Wait-k Models for Simulta-
+                                                             neous Machine Translation. In Interspeech 2020-
+     8. Bibliographical References                           Conference of the International Speech Commu-
+                                                             nication Association, pages 1461–1465.
+                                                            Biao Fu, Minpeng Liao, Kai Fan, Zhongqiang
+                                                              Huang, Boxing Chen, Yidong Chen, and Xi-
+Naveen Arivazhagan, Colin Cherry, Wolfgang                    aodong Shi. 2023a. Adapting Offline Speech
+ Macherey, Chung-Cheng Chiu, Semih Yavuz,                     Translation Models for Streaming with Future-
+ Ruoming Pang, Wei Li, and Colin Raffel. 2019.                Aware Distillation and Inference. In Proceedings
+ Monotonic Infinite Lookback Attention for Simul-             of the 2023 Conference on Empirical Methods
+ taneous Machine Translation. In Proceedings of               in Natural Language Processing, pages 16600–
+ the 57th Annual Meeting of the Association for               16619.
+ Computational Linguistics, pages 1313–1323.
+                                                            Biao Fu, Peigen Ye, Liang Zhang, Pei Yu, Cong Hu,
+Necati Cihan Camgoz, Simon Hadfield, Oscar                    Xiaodong Shi, and Yidong Chen. 2023b. A Token-
+ Koller, Hermann Ney, and Richard Bowden. 2018.               Level Contrastive Framework for Sign Language
+ Neural sign language translation. In Proceedings             Translation. In ICASSP 2023-2023 IEEE Inter-
+ of the IEEE conference on computer vision and                national Conference on Acoustics, Speech and
+ pattern recognition, pages 7784–7793.                        Signal Processing (ICASSP), pages 1–5. IEEE.
+
+                                                      380
+Shiwei Gan, Yafeng Yin, Zhiwei Jiang, Kang Xia,             Implicit Anticipation and Controllable Latency us-
+  Lei Xie, and Sanglu Lu. 2023. Contrastive Learn-          ing Prefix-to-Prefix Framework. In Proceedings
+  ing for Sign Language Recognition and Trans-              of the 57th Annual Meeting of the Association for
+  lation. In Proceedings of the Thirty-Second In-           Computational Linguistics, pages 3025–3036.
+  ternational Joint Conference on Artificial Intelli-
+  gence, IJCAI-23, pages 763–772. International           Xutai Ma, Mohammad Javad Dousti, Chang-
+  Joint Conferences on Artificial Intelligence Orga-        han Wang, Jiatao Gu, and Juan Pino. 2020a.
+  nization. Main Track.                                     SIMULEVAL: An Evaluation Toolkit for Simulta-
+                                                            neous Translation. In Proceedings of the 2020
+Jiatao Gu, Graham Neubig, Kyunghyun Cho, and                Conference on Empirical Methods in Natural
+  Victor OK Li. 2017. Learning to Translate in Real-        Language Processing: System Demonstrations,
+  time with Neural Machine Translation. In Pro-             pages 144–150.
+  ceedings of the 15th Conference of the Euro-
+  pean Chapter of the Association for Computa-            Xutai Ma, Juan Pino, and Philipp Koehn. 2020b.
+  tional Linguistics: Volume 1, Long Papers, pages          SimulMT to SimulST: Adapting Simultaneous
+  1053–1062.                                                Text Translation to End-to-End Simultaneous
+                                                            Speech Translation. In Proceedings of the 1st
+Shoutao Guo, Shaolei Zhang, and Yang Feng.                  Conference of the Asia-Pacific Chapter of the As-
+  2023. Learning Optimal Policy for Simultane-              sociation for Computational Linguistics and the
+  ous Machine Translation via Binary Search. In             10th International Joint Conference on Natural
+  Proceedings of the 61st Annual Meeting of the             Language Processing, pages 582–587.
+  Association for Computational Linguistics (Vol-
+  ume 1: Long Papers), pages 2318–2333.                   Xutai Ma, Juan Miguel Pino, James Cross, Liezl
+                                                            Puzon, and Jiatao Gu. 2019b. Monotonic Multi-
+Hezhen Hu, Weichao Zhao, Wengang Zhou, and                  head Attention. In International Conference on
+ Houqiang Li. 2023. SignBERT+: Hand-model-                  Learning Representations.
+ aware Self-supervised Pre-training for Sign Lan-
+ guage Understanding. IEEE Transactions on                Myle Ott, Sergey Edunov, Alexei Baevski, Angela
+ Pattern Analysis and Machine Intelligence.                Fan, Sam Gross, Nathan Ng, David Grangier,
+                                                           and Michael Auli. 2019. fairseq: A Fast, Ex-
+Tao Jin and Zhou Zhao. 2021. Contrastive dis-              tensible Toolkit for Sequence Modeling. In Pro-
+  entangled meta-learning for signer-independent           ceedings of the 2019 Conference of the North
+  sign language translation. In Proceedings of the         American Chapter of the Association for Com-
+  29th ACM International Conference on Multime-            putational Linguistics (Demonstrations), pages
+  dia, pages 5065–5073.                                    48–53.
+
+Tao Jin, Zhou Zhao, Meng Zhang, and Xingshan              Sara Papi, Marco Gaido, Matteo Negri, and Marco
+  Zeng. 2022. MC-SLT: Towards Low-Resource                  Turchi. 2022. Does Simultaneous Speech Trans-
+  Signer-Adaptive Sign Language Translation. In             lation need Simultaneous Models? In Findings
+  Proceedings of the 30th ACM International Con-            of the Association for Computational Linguistics:
+  ference on Multimedia, pages 4939–4947.                   EMNLP 2022, pages 141–153.
+
+Taku Kudo and John Richardson. 2018. Sentence-            Sara Papi, Matteo Negri, and Marco Turchi. 2023.
+  Piece: A simple and language independent sub-             Attention as a Guide for Simultaneous Speech
+  word tokenizer and detokenizer for Neural Text            Translation. In Proceedings of the 61st Annual
+  Processing. In Proceedings of the 2018 Confer-            Meeting of the Association for Computational Lin-
+  ence on Empirical Methods in Natural Language             guistics (Volume 1: Long Papers), pages 13340–
+  Processing: System Demonstrations, pages 66–              13356.
+  71.
+                                                          Yi Ren, Jinglin Liu, Xu Tan, Chen Zhang, Tao Qin,
+Dan Liu, Mengge Du, Xiaoxi Li, Ya Li, and Enhong            Zhou Zhao, and Tie-Yan Liu. 2020. SimulSpeech:
+  Chen. 2021. Cross attention augmented trans-              End-to-end simultaneous speech to text transla-
+  ducer networks for simultaneous translation. In           tion. In Proceedings of the 58th Annual Meeting
+  Proceedings of the 2021 Conference on Empir-              of the Association for Computational Linguistics,
+  ical Methods in Natural Language Processing,              pages 3787–3796.
+  pages 39–55.
+                                                          Ashish Vaswani, Noam Shazeer, Niki Parmar,
+Mingbo Ma, Liang Huang, Hao Xiong, Renjie                   Jakob Uszkoreit, Llion Jones, Aidan N Gomez,
+  Zheng, Kaibo Liu, Baigong Zheng, Chuanqiang               £ukasz Kaiser, and Illia Polosukhin. 2017. Atten-
+  Zhang, Zhongjun He, Hairong Liu, Xing Li, et al.          tion is all you need. Advances in neural informa-
+  2019a. STACL: Simultaneous Translation with               tion processing systems, 30.
+
+                                                    381
+Aoxiong Yin, Zhou Zhao, Jinglin Liu, Weike Jin,             2021 Conference on Empirical Methods in Natu-
+  Meng Zhang, Xingshan Zeng, and Xiaofei He.                ral Language Processing, pages 7306–7317.
+  2021a. SimulSLT: End-to-end simultaneous sign
+  language translation. In Proceedings of the 29th        Shaolei Zhang and Yang Feng. 2022a. Gaussian
+  ACM International Conference on Multimedia,               Multi-head Attention for Simultaneous Machine
+  pages 4118–4127.                                          Translation. In Findings of the Association for
+                                                            Computational Linguistics: ACL 2022, pages
+Kayo Yin, Amit Moryossef, Julie Hochgesang, Yoav            3019–3030.
+  Goldberg, and Malihe Alikhani. 2021b. Including
+  Signed Languages in Natural Language Process-           Shaolei Zhang and Yang Feng. 2022b. Information-
+  ing. In Proceedings of the 59th Annual Meeting           Transport-based Policy for Simultaneous Trans-
+  of the Association for Computational Linguistics          lation. In Proceedings of the 2022 Conference
+  and the 11th International Joint Conference on            on Empirical Methods in Natural Language Pro-
+  Natural Language Processing (Volume 1: Long               cessing, pages 992–1013.
+  Papers), pages 7347–7360.                               Shaolei Zhang and Yang Feng. 2022c. Reducing
+                                                            Position Bias in Simultaneous Machine Transla-
+Pei Yu, Liang Zhang, Biao Fu, and Yidong Chen.
+                                                            tion with Length-Aware Framework. In Proceed-
+  2023. Efficient Sign Language Translation with a
+                                                            ings of the 60th Annual Meeting of the Associ-
+  Curriculum-based Non-autoregressive Decoder.
+                                                            ation for Computational Linguistics (Volume 1:
+  In Proceedings of the Thirty-Second International
+                                                            Long Papers), pages 6775–6788.
+  Joint Conference on Artificial Intelligence, IJCAI-
+  23, pages 5260–5268. International Joint Con-           Shaolei Zhang, Yang Feng, and Liangyou Li. 2021.
+  ferences on Artificial Intelligence Organization.         Future-guided incremental transformer for simul-
+  Main Track.                                               taneous translation. In Proceedings of the AAAI
+                                                            Conference on Artificial Intelligence, volume 35,
+Xingshan Zeng, Liangyou Li, and Qun Liu.
+                                                            pages 14428–14436.
+  2021. RealTranS: End-to-End Simultaneous
+  Speech Translation with Convolutional Weighted-         Shaolei Zhang, Shoutao Guo, and Yang Feng.
+  Shrinking Transformer. In Findings of the Associ-         2022c. Wait-info Policy: Balancing Source and
+  ation for Computational Linguistics: ACL-IJCNLP           Target at Information Level for Simultaneous Ma-
+  2021, pages 2461–2474.                                    chine Translation. In Findings of the Associa-
+                                                            tion for Computational Linguistics: EMNLP 2022,
+Biao Zhang, Mathias Müller, and Rico Sennrich.
+                                                            pages 2249–2263.
+  2022a. SLTUNET: A Simple Unified Model for
+  Sign Language Translation. In The Eleventh In-          Rui Zhao, Liang Zhang, Biao Fu, Cong Hu, Jinsong
+  ternational Conference on Learning Representa-            Su, and Yidong Chen. 2024. Conditional Varia-
+  tions.                                                    tional Autoencoder for Sign Language Transla-
+                                                            tion with Cross-Modal Alignment. In Proceedings
+Ruiqing Zhang, Zhongjun He, Hua Wu, and Haifeng
+                                                            of the AAAI Conference on Artificial Intelligence.
+ Wang. 2022b. Learning adaptive segmentation
+  policy for end-to-end simultaneous translation.         Hao Zhou, Wengang Zhou, Weizhen Qi, Junfu
+  In Proceedings of the 60th Annual Meeting of the         Pu, and Houqiang Li. 2021a. Improving sign
+  Association for Computational Linguistics (Vol-          language translation with monolingual data by
+  ume 1: Long Papers), pages 7862–7874.                    sign back-translation. In Proceedings of the
+                                                           IEEE/CVF Conference on Computer Vision and
+Ruiqing Zhang, Chuanqiang Zhang, Zhongjun He,              Pattern Recognition, pages 1316–1325.
+  Hua Wu, and Haifeng Wang. 2020. Learning
+  adaptive segmentation policy for simultaneous           Hao Zhou, Wengang Zhou, Yun Zhou, and
+  translation. In Proceedings of the 2020 Confer-          Houqiang Li. 2021b. Spatial-temporal multi-cue
+  ence on Empirical Methods in Natural Language            network for sign language recognition and trans-
+  Processing (EMNLP), pages 2280–2289.                     lation. IEEE Transactions on Multimedia, 24:768–
+                                                           779.
+Shaolei Zhang and Yang Feng. 2021a. ICT’s sys-
+  tem for AutoSimTrans 2021: Robust char-level
+  simultaneous translation. In Proceedings of the
+                                                                     A. Numeric Results
+  Second Workshop on Automatic Simultaneous
+  Translation, pages 1–11.                              We provide the numeric results for Figure 3(a) in
+Shaolei Zhang and Yang Feng. 2021b. Universal           Table 2, and for Figure 3(b) in Table 3. We also
+  Simultaneous Machine Translation with Mixture-        include additional metrics for evaluation.
+  of-Experts Wait-k Policy. In Proceedings of the
+
+                                                    382
+SimulSLT
+k            1       3       5        7
+AL           1905    2826    3435     3885
+BLEU1        45.69   45.89   47.34    47.18
+BLEU2        32.66   33.03   35.20    34.85
+BLEU3        24.94   25.46   27.74    27.47
+BLEU4        20.10   20.70   22.97    22.65
+ROUGE        45.62   46.91   48.36    49.47
+Wait-k
+k            1       3       5        7       9       11
+AL           1181    1858    2457     2977    3394    3683
+BLEU1        43.95   48.06   49.64    50.59   50.66   50.99
+BLEU2        30.85   34.51   36.05    37.17   37.31   37.63
+BLEU3        23.38   26.37   27.77    28.79   28.95   29.34
+BLEU4        18.77   21.33   22.60    23.45   23.67   24.01
+ROUGE        44.35   47.50   48.86    49.77   49.83   49.99
+MU-ST
+             0.3     0.5     0.7      0.8     0.85    0.9     0.95    1.0
+AL           1370    1494    1650     1837    1998    2231    2674    4027
+BLEU1        48.10   48.89   49.39    49.38   49.75   50.02   50.63   50.99
+BLEU2        34.58   35.35   35.78    35.90   36.21   36.45   37.02   37.67
+BLEU3        26.26   26.96   27.37    27.54   27.76   28.04   28.58   29.49
+BLEU4        21.09   21.66   22.02    22.20   22.38   22.62   23.20   24.19
+ROUGE        47.82   48.41   48.77    48.84   48.85   49.19   49.57   50.04
+CTL
+m            0       2       4        6       8       10      14      18
+AL           974     1559    2112     2613    3048    3400    3796    3955
+BLEU1        48.46   49.67   49.95    50.65   50.91   50.79   51.16   51.04
+BLEU2        34.16   36.14   36.30    37.23   37.31   37.43   37.73   37.71
+BLEU3        25.70   27.73   27.96    28.88   28.88   29.15   29.49   29.51
+BLEU4        20.43   22.44   22.73    23.57   23.52   23.84   24.16   24.20
+ROUGE        46.99   48.66   48.88    49.69   49.73   49.87   50.09   50.07
+CTL++
+m            0       2       4        6       8       10      14      18
+AL           1033    1592    2137     2629    3061    3406    3800    3960
+BLEU1        48.57   49.74   49.54    49.91   49.54   49.47   49.35   49.40
+BLEU2        35.28   36.61   36.60    36.64   36.66   36.59   36.46   36.40
+BLEU3        27.12   28.67   28.65    28.73   28.80   28.74   28.56   28.48
+BLEU4        21.84   23.50   23.55    23.68   23.75   23.73   23.49   23.41
+ROUGE        46.94   48.24   48.23    48.26   48.34   48.23   48.16   48.06
+
+         Table 2: Numeric results on PHOENIX2014T (Figure 3(a))
+
+
+
+
+                                     383
+SimulSLT
+k           1       3       5        7
+AL          1427    2054    2756     3370
+BLEU1       41.19   42.17   42.09    41.52
+BLEU2       27.15   28.45   28.65    28.41
+BLEU3       18.09   19.38   19.59    19.60
+BLEU4       12.30   13.44   13.55    13.88
+ROUGE       40.50   42.63   43.28    43.18
+Wait-k
+k           1       3       5        7       9       11
+AL          1178    1741    2281     2784    3211    3554
+BLEU1       38.95   41.60   42.62    43.08   43.06   43.01
+BLEU2       25.40   27.66   28.72    29.10   29.28   29.25
+BLEU3       16.81   18.53   19.48    19.86   20.11   20.09
+BLEU4       11.54   12.83   13.68    14.05   14.29   14.32
+ROUGE       37.88   40.25   41.13    41.58   41.73   41.76
+MU-ST
+            0.3     0.5     0.7      0.8     0.85    0.9         0.95    1.0
+AL          960     1338    1780     2081    2265    2527        2926    4259
+BLEU1       40.64   41.69   42.67    42.83   43.38   43.50       43.58   43.37
+BLEU2       26.75   27.66   28.47    28.76   29.23   29.45       29.49   29.54
+BLEU3       17.73   18.50   19.20    19.55   19.89   20.10       20.17   20.29
+BLEU4       12.04   12.78   13.37    13.74   14.01   14.26       14.37   14.47
+ROUGE       39.06   40.00   40.59    40.86   41.39   41.66       41.77   41.89
+CTL
+m           0       2       4        6       8       10          14      18
+AL          1040    1465    1882     2288    2673    3023        3562    3927
+BLEU1       42.80   43.29   43.32    43.37   43.60   43.56       43.16   43.30
+BLEU2       28.51   28.82   29.07    29.34   29.55   29.57       29.37   29.52
+BLEU3       19.18   19.34   19.70    20.04   20.16   20.25       20.19   20.29
+BLEU4       13.40   13.46   13.88    14.24   14.26   14.38       14.42   14.48
+ROUGE       40.64   40.97   41.42    41.76   41.89   41.96       41.88   41.95
+CTL++
+m           0       2       4        6       8       10          14      18
+AL          1163    1608    2022     2427    2815    3155        3677    3983
+BLEU1       43.62   43.38   43.43    43.72   43.72   43.77       43.81   43.72
+BLEU2       29.65   29.36   29.54    29.87   29.81   29.79       29.78   29.74
+BLEU3       20.15   19.89   20.19    20.48   20.41   20.35       20.34   20.31
+BLEU4       14.13   13.94   14.27    14.46   14.42   14.34       14.33   14.30
+ROUGE       41.62   41.40   41.41    41.68   41.72   41.63       41.78   41.70
+
+           Table 3: Numeric results on CSL-Daily (Figure 3(b))
+
+
+
+
+                                    384
+

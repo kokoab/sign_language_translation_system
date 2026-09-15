@@ -1,0 +1,812 @@
+                                               Gloss-free Sign Language Translation: Improving from Visual-Language
+                                                                            Pretraining
+
+                                                     Benjia Zhou1 , Zhigang Chen2,3 *, Albert Clapés4,5 , Jun Wan1,2,3†, Yanyan Liang1 ,
+                                                                      Sergio Escalera4,5,6 , Zhen Lei2,3,7 , Du Zhang1
+                                             1
+                                               MUST, Macau, China; 2 UCAS, China; 3 MAIS, CASIA, China; 4 Universitat de Barcelona, Spain;
+                                          5
+                                            Computer Vision Center, Spain; 6 AAU, Aalborg, Denmark; 7 CAIR, HKISI, CAS, Hong Kong, China
+
+
+
+
+arXiv:2307.14768v1 [cs.CV] 27 Jul 2023
+                                                                     Abstract
+
+                                             Sign Language Translation (SLT) is a challenging task
+                                         due to its cross-domain nature, involving the translation
+                                         of visual-gestural language to text. Many previous meth-
+                                         ods employ an intermediate representation, i.e., gloss se-
+                                         quences, to facilitate SLT, thus transforming it into a two-
+                                         stage task of sign language recognition (SLR) followed
+                                         by sign language translation (SLT). However, the scarcity
+                                         of gloss-annotated sign language data, combined with the
+                                         information bottleneck in the mid-level gloss representa-                                (a) Gloss-based approach.
+                                         tion, has hindered the further development of the SLT
+                                         task. To address this challenge, we propose a novel Gloss-
+                                         Free SLT based on Visual-Language Pretraining (GFSLT-
+                                         VLP), which improves SLT by inheriting language-oriented
+                                         prior knowledge from pre-trained models, without any
+                                         gloss annotation assistance. Our approach involves two
+                                         stages: (i) integrating Contrastive Language-Image Pre-
+                                         training (CLIP) with masked self-supervised learning to
+                                         create pre-tasks that bridge the semantic gap between vi-
+                                         sual and textual representations and restore masked sen-
+                                         tences, and (ii) constructing an end-to-end architecture with
+                                                                                                                                (b) Gloss-free approach (ours).
+                                         an encoder-decoder-like structure that inherits the param-
+                                         eters of the pre-trained Visual Encoder and Text Decoder              Figure 1: Two SLT approaches: (a) using gloss sequences
+                                         from the first stage. The seamless combination of these               as intermediate representations, e.g., Sign2Gloss2Text (di-
+                                         novel designs forms a robust sign language representation             rectly), Sign2Text (indirectly), (b) not using gloss info
+                                         and significantly improves gloss-free sign language trans-            throughout the training/inference process.
+                                         lation. In particular, we have achieved unprecedented im-
+                                         provements in terms of BLEU-4 score on the PHOENIX14T
+                                         dataset (≥+5) and the CSL-Daily dataset (≥+3) com-                    1. Introduction
+                                         pared to state-of-the-art gloss-free SLT methods. Further-
+                                         more, our approach also achieves competitive results on                  Sign language is the main medium of communication
+                                         the PHOENIX14T dataset when compared with most of the                 among deaf people. To facilitate effective communica-
+                                         gloss-based methods1 .                                                tion with hard-of-hearing people, developing Sign Lan-
+                                                                                                               guage Translation (SLT) techniques is a promising direc-
+                                                                                                               tion. SLT refers to translating sign language into fluent
+                                           * Benjia Zhou and Zhigang Chen contributed equally to this paper.
+                                                                                                               spoken language sentences, which is more challenging than
+                                           † Corresponding author.                                             traditional Natural Machine Translation (NMT) due to its
+                                           1 https://github.com/zhoubenjia/GFSLT-VLP                           cross-domain translation nature and the scarcity of anno-
+tated data.                                                     which inherits the parameters of the pre-trained Visual En-
+    Recently, a growing body of literature [4, 42, 12, 6, 5]    coder and Text Decoder from the first stage. This archi-
+has promoted the SLT by directly or indirectly employ-          tecture enables us to directly encode visual representations
+ing the intermediate representations, namely sign glosses.      into spoken sentences without requiring any intermediate
+Gloss is a simplified representation of each sign language      projection or supervision. Moreover, unlike other meth-
+in continuous video as illustrated in Figure 1a. Although       ods [4, 43, 5] that only fine-tune the spatial feature extrac-
+gloss-based methods have significantly improved the SLT         tor (visual embedding module) in the Visual Encoder, we
+performance compared to end-to-end gloss-free approaches        fine-tune both the spatial feature extractor and the temporal
+(as illustrated in Figure 1b), the former still suffers from    relationship modeling network (Transformer encoder) as a
+the following problems: (i) annotating glosses is a labor-      unified whole.
+intensive task, which requires fine-grained alignment and          In summary, the main contributions are listed:
+labeled by specialists, significantly constraining the scala-
+                                                                   • In this work, we have achieved unprecedented im-
+bility of gloss-based SLT methods and (ii) the gloss-based
+                                                                     provements in the BLEU-4 score for SLT with-
+approach introduces an information bottleneck in the mid-
+                                                                     out using gloss annotations. Specifically, compared
+level gloss representation [4], which limits the network’s
+                                                                     with state-of-the-art gloss-free SLT methods, our
+ability to understand sign language as the translation model
+                                                                     method has got ≥+5 and ≥+3 improvements on the
+can only be as good as the sign gloss annotations it was
+                                                                     PHOENIX14T dataset and CSL-Daily dataset, respec-
+trained from.
+                                                                     tively. We believe that these improvements represent a
+    Inspired by CLIP [30], which utilizes natural language           significant breakthrough in the task of gloss-free SLT.
+supervision for image representation learning, we discov-
+ered that learning language-indicated visual representation        • To the best of our knowledge, this is the first attempt to
+from sign language videos is an effective pre-training task          introduce the VLP strategy to align visual and textual
+for SLT as it establishes a potential connection between vi-         representations in a joint semantic space in the gloss-
+sual signs and language context. However, directly trans-            free SLT task.
+ferring CLIP to SLT is not advisable due to two reasons:
+(i) it cannot perform joint pretraining of the Visual Encoder      • We propose a novel pre-training paradigm that incor-
+and Text Decoder for SLT, and (ii) sufficient SLT data is            porates masked self-supervised learning together with
+required to support this pretraining task. To address these          contrastive language-image pre-training to facilitate
+challenges, we need to tackle two critical questions: (i)            the gloss-free SLT task. This approach represents a
+how to achieve efficient joint pretraining on the limited SLT        significant improvement over previous methods and
+dataset? and (ii) how to ensure that the pretraining model           has the potential to greatly enhance the accuracy and
+offers the most effective assistance for the downstream SLT          efficiency of SLT systems.
+task?
+    To address the first challenge, we propose a solution at    2. Related Works
+both the algorithmic and data levels. At the algorithmic
+level, we introduce a novel pre-training paradigm, called          Generally speaking, there are two methods for Sign Lan-
+VLP (Visual-Language Pretraining), which incorporates the       guage Translation (SLT), namely, gloss-based and gloss-
+masked self-supervised learning paradigm together with          free. Before briefly surveying works along these two di-
+CLIP as illustrated in Figure 2a. Specifically, we design       rections, we first introduce the Sign Language Recognition
+a pretext task that aligns visual and textual representations   (SLR) task as it is an essential step for gloss-based SLT
+in a joint multimodal semantic space, guiding the Visual        methods.
+Encoder to learn language-indicated visual representations.
+Meanwhile, we introduce masked self-supervised learning         2.1. Sign Language Recognition
+into the pre-training mechanism to guide the Text Decoder           Sign Language Recognition (SLR) consists of two dif-
+to capture the syntactic and semantic properties of sign lan-   ferent tasks: Isolated Sign Language Recognition (ISLR)
+guage sentences. At the data level, we investigate a set of     and Continuous Sign Language Recognition (CSLR). The
+strong data augmentation techniques for sign videos to in-      goal of ISLR is to translate an isolated sign into a corre-
+crease the diversity of visual data. This is an aspect that     sponding single sign language word [15, 16, 21, 23], which
+has not always been adequately addressed in previous SLT        is somewhat similar to the isolated gesture recognition task
+methods.                                                        [34, 19, 10, 39, 41, 40, 37]. CSLR is a more challenging
+    To cope with the second aspect, as shown in Figure          task, which is dedicated to recognizing a continuous video
+2b, we construct an end-to-end Gloss-Free SLT architec-         of sign language into ordered sign language words, referred
+ture with an encoder-decoder-like structure called GFSLT,       to as gloss sequences [4, 6, 12, 14, 18, 28, 43, 44]. Previous
+                                                                              Stage 1                                                                             Stage 2
+
+                 an
+                  anden den[Mask]
+                             küsten                                                                                                          Parameters Inheriting
+                  ististeseswindig                        𝜓𝑇𝐸         𝐼𝑦                       𝜓 𝑇𝐷
+                             windig
+                        …
+
+  Sentences
+                                                            Text                              Text               an
+                                                                                                                  anden denküsten
+                                                                                                                             küsten
+               𝑚𝑎𝑠𝑘𝑒𝑑 𝑠𝑒𝑛𝑡𝑒𝑛𝑐𝑒𝑠                           Encoder                           Decoder               ististeseswindig      ℒ𝑐                            Sign Language Sentence
+                                                                                                                             windig
+                                                                      𝐼𝑦,𝑘                                                …                               ℎ1:𝑁                               𝑧𝑢
+                 an
+                  anden denküsten
+                             küsten
+                                                                                                            𝑟𝑒𝑠𝑡𝑜𝑟𝑒𝑑 𝑠𝑒𝑛𝑡𝑒𝑛𝑐𝑒𝑠
+                  ististeseswindig
+                             windig                                          head                                                                                                𝜓 𝑇𝐷
+                         …                                                           𝐼ሚ𝑦,𝑘                                                            Visual                         Text
+               𝑛𝑜𝑟𝑚𝑎𝑙 𝑠𝑒𝑛𝑡𝑒𝑛𝑐𝑒𝑠                                                                       𝑻𝟏 𝑻𝟐 𝑻𝟑             … 𝑻N                      Encoder                       Decoder
+                                                                                                                                                  𝜓𝑉𝐸
+                                                                                               𝐼1     𝑰𝟏 𝑻𝟏 𝑰𝟏 𝑻𝟐 𝑰𝟏 𝑻𝟑    … 𝑰𝟏 𝑻N
+                                                          𝜓𝑉𝐸                                                              …
+
+                                      Data Augmentation
+                                                                                               𝐼2     𝑰𝟐 𝑻𝟏 𝑰𝟐 𝑻𝟐 𝑰𝟐 𝑻𝟑         𝑰𝟐 𝑻N             Data Augmentation               Shift Operation
+                                                                                                                                        ℒ𝑠
+                    𝑽𝟏                                     Visual
+                                                                             head              𝐼3                          …
+
+
+ Sign Videos
+                                                                                                      𝑰𝟑 𝑻𝟏 𝑰𝟑 𝑻𝟐 𝑰𝟑 𝑻𝟑         𝑰𝟑 𝑻N
+                                                          Encoder   𝐼𝑓,𝑐            𝐼ሚ𝑓,𝑐
+                                                                                               …       …     …     …              …               sign video                       words
+
+                   𝑽𝟐                                                                          𝐼N 𝑰N𝑻𝟏 𝑰N𝑻𝟐 𝑰N𝑻𝟑 … 𝑰N𝑻N
+                   …                                                                                                                                                        ℒ𝑔
+                   𝑽N                                                                Parameters Inheriting
+
+                                                            (a) Visual-Language Pre-training                                                 (b) Gloss-free Sign Language Translation
+
+
+Figure 2: Method Overview. GFSLT-VLP improves the SLT by (a) performing Visual-Language Pretraining in stage 1 first,
+and then (b) transferring parameters of the pre-trained Visual Encoder and Textual Decoder in stage 2. Wherein N indicates
+the number of samples in a mini-batch.
+
+
+SLT work often utilized CSLR as a pre-task to predict gloss                                                               2.3. Gloss-free Sign Language Translation
+or obtain better visual representations [4, 43, 42, 5, 6]. Such
+                                                                                                                             Gloss-free SLT refers to the absence of gloss supervi-
+methods often have high requirements on the accuracy of
+                                                                                                                          sion throughout the training and testing stages, including
+CSLR. In this work, however, we abandon gloss sequences
+                                                                                                                          pre-training and fine-tuning. NSLT [3] utilized CNN+RNN
+entirely and explore a new gloss-free SLT approach.
+                                                                                                                          to model SLT end-to-end, where CNN learned visual fea-
+                                                                                                                          tures of sign language, and RNN with attention mechanism
+                                                                                                                          [2, 27] performed sequence learning and text modeling.
+2.2. Gloss-based Sign Language Translation                                                                                TSPNet [22] designed inter-scale attention and intra-scale
+                                                                                                                          attention to model local and global contextual semantic in-
+    To improve the Sign Language Translation (SLT), sev-                                                                  formation of sign language video clips for better visual fea-
+eral works have employed the mid-level representation of                                                                  ture learning. In contrast, CSGCR [38] aimed to improve
+sign glosses. SLRT [4] first introduces a Transformer-                                                                    the accuracy and fluency of SLT by proposing three mod-
+based encoder-decoder framework to perform end-to-end                                                                     ules: word existence verification, conditional sentence gen-
+SLT. This approach improves performance by using a Con-                                                                   eration, and cross-modal re-ranking to learn better gram-
+nectionist Temporal Classification (CTC) loss to soft-match                                                               matical features. However, aligning the two modalities
+sign representations and gloss sequences. STMC-T[43] ap-                                                                  without gloss supervision is challenging due to the signif-
+proaches sign language understanding with multi-cue learn-                                                                icant difference in the order of sign language videos and
+ing. It models sequence information by introducing intra-                                                                 spoken language. Consequently, the performance of gloss-
+cue and inter-cue CTC [11] losses. SignBack[42] attempts                                                                  free SLT is much lower than that of gloss-based SLT. In this
+to introduce advanced machine translation techniques such                                                                 paper, we adopt a VLP-based strategy to obtain better cross-
+as back-translation [42] into SLT. Moreover, thanks to the                                                                modal representations and significantly narrow the perfor-
+successful application of transfer learning on NMT, Chen et                                                               mance gap between gloss-free SLT and gloss-based SLT.
+al. [5, 6] made the first attempt to introduce large language
+models into SLT. All the above methods used the Gloss an-                                                                 3. Method
+notation directly or indirectly in SLT model training. How-
+ever, in our case, we completely abandon the Gloss annota-                                                                   In this paper, we suggest that language-indicated vi-
+tion because its existence limits the scale of sign language                                                              sual representations enjoy both low-redundancy and high-
+datasets. Instead, a more general design of sign language                                                                 abstract properties of language information that can im-
+pre-training is introduced in this paper.                                                                                 prove SLT. To this end, we introduce a new pre-training
+                                                             𝒐1           𝒐𝒖+𝟏
+                                                          dahinter       … aber <EOS>
+
+
+
+
+                                                                                                                                                   Conv1D-BN1D-Relu-Pooling                Conv1D-BN1D-Relu-Pooling
+                                                                                                                                   2D
+                                                                Linear+Softmax
+
+
+                                                                                             Text Decoder
+                                                                                                                                  CNN
+                                  𝒉𝟏         𝒉𝑵                     𝒛𝟎      𝒛𝒖    𝒛𝑼                                …
+
+
+
+     Visual Encoder
+                                                                                                                                   2D
+
+                                                                                                                                                                                                                              Linear
+                            Transformer Encoder               Transformer Decoder
+                                                                                                                                  CNN
+                                   ෡𝟏
+                                   𝒇         ෡𝑵
+                                             𝒇                      ෝ
+                                                                    𝒚𝟎      ෝ
+                                                                            𝒚𝒖    ෝ
+                                                                                  𝒚𝑼                                …                                                                                                                         𝒇𝒏
+                      PE                                                                PE
+                                   𝒇𝟏        𝒇𝑵                     𝒚𝟎      𝒚𝒖    𝒚𝑼                                               2D
+                                Vision Embedding                Word Embedding                                                    CNN
+                                                                                                                    …
+                                                                                                                                   2D
+                                   …         …              <BOS> dahinter nase                                                   CNN
+                                   …                𝑣𝑻                                                      (T x 224 x 224 x 3)          (T x C)                               (T/2 x C)                              (T/4 x C)        (T/4 x L)
+                           𝑣1           𝑣𝐭   …                       𝒔𝒖 … 𝒔𝑼
+                                                  (a) GFSLT Model                                                                       (b) Vision Embedding
+
+Figure 3: (a) The framework of the Gloss-free SLT Model, where PE means Positional Encoding. (b) The structure of the
+Vision Embedding layer.
+
+
+paradigm for SLT that combines masked self-supervised                                             3.1. Visual-Language Pretraining
+learning with CLIP, allowing us to jointly pre-train the Vi-
+                                                                                                     In order to learn language-indicated visual representa-
+sual Encoder ψV E (·) and Text Decoder ψT D (·) for the
+                                                                                                  tions from sign videos, two crucial issues need to be consid-
+downstream GFSLT model (Section 3.1). Subsequently, we
+                                                                                                  ered: (i) how to design a pretext task that can effectively
+transfer the parameters of the pre-trained Visual Encoder
+                                                                                                  reduce the semantic gap between visual and textual rep-
+ψV∗ E (·) and Text Decoder ψT∗ D (·) to the GFSLT model
+                                                                                                  resentations? and (ii) how to achieve jointly pretraining
+ψGF SLT (·) meticulously to enhance its translation capabil-
+                                                                                                  on the limited SLT dataset?
+ities (Section 3.2). Algorithm 1 elaborates our entire algo-
+                                                                                                     To cope with the first issue, we draw inspiration from
+rithm flow.
+                                                                                                  CLIP [30] in the field of zero-shot transfer learning, which
+                                                                                                  developed the “image-to-text” as a standardized input-
+                                                                                                  output interface, allowing for transferable visual models
+Algorithm 1 Two-Stage Gloss-free SLT.                                                             from natural language supervision. CLIP [30] has high-
+Stage1: Visual-Language Pre-training (VLP)                                                        lighted the advantages of learning from natural language
+ 1: Input: Dataset D = {V (n) , S (n) }N
+                                       n=1
+                                                                                                  over other task-agnostic pretraining methods, making it par-
+ 2: Initialize the parameters Θ∗ of ψV E (·), ψT D (·) and ψT E (·)                               ticularly suitable for sign language translation tasks. In
+ 3: while not converged do                                                                        other words, learning visual representations through lan-
+ 4:    for V (i) , S (i) in D do                                                                  guage supervision is a straightforward yet effective pretext
+ 5:       Update the ψV E (·) by descending ▽Ls (ΘV E , V (i) ) +                                 task for SLT, given that SLT data inherently has an image-
+         Ls (ΘT E , S (i) )                                                                       text pair structure. From this insight, we present a new
+ 6:      Obtain the masked sentences S̃ (i)
+                                                                                                  Visual-Language Pre-training scheme, termed VLP, as il-
+ 7:      Update the ψT D (·) by descending ▽Lc (ΘT D , S̃ (i) )
+                                                                                                  lustrated in Figure 2a. It trains a Visual Encoder ψV E (·)
+ 8:   end for
+ 9: end while
+                                                                                                  and a Text Encoder ψT E (·) jointly to predict the correct
+10: Output: ψV∗             ∗
+                E (·) and ψT D (·)
+                                                                                                  pairings of a batch of (sign video, language sentence) train-
+                                                                                                  ing examples. Formally, a video-text pair is first input
+Stage2: Gloss-Free Sign Language Translation (GFSLT)
+                                                                                                  into ψV E (·) and ψT E (·) in parallel to obtain corresponding
+ 1: Initialize the parameters ΘGF SLT of ψGF SLT (·) with
+                                                                                                  high-dimensional semantic features:
+    ψV∗ E (·), ψT∗ D (·)
+ 2: while not converged do
+                                                                                                                     If = ψV E (V ),                                          V = (v1 , ..., vT );
+ 3:    for V (i) , S (i) in D do                                                                                                                                                                                                                   (1)
+ 4:        Update the ψGF SLT (·) by descending                                                                      Iy = ψT E (S),                                 S = (s1 , ...sU );
+           ▽Lg (ΘGF SLT , S̃ (i) )
+ 5:    end for                                                                                    where V is a sign language video with T frames and S is a
+ 6: end while                                                                                     spoken language sentence with U words.
+                 ∗
+ 7: Output: ψGF      SLT (·)                                                                      Visual Encoder: The Visual Encoder consists of a Visual
+                                                                                                  Embedding layer, as shown in Figure 3b, followed by a
+                                                                                                  Transformer Encoder with multiple layers. Each frame of
+                                                                                                  the video is first encoded by the weight-sharing 2D CNN
+layers; The resulting visual encoding is then fed through                      and temporal transformation. During training, we randomly
+two temporal blocks, which use a combination of Conv1D-                        combine these three augmentation methods to enlarge the
+BN-Relu-Maxpooling to capture short-term dependencies.                         data space.
+Finally, the features are passed through the Transformer En-                       In fact, this paradigm facilitates the Visual Encoder to
+coder to capture long-term dependencies in the video.                          acquire potent language representation skills that are simi-
+Text Encoder: To encode text data effectively, it is crucial                   lar to those of the Text Encoder, resulting in the generation
+to have a strong Text Encoder. As a result, we have opted                      of more robust and representative visual features. This is the
+to use the parameters initialized encoder with 12 layers in                    reason why acquiring language-indicated visual features for
+mBART [25]. This is an NMT model that has been pre-                            SLT is feasible. Hence, after the Visual Encoder and Text
+trained on CC25 [25], a multilingual corpus that covers 25                     Decoder have established such modeling capability, we em-
+languages.                                                                     ploy them to perform the SLT task in the second stage.
+    The captured visual features If and textual features Iy
+                                                                               3.2. Gloss-free Sign Language Translation
+are then input to the corresponding heads to be linearly pro-
+jected to the joint multimodal semantic space for similarity                      In this section, we present our Gloss-Free SLT (GFSLT)
+computation. Here, both heads are composed of a simple                         network, which can generate the corresponding sentence
+Linear layer. Formally, we can express the process as fol-                     S from the given sign video V without any gloss annota-
+lows:                                                                          tion assistance. To achieve this, as illustrated in Figure 3a,
+                                                                               we utilize Transformer [32] as the main framework of the
+           I˜f,c = Linear(If,c ), I˜y,k = Linear(Iy,k );                (2)    model, as it has shown superior performance in Neural Ma-
+                                                                               chine Translation (NMT). Initially, the sign video is passed
+where If,c denotes the activation of the last layer of the
+                                                                               through the Visual Encoder ψV∗ E pretained in the VLP stage
+Visual Encoder at the [CLS] token2 , and Iy,k denotes the
+                                                                               to get the hidden semantic vectors:
+activation of the last layer of the Text Encoder at the
+<EOS>token3 . Subsequently, similar to CLIP [30], I˜f,c                                              h1:M = ψV∗ E (v1:T )                  (5)
+and I˜y,k are layer-normalized and pairwise-scaled, and then
+used to calculate the loss value via a symmetric Cross-                        where M = T /4. Meanwhile, Text Decoder ψT∗ D pre-
+entropy loss function:                                                         tained in the VLP stage takes the corresponding sentence
+                                                                               S = (s1 , .., sU ) along with the last encoder hidden state as
+                  1 X                 X
+                      V log(I˜f,c ) +   S log(I˜y,k )
+                                                     
+        Ls = −                                                          (3)    input to generate one word at a time:
+                  2
+    To tackle the second question, we take a dual approach                                        zu = ψT∗ D (s1:u−1 , h1:M )              (6)
+at both the algorithm and data levels. At the algorithm level,
+as illustrated in Figure 2a, we combine two pre-training                       where the first word of a sentence is artificially set to a spe-
+paradigms - masked self-supervised learning and visual-                        cial flag word <BOS>, and the Transformer Decoder will
+language supervision learning - to achieve end-to-end joint                    end the generation until the flag word <EOS>. Finally, we
+pre-training. This consideration stems from the fact that dif-                 calculate the conditional probability p(S|V ) after a Linear
+ferent pre-training paradigms can capture different aspects                    and a Softmax layer, and optimize the whole network by
+of the data, and combining them can provide a more com-                        minimizing the video-to-sentence cross-entropy loss:
+prehensive representation of the data [17, 20]. Let ψT D (·)                                U
+                                                                                            Y
+denote the Text Decoder, and its optimization goal is to re-                    p(S|V ) =         p(su |ou ),   ou = sof tmax(W zu + b) (7)
+store the masked words in the input sentence, which can be                                  u=1
+formulated as follows:
+                       n
+                                                                                                     Lg = − log p(S|V )                    (8)
+                 1X
+                      Lc ψT D (ψT∗ E (S̃ (i) )), S (i)
+                                                       
+             min                                                        (4)
+              Θ n
+                  i=1
+                                                                               4. Experiments
+
+where S̃ denotes the masked sentences, n is the number
+                                                                               4.1. Datasets and Evaluation Metrics
+of training samples, Lc is the loss function. At the data                      Datasets. We evaluated our proposed method on two
+level, we introduce strong data augmentation (implemented                      widely used SLT datasets: RWTH-PHOENIX-Weather
+by VIDAUG library [7]) for input videos in SLT, includ-                        2014T [3] and CSL-Daily [42]. PHOENIX-2014T contains
+ing geometric transformation, color space transformation,                      8257 parallel German sign language (DGS) videos with
+    2 It is a special token that is added to make a global representation of   German translations from weather forecast programs, split
+the whole sequence.                                                            into train, dev, and test sets of sizes 7096, 519, and 642 re-
+    3 The text sequence is bracketed with <BOS>and <EOS>tokens.                spectively. The German translations have a vocabulary size
+                                                      Dev                                            Test
+Method
+                                   B1       B2       B3         B4       ROUGE       B1      B2      B3      B4     ROUGE
+                                                         Gloss-based
+SLRT [4]                         47.26    34.40    27.05       22.38        -       46.61   33.73   26.19   21.32      -
+STN-SLT [33]                     49.12    36.29    28.34       23.23        -       48.61   35.97   28.37   23.65      -
+STMC-T [43]                      47.60    36.43    29.18       24.09      48.24     46.98   36.09   28.70   23.65    46.65
+BN-TIN-Transf.+SignBT [42]       51.11    37.90    29.80       24.45      50.29     50.80   37.75   29.72   24.32    49.54
+MMTLB [5]                        53.95    41.12    33.14       27.61      53.10     53.97   41.75   33.84   28.39    52.65
+TS-SLT [6]                       54.32    41.99    34.15       28.66      54.08     54.90   42.43   34.46   28.95    53.48
+                                                           Gloss-free
+NSLT [3]                         28.10    16.81    11.82        9.12      31.00     27.10   15.61   10.82    8.35    29.70
+NSLT+Bahdanau [3, 2]             31.87    19.11    13.16        9.94      31.80     32.24   19.03   12.83    9.58    31.80
+NSLT+Luong [3, 27]               31.58    18.98    13.22       10.00      32.60     29.86   17.52   11.96    9.00    30.70
+TSPNet [22]                        -        -        -            -         -       36.10   23.12   16.88   13.41    34.96
+CSGCR [38]                       35.85    24.77    18.65       15.08      38.96     36.71   25.40   18.86   15.18    38.85
+GASLT [36]                         -        -        -            -         -       39.07   26.74   21.86   15.74    39.86
+GFSLT (ours)                     41.97    31.04    24.30       19.84      40.70     41.39   31.00   24.20   19.66    40.93
+GFSLT-VLP (ours)                 44.08    33.56    26.74       22.12      43.72     43.71   33.18   26.11   21.44    42.49
+Improvement                      +8.23    +8.79    +8.09       +7.04      +4.76     +4.64   +6.44   +4.25   +5.70    +2.63
+
+Table 1: Experimental results on PHOENIX14T dataset. We report BLEU-n in B-n columns and ROUGE. Improvement
+represents the result of comparison with the latest gloss-free methods.
+
+                                                      Dev                                            Test
+Method
+                                   B1       B2       B3         B4       ROUGE       B1      B2      B3      B4     ROUGE
+                                                         Gloss-based
+SLRT [4]                         37.47    24.67    16.86       11.88      37.96     37.38   24.36   16.55   11.79    36.74
+BN-TIN-Transf. [42]              40.66    26.56    18.06       12.73      37.29     40.74   26.96   18.48   13.19    37.67
+BN-TIN-Transf.+SignBT [42]       51.46    37.23    27.51       20.80      49.49     51.42   37.26   27.76   21.34    49.31
+MMTLB [5]                        53.81    40.84    31.29       24.42      53.38     53.31   40.41   30.87   23.92    53.25
+TS-SLT [6]                       55.21    42.31    32.71       25.76      55.10     55.44   42.59   32.87   25.79    55.72
+                                                           Gloss-free
+SLRT† [4]                        21.03     9.97     5.96       4.04       20.51     20.00    9.11    4.93   3.03     19.67
+GASLT [36]                         -         -        -          -          -       19.90    9.94    5.98   4.07     20.35
+NSLT+Luong [3, 27]               34.22    19.72    12.24       7.96       34.28     34.16   19.57   11.84   7.56     34.54
+GFSLT (ours)                     37.60    23.30    14.89        9.92      35.42     37.69   23.28   14.93    9.88    35.16
+GFSLT-VLP (ours)                 39.20    25.02    16.35       11.07      36.70     39.37   24.93   16.26   11.00    36.44
+Improvement                      +4.98    +5.30    +4.11       +3.11      +2.42     +5.21   +5.36   +4.42   +3.44    +1.90
+
+Table 2: Experimental results on CSL-Daily dataset. Results of SLRT [4] and NSLT+Loung [3, 27] are reproduced by [42],
+† denotes our reproduced result under the gloss-free setting.
+
+
+of 2887. CSL-Daily focuses on daily topics in Chinese sign            Evaluation Metrics. Following previous works [4, 42,
+language, containing 20654 parallel CSL videos with Chi-              5, 6], we adopt BLEU [29] and ROUGE [24] to evaluate
+nese translations. The dataset is split into train, dev, and          SLT. Higher BLEU and ROUGE-L indicate better transla-
+test sets of sizes 18401, 1077, and 1176, respectively, and           tion performance.
+the Chinese translations have a vocabulary size of 2343.
+                                                   Dev                                           Test
+  VLP     Aug-S1     Aug-S2
+                                BLEU-1       BLEU-2 BLEU-3         BLEU-4      BLEU-1       BLEU-2 BLEU-3           BLEU-4
+   %         %          %         41.97       31.04       24.30      19.84       41.39       31.00        24.20       19.66
+   "         %          %         41.50       31.26       24.64      20.12       41.81       31.34        24.40       19.77
+   "         "          %         42.19       32.49       26.28      22.05       42.09       32.01        25.60       21.23
+   %         %          "         41.84       30.98       24.12      19.65       40.57       29.59        22.73       18.41
+   "         "          "         44.08       33.56       26.74      22.12       43.71       33.18        26.11       21.44
+
+Table 3: Effect of VLP and data augmentation strategies. VLP: Visual-Language Pre-training, Aug-S1: strong data augmen-
+tation employed during stage 1 for sign video, Aug-S2: strong data augmentation employed during stage 2 for sign video.
+
+
+4.2. Implementation details                                       [4] (22.38 vs. 22.12) and STMC-T [43] (24.09 vs. 22.12),
+                                                                  highlighting its potential.
+GFSLT Model. We used ResNet18 [13] pre-trained on Im-
+ageNet [8] as our 2D-CNN. For the temporal blocks, we             Results on CSL-Daily dataset. Table 10 compares our
+followed the configuration of [42], using a stride size of 1/2    method with the state-of-the-art approaches on the CSL-
+and a kernel size of 5/2 for the Conv1D/Maxpooling layers.        Daily dataset. CSL-Daily is a large Chinese sign language
+Our Transformer encoder and decoder both have 3 layers,           dataset released in 2021 by [42] and there are therefore only
+with a hidden size of 1024 and a feed-forward size of 4096.       a few methods that tested on it, especially gloss-free ones.
+Each layer has 8 attention heads, and we set the dropout to       Note that the result of SLRT[4] and NSLT+Loung[3, 27] are
+0.1 to avoid overfitting.                                         reproduced by [42]. As it can be seen, our method surpasses
+                                                                  the gloss-free method NSLT+Loung[3, 27] in all metrics,
+Visual-Language Pretraining. We conduct respective pre-           especially improving the BLEU-4 score about 3.2±0.1 and
+training tasks on the training sets of the two sign language      ROUGE score about 2.2±0.2 on this dataset. Furthermore,
+datasets. The mini-batch size is set to 16 (we use AMP [1]        compared with gloss-based methods, we are close to the
+technology to expand the batch size). The input sequences         SLRT[4] and BN-TIN-Transf[42] which did not use semi-
+are first resized into 256 × 256, and then randomly/centrally     supervised back-translation auxiliary training unlike BN-
+cropped into 224 × 224 during training/inference. We em-          TIN-Transf+SignBT[42], large model transfer training such
+ploy SGD as the optimizer and the learning rate is decayed        as MMTLB[5] or a multi-stream model like the one from
+with a cosine schedule [26] from 0.01 (maximum) to 1e-5           TS-SLT[6].
+(minimum). The training lasts for 80 epochs.
+SLT Training and Inference. The GFSLT network                     4.4. Ablation Studies
+is trained end-to-end using cross-entropy loss with label            The ablation studies were conducted mainly on the
+smoothing of 0.2 and a mini-batch size of 8. We used SGD          PHOENIX14T dataset, with a primary focus on improving
+optimizer [31] with 0.9 momentum and initialized the learn-       the BLEU-4 score as it is the most reliable measure of SLT
+ing rate to 0.01 with the cosine annealing scheduler. The         accuracy. Additionally, unless stated otherwise, we utilized
+network is trained for 200 epochs. During inference, de-          the configuration outlined in Section 4.2 as the baseline set-
+coding is performed using the beam search strategy with a         tings for our network.
+length penalty [35] of 1, and a beam size of 5 is employed.
+                                                                  Visual-Language Pretraining. In our investigation of
+                                                                  VLP, we delved into the key factors that affect its effi-
+4.3. Comparison with State-of-the-art Methods
+                                                                  cacy and discovered several phenomena. Firstly, from Ta-
+Results on PHOENIX14T dataset. Table 1 presents a                 ble 3, we observed that data augmentation on sign videos
+comparison of our approach with state-of-the-art gloss-           plays a significant role in the success of VLP. Specifically,
+based and gloss-free methods for sign language transla-           when utilizing lightweight data augmentation such as ran-
+tion. Our method achieves a significant performance gain          dom cropping, the improvement of VLP for SLT is limited,
+when compared to other gloss-free approaches, such as CS-         only increasing the BLEU-4 score by about +0.3 on the Dev
+GCR [38]. Specifically, our method improves the BLEU-4            set and +0.1 on the Test set. However, when combined with
+score by approximately +7.0 and +5.7 on the Dev and Test          strong data augmentation, VLP significantly enhances the
+sets, respectively, and improves the ROUGE score by about         SLT task, improving the BLEU-4 score from 19.84 to 22.05
++4.8 and +2.6. Moreover, our results are highly competi-          (+2.2). This emphasizes the data-hungry nature of VLP.
+tive when compared to most gloss-based methods. Notably,          Secondly, we observed that without VLP, relying solely
+our method achieves competitive performance with SLRT             on strong data augmentation in stage 2 does not provide
+     Visual Encoder                                              Dev                                                               Test
+                                T-Decoder
+ V-Embedding T-Encoder                          BLEU-1     BLEU-2 BLEU-3           BLEU-4             BLEU-1                  BLEU-2 BLEU-3                     BLEU-4
+       %               %            %            41.97       31.04   24.30          19.84                41.39                 31.00           24.20               19.66
+       "               %            %            41.31       30.88   24.25          19.83                40.12                 30.03           23.34               18.93
+       %               "            %            42.75       32.31   25.65          21.23                42.94                 32.68           25.83               21.25
+       "               "            %            43.30       32.52   26.31          22.07                43.29                 32.74           25.96               21.43
+       %               %            "            42.27       31.68   25.14          20.70                41.55                 31.11           24.56               20.27
+       "               "            "            44.08       33.56   26.74          22.12                43.71                 33.18           26.11               21.44
+
+Table 4: Investigating the impact of fine-tuning individual components within the Visual-Language-Pretrain (VLP) frame-
+work. V-Embedding: Visual Embedding module; T-Encoder: Transformer Encoder; T-Decoder: Transformer Decoder.
+Notations %and "denote the initialization of corresponding layers with random parameters and pre-trained parameters, re-
+spectively.
+
+
+  period    40 epoch    80 epoch     160 epoch      200 epoch        training time, the gloss-free SLT model requires a longer
+        fixing the training time (80 epochs) of stage 1.             training regime (> 100 epochs) to achieve satisfactory per-
+  stage 2    18.23         20.42        21.13            22.12       formance. This is because without the aid of intermediate
+                                                                     representation, the convergence speed of the network is re-
+       fixing the training time (200 epochs) of stage 2.             duced, necessitating more training time to make the model
+  stage 1    20.62         22.12        22.13            22.07       fit the desired effect. Moreover, we investigated the influ-
+                                                                     ence of pre-training duration on model performance. As
+Table 5: Effect of longer training regimes. We explore the           observed, it doesn’t seem necessary to have an extended
+optimal training time for both stages by fixing the training         pre-training duration. 80 epochs appears to be a trade-off
+time of stage 1 to investigate the optimal training time of          between the two sign language datasets.
+stage 2 and vice versa in this table.
+                                                                     5. Qualitative Results
+much benefit for SLT and may even impair performance
+                                                                      Reference:    sonst regnet es teilweise kräftig
+slightly. But when combined with VLP, SLT performance                               (Otherwise it rains heavily at times)
+can be continuously improved. This is because aggressive              GFSLT:         sonst regnet es hier und da
+                                                                                    ( Otherwise it rains here and there )
+data augmentation methods may introduce excessive vari-               GFSLT-VLP:     sonst regnet es teilweise kräftig
+                                                                                    ( Otherwise it rains heavily at times )
+ations or distortions to the training data, which may pose            Reference:    am tag wechseln sonne und wolken einander ab teilweise ist es auch längere zeit sonnig
+challenges for the SLT model to adapt to the distribution                           (During the day sun and clouds alternate partly it is sunny for a long time)
+                                                                      GFSLT:         am tag sonne und wolken im wechsel nur vereinzelt schauer
+of the augmented data. However, the VLP stage leverages                             ( During the day sun and clouds alternate only sporadic showers )
+                                                                      GFSLT-VLP:     am tag wechseln sonne und wolken einander ab es bilden sich längere zeit viel sonnenschein
+the LLM to encourage the Visual Encoder to adapt to the                             ( During the day, sun and clouds alternate There is a lot of sunshine for a long time )
+distribution differences introduced by the augmented data,            Reference:    am tag nur hier und da einige sonnige momente vor allem an den alpen
+                                                                                    (During the day only here and there some sunny moments, especially in the Alps)
+helping the downstream SLT model develop the ability to               GFSLT:         gebietsweise zeigt sich morgen häufig die sonne
+generalize from the augmented data. Additionally, from Ta-                          ( In some areas, the sun will often show up tomorrow )
+                                                                      GFSLT-VLP:     morgen zeigt sich mal die sonne wenn dann vor allem an den alpen
+ble 4, we find that fine-tuning the Visual Embedding mod-                           ( Tomorrow the sun will show up , especially in the Alps )
+
+ule and Transformer Encoder as a unified whole can result             Reference:    und nun die wettervorhersage für morgen sonntag den zwölften dezember
+                                                                                    (And now the weather forecast for tomorrow Sunday the twelfth of December)
+in significant performance gains (+2.23) compared to fine-            GFSLT:         und nun die wettervorhersage für morgen sonntag den zwölften november
+                                                                                    ( And now the weather forecast for tomorrow Sunday the twelfth of November )
+tuning them separately (-0.01 and +1.39, respectively). Fi-           GFSLT-VLP:     und nun die wettervorhersage für morgen sonntag den zwölften dezember
+nally, we observe that fine-tuning the Text Decoder can also                        ( And now the weather forecast for tomorrow Sunday the twelfth of December )
+
+bring some gains, but it seems limited (≤ 1). These re-
+sults confirm that a good visual feature is critical to Gloss-       Table 6: Qualitative results of PHOENIX14T. We highlight
+Free SLT. The VLP strategy facilitates the learning of low-          the difference between sentences. Green means totally
+redundancy and high-abstract features present in language            same as the reference. Yellow means correct but differ-
+representations by the Visual Encoder, which makes it a cru-         ent words. Red means totally wrong.
+cial component of the system.
+Investigation of Training Time. The training time of                    We visually demonstrate our model’s performance on
+gloss-based SLT models typically does not exceed 100                 several sign language videos from PHOENIX14T test set in
+epochs. However, as shown in Table 5, with a fixed pre-              Table 6. While both models understand the general meaning
+of sign language videos and produce complete sentences,             [5] Yutong Chen, Fangyun Wei, Xiao Sun, Zhirong Wu, and
+the baseline model is more error-prone on some keywords,                Stephen Lin. A simple multi-modality transfer learning
+resulting in drastically different translations (first and sec-         baseline for sign language translation. In Proceedings of
+ond rows). Additionally, the VLP model outperforms the                  the IEEE/CVF Conference on Computer Vision and Pattern
+baseline in recognizing named entities, accurately translat-            Recognition, pages 5120–5130, 2022. 2, 3, 6, 7
+                                                                    [6] Yutong Chen, Ronglai Zuo, Fangyun Wei, Yu Wu, Shujie
+ing place names and months (third and fourth rows).
+                                                                        LIU, and Brian Mak. Two-stream network for sign language
+                                                                        recognition and translation. In Alice H. Oh, Alekh Agarwal,
+6. Conclusion and Future work                                           Danielle Belgrave, and Kyunghyun Cho, editors, Advances
+   In this work, we propose a new perspective for the gloss-            in Neural Information Processing Systems, 2022. 2, 3, 6, 7
+free SLT task by reducing the semantic gap between vi-              [7] darpa-sail on. Video augmentation techniques for deep
+                                                                        learning. https://github.com/darpa-sail-on/
+sual and textual representations, which enables us to learn
+                                                                        videoaug, 2021. 5
+language-indicated visual representations from sign videos.
+                                                                    [8] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li,
+To achieve this, we introduce a novel pre-training paradigm             and Li Fei-Fei. Imagenet: A large-scale hierarchical image
+that combines masked self-supervised learning with visual-              database. In 2009 IEEE conference on computer vision and
+language supervision learning. Our experiments reveal that              pattern recognition, pages 248–255. Ieee, 2009. 7
+both data scale and model parameters have a significant im-         [9] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina
+pact on the performance of this method. While our pro-                  Toutanova.       Bert: Pre-training of deep bidirectional
+posed pre-training paradigm is a crucial step towards gloss-            transformers for language understanding. arXiv preprint
+free SLT, we acknowledge that further research is needed,               arXiv:1810.04805, 2018. 11
+especially in pre-training on a large-scale SLT dataset (with-     [10] Sergio Escalera, Jordi Gonzàlez, Xavier Baró, and Jamie
+out gloss annotations). We hope that our work will inspire              Shotton. Guest editors’ introduction to the special issue
+future research in this area.                                           on multimodal human pose recovery and behavior analysis.
+                                                                        38(8):1489–1491, 2016. 2
+                                                                   [11] Alex Graves, Santiago Fernández, Faustino Gomez, and
+                   Acknowledgement                                      Jürgen Schmidhuber. Connectionist temporal classification:
+                                                                        labelling unsegmented sequence data with recurrent neural
+This work was supported by the National Key Research and
+                                                                        networks. In Proceedings of the 23rd international confer-
+Development Plan under Grant 2021YFE0205700, the Ex-                    ence on Machine learning, pages 369–376, 2006. 3
+ternal cooperation key project of Chinese Academy Sci-             [12] Aiming Hao, Yuecong Min, and Xilin Chen. Self-mutual dis-
+ences 173211KYSB20200002, the Science and Technol-                      tillation learning for continuous sign language recognition.
+ogy Development Fund of Macau Project 0123/2022/A3,                     In Proceedings of the IEEE/CVF International Conference
+0070/2020/AMJ, InnoHK program, and has been partially                   on Computer Vision, pages 11303–11312, 2021. 2
+supported by the Spanish project PID2022-136436NB-I00              [13] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+and by ICREA under the ICREA Academia programme.                        Deep residual learning for image recognition. In Proceed-
+                                                                        ings of the IEEE conference on computer vision and pattern
+References                                                              recognition, pages 770–778, 2016. 7, 11
+                                                                   [14] Lianyu Hu, Liqing Gao, Zekang Liu, and Wei Feng. Tem-
+ [1] Marc Baboulin, Alfredo Buttari, Jack Dongarra, Jakub               poral lift pooling for continuous sign language recognition.
+     Kurzak, Julie Langou, Julien Langou, Piotr Luszczek, and           In Computer Vision–ECCV 2022: 17th European Confer-
+     Stanimire Tomov. Accelerating scientific computations with         ence, Tel Aviv, Israel, October 23–27, 2022, Proceedings,
+     mixed precision algorithms. Computer Physics Communica-            Part XXXV, pages 511–527. Springer, 2022. 2
+     tions, 180(12):2526–2533, 2009. 7                             [15] Alfarabi Imashev, Medet Mukushev, Vadim Kimmelman,
+ [2] Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio.                and Anara Sandygulova. A dataset for linguistic understand-
+     Neural machine translation by jointly learning to align and        ing, visual evaluation, and recognition of sign languages:
+     translate. In International Conference on Learning Repre-          The k-rsl. In Proceedings of the 24th Conference on Compu-
+     sentations, 2015. 3, 6                                             tational Natural Language Learning, pages 631–640, 2020.
+ [3] Necati Cihan Camgoz, Simon Hadfield, Oscar Koller, Her-            2
+     mann Ney, and Richard Bowden. Neural sign language trans-     [16] Hamid Reza Vaezi Joze and Oscar Koller. Ms-asl: A large-
+     lation. In Proceedings of the IEEE conference on computer          scale data set and benchmark for understanding american
+     vision and pattern recognition, pages 7784–7793, 2018. 3,          sign language. In British Machine Vision Conference, 2019.
+     5, 6, 7                                                            2
+ [4] Necati Cihan Camgoz, Oscar Koller, Simon Hadfield, and        [17] Alex Kendall, Yarin Gal, and Roberto Cipolla. Multi-task
+     Richard Bowden. Sign language transformers: Joint end-to-          learning using uncertainty to weigh losses for scene geome-
+     end sign language recognition and translation. In Proceed-         try and semantics. In Proceedings of the IEEE conference on
+     ings of the IEEE/CVF conference on computer vision and             computer vision and pattern recognition, pages 7482–7491,
+     pattern recognition, pages 10023–10033, 2020. 2, 3, 6, 7           2018. 5
+[18] Oscar Koller, Necati Cihan Camgoz, Hermann Ney, and             [31] Herbert Robbins and Sutton Monro. A stochastic approxi-
+     Richard Bowden. Weakly supervised learning with multi-               mation method. The annals of mathematical statistics, pages
+     stream cnn-lstm-hmms to discover sequential parallelism in           400–407, 1951. 7
+     sign language videos. IEEE transactions on pattern analysis     [32] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-
+     and machine intelligence, 42(9):2306–2320, 2019. 2                   reit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia
+[19] Jakub Konečnỳ and Michal Hagara. One-shot-learning ges-            Polosukhin. Attention is all you need. Advances in neural
+     ture recognition using hog-hof features. The Journal of Ma-          information processing systems, 30, 2017. 5
+     chine Learning Research, 15(1):2513–2532, 2014. 2               [33] Andreas Voskou, Konstantinos P Panousis, Dimitrios Kos-
+[20] Simon Kornblith, Jonathon Shlens, and Quoc V Le. Do                  mopoulos, Dimitris N Metaxas, and Sotirios Chatzis.
+     better imagenet models transfer better? In Proceedings of            Stochastic transformer networks with linear competing units:
+     the IEEE/CVF conference on computer vision and pattern               Application to end-to-end sl translation. In Proceedings of
+     recognition, pages 2661–2671, 2019. 5                                the IEEE/CVF International Conference on Computer Vi-
+[21] Dongxu Li, Cristian Rodriguez, Xin Yu, and Hongdong Li.              sion, pages 11946–11955, 2021. 6
+     Word-level deep sign language recognition from video: A         [34] Jun Wan, Qiuqi Ruan, Wei Li, and Shuang Deng. One-shot
+     new large-scale dataset and methods comparison. In Pro-              learning gesture recognition from RGB-D data using bag of
+     ceedings of the IEEE/CVF winter conference on applications           features. 14(1):2549–2582, 2013. 2
+     of computer vision, pages 1459–1469, 2020. 2                    [35] Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V Le,
+[22] Dongxu Li, Chenchen Xu, Xin Yu, Kaihao Zhang, Benjamin               Mohammad Norouzi, Wolfgang Macherey, Maxim Krikun,
+     Swift, Hanna Suominen, and Hongdong Li. Tspnet: Hier-                Yuan Cao, Qin Gao, Klaus Macherey, et al. Google’s
+     archical feature learning via temporal semantic pyramid for          neural machine translation system: Bridging the gap be-
+     sign language translation. Advances in Neural Information            tween human and machine translation. arXiv preprint
+     Processing Systems, 33:12034–12045, 2020. 3, 6                       arXiv:1609.08144, 2016. 7
+[23] Dongxu Li, Xin Yu, Chenchen Xu, Lars Petersson, and
+                                                                     [36] Aoxiong Yin, Tianyun Zhong, Li Tang, Weike Jin, Tao Jin,
+     Hongdong Li. Transferring cross-domain knowledge for
+                                                                          and Zhou Zhao. Gloss attention for gloss-free sign language
+     video sign language recognition. In Proceedings of the
+                                                                          translation. In Proceedings of the IEEE/CVF Conference
+     IEEE/CVF Conference on Computer Vision and Pattern
+                                                                          on Computer Vision and Pattern Recognition, pages 2551–
+     Recognition, pages 6205–6214, 2020. 2
+                                                                          2562, 2023. 6
+[24] Chin-Yew Lin. Rouge: A package for automatic evaluation
+                                                                     [37] Zitong Yu, Benjia Zhou, Jun Wan, Pichao Wang, Haoyu
+     of summaries. In Text summarization branches out, pages
+                                                                          Chen, Xin Liu, Stan Z Li, and Guoying Zhao. Searching
+     74–81, 2004. 6
+                                                                          multi-rate and multi-modal temporal enhanced networks for
+[25] Yinhan Liu, Jiatao Gu, Naman Goyal, Xian Li, Sergey
+                                                                          gesture recognition. IEEE Transactions on Image Process-
+     Edunov, Marjan Ghazvininejad, Mike Lewis, and Luke
+                                                                          ing, 2021. 2
+     Zettlemoyer. Multilingual denoising pre-training for neu-
+                                                                     [38] Jian Zhao, Weizhen Qi, Wengang Zhou, Nan Duan, Ming
+     ral machine translation. Transactions of the Association for
+                                                                          Zhou, and Houqiang Li. Conditional sentence generation and
+     Computational Linguistics, 8:726–742, 2020. 5, 11
+                                                                          cross-modal reranking for sign language translation. IEEE
+[26] Ilya Loshchilov and Frank Hutter.           Sgdr: Stochas-
+                                                                          Transactions on Multimedia, 24:2662–2672, 2021. 3, 6, 7
+     tic gradient descent with warm restarts. arXiv preprint
+     arXiv:1608.03983, 2016. 7                                       [39] Benjia Zhou, Yunan Li, and Jun Wan. Regional attention
+[27] Minh-Thang Luong, Hieu Pham, and Christopher D Man-                  with architecture-rebuilt 3d network for rgb-d gesture recog-
+     ning. Effective approaches to attention-based neural machine         nition. Proceedings of the AAAI Conference on Artificial In-
+     translation. In Conference on Empirical Methods in Natural           telligence, 35(4):3563–3571, May 2021. 2
+     Language Processing, pages 1412–1421, 2015. 3, 6, 7             [40] Benjia Zhou, Pichao Wang, Jun Wan, Yanyan Liang, and Fan
+[28] Yuecong Min, Aiming Hao, Xiujuan Chai, and Xilin Chen.               Wang. A unified multimodal de- and re-coupling framework
+     Visual alignment constraint for continuous sign language             for rgb-d motion recognition. IEEE Transactions on Pattern
+     recognition. In Proceedings of the IEEE/CVF International            Analysis and Machine Intelligence, pages 1–15, 2023. 2
+     Conference on Computer Vision, pages 11542–11551, 2021.         [41] Benjia Zhou, Pichao Wang, Jun Wan, Yanyan Liang, Fan
+     2                                                                    Wang, Du Zhang, Zhen Lei, Hao Li, and Rong Jin. De-
+[29] Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing              coupling and recoupling spatiotemporal representation for
+     Zhu. Bleu: a method for automatic evaluation of machine              rgb-d-based motion recognition. In Proceedings of the
+     translation. In Proceedings of the 40th annual meeting of the        IEEE/CVF Conference on Computer Vision and Pattern
+     Association for Computational Linguistics, pages 311–318,            Recognition (CVPR), pages 20154–20163, June 2022. 2
+     2002. 6                                                         [42] Hao Zhou, Wengang Zhou, Weizhen Qi, Junfu Pu, and
+[30] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya                   Houqiang Li. Improving sign language translation with
+     Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,                monolingual data by sign back-translation. In Proceedings
+     Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-             of the IEEE/CVF Conference on Computer Vision and Pat-
+     ing transferable visual models from natural language super-          tern Recognition, pages 1316–1325, 2021. 2, 3, 5, 6, 7
+     vision. In International Conference on Machine Learning,        [43] Hao Zhou, Wengang Zhou, Yun Zhou, and Houqiang Li.
+     pages 8748–8763. PMLR, 2021. 2, 4, 5                                 Spatial-temporal multi-cue network for sign language recog-
+     nition and translation. IEEE Transactions on Multimedia,
+                                                                                                 DEV BLEU4                                 4.0
+                                                                                                                                                                 DEV Loss
+     24:768–779, 2021. 2, 3, 6, 7                                         24                                             2-layers                                                        2-layers
+                                                                                                                         3-layers                                                        3-layers
+[44] Ronglai Zuo and Brian Mak. C2slr: Consistency-enhanced                                                              4-layers                                                        4-layers
+                                                                          22                                                               3.8
+     continuous sign language recognition. In Proceedings of              20
+                                                                                                                                           3.6
+     the IEEE/CVF Conference on Computer Vision and Pattern
+                                                                 BLEU-4
+                                                                          18
+     Recognition, pages 5131–5140, 2022. 2                                                                                          Loss
+                                                                          16                                                               3.4
+
+                                                                          14
+                                                                                                                                           3.2
+A. More Implementation details                                            12
+
+                                                                          10                                                               3.0
+                                                                               0      25    50   75   100   125   150   175   200                 0   25    50   75   100   125   150   175   200
+    GFSLT Model Table 7 presents detailed information                                             #Epoch                                                          #Epoch
+on the GFSLT model structure and feature sizes for each                   (a) BLEU-4 score on Dev data.                                          (b) Loss value on Dev data.
+module. The input sign video, which may have varying
+lengths, is padded to the longest length and loaded into a        Figure 4: Analysis of the impact of model parameter size.
+batch. After ResNet [13] processing without a fully con-          Increasing the network depth (to 4 layers) did not yield any
+nected (FC) layer, the resulting visual feature has a size of     positive results, but instead exacerbated model overfitting.
+B × T × 512. Two temporal modules, each consisting of
+Conv1D-BN1D-RELU-MaxPooling1D, are used to capture
+the short-term dependencies in the sign video, yielding fea-      more emphasis on pre-training the Visual Encoder than the
+tures of size B×T /4×1024. These features are then passed         Text Decoder.
+through an MLP and a Transformer Encoder to prepare for
+                                                                  B.3. Impact of Freezing the Text Encoder.
+decoding. In the decoder, the text inputs are first padded to
+a uniform length of U and passed through a Word Embed-               Considering that the Text Encoder is derived from the
+ding Layer to obtain features of size B × U × 1024. The           pre-trained Mbart [25], so in this experiment, we attempted
+Transformer Decoder takes the outputs of the Transformer          to freeze its parameters and use it as a teacher model to
+Encoder and the Word Embedding to generate one word at            supervise the learning of the Visual Encoder. Contrary to
+a time, and an FC layer is used to obtain the final prediction    our expectations, this pre-training strategy did not produce
+word.                                                             satisfactory results, as shown in Table 9. We hypothesize
+                                                                  that the reason for this may be that the text and visual fea-
+B. More Ablation Studies                                          tures have fundamentally different underlying representa-
+                                                                  tions, and they must be optimized to a common representa-
+B.1. Impact of Model Parameter Size.                              tion for meaningful comparisons and analysis. As a result,
+   It is widely acknowledged that the size of the network         directly freezing the parameters of the Text Encoder may
+parameters has a significant effect on the ultimate perfor-       not provide sufficient guidance for the Visual Encoder to
+mance of the model, and a more intuitive perception is that       learn optimal representations in the joint multimodal space.
+the deeper the network, the better the performance. Never-
+                                                                  B.4. Impact of Loss weight
+theless, for the GFSLT network, we noticed that adding net-
+work layers would cause more severe overfitting as shown
+in Figure 4. We attribute this to the limited scale of SLT                                  22.18
+data, suggesting that a sufficiently large SLT dataset may be
+able to alleviate this issue.
+                                                                                            22.14
+B.2. Impact of Mask Rate.
+    We adopt a token masking strategy in our approach sim-                         BLEU-4   22.10
+ilar to that used in Bert [9]. Specifically, we randomly re-
+place ρ% of the tokens in a sentence using the following cri-                               22.06
+teria: (i) 80% of these tokens are replaced with the special
+[Mask] token, and (ii) 10% are replaced with any other to-                                  22.02
+ken, while the remaining 10% of the tokens are kept intact.                                           0.05                    0.1                          0.3               0.5
+As shown in Table 8, our experiments reveal that the opti-
+mal BLEU-4 score is achieved with a masking rate of 15%,
+which is consistent with the rate used in Bert. Interestingly,    Figure 5: Impact of loss weight coefficient λ on network
+we observe that increasing or decreasing the masking rate         performance.
+does not yield significant benefits. This result could be at-
+tributed to the fact that the proposed approach, VLP, places               In fact, Text Decoder can be updated jointly or in stages.
+                                      Module            Stride      Kernel              Output Size
+                                  Sign Input                -          -        B × T × 224 × 224 × 3
+                                Resnet wo/ fc               -          -            B × T × 512
+                            Conv1D-BN1D-RELU                1          5            B × T × 1024
+                                MaxPooling1D                2          2           B × T /2 × 1024
+                            Conv1D-BN1D-RELU                1          5           B × T /2 × 1024
+                                MaxPooling1D                2          2           B × T /4 × 1024
+                             Linear-BN1D-RELU               -          -           B × T /4 × 1024
+                             Transformer Encoder            -          -           B × T /4 × 1024
+                                  Text Input                -          -                  B×U
+                               Word Embedding               -          -               B × U × 1024
+                             Transformer Decoder            -          -               B × U × 1024
+                                     FC                     -          -                B×U ×C
+
+Table 7: Detailed Gloss-Free SLT(GFSLT) Framework. B means batch size. T means the lengths of the longest input sign
+video in the batch. U means the lengths of the longest input text in the batch.
+
+                                             Dev                                                    Test
+        mask rate (ρ)
+                          BLEU1        BLEU-2 BLEU-3             BLEU-4        BLEU-1          BLEU-2 BLEU-3                   BLEU-4
+             10%            43.30       33.05       26.04           22.03           43.54           32.90           25.61           20.84
+             15%            44.08       33.56       26.74           22.12           43.71           33.18           26.11           21.44
+             20%            44.15       33.72       26.35           22.07           43.85           33.08           25.97           21.32
+
+Table 8: Effect of mask rate for network performance. The gray box represents the mask rate we finally adopted in this
+paper.
+
+                                                  Dev                                                       Test
+  V-Encoder      T-Encoder
+                                BLEU-1      BLEU-2 BLEU-3               BLEU-4         BLEU-1          BLEU-2 BLEU-3                   BLEU-4
+    update         freeze           40.28       29.83       22.13           18.32           40.81           29.32           21.24           16.93
+    update         update           44.08       33.56       26.74           22.12           43.71           33.18           26.11           21.44
+
+Table 9: Analyze the impact of freezing the Text Encoder during the pretraining stage. update means updating the network
+parameters, and freeze means freezing the network parameters.
+
+                                                     Dev                                                     Test
+ VLP     Aug-S1      Aug-S2
+                                BLEU-1         BLEU-2 BLEU-3               BLEU-4       BLEU-1          BLEU-2 BLEU-3                   BLEU-4
+  %          %          %           37.60       23.30       14.89            9.92           37.69           23.28            14.93            9.88
+  "          %          %           37.38       23.26       14.91            9.97           37.84           23.60            15.23           10.29
+  "          "          %           38.34       24.13       15.56           10.32           38.31           23.80            15.33           10.27
+  %          %          "           34.36       21.00       13.50            9.14           34.07           20.77            13.40            9.03
+  "          "          "           39.20       25.02       16.35           11.07           39.37           24.93            16.26           11.00
+
+Table 10: Effect of VLP and data augmentation strategies on CSL-Daily dataset. VLP: Visual-Language Pre-training, Aug-
+S1: strong data augmentation employed during stage 1 for sign video, Aug-S2: strong data augmentation employed during
+stage 2 for sign video.
+
+
+When updating jointly, the loss in the first stage consists of         the following two parts:
+
+                                                                                                Ltotal = Ls + λLc                                   (9)
+where λ is a scalar weight. In this experiment, we studied
+the effect of the loss weight coefficient λ on the pre-trained
+model. As illustrated in Figure 5, the influence of λ on the
+model performance is relatively minor, with performance
+fluctuations staying around ±0.1. However, as λ increases,
+the model’s performance begins to decline, indicating that it
+is not always beneficial to amplify the influence of the Text
+Decoder on VLP. As a result, we set λ to 0.1 in this paper.
+B.5. Investigation VLP on CSL-Daily
+   We also conducted VLP and strong data augmentation
+ablation experiments on CSL-Daily. As shown in Table 10,
+the translation performance improved with VLP, and adding
+strong data augmentation in Stage 1 further helped. How-
+ever, the model performance decreased when strong data
+augmentation was added only in Stage 2 without VLP. The
+best result was achieved when strong data augmentation
+was added to both stages. This finding is consistent with
+the results of our experiments on Phoenix14T.
+

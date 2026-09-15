@@ -1,0 +1,1185 @@
+         SHuBERT: Self-Supervised Sign Language Representation Learning
+                       via Multi-Stream Cluster Prediction
+
+  Shester Gueuwou1 , Xiaodan Du1 , Greg Shakhnarovich1 , Karen Livescu1 , Alexander H. Liu2
+                                                   1
+                                                       TTI-Chicago, 2 MIT CSAIL
+                                     {shesterg,xdu,greg,klivescu}@ttic.edu, alexhliu@mit.edu
+                                                http://shubert.pals.ttic.edu
+
+
+
+
+                           Abstract
+
+         Sign language processing has traditionally re-
+         lied on task-specific models, limiting the po-
+         tential for transfer learning across tasks. Pre-
+         training methods for sign language have typi-
+         cally focused on either supervised pre-training,
+         which cannot take advantage of unlabeled data,
+         or context-independent (frame or video seg-
+         ment) representations, which ignore the effects
+         of relationships across time in sign language.
+         We introduce SHuBERT (Sign Hidden-Unit
+         BERT), a self-supervised contextual represen-
+         tation model learned from approximately 1,000
+         hours of American Sign Language video. SHu-                Figure 1: Comparison between our results using fine-
+         BERT adapts masked token prediction objec-                 tuned SHuBERT and results of the previous state-of-
+         tives to multi-stream visual sign language in-             the-art task-specific models on a suite of tasks, datasets,
+         put, learning to predict multiple targets cor-             and metrics. Note: The orange shade does not rep-
+         responding to clustered hand, face, and body               resent a single model but a collection of the previous
+         pose streams. SHuBERT achieves state-of-the-               SOTA results for models trained on public data. The
+         art performance across multiple tasks includ-              SHuBERT-based results improve on all but one task-
+         ing sign language translation, isolated sign lan-          specific SOTA model. See Sec. 4 for details.
+         guage recognition, and fingerspelling detection.
+                                                                    typically focused on either supervised pre-training,
+    1    Introduction                                               which cannot take advantage of unlabeled data,
+                                                                    context-independent (frame or video segment) rep-
+    Sign language presents unique challenges com-
+                                                                    resentations, which ignore the effects of relation-
+    pared to other language modalities, because of the
+                                                                    ships across time in sign language, or contextual
+    relative scarcity of data and its multi-channel na-
+                                                                    representations of only some aspects of sign lan-
+    ture, combining manual, facial, and other body
+                                                                    guage (see Sec. 2). These limitations have histori-
+    movements, which can be quick and highly coar-
+                                                                    cally constrained the performance and scalability
+    ticulated (Bellugi and Fischer, 1972). Existing ap-
+                                                                    of sign language processing systems.
+    proaches to sign language processing have typically
+    relied on models designed and trained for specific                 The success of self-supervised representations
+    tasks, such as sign language translation (SLT) from             for written and spoken language, such as BERT for
+    signed to written languages (Camgoz et al., 2018;               written language (Devlin et al., 2019) and HuBERT
+    Shi et al., 2022; Zhang et al., 2024), isolated sign            for speech (Hsu et al., 2021), has yet to be real-
+    language recognition (ISLR) (Kezar et al., 2023),               ized for sign language. Self-supervised learning
+    and fingerspelling detection and recognition (Shi               seems particularly relevant for sign language, for
+    et al., 2019; Fayyazsanavi et al., 2024; Georg et al.,          which annotated datasets are scarce. But the unique
+    2024). Pre-training approaches allow for pooling                multi-channel and other visual properties of sign
+    data across tasks, and several pre-training methods             languages suggest a specialized approach.
+    have been successful for sign language tasks (Uthus               In this work, we present SHuBERT (Sign
+    et al., 2023; Rust et al., 2024). However, these have           Hidden-Unit BERT) (Fig. 2), a self-supervised rep-
+                                                               28792
+Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 28792–28810
+                             July 27 - August 1, 2025 ©2025 Association for Computational Linguistics
+                             (b) DINOv2
+                                                …                                         (c) Kmeans Clustering
+                               Body Pose
+
+
+
+                                                                                                                                 Classification Loss
+                                            (d) Masking                                                                                                   Face
+                                                                                                                                                        Clusters
+             (a) MediaPipe
+
+
+
+
+                                                            Transformer Encoder                         Linear Classifiers
+                                                                                                                                                       Right hand
+                                                                                                                                                        Clusters
+                                                …
+                                                                                                                             …                …
+                                                                                                                                                       Left hand
+                                                                                          …
+                                                                                                                                                        Clusters
+
+
+                                                                                                                                                       Body Pose
+                                                                                                                                                        Clusters
+                                                                                                  (e) Predicting cluster
+                                                                                                           for
+                                                                                                      masked tokens
+
+
+
+Figure 2: SHuBERT pre-training. (a) We locate a set of landmarks in each frame of the input video using
+MediaPipe (Lugaresi et al., 2019), with inter-frame interpolation to fill in missing landmarks. From these, we extract
+the upper body pose, crop the hand and face regions, and blur and partially mask the face crop for a measure of
+privacy and robustness. (b) We use DINOv2 (Oquab et al., 2023) to extract features for the hands and face, yielding
+a four-stream representation (two hands, face, body pose) for each frame. (c) We assign the feature vectors for
+frame t to cluster indices using pre-computed k-means clusters, yielding assignments (ft , lt , rt , bt ) ∈ [k]4 for face,
+left and right hand, and body pose, respectively. (d) We partially mask the features, and the masked features form
+the input to the transformer encoder. (e) We train SHuBERT to predict the cluster assignments for each masked
+input frame, (fbt , b
+                    lt , rbt , bbt ).
+
+
+resentation learning approach that learns contextual                              The most commonly used datasets are in Ameri-
+frame representations for all sign language chan-                                 can Sign Language (ASL) (Duarte et al., 2021; Shi
+nels jointly. SHuBERT adapts the masked predic-                                   et al., 2022; Uthus et al., 2023), German Sign Lan-
+tion paradigm of BERT and HuBERT to the char-                                     guage (DGS) (Camgoz et al., 2018), British Sign
+acteristics of sign language video, and learns by                                 Language (Albanie et al., 2021), and Chinese Sign
+predicting cluster assignments of multiple masked                                 Language (Zhou et al., 2021a). Of these, recent
+feature streams representing the hands, face, and                                 ASL datasets are the most naturalistic, and include
+body pose. The learned representations transfer                                   large quantities of natively produced sign language
+effectively to multiple sign language understand-                                 (rather than translated from a spoken language,
+ing tasks, achieving state-of-the-art performance                                 which has properties of “translationese” (Desai
+on several SLT benchmarks, multiple ISLR bench-                                   et al., 2024b)). For this reason we focus on ASL
+marks, and fingerspelling detection, and improving                                data and tasks, but our approach is applicable and
+over specialized models for each task (Fig. 1).                                   extensible to any sign language.
+
+                                                                                  2.1   Pre-Training for Text And Speech
+2   Related Work
+                                                                                  Pre-training is a cornerstone of modern language
+Sign language understanding (recognition and                                      processing across modalities. For written lan-
+translation) tasks have received increasing atten-                                guage, encoder models like BERT (Devlin et al.,
+tion in the last few years (Camgoz et al., 2018; Shi                              2019) and its variants (e.g., (Liu, 2019; Lan et al.,
+et al., 2022; Lin et al., 2023; Kezar et al., 2023).                              2020)), based on masked language modeling, have
+For translation, early work mainly focused on gloss-                              served as dependable representations for language
+based methods, which rely on (the rare and small)                                 understanding tasks. In speech processing, self-
+datasets with manually labeled glosses (Camgoz                                    supervised learning approaches (Mohamed et al.,
+et al., 2018). More recent work has turned to larger                              2022) have taken inspiration from text encoder
+and more naturalistic datasets without gloss labels.                              models while addressing the unique challenges
+                                                          28793
+posed by continuous audio, which has no inherent         Self-supervised pre-training. Previous work
+segmentation into tokens nor a pre-defined token         has compared multiple context-independent self-
+vocabulary. For example, Hidden-Unit BERT (Hu-           supervised techniques for ISLR, finding masked au-
+BERT) (Hsu et al., 2021) adapts BERT by adding           toencoders (MAE) particularly effective (Sandoval-
+an offline clustering step to provide pseudo-labels      Castaneda et al., 2023). SSVP-SLT (Rust et al.,
+for masked prediction. Such self-supervised repre-       2024) adapts MAEs for large-scale sign language
+sentations, combined with task-specific fine-tuning,     pre-training, achieving competitive performance on
+remain the state of the art for many speech tasks.       ASL-to-English translation. This approach is com-
+   Sign languages share similar challenges to            putationally demanding, using 64 A100 GPUs for
+speech, with no pre-existing token lexicon and           14 days, and takes a maximum of 128 input frames
+variable-length units (gestures) with no explicit        (∼8 seconds) at a time so is unable to model longer-
+boundaries, and our approach takes inspiration           term dependencies. Other lines of work on SLT
+from HuBERT. However, sign language video has            (e.g., Chen et al. (2022a)) have used a pre-trained
+its own unique challenges: the many sources of           S3D model (Xie et al., 2018), which requires the
+variation (signer appearance, background, light-         video sequence to be segmented into chunks, with
+ing, camera angles), the multiple streams of ges-        each chunk treated as independent. All of these ap-
+tures (hands, face, body), the high dimensionality       proaches learn context-independent representations
+of video, and the relative dearth of data. These chal-   of individual frames or video segments, whereas
+lenges are addressed in SHuBERT by focusing on           SHuBERT learns contextual frame representations
+the relevant streams (via pose tracking) combined        and can operate on long video directly.
+with multi-stream masking and clustering.                   The only previous self-supervised approach of
+                                                         which we are aware for contextual sign represen-
+                                                         tation learning is SignBERT+ (Hu et al., 2023),
+2.2 Pre-Training for Sign Language                       which extends the earlier SignBERT (Hu et al.,
+                                                         2021). This approach learns a representation specif-
+Supervised pre-training. For translation of sign         ically for hand poses, via masked reconstruction of
+language video, the supervised pre-training ap-          hand joints, and has strong results on ISLR, con-
+proach has focused on (pre-)training a translation       tinuous (gloss-based) sign recognition, and sign
+model on a large (but often noisy) out-of-domain         translation on the RWTH-PhoenixT German Sign
+dataset, followed by fine-tuning on a smaller in-        Language dataset (Camgoz et al., 2018). However,
+domain dataset. This type of pre-training leverages      this approach is inherently limited by not modeling
+large collections of annotated data, with some sys-      the face and global body pose, and the results are
+tems (Uthus et al., 2023; Tanzer and Zhang, 2024;        obtained by combining SignBERT+ with a dataset-
+Tanzer, 2024a; Zhang et al., 2024) trained on up         specific image pixel (RGB) representation. In ad-
+to 6,600 hours of sign language content (Uthus           dition, SignBERT+ is pre-trained on the union of
+et al., 2023) to achieve state-of-the-art performance.   datasets on which it is tested; that is, it is exposed to
+However, much of this data remains private. In ad-       the fine-tuning data during pre-training. In contrast,
+dition, these approaches often involve substantial       SHuBERT models all components of sign language
+computational resources: The supervised model            jointly, and is pre-trained on data that is disjoint
+of Zhang et al. (2024), for example, was trained         from the fine-tuning data for the downstream tasks.
+on 128 TPU-v3 chips for 20 days. Jiao et al.
+(2024) propose an alternative pre-training approach      2.3    Multi-Stream Models of Sign Language
+that greatly improves efficiency by using pose in-       Several previous methods have taken advantage
+formation only (rather than image pixels); how-          of the observation that sign language naturally
+ever, this approach pre-trains and fine-tunes on the     decomposes into multiple streams of hand, face,
+same training data. Unlike these approaches, Uni-        and body motions.1 For example, prior work in-
+Sign (Li et al., 2025) is a supervised pre-training      cudes multi-stream models for fingerspelling recog-
+approach, based on mT5 (Xue et al., 2021), that
+has been applied to multiple tasks including both            1
+                                                               The term “multi-stream” has been used in different senses
+translation and ISLR. Like all supervised methods,       in prior work. For example, DSTA-SLR (Hu et al., 2024)
+                                                         creates multiple streams consisting of different geometric rep-
+these approaches can not take advantage of avail-        resentations of the same skeleton data, while we are concerned
+able unlabelled sign language data.                      with streams that correspond to different body parts.
+
+                                                    28794
+                                                                 ∼95% on OpenASL.3 Upon inspection, we find
+                                                                 that the majority of the remaining 5% of “failed"
+                                                                 detections occur when the hands are outside the
+                                                                 frame. For these cases, we interpolate from the
+                                                                 nearest frames with successful detections. Dilated
+                                                                 bounding boxes for the detected hand landmarks
+                                                                 (for both left and right hand) are cropped and re-
+                                                                 sized to 224×224.
+
+                                                                 Facial Features The signer’s face contains
+                                                                 important non-manual markers for sign lan-
+        Original frame   Face crop   Left hand   Right hand      guages (Bragg et al., 2019). Previous approaches ei-
+                                                                 ther use the full face, compromising privacy (Gueu-
+Figure 3: Sample frames of several signers and the cor-
+responding input channels used for SHuBERT: blurred
+                                                                 wou et al., 2025), or blur the whole face in an at-
+face crop, left hand crop, and right hand crop. In ad-           tempt to protect privacy, potentially losing essential
+dition to the face and left/right hand features extracted        non-manual markers (Rust et al., 2024). Our design
+from these crops, each frame is represented by an addi-          attempts to balance the need to preserve linguistic
+tional feature vector corresponding to the upper body            information with the goal of enhancing privacy. We
+pose extracted from MediaPipe (see Fig. 2).                      identify the whole face, mouth and eye regions in
+                                                                 the frame from the relevant MediaPipe facial land-
+nition (which combines hand and mouthing ges-                    marks. The face pixels are greyed out except for
+tures) (Shi, 2023), SLT (Camgoz et al., 2020; Zhou               the pixels in the mouth and eye regions. We then
+et al., 2021b; Chen et al., 2022b; Shi et al., 2022;             apply Gaussian blur to the entire face region and
+Gueuwou et al., 2025), and ISLR (Pu et al., 2016;                resize it to 224×224.
+Jiang et al., 2021). This factorization into multiple
+streams can enable dramatic improvements in data                 Image Feature Extractor for Hands and Face
+and compute efficiency over single-stream models                 We use DINOv2 (Oquab et al., 2023), which has
+that use the full image (Gueuwou et al., 2025).                  proven successful in previous sign language work
+   Like this prior work, SHuBERT also adopts the                 (Wong et al., 2024; Gueuwou et al., 2025), as the
+idea of multiple streams. However, unlike prior                  feature extractor for face and hand image crops.
+approaches, SHuBERT learns a self-supervised rep-                An additional benefit of DINOv2 representations
+resentation from the multiple streams jointly that               is that they yield meaningful clusters after quan-
+performs well on multiple tasks.                                 tization (Zheng et al., 2024), which is an impor-
+                                                                 tant property since SHuBERT training targets are
+3       Sign Hidden-Unit BERT (SHuBERT)                          clustered input features. While many other prior
+                                                                 approaches use keypoint estimation tools, these
+SHuBERT is a transformer encoder (Vaswani et al.,                have some weaknesses in capturing handshapes
+2017) that learns contextualized representations of              (Moryossef et al., 2021) and facial expressions
+sign language video frames through self-supervised               (Kuznetsova and Kimmelman, 2024).
+learning. The pre-training approach is outlined in                  To adapt the general image feature extractor to
+Fig. 2. In the following sections we describe the                a face feature extractor for sign language, we ran-
+video features used in SHuBERT (Sec. 3.1) and the                domly sample 5 million face crops from videos in
+self-supervised training approach (Sec. 3.2).                    the YouTube-ASL (Uthus et al., 2023) dataset and
+                                                                 use them for continued pre-training of DINOv2
+3.1 Multi-Stream Feature Pre-Processing                          for 1 epoch. We do the same for the hand feature
+Fig. 3 provides examples of SHuBERT’s input                      extractor, using 5 million randomly sampled hands
+video features, described in detail below.                       (mix of left and right hand crops) from YouTube-
+                                                                 ASL. For both the face and hand streams, crop re-
+Handshapes We use the MediaPipe Hand Land-                       gions of interest (ROIs) are processed through the
+marker2 model, which has hand detection accuracy                 face or hand fine-tuned DINOv2 models, yielding
+    2                                                                 3
+    https://ai.google.dev/edge/mediapipe/                           Estimated from a small-scale experiment on 100 Ope-
+solutions/vision/hand_landmarker                                 nASL videos, with manual verification of detections.
+
+                                                              28795
+                                                             random masking, which independently masks ran-
+                                                             dom small frame spans in each channel. Based on
+                                                    …
+                                                             our experiments comparing these strategies (Ap-
+                                                             pendix A), we ultimately chose random masking.
+                                   Tube/channel masking
+
+                                                             Learning Objective We use offline k-means
+               …                                    …        clustering (separately for each of the four channels)
+                                                             to create discrete target pseudo-labels (ft , lt , rt , bt )
+        Time
+                                    Time/Gloss masking       for the face, left hand, right hand, and body pose re-
+                                                             spectively. The transformer output vector for each
+                                                    …
+                                                             frame is fed to four linear classifiers (one per chan-
+                                                             nel) to predict the cluster assignments for masked
+                                     Random masking          channels for that frame.
+                                                                As an example, suppose that face and body
+Figure 4: Three strategies for sequence masking. Each        pose channel features for frame t, respectively
+color-coded row corresponds to one of the four channels      xft ∈ R384 and xbt ∈ R14 , are masked. The k-
+(face, right hand, left hand, body).                         means cluster assignments for these masked feature
+                                                             vectors are, respectively, ft and bt , each a number
+a 384-dimensional feature vector per crop, which             between 1 and k. The classifier predicts, from the
+we denote xft , xlt , xrt ∈ R384 for the face, left hand,    output vector yt for frame t, labels fbt and bbt . The
+and right hand features respectively.                        training objective is a cross-entropy loss between
+                                                             the target and predicted cluster assignments for the
+Body Pose For (coarse) body pose, we extract
+                                                             masked positions. The unmaksed positions are not
+seven key upper body landmarks (nose, shoulders,
+                                                             included in the loss (but of course influence the
+elbows, and wrists) and normalize their coordinates
+                                                             predictions for the masked ones).
+relative to the signing space, resulting in a compact
+14-dimensional pose vector, xbt ∈ R14 .                         This self-supervised training produces the pre-
+                                                             trained SHuBERT model, which can then be fine-
+3.2 Self-Supervised Training of SHuBERT                      tuned for downstream sign language tasks using ap-
+                                                             propriate task-specific prediction layers and losses.
+For each of the four channels (left/right hand,
+face, and pose), we layer-normalize the extracted
+features (producing zero mean and unit variance
+                                                             4     Experiments and Results
+across all dimensions for each feature vector) and           In this section, we describe the experimental setup
+linearly project them to 256 dimensions, produc-             for self-supervised training of SHuBERT, followed
+ing a 1024-dimensional input feature vector per              by its adaptation as a foundation model for mul-
+frame. This joint representation of the four streams         tiple sign language processing tasks: sign lan-
+is masked (see below) and input to the transformer           guage translation (Sec. 4.2), isolated sign language
+encoder. The output of the transformer is one rep-           recognition (Sec. 4.3) and fingerspelling detection
+resentation vector per input frame, yt , which may           (Sec. 4.4). We also apply SHuBERT to phonolog-
+take into account information from the entire length         ical feature recognition, as a baseline for future
+of the input video, and from all four input channels.        work (see Appendix B).
+Sequence Masking SHuBERT learns by predict-
+                                                             4.1    Pre-Training SHuBERT
+ing masked elements of the input feature sequence,
+given the observed (unmasked) data. We use a                 Data and Pre-Processing For pre-training SHu-
+masking strategy designed for multi-channel sign             BERT, we use the YouTube-ASL dataset (Uthus
+language input. We consider three types of mask-             et al., 2023). Note that we excluded the clips that in-
+ing, illustrated in Fig. 4: channel masking, which           tersect with the OpenASL dataset (Shi et al., 2022)
+masks entire channels (e.g., all face and left hand          to evaluate SHuBERT on OpenASL. To maintain
+features in a video) to learn cross-channel depen-           the same training set size as the original YouTube-
+dencies; time masking, which masks all channels              ASL dataset, we replaced the removed content
+at selected temporal positions (e.g., face, hand, and        with ASL videos from YouTube-SL-25 (Tanzer and
+body pose in frames 20-40 in a given video); and             Zhang, 2024) that are not present in YouTube-ASL.
+                                                          28796
+Our final pre-training dataset comprises approxi-              weakly labeled YouTube-ASL dataset (with Ope-
+mately 984 hours of ASL content.4                              nASL removed, as described above) for 250K steps.
+   To reduce computation, we downsample the                    During this phase, we use the AdamW optimizer
+videos by removing every other frame (Uthus                    with a peak learning rate of 5 × 10−4 for ByT5 and
+et al., 2023). The average frame rate of the post-             a reduced learning rate of 5 × 10−5 for SHuBERT
+processed videos is 14.89 fps.                                 parameters (when fine-tuned). The learning rate
+                                                               follows a cosine schedule with 10K warmup steps.
+Model Configuration and Training We train a
+                                                               We use a batch size of 2 utterances per GPU with
+base model consisting of 12 transformer blocks,
+                                                               gradient accumulation over 8 steps and use weight
+with each block having an embedding dimension-
+                                                               decay of 0.1.
+ality of 768, feed-forward dimensionality of 3072,
+                                                                  In the second phase, we fine-tune on two tar-
+and 12 attention heads. The complete model con-
+                                                               get benchmark datasets (How2Sign (Duarte et al.,
+tains 86M parameters. For each channel (face, left
+                                                               2021) and OpenASL (Shi et al., 2022)) for 50K
+hand, right hand, and body pose), we use k-means
+                                                               steps, using a lower learning rate of 10−4 and 5K
+on 10% of the data to create 256 discrete clusters
+                                                               warmup steps. We also evaluate in a zero-shot
+that serve as prediction targets. Figs. 5 to 8 in the
+                                                               setting, without any additional fine-tuning, on a
+Appendix provide examples of images in several
+                                                               third dataset (for which no training data exists),
+clusters. Our masking strategy uses a span length of
+                                                               FLEURS-ASL (Tanzer, 2024b). We use a learned
+3 frames (approximately 200ms), which is roughly
+                                                               weighted sum of features from all SHuBERT lay-
+the average duration of fingerspelling a single letter
+                                                               ers rather than using a single layer’s output, as is
+in ASL and is therefore roughly the smallest ges-
+                                                               commonly done when using speech representations
+ture length (Hanson, 1982). We train the model for
+                                                               such as HuBERT (Yang et al., 2021). During de-
+400K steps using 8 NVIDIA A6000 (48GB) GPUs,
+                                                               coding, we use beam search with a beam width of
+with a total training time of approximately 7 days.
+                                                               5 and a maximum sequence length of 384 tokens.
+   We optimize the model using Adam with a peak
+                                                                  We evaluate the final model on the three bench-
+learning rate of 5 × 10−4 , warming up for the first
+                                                               mark test sets of How2Sign, OpenASL, and
+8% of updates followed by linear decay. We batch
+                                                               FLEURS-ASL, using the standard BLEU (Papineni
+videos to maintain efficiency while not exceeding
+                                                               et al., 2002; Post, 2018)5 and BLEURT (Sellam
+1,500 frames per GPU.
+                                                               et al., 2020) translation metrics, as shown in Tab. 1
+4.2 Sign Language Translation                                  (see also example translations in Tabs. 11 to 13).
+                                                                  In all cases, our results using SHuBERT improve
+For sign language translation, where the input
+                                                               over the best prior published results using publicly
+sign language video is mapped to text in English,
+                                                               available training data. On How2Sign, SHuBERT
+we use ByT5-Base (Xue et al., 2022), pre-trained
+                                                               improves by +0.7 BLEU/+0.3 BLEURT over the
+on a large corpus of unlabeled multilingual text
+                                                               prior state-of-the-art result (using public data) of
+data, as a translation model to map from SHu-
+                                                               SSV-SLT (Rust et al., 2024), which used slighty
+BERT representations to written English, follow-
+                                                               more pre-training data (1,054 vs. 984 hours) that
+ing prior work showing its strong performance on
+                                                               included the training data of How2Sign. Better
+this task (Tanzer and Zhang, 2024; Zhang et al.,
+                                                               published results exist (as shown in Tab. 1), but
+2024). We first extract video representations from
+                                                               they rely on private fine-tuning datasets so we can-
+SHuBERT and project them to ByT5’s input space
+                                                               not reproduce their settings nor compare to them
+through a linear layer. We train the combined
+                                                               meaningfully.
+model (SHuBERT+projection layer+ByT5) with a
+                                                                  In the case of OpenASL, SHuBERT’s improve-
+cross-entropy loss and label smoothing factor of
+                                                               ment over the best prior result is +2.0 BLEU.6
+0.2.
+                                                               This larger improvement may be attributable to pre-
+   Similarly to Uthus et al. (2023) and Rust et al.
+                                                               training on similar-domain (generally native, natu-
+(2024), we use a two-phase training strategy. In the
+                                                                   5
+first phase, we train the translation system on the                  SacreBLEUversionsignature:BLEU+c.mixed+#.1+s.
+                                                               exp+tok.13a+v.1.4.1.
+    4                                                              6
+      Note that YouTube-ASL encompasses parts of several             Uni-Sign (Li et al., 2025) reports a similar BLEU score
+datasets used in other work, including 72.4% of the OpenASL    of 23.1 on OpenASL, but Uni-Sign is pre-trained on YouTube-
+test set and 38.2% of the MSASL (Joze and Koller, 2018) test   ASL. Therefore, most of the test set is included in Uni-Sign’s
+set. We do not compare to other work on MSASL for this         pre-training data, so we do not consider the results directly
+reason.                                                        comparable.
+
+                                                          28797
+                                                       How2Sign      OpenASL      FLEURS-ASL
+ Method                         SSL PT data (hrs)
+                                                    BLEU↑ BLEURT↑ BLEU↑ BLEURT↑ BLEU↑ BLEURT↑
+                                                    Private data
+  Tanzer (2024a)                  ×       ∼2,800       18.1          50.8        -           -      5.8        45.4
+  Zhang et al. (2024)             ×       ∼6,600       21.1          55.7        -           -        -           -
+                                              Publicly available data
+  SSVP (Rust et al., 2024)       ✓          1,054      15.5          49.6        -           -        -           -
+  Uthus et al. (2023)            ×            984      12.4          46.6        -           -        -           -
+  Tanzer and Zhang (2024)        ×          3,207      15.4          47.9        -           -      4.4        40.1
+  SM (Gueuwou et al., 2025)      ✓            984      14.3             -        -           -        -           -
+  VAP (Jiao et al., 2024)        ×              -      12.9             -     21.2           -        -           -
+  Uni-Sign (Li et al., 2025)     ×            984      14.9          49.4     23.1*       60.4*       -           -
+  OpenASL (Shi et al., 2022)     ×              -         -             -      6.7        31.1        -           -
+  GloFE-VN (Lin et al., 2023)    ×              -         -             -      7.1        36.7        -           -
+  C2RL (Chen et al., 2025)       ×              -         -             -     13.2           -        -           -
+  Tanzer (2024b)                 ×            984         -             -        -           -      3.9        38.3
+  Ours                           ✓           984       16.2          49.9     23.2        60.6      4.7        41.2
+
+Table 1: Translation results on the How2Sign, OpenASL, and FLEURS-ASL test sets. SSL: self-supervised learning
+(yes/no); PT: pre-training. * Uni-Sign is pre-trained on YouTube-ASL, which contains >72% of the OpenASL test
+samples, so we do not consider the results on OpenASL to be directly comparable to ours.
+
+
+ral rather than interpreted signing) data in YouTube-         to validate our design choices and analyze SHu-
+ASL (but, as previously mentioned, none of the                BERT’s behavior. These studies examine: (1) the
+same data). The distinction between interpreted               impact of different masking strategies during pre-
+signing in a constrained visual environment (as in            training, where random masking proves most effec-
+How2Sign and FLEURS-ASL) and natural signing                  tive based on BLEURT scores; (2) the importance
+in a less constrained environment (as in OpenASL              of pre-training data scale, showing the clear ben-
+and much of YouTube-ASL) is an important one                  efit of using the full pre-training dataset; (3) the
+that has not received sufficient attention, and is            contribution of different architectural components,
+worth exploring further in future work. The proper-           demonstrating that a weighted combination of lay-
+ties of the visual environment affect the difficulty of       ers significantly improves translation performance;
+the task, and natural signing has different character-        and (4) the effects of fine-tuning versus keeping
+istics from those of interpreted sign language (De-           SHuBERT frozen during translation training, with
+sai et al., 2024c).                                           fine-tuning providing moderate gains. The strong
+   On FLEURS-ASL, a dataset designed for testing              performance of the frozen, layer-weighted SHu-
+only, SHuBERT demonstrates strong performance                 BERT suggests that it is a promising approach for
+in a zero-shot setting, surpassing both prior meth-           low-resource settings where parallel data may be
+ods, which used over 3x as much pre-training data             limited. Detailed results and analysis of these abla-
+(3,207 hours) as ours.                                        tions can be found in Appendix A.
+
+  We also note that some previous approaches use              4.3   Isolated Sign Language Recognition
+additional techniques such as auxiliary losses that
+contribute to their final results, such as additional         For isolated sign language recognition (ISLR), the
+contrastive learning with labelled data (Rust et al.,         task of classifying a short video of a single sign, we
+2024), joint training with text machine translation           include results for SHuBERT adapted with LoRA
+(Zhang et al., 2024), and multi-tasking with ran-             adapters (Hu et al., 2022). Unless otherwise speci-
+dom dynamic clips from an original video (Tanzer,             fied, for all experiments, we train for 125 epochs
+2024b). It is possible that incorporating such tech-          with a batch size of 128 and perform early stopping
+niques into our framework will further improve                according to validation results (R@1/P-I). We use
+performance, but we leave this for future work.               an Adam optimizer (Kingma, 2014) with a learn-
+                                                              ing rate of 10−4 and weight decay of 10−4 . For
+Ablations We conduct several ablation studies                 classification tasks, we first average SHuBERT rep-
+                                                      28798
+                                                        ASL Citizen                          Sem-Lex           WLASL2000
+ Method                          #Params
+                                             Rec@1↑      Rec@5↑ Rec@10↑            Rec@1↑    Rec@5↑ Rec@10↑    P-I↑ P-C↑
+ ST-GCN (Desai et al., 2024a)      0.45M         0.60       0.82            0.88         -        -        -       -       -
+ SignCLIP (Jiang et al., 2024)      217M         0.60       0.84            0.89      0.30     0.48     0.55       -       -
+ I3D (Desai et al., 2024a)           25M         0.63       0.86            0.91         -        -        -       -       -
+ Sem-Lex (Kezar et al., 2023)      0.45M            -          -               -     0.69∗        -        -       -       -
+ SignBERT (Hu et al., 2021)             -           -          -               -         -        -        -   39.40   36.74
+ SignBERT+ (Hu et al., 2023)            -           -          -               -         -        -        -   48.85   46.37
+ MSLU (Zhou et al., 2024)               -           -          -               -         -        -        -   56.29   53.29
+ NLA-SLR (Zuo et al., 2023)             -           -          -               -         -        -        -   61.05   58.05
+ Uni-Sign (Li et al., 2025)         580M            -          -               -         -        -        -   63.52   61.32
+ Ours (rank=1 LoRA)                0.17M         0.65       0.87            0.91      0.54     0.74     0.80   60.90   58.01
+
+Table 2: ISLR results on the ASL Citizen, Sem-Lex, and WLASL2000 test sets. Note: For Sem-Lex, the result
+marked with an asterisk (∗ ) is not directly comparable to Ours as it is for a reduced (and easier) test set, as mentioned
+in (Jiang et al., 2024). Additionally, the dataset version released by (Kezar et al., 2023) has a significant fraction of
+videos missing. For WLASL2000, evaluation metrics are per-instance (P-I) and per-class (P-C) Top-1 accuracy.
+
+ Method                                     SSL Mean IoU ↑
+ Contrastive Learning (Yin et al., 2024)     ×           0.28
+                                                                   dataset (Yin et al., 2024). Given a sign language
+ SHuBERT (Ours)                              ✓           0.40      video input v, which consists of an ordered se-
+                                                                   quence of frames {v1 , v2 , . . . , vn }, the task is to
+Table 3: Fingerspelling detection on ASL-Stem Wiki                 identify all segments containing fingerspelling. The
+(Yin et al., 2024).                                                output is represented as a set F of frame intervals:
+                                                                   F = {[s1 , e1 ], [s2 , e2 ], . . . , [sk , ek ]}, where each
+resentations across the time dimension and add a                   interval [si , ei ] represents the start and end frames
+batch-norm layer followed by a linear layer as the                 of a fingerspelling sequence, such that frames vsi
+classification head.                                               through vei contain fingerspelling. We follow the
+   For LoRA training, we learn a rank-1 LoRA                       original ASL-Stem-Wiki evaluation pipeline (cross-
+module for each linear layer in SHuBERT while                      validation) and evaluation metric (intersection over
+keeping all the other weights frozen, resulting in                 union, or IoU). The results are shown in Tab. 3. We
+training only 0.2% of the number of parameters                     see that by simply fine-tuning SHuBERT for this
+of the original model. In addition to the aforemen-                task, we increase the IoU by 42% compared to the
+tioned hyperparameters, we reduce the learning rate                previous state of the art method, which pre-trains
+of the LoRA modules to 1/10 of the classification                  and fine-tunes on the same dataset.
+head’s and also use 0.1 label smoothing.
+                                                                   5        Conclusion
+   Our ISLR results on ASL Citizen, WLASL2000
+(original), and Sem-Lex are shown in Tab. 2. We                    SHuBERT, our proposed self-supervised approach
+note that we do not report on MSASL, as done in                    for learning sign language video representations,
+some of the prior work, because of the aforemen-                   yields a transformer encoder that maps from mul-
+tioned overlap between its test set and YouTube-                   tiple feature streams (face and hand appearance
+ASL. Following prior work, we report Recall at                     and upper body pose) to a stream of per-frame con-
+1, 5 and 10, unless stated otherwise.7 We achieve                  textual representations. A single base SHuBERT
+state-of-the-art performance on all datasets except                model, when adapted to a range of sign language
+WLASL2000 where Uni-Sign has a better result.                      processing benchmarks including both translation
+We note that Uni-Sign fine-tunes 3,000 times more                  and isolated sign recognition, achieves strong per-
+paramters than ours.8                                              formance on all of them and almost always im-
+                                                                   proves over the prior state of the art. SHuBERT is
+4.4 Fingerspelling detection                                       trained on public data and is publicly available.9
+Finally, we evaluate SHuBERT on the task of                        Based on its strong performance on the tasks stud-
+fingerspelling detection on the ASL-Stem-Wiki                      ied here, we expect that SHuBERT can serve as
+    7
+      Note that some prior work reports ISLR results in terms      a base model for a broad range of sign language
+of accuracy, which is equivalent to Recall at 1.                   processing tasks.
+    8
+      Note: As described in the caption of Tab. 2, the Sem-Lex
+results in (Kezar et al., 2023) are not comparable with other
+                                                                        9
+methods, including ours.                                                    http://shubert.pals.ttic.edu
+
+                                                                28799
+Limitations Our work has several limitations.               Yutong Chen, Fangyun Wei, Xiao Sun, Zhirong Wu, and
+First, although the results are competitive with or           Stephen Lin. 2022a. A simple multi-modality trans-
+                                                              fer learning baseline for sign language translation. In
+outperform prior work, the absolute performance
+                                                              Proc. CVPR.
+is still quite poor. Neither our model nor others
+can replace human interpreters for broad-domain             Yutong Chen, Ronglai Zuo, Fangyun Wei, Yu Wu, Shu-
+sign language translation. Second, our training data          jie Liu, and Brian Mak. 2022b. Two-stream network
+                                                              for sign language recognition and translation. In
+volume is significantly smaller than that of typical          Proc. SIGACCESS.
+self-supervised speech and text models. We can-
+not say with certainty how our model would scale            Zhigang Chen, Benjia Zhou, Yiqing Huang, Jun Wan,
+                                                              Yibo Hu, Hailin Shi, Yanyan Liang, Zhen Lei, and
+up to much larger datasets. Third, we have not                Du Zhang. 2025. C2 RL: Content and context repre-
+carefully studied potential sources of bias in the            sentation learning for gloss-free sign language trans-
+model. From our qualitative visual inspection of              lation and retrieval. IEEE Transactions on Circuits
+images and their corresponding clusters (Figs. 5              and Systems for Video Technology.
+to 8 in the Appendix), we observe that semantic             Aashaka Desai, Lauren Berger, Fyodor Minakov, Nessa
+properties appear to take precedence over attributes          Milano, Chinmay Singh, Kriston Pumphrey, Richard
+like skin color, gender, or eyewear. While these              Ladner, Hal Daumé III, Alex X Lu, Naomi Caselli,
+preliminary observations are encouraging, a more              et al. 2024a. ASL Citizen: A community-sourced
+                                                              dataset for advancing isolated sign language recogni-
+thorough investigation of potential biases would be           tion. In Proc. NeurIPS.
+valuable future work. Finally, the current scope of
+our work is limited to American Sign Language.              Aashaka Desai, Maartje De Meulder, Julie A. Hochge-
+                                                              sang, Annemarie Kocab, and Alex X. Lu. 2024b. Sys-
+Although sign languages use the same channels and             temic biases in sign language AI research: A Deaf-
+share many elements, we do not know how well our              led call to reevaluate research agendas. In LREC-
+model would generalize to other languages. Future             COLING 2024 11th Workshop on the Representation
+work could address these limitations by expanding             and Processing of Sign Languages: Evaluation of
+the training dataset and training on data from other          Sign Language Resources.
+sign languages.                                             Aashaka Desai, Maartje De Meulder, Julie A Hochge-
+                                                              sang, Annemarie Kocab, and Alex X Lu. 2024c. Sys-
+Acknowledgment We are grateful to Shiry Gi-                   temic biases in sign language ai research: A deaf-led
+nosar, Anand Bhattad, Ju-Chieh Chou, and Chung-               call to reevaluate research agendas. arXiv preprint
+Ming Chien for their valuable suggestions through-            arXiv:2403.02563.
+out this project.                                           Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+                                                               Kristina Toutanova. 2019. BERT: Pre-training of
+                                                               deep bidirectional transformers for language under-
+References                                                     standing. In Proc. NAACL-HLT.
+Samuel Albanie, Gül Varol, Liliane Momeni, Hannah           Amanda Duarte, Shruti Palaskar, Lucas Ventura, Deepti
+  Bull, Triantafyllos Afouras, Himel Chowdhury, Neil          Ghadiyaram, Kenneth DeHaan, Florian Metze, Jordi
+  Fox, Bencie Woll, Rob Cooper, Andrew McParland,            Torres, and Xavier Giro-i Nieto. 2021. How2Sign: A
+  et al. 2021. BBC-Oxford British Sign Language               large-scale multimodal dataset for continuous Ameri-
+  dataset. arXiv preprint arXiv:2111.03635.                   can Sign Language. In Proc. CVPR.
+Ursula Bellugi and Susan Fischer. 1972. A comparison
+                                                            Pooya Fayyazsanavi, Negar Nejatishahidin, and Jana
+  of sign language and spoken language. Cognition.
+                                                              Košecká. 2024. Fingerspelling PoseNet: Enhanc-
+Danielle Bragg, Oscar Koller, Mary Bellard, Larwan            ing fingerspelling translation with pose-based trans-
+  Berke, Patrick Boudreault, Annelies Braffort, Naomi         former models. In Proc. Winter Conference on Ap-
+  Caselli, Matt Huenerfauth, Hernisa Kacorri, Tessa           plications of Computer Vision (WACV).
+  Verhoef, et al. 2019. Sign language recognition, gen-
+  eration, and translation: An interdisciplinary perspec-   Markus Freitag, Ricardo Rei, Nitika Mathur, Chi-kiu Lo,
+  tive. In Proc. SIGACCESS.                                   Craig Stewart, Eleftherios Avramidis, Tom Kocmi,
+                                                              George Foster, Alon Lavie, and André FT Martins.
+Necati Cihan Camgoz, Simon Hadfield, Oscar Koller,            2022. Results of WMT22 metrics shared task: Stop
+  Hermann Ney, and Richard Bowden. 2018. Neural               using BLEU – neural metrics are better and more
+  sign language translation. In Proc. CVPR.                   robust. In Proc. Conference on Machine Translation
+                                                             (WMT).
+Necati Cihan Camgoz, Oscar Koller, Simon Hadfield,
+  and Richard Bowden. 2020. Multi-channel trans-            Manfred Georg, Garrett Tanzer, Saad Hassan, Maximus
+  formers for multi-articulatory sign language transla-       Shengelia, Esha Uboweja, Sam Sepah, Sean Forbes,
+  tion. In ECCV Workshops.                                    and Thad Starner. 2024. FSboard: Over 3 million
+                                                       28800
+  characters of ASL fingerspelling collected via smart-     Lee Kezar, Jesse Thomason, Naomi Caselli, Zed Sehyr,
+  phones. arXiv preprint arXiv:2407.15806.                    and Elana Pontecorvo. 2023. The Sem-Lex bench-
+                                                              mark: Modeling ASL signs and their phonemes. In
+Shester Gueuwou, Xiaodan Du, Greg Shakhnarovich,              Proc. SIGACCESS.
+  and Karen Livescu. 2025. SignMusketeers: An effi-
+  cient multi-stream approach for sign language trans-      Diederik P Kingma. 2014. Adam: A method for stochas-
+  lation at scale. In Findings of the Association for         tic optimization. arXiv preprint arXiv:1412.6980.
+  Computational Linguistics: ACL.
+                                                            Anna Kuznetsova and Vadim Kimmelman. 2024. Test-
+Shester Gueuwou, Sophie Siake, Colin Leong, and               ing MediaPipe Holistic for linguistic analysis of non-
+  Mathias Müller. 2023. JWSign: A highly multilin-            manual markers in sign languages. arXiv preprint
+  gual corpus of bible translations for more diversity in     arXiv:2403.10367.
+  sign language processing. In Findings of the Associ-
+                                                            Zhenzhong Lan, Mingda Chen, Sebastian Goodman,
+  ation for Computational Linguistics: EMNLP.
+                                                              Kevin Gimpel, Piyush Sharma, and Radu Soricut.
+                                                              2020. ALBERT: A lite BERT for self-supervised
+VL Hanson. 1982. Use of orthographic structure by
+                                                              learning of language representations. In Proc. ICML.
+  deaf adults: Recognition of fingerspelled words. In
+ Applied Psycholinguistics.                                 Zecheng Li, Wengang Zhou, Weichao Zhao, Kepeng
+                                                              Wu, Hezhen Hu, and Houqiang Li. 2025. Uni-Sign:
+Wei-Ning Hsu, Benjamin Bolte, Yao-Hung Hubert Tsai,           Toward unified sign language understanding at scale.
+  Kushal Lakhotia, Ruslan Salakhutdinov, and Abdel-           In Proc. ICLR.
+  rahman Mohamed. 2021. HuBERT: Self-supervised
+  speech representation learning by masked prediction       Kezhou Lin, Xiaohan Wang, Linchao Zhu, Ke Sun,
+  of hidden units. IEEE Trans. Audio, Speech, Lang.           Bang Zhang, and Yi Yang. 2023. Gloss-free end-to-
+  Process.                                                    end sign language translation. In Proc. ACL.
+
+Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan            Yinhan Liu. 2019. RoBERTa: A robustly opti-
+  Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and             mized BERT pretraining approach. arXiv preprint
+  Weizhu Chen. 2022. LoRA: Low-rank adaptation of             arXiv:1907.11692.
+  large language models. In Proc. ICLR.
+                                                            Camillo Lugaresi, Jiuqiang Tang, Hadon Nash, Chris
+Hezhen Hu, Weichao Zhao, Wengang Zhou, and                    McClanahan, Esha Uboweja, Michael Hays, Fan
+  Houqiang Li. 2023. SignBERT+: Hand-model-                   Zhang, Chuo-Ling Chang, Ming Guang Yong,
+  aware self-supervised pre-training for sign language        Juhyun Lee, et al. 2019. Mediapipe: A framework
+  understanding. IEEE Trans. Pattern Anal. Mach. In-          for building perception pipelines. arXiv preprint
+  tell.                                                       arXiv:1906.08172.
+
+Hezhen Hu, Weichao Zhao, Wengang Zhou, Yuechen              Abdelrahman Mohamed, Hung-Yi Lee, Lasse Borgholt,
+  Wang, and Houqiang Li. 2021. SignBERT: Pre-                 Jakob D Havtorn, Joakim Edin, Christian Igel, Ka-
+  training of hand-model-aware representation for sign        trin Kirchhoff, Shang-Wen Li, Karen Livescu, Lars
+  language recognition. In Proc. CVPR.                        Maaløe, et al. 2022. Self-supervised speech represen-
+                                                              tation learning: A review. IEEE J. Sel. Top. Signal
+Lianyu Hu, Liqing Gao, Zekang Liu, and Wei Feng.              Process., 16(6):1179–1210.
+  2024. Dynamic spatial-temporal aggregation for
+                                                            Amit Moryossef, Ioannis Tsochantaridis, Joe Dinn,
+  skeleton-aware sign language recognition. In Proc.
+                                                             Necati Cihan Camgoz, Richard Bowden, Tao Jiang,
+  LREC-COLING.
+                                                             Annette Rios, Mathias Müller, and Sarah Ebling.
+                                                             2021. Evaluating the immediate applicability of pose
+Songyao Jiang, Bin Sun, Lichen Wang, Yue Bai, Kun-
+                                                             estimation for sign language recognition. In Proc.
+  peng Li, and Yun Fu. 2021. Skeleton-aware multi-
+                                                             CVPR.
+  modal sign language recognition. In Proc. CVPR.
+                                                            Maxime Oquab, Timothée Darcet, Théo Moutakanni,
+Zifan Jiang, Gerard Sant, Amit Moryossef, Mathias            Huy V Vo, Marc Szafraniec, Vasil Khalidov,
+   Müller, Rico Sennrich, and Sarah Ebling. 2024. Sign-      Pierre Fernandez, Daniel Haziza, Francisco Massa,
+   CLIP: Connecting text and sign language by con-           Alaaeldin El-Nouby, et al. 2023. DINOv2: Learning
+   trastive learning. In Proc. EMNLP.                        robust visual features without supervision. Trans.
+                                                             Machine Learning Research.
+Peiqi Jiao, Yuecong Min, and Xilin Chen. 2024. Visual
+  alignment pre-training for sign language translation.     Kishore Papineni, Salim Roukos, Todd Ward, and Wei-
+  In Proc. ECCV.                                              Jing Zhu. 2002. BLEU: A method for automatic
+                                                              evaluation of machine translation. In Proc. ACL.
+Hamid Reza Vaezi Joze and Oscar Koller. 2018. MS-
+  ASL: A large-scale data set and benchmark for under-      Matt Post. 2018. A call for clarity in reporting BLEU
+  standing American Sign Language. arXiv preprint            scores. In Proc. Conference on Machine Translation
+  arXiv:1812.01053.                                          (WMT).
+                                                       28801
+Junfu Pu, Wengang Zhou, and Houqiang Li. 2016.            Saining Xie, Chen Sun, Jonathan Huang, Zhuowen Tu,
+  Sign language recognition with multi-modal features.      and Kevin Murphy. 2018. Rethinking spatiotemporal
+  In Advances in Multimedia Information Processing–         feature learning: Speed-accuracy trade-offs in video
+  PCM 2016: 17th Pacific-Rim Conference on Multi-           classification. In Proc. ECCV.
+  media.
+                                                          Linting Xue, Aditya Barua, Noah Constant, Rami Al-
+Phillip Rust, Bowen Shi, Skyler Wang, Necati Cihan          Rfou, Sharan Narang, Mihir Kale, Adam Roberts,
+  Camgoz, and Jean Maillard. 2024. Towards privacy-         and Colin Raffel. 2022. ByT5: Towards a token-free
+  aware sign language translation at scale. In Proc.        future with pre-trained byte-to-byte models. Trans.
+  ACL.                                                      ACL.
+Marcelo Sandoval-Castaneda, Yanhong Li, Diane             Linting Xue, Noah Constant, Adam Roberts, Mihir Kale,
+ Brentari, Karen Livescu, and Gregory Shakhnarovich.        Rami Al-Rfou, Aditya Siddhant, Aditya Barua, and
+ 2023. Self-supervised video transformers for iso-          Colin Raffel. 2021. mT5: A massively multilingual
+ lated sign language recognition. arXiv preprint            pre-trained text-to-text transformer. In Proc. NAACL-
+ arXiv:2309.02450.                                          HLT.
+Thibault Sellam, Dipanjan Das, and Ankur P Parikh.        Shu-wen Yang, Po-Han Chi, Yung-Sung Chuang,
+  2020. BLEURT: Learning robust metrics for text            Cheng-I Jeff Lai, Kushal Lakhotia, Yist Y Lin,
+  generation. In Proc. ACL.                                 Andy T Liu, Jiatong Shi, Xuankai Chang, Guan-Ting
+Zed Sevcikova Sehyr, Naomi Caselli, Ariel M Cohen-          Lin, et al. 2021. SUPERB: Speech processing univer-
+  Goldberg, and Karen Emmorey. 2021. The ASL-Lex            sal performance benchmark. In Proc. Interspeech.
+  2.0 project: A database of lexical and phonological
+                                                          Kayo Yin, Chinmay Singh, Fyodor O Minakov, Vanessa
+  properties for 2,723 signs in American Sign Lan-
+                                                            Milan, Hal Daumé III, Cyril Zhang, Alex Xijie Lu,
+  guage. In The Journal of Deaf Studies and Deaf
+                                                            and Danielle Bragg. 2024. ASL STEM Wiki: Dataset
+  Education.
+                                                            and benchmark for interpreting STEM articles. In
+Bowen Shi. 2023. Toward American Sign Language              Proc. EMNLP.
+  Processing in the Real World: Data, Tasks, and Meth-
+  ods. Ph.D. thesis, TTI-Chicago.                         Biao Zhang, Garrett Tanzer, and Orhan Firat. 2024.
+                                                            Scaling sign language translation. In Proc. NeurIPS.
+Bowen Shi, Diane Brentari, Gregory Shakhnarovich,
+  and Karen Livescu. 2022. Open-domain sign lan-          Matthew Zheng, Enis Simsar, Hidir Yesiltepe, Federico
+  guage translation learned from online video. In Proc.    Tombari, Joel Simon, and Pinar Yanardag. 2024.
+  EMNLP.                                                   Stylebreeder: Exploring and democratizing artis-
+                                                           tic styles through text-to-image models. In Proc.
+Bowen Shi, Aurora Martinez Del Rio, Jonathan Keane,        NeurIPS.
+  Diane Brentari, Greg Shakhnarovich, and Karen
+  Livescu. 2019. Fingerspelling recognition in the wild   Hao Zhou, Wengang Zhou, Weizhen Qi, Junfu Pu, and
+  with iterative visual attention. In Proc. CVPR.           Houqiang Li. 2021a. Improving sign language trans-
+                                                            lation with monolingual data by sign back-translation.
+Garrett Tanzer. 2024a. Fingerspelling within sign lan-      In Proc. CVPR.
+  guage translation. arXiv preprint arXiv:2408.07065.
+                                                          Hao Zhou, Wengang Zhou, Yun Zhou, and Houqiang Li.
+Garrett Tanzer. 2024b. FLEURS-ASL: Including Amer-          2021b. Spatial-temporal multi-cue network for sign
+  ican Sign Language in massively multilingual multi-       language recognition and translation. IEEE Trans.
+  task evaluation. arXiv preprint arXiv:2408.13585.         Multimedia, 24:768–779.
+Garrett Tanzer and Biao Zhang. 2024. YouTube-             Wengang Zhou, Weichao Zhao, Hezhen Hu, Zecheng
+  SL-25: A large-scale, open-domain multilingual           Li, and Houqiang Li. 2024. Scaling up multimodal
+  sign language parallel corpus. arXiv preprint            pre-training for sign language understanding. arXiv
+  arXiv:2407.11144.                                        preprint arXiv:2408.08544.
+Dave Uthus, Garrett Tanzer, and Manfred Georg. 2023.
+                                                          Ronglai Zuo, Fangyun Wei, and Brian Mak. 2023. Nat-
+  YouTube-ASL: A large-scale, open-domain Ameri-
+                                                            ural language-assisted sign language recognition. In
+  can Sign Language-English parallel corpus. In Proc.
+                                                            Proc. CVPR.
+  NeurIPS.
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob
+  Uszkoreit, Llion Jones, Aidan N Gomez, Lukasz
+  Kaiser, and Illia Polosukhin. 2017. Attention is all
+  you need. In Proc. NeurIPS.
+Ryan Wong, Necati Cihan Camgoz, and Richard Bow-
+  den. 2024. Sign2GPT: Leveraging large language
+  models for gloss-free sign language translation. In
+  Proc. ICLR.
+                                                     28802
+ Masking strategy      BLEU-1        BLEU     BLEURT        Layer of SHuBERT      BLEU-1     BLEU     BLEURT
+ Channel masking            14.5       2.6       29.9       None                      15.3      2.5        31.6
+ Time masking               15.1       2.3       31.2       Last Layer                21.4      4.7        35.0
+ Random masking             15.4       2.2       31.4       Weighted Sum              29.3      7.1        39.5
+
+Table 4: Comparison of masking strategies in SHuBERT       Table 6: Contribution of several components of SHu-
+pre-training. SHuBERT is frozen and stopped after          BERT: direct use of input video features (None) vs. us-
+100K steps, and fine-tuned and evaluated on How2Sign       ing SHuBERT’s last layer vs. weighted combination of
+only.                                                      all layers. In all cases SHuBERT is frozen.
+ Hours of pre-train data   BLEU-1     BLEU    BLEURT        Fine-tune SHuBERT     BLEU-1     BLEU     BLEURT
+                    984       15.4      2.2      31.4                         ×       21.4      4.7        35.0
+                     98       12.7      0.7      29.1                         ✓       30.0      7.5        39.9
+
+Table 5: Impact of pre-training data size on SHuBERT’s     Table 7: Effect of fine-tuning on translation perfor-
+performance.                                               mance: Fine-tuning SHuBERT along with the trans-
+                                                           lation model (✓) vs. using frozen SHuBERT represen-
+                                                           tations (×).
+A    Ablations on SHuBERT
+We conduct ablations, using the How2Sign trans-            larger datasets also include more language diver-
+lation task, to measure the importance of different        sity, which may also improve performance and/or
+factors in the SHuBERT pre-training and adapta-            applicability to additional languages.
+tion to the downstream task. Unless stated other-
+                                                           Isolating SHuBERT’s Impact on Performance
+wise, in the ablation experiments we pre-train SHu-
+                                                           To understand SHuBERT’s impact on translation
+BERT for 100K steps (instead of the full 400K) for
+                                                           performance, we conduct three experiments, shown
+a faster turnaround and freeze SHuBERT for the
+                                                           in Tab. 6. In our baseline experiment (“None"),
+downstream task.
+                                                           we directly feed the projected 4-channel features
+Masking Strategies Tab. 4 compares translation             (face, left hand, right hand, body pose) to the ByT5
+performance when using each of the three masking           translation model, bypassing SHuBERT entirely,
+strategies (Fig. 4). We observe different signals          resulting in fairly poor performance. When we
+from different metrics. While the BLEU scores              instead pass these features through a frozen pre-
+suggest channel masking to be the best, random             trained SHuBERT (400k steps, random masking)
+masking produces better BLEURT scores. Contra-             and use its final layer’s output (“Last Layer"), we
+dicting signals between different evaluation met-          see significant improvement. Finally, computing
+rics for sign language translation has also been           a learned weighted combination of all SHuBERT
+observed in prior work (Zhang et al., 2024). We            layers (“Weighted Sum") further improves perfor-
+chose to priotize BLEURT, as it generally has better       mance. These results demonstrate that each com-
+alignment with human judgements of translation             ponent of SHuBERT contribute to translation per-
+quality (Freitag et al., 2022), and therefore use ran-     formance.
+dom masking in all of our other experiments.
+                                                           Frozen vs. Fine-Tuned SHuBERT We also in-
+Data Scaling Behavior of SHuBERT In addi-                  vestigate the impact of fine-tuning during trans-
+tion to the full pre-training dataset, we also train       lation training, as shown in Tab. 7. We compare
+SHuBERT from scratch on a randomly selected                two scenarios: using a frozen SHuBERT (400k
+10% of the full data. In Tab. 5 we see that there          steps, random masking) and only fine-tuning ByT5,
+is a noticeable drop in performance in BLEU                versus fine-tuning both SHuBERT (from the same
+and BLEURT, suggesting that data size is impor-            base model) and ByT5 together. Both scenarios
+tant. With multiple larger datasets now available—         use features from SHuBERT’s last layer. Fine-
+BOBSL (Albanie et al., 2021), JWSign (Gueu-                tuning SHuBERT leads to substantial improve-
+wou et al., 2023) and YouTube-SL-25 (Tanzer and            ments compared to keeping it frozen, when using
+Zhang, 2024) contain approximately 1500, 2500,             the final layer. However, referring back to Tab. 6,
+and 3200 hours of data respectively—we expect              the relatively small difference between the fine-
+that expanding the SHuBERT pre-training data may           tuned performance and that of the frozen and layer-
+further improve performance. In addition, these            weighted SHuBERT is noteworthy. This observa-
+                                                        28803
+           Streams Used            BLEU ↑
+                                                           16 commonly used phonological features (from
+           Face only                     0.6               ASL-LEX 2.0 (Sevcikova Sehyr et al., 2021)) in
+           Hands only                    0.2               Tab. 9. The training setups and hyperparameters are
+           Upper body only               0.8               identical to those of the full fine-tuning method in
+           Hands + Upper Body            2.1               Sec. 4.3, except that we now train 16 classification
+           All streams                   2.4               heads simultaneously. We also find that removing
+                                                           weight decay gives a slight performance boost.
+Table 8: Stream contributions in ASL-to-English trans-        To the best of our knowledge, no previous work
+lation.
+                                                           has reported phonological feature recognition ac-
+                                   Rec@1↑                  curacies on the ASL Citizen dataset. Similarly,
+ Phonological Feature
+                             Sem-Lex ASL Citizen           though the Sem-Lex authors (Kezar et al., 2023)
+ Major Location                0.8477          0.9022      report phonological feature prediction accuracies,
+ Minor Location                0.7130          0.8000      they are not comparable to ours, which are com-
+ Second Minor Location         0.7328          0.8118      puted on the entire test set available to the public.
+ Contact                       0.8684          0.9157      Thus, we hope that our results in Tab. 9 can serve
+ Thumb Contact                 0.8474          0.8752
+                                                           as a benchmark for future work.
+ Sign Type                     0.8464          0.9154
+ Repeated Movement             0.8265          0.8993
+                                                           C    ASL Phonological Feature
+ Path Movement                 0.7275          0.7942
+ Wrist Twist                   0.9058          0.9300
+                                                                Classification Details
+ Selected Fingers              0.7953          0.8344      American Sign Language (ASL) can be described
+ Thumb Position                0.8604          0.8819
+                                                           through a set of phonological features, similarly
+ Flexion                       0.7264          0.7773
+ Spread                        0.7942          0.8480
+                                                           to the description of spoken languages via fea-
+ Spread Change                 0.8160          0.8658      tures. These features capture the essential compo-
+ Nondominant Handshape         0.7632          0.8432      nents of sign formation, including hand configura-
+ Handshape                     0.6293          0.7080      tion, movement patterns, and spatial relationships.
+ Average                       0.7938          0.8502      Tab. 10 presents the number of classes for each
+                                                           of the phonological features we use in our phono-
+Table 9: Phonological feature recognition accuracy on      logical feature prediction analysis for Sem-lex and
+two datasets, Sem-Lex and ASL Citizen.                     ASL-Citizen, and below we list the values of each
+                                                           feature. This commonly used feature set is from
+tion is promising for low-resource sign languages,         ASL-LEX 2.0 (Sevcikova Sehyr et al., 2021)).
+where we may have plentiful unlabeled video data
+for pre-training, but very limited parallel data for       Handshape v, 5, y, h, open_b, c, baby_o, flat_h,
+translation training.                                      o, l, 1, a, open_8, w, curved_5, d, flatspread_5, i, f,
+                                                           s, p, flat_b, curved_4, flat_o, g, open_e, 4, closed_b,
+Stream contributions in ASL-to-English trans-              bent_1, 3, flat_horns, goody_goody, flat_m, bent_v,
+lation To quantify the contribution of each in-            flat_1, r, 8, curved_v, open_h, curved_1, horns,
+put stream, we conduct a translation experiment            flat_ily, flat_n, bent_l, stacked_5, ily, e, flat_v,
+with the How2Sign dataset (without pre-training),          curved_l, spread_open_e, curved_h, 7, closed_e, t,
+feeding the concatenation of the multiple streams          flat_4, open_f, k, and spread_e.
+directly to a language model (T5). The resulting
+BLEU scores are shown in Tab. 8, showing that              Nondominant Handshape v, 5, y, none, open_b,
+all of the streams contribute to translation. These        Dominance Condition Violation, B, 1, a, open_8,
+results should be interpreted as assessing the true        C, s, h, o, flat_b, curved_5, p, c, S, closed_b, 4,
+relative importance of each stream, however, since         flat_m, bent_v, flat_1, flat_h, baby_o, curved_v,
+this is a very small-scale experiment.                     i, f, bent_1, Symmetry Violation, flatspread_5,
+                                                           flat_o, curved_1, open_h, stacked_5, g, l, bent_l,
+B    Phonological Feature Recognition                      3, 8, spread_open_e, e, horns, w, r, Lax, curved_l,
+                                                           open_e, flat_4, O, curved_b, A, ily, flat_v, and
+We also conduct experiments on phonological fea-
+                                                           flat_horns.
+ture recognition, that is the classification of linguis-
+tic features of signs, for two of the ISLR datasets.       Minor Location Neutral, Head Away, Body
+We report the Recall at 1 (prediction accuracy) for        Away, Hand Away, Palm, Finger Tip, Forehead,
+                                                        28804
+                               Number of Classes
+ Phonological Feature                                       Selected Fingers    im, imrp, p, i, t, m, ip, imp, mr,
+                             Sem-Lex ASL Citizen
+                                                            imr, r, and mrp.
+ Major Location                      5               6
+ Minor Location                     37              37      Major Location Neutral, Head, Body, Hand, and
+ Second Minor Location              37              38      Arm.
+ Contact                             2               2
+ Thumb Contact                       3               3      Flexion Change 1.0, 0.0, and none.
+ Sign Type                           6               6
+ Repeated Movement                   2               2      Spread Change 1.0, 0.0, and none.
+ Path Movement                       8               8
+                                                            Thumb Contact 1.0, 0.0, and none.
+ Wrist Twist                         2               2
+ Selected Fingers                   12              12      Spread 1.0, 0.0, and none.
+ Thumb Position                      2               2
+ Flexion                             8               8      Thumb Position Closed and Open.
+ Spread                              3               3
+ Spread Change                       3               3      Repeated Movement 1.0 and 0.0.
+ Nondominant Handshape              56              57
+                                                            Contact 1.0 and 0.0.
+ Handshape                          58              58
+                                                            Wrist Twist 0.0 and 1.0.
+Table 10: Number of classes for each phonological
+feature represented in two ASL datasets, Sem-Lex and        D    Cluster Samples
+ASL Citizen. Most features have the same number of
+classes across datasets, while a few features have values   We visualize clustering results for the face, left
+that don’t appear in one of the datasets (for example,      hand, right hand, and upper body pose in Figs. 5
+Second Minor Location has 37 classes that appear in         to 8. All cluster samples were randomly selected
+Sem-Lex and 38 classes in ASL Citizen).                     (i.e., without manual curation or cherry-picking).
+                                                            Each row represents a cluster. For each channel
+Finger Front, Mouth, Chin, Other, Upper Arm,                (Face, Left hand, Right hand, Upper Body), we
+Torso Top, Forearm Back, Cheek Nose, Wrist                  include 10 random examples for 5 random clusters.
+Front, Palm Back, Finger Back, Finger Radial, Un-           While there is variability within each cluster, and
+der Chin, Finger Ulnar, Wrist Back, Shoulder, Arm           some clusters contain a large mix of poses, we
+Away, Forearm Ulnar, Torso Mid, Heel, Clavicle,             can also see a great deal of systematic behavior,
+Eye, Forearm Front, Neck, Torso Bottom, Upper               where the images in a cluster tend to correspond to
+Lip, Head Top, Elbow Back, Hips, and Waist.                 similar gestures regardless of signer appearance or
+                                                            other visual properties. The caption for each figure
+Second Minor Location Neutral, Head Away,
+                                                            provides our interpretations of some of the clusters.
+Torso Bottom, Finger Tip, Hand Away, none, Palm,
+Forearm Back, Finger Back, Body Away, Torso                 E Translation examples
+Top, Finger Front, Chin, Arm Away, Upper Arm,
+Finger Ulnar, Eye, Hips, Neck, Palm Back, Fore-             We provide example translations produced by
+arm Front, Finger Radial, Mouth, Heel, Torso Mid,           our model given inputs from three ASL datasets:
+Other, Waist, Cheek Nose, Forehead, Elbow Back,             How2Sign (instructional content, Tab. 11),
+Under Chin, Clavicle, Shoulder, Forearm Ulnar,              FLEURS-ASL (zero-shot setting, Tab. 12), and
+Head Top, Upper Lip, and Forearm Radial.                    OpenASL (general domain with native signers and
+                                                            varying background, Tab. 13).
+Sign Type Symmetrical Or Alternating, One
+Handed, Dominance Violation, Asymmetrical Dif-
+ferent Handshape, Asymmetrical Same Handshape,
+and Symmetry Violation.
+
+Path Movement Curved, Back And Forth,
+Straight, Circular, None, Z-shaped, Other, and X-
+shaped.
+
+Flexion Fully Open, Curved, Bent, Flat, none,
+Fully Closed, Stacked, and Crossed.
+                                                         28805
+ (1) Reference              And that’s a great vital point technique for women’s self defense.
+     (Uthus et al., 2023)   It’s really great for women’s self defense.
+     (Rust et al., 2024)    This is a really great point for women’s self defense.
+     Ours                   If you’re a bigger person we’re talking about really self defense here.
+ (2) Reference              In this clip I’m going to show you how to tape your cables down.
+     (Uthus et al., 2023)   In this clip we’re going to show you how to cut a piece of clay.
+     (Rust et al., 2024)    In this clip I’m going to show you how to clip the cable, the cable.
+     Ours                   In this clip I’m going to show you how to brand out the cable strings.
+ (3) Reference              In this segment we’re going to talk about how to load your still for distillation of
+                            lavender essential oil.
+     (Uthus et al., 2023)   In this clip we’re going to talk about how to feed a set of baiting lizards for a lava
+                            field oil.
+     (Rust et al., 2024)    In this clip we’re going to talk about how to feed the trail for draining clean for
+                            laborer oil.
+     Ours                   In this clip we’re going to talk about how to take our stick for disinfectant oil.
+ (4) Reference              You are dancing, and now you are going to need the veil and you are going to just
+                            grab the veil as far as possible.
+     (Uthus et al., 2023)   Their hopping and dancing is now, they’re going to need their squat and squat and
+                            they’re going to be able to move independently.
+     (Rust et al., 2024)    So that she’s going to get her hips up as far as she can, and now she’s going to lift
+                            her head up as far as possible.
+     Ours                   Her dancing and now she needs her feather to grab it with her foot as far as possible.
+ (5) Reference              But if you have to setup a new campfire, there’s two ways to do it in a very low
+                            impact; one is with a mound fire, which we should in the campfire segment earlier
+                            and the other way to setup a low impact campfire is to have a fire pan, which is just a
+                            steel pan like the top of a trash can.
+     (Uthus et al., 2023)   But if you have to set up a new campfire, there are two ways to do a low impact fire,
+                            one is a cone fire, which we have to do in the tent earlier, and the other one is to set
+                            up a campfire in a fire pan.
+     (Rust et al., 2024)    But if you have to set up a new campfire, this is one way to do it in a low impact. One
+                            is a monk fire. One is a campfire. The other one is to set a campfire in a campfire.
+                            That’s just a post like the top of the post.
+     Ours                   But if you have to set a new campfire, there are two ways to do a low impact one is a
+                            bond fire, which we should do in your campfire, another one is to set a campfire in a
+                            fire pan that is just just set a pan like the top of it pan.
+ (6) Reference              So, this is a very important part of the process.
+     (Uthus et al., 2023)   Alright, let’s get started.
+     (Rust et al., 2024)    It’s an important part of the process.
+     Ours                   This is a very important part of the process.
+
+Table 11: Qualitative translation examples from the How2Sign dataset, comparing SHuBERT-based translations to
+previous models.
+
+
+
+
+                                                      28806
+  cluster 141
+
+
+
+
+  cluster 132
+
+
+
+
+  cluster 22
+
+
+
+
+  cluster 57
+
+
+
+
+  cluster 251
+
+
+
+
+Figure 5: Sample face clusters. Each row represents a distinct cluster and 10 random examples from it. Cluster 141
+includes mainly open-mouthed expressions with raised eyebrows, cluster 57 seems to capture closed or squinting
+eyes with neutral mouths, and cluster 251 corresponds to a slightly tilted head with direct gaze and little mouth
+opening. NOTE: For clarity, we show unblurred cropped faces here.
+
+
+
+
+  cluster 146
+
+
+
+
+  cluster 125
+
+
+
+
+  cluster 115
+
+
+
+
+  cluster 51
+
+
+
+
+  cluster 98
+
+
+
+
+Figure 6: Sample left hand clusters. Each row represents a distinct cluster and 10 random examples from it. Cluster
+125 shows pointing configurations with the index finger extended. Cluster 115 generally corresponds to closed fist
+formations oriented with the thumb on top. Cluster 51 seems to be a mix of poses without a consistent description.
+Cluster 98 seems to include mainly transitional hand movements around the chest.
+
+
+
+
+                                                      28807
+   cluster 146
+
+
+
+
+   cluster 105
+
+
+
+
+   cluster 42
+
+
+
+
+   cluster 1
+
+
+
+
+   cluster 76
+
+
+
+
+Figure 7: Sample right hand clusters. Each row represents a distinct cluster and 10 random examples from it. Cluster
+42 captures mainly multi-finger pointing gestures. Cluster 76 corresponds to clasped or overlapped hands in resting
+positions.
+
+
+
+
+   cluster 5
+
+
+
+
+   cluster 43
+
+
+
+
+   cluster 36
+
+
+
+
+   cluster 168
+
+
+
+
+   cluster 19
+
+
+
+
+Figure 8: Sample upper body clusters. Each row represents a distinct cluster and 10 random examples from it.
+Cluster 5 seems to correspond to configurations of the upper body pose where the right hand is at shoulder level
+and the left hand is down. Cluster 43 seems to be a configuration where the two hands are raised and close to each
+other near the chest, and the signer is facing slightly to the right. This might correspond to signs being performed
+with both hands involved/active. Cluster 36 appears similar, but with the hands slightly farther apart. Cluster 19 is
+generally similar to cluster 43, except that the signer tends to be facing slightly to the left. Finally in cluster 168, the
+right hand is usually above the shoulder and close to the face/head.
+
+
+
+                                                          28808
+  (1) Reference         During the 1980s he worked on shows such as Taxi, Cheers, and The Tracy Ullman
+                        Show.
+      (Tanzer, 2024b)   In the 1980s, she worked in theaters like taxesi, cheesy, and tracy.
+      Ours              In the 1980’s, she worked for theaters like Taxi Chers, Tracy Ullman Shaw.
+  (2) Reference         The rise of new technologies allows us to see and investigate brain structures and
+                        processes never seen before.
+     (Tanzer, 2024b)    There is a new technique to detect brains and vision.
+     Ours               Increasing new technology that allows people to consider investigating their brain
+                        structures and brain structures.
+  (3) Reference         The Articles required unanimous consent from all the states before they could be
+                        amended and states took the central government so lightly that their representatives
+                        were often absent.
+     (Tanzer, 2024b)    The law requires all states to agree on a standard and that it is a legal requirement.
+     Ours               The state’s agreement requires all standardized agreements to remove the standards
+                        of representatives from the state to represent the state’s amendments.
+
+Table 12: Qualitative translation examples from the FLEURS-ASL dataset, comparing SHuBERT-based translation
+(zero-shot) to a previous approach (Tanzer, 2024b).
+
+
+
+
+                                                    28809
+ (1)  Reference              thank you
+      (Shi et al., 2022)     thank you
+      Ours                   thank you
+ (2) Reference               come on
+      (Shi et al., 2022)     come on
+      Ours                   maybe
+ (3) Reference               now i’ve come this far and it ’s a different team
+      (Shi et al., 2022)     how do you feel about it
+      Ours                   it feels like a crash in the team
+ (4) Reference               i was there from the beginning to the end and time went by fast
+      (Shi et al., 2022)     the students were thrilled by this
+      Ours                   i just wanted to leave because it went ahead and started
+ (5) Reference               i’m here at nad’s 50th wow
+      (Shi et al., 2022)     the nad has been <unk> for many years
+      Ours                   well the nad is shocked to have 50 years of dhh
+ (6) Reference               i entered the yap 2018 competition and won
+      (Shi et al., 2022)     the competition was started with ideas
+      Ours                   i enrolled in that competition in 2018 and then i won
+ (7) Reference               you can check out their kickstarter in the link below
+      (Shi et al., 2022)     you can watch the conversation at lake county
+      Ours                   you can check out their kickstarter link below
+ (8) Reference               that is one thing i found interesting and wanted to share with you today
+      (Shi et al., 2022)     i also am the president of the jr. nad conference here
+      Ours                   that’s one interesting thing she wanted to share with you
+ (9) Reference               those are the different types of bills
+      (Shi et al., 2022)     schools have switched to teaching students
+      Ours                   i looked at several different types of interpreting services
+ (10) Reference              dry january has picked up in popularity since it began in 2012
+      (Shi et al., 2022)     krispy kreme is bringing back its original playstation in 2016
+      Ours                   the qury dry january started in 2012
+ (11) Reference              we will be happy to respond give you support and listen to your concerns
+      (Shi et al., 2022)     please review and submit your time passion and support this important issue
+      Ours                   the nad is willing to respond and support your concerns
+ (12) Reference              there were videos posted on the internet that showed a person walking on the grass
+                             completely engulfed in flames
+       (Shi et al., 2022)    a video shows the officer walking up to his shoulder and before he was shot
+       Ours                  videos posted on social media of him walking on a grass walking completely with
+                             fire
+ (13) Reference              and people would become carpenters laborers mechanics plowers and farmers
+      (Shi et al., 2022)     the next year 1880 the nad was established in the first operation 30 of the house in
+                             2015
+      Ours                   and he was forced to wear a wearing a labover meganic and a financial warper
+ (14) Reference              for nad youth programs related information please contact us via facebook at the nad
+                             youth programs or email us through
+       (Shi et al., 2022)    you can contact us through our website where you can check our facebook page
+                             online at <unk>
+       Ours                  if you want to contact the nad youth program you can contact us through our facebook
+                             page at the nad youth program or youth program through our website
+ (15) Reference              last week suspects gregory mcmichael and his son travis were arrested and charged
+                             with felony murder and aggravated assault
+       (Shi et al., 2022)    last week a black man named <unk> <unk> was arrested and charged with felony
+                             murder and aggravated assault
+       Ours                  last week two suspects gregory mcmichael and his son travis were arrested and
+                             charged with felony murder and wounded by another gravated assaulter
+
+Table 13: Qualitative translation examples from the OpenASL dataset, comparing SHuBERT-based translations to a
+previous model (Shi et al., 2022)
+                                                        .
+
+                                                    28810
+

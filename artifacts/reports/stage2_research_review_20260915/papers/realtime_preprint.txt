@@ -1,0 +1,585 @@
+                                                 Toward Real-Time Sentence-Level Sign Language Translation
+                                                                                   Thanh-Hoang Nguyen Doan
+                                                                 The University of Danang – University of Science and Technology
+                                                                                102230150@sv1.dut.udn.vn
+
+
+                                                                      Abstract                                      boundaries between signs, and rely on richer supervision.
+                                                                                                                    Non-manual channels—facial expression, mouthing, and
+                                         Most sign language understanding systems operate at the level              upper-body motion—become obligatory signals rather than
+                                         of isolated signs, limiting their usefulness in natural communica-         optional cues; a model that attends only to the hands discards
+                                         tion. We study sentence-level sign language translation (SLT) with
+                                                                                                                    a substantial part of the linguistic information.
+                                         the primary goal of real-time deployment rather than proposing
+                                         a new translation architecture. We fine-tune a SHuBERT–ByT5
+                                                                                                                       Deployment adds a further constraint. A useful assistive
+                                         translation stack on a uniformly sampled 9,872-example subset of           system should respond quickly, yet translating each sign the
+                                         How2Sign, selected because of compute and storage constraints,             instant it appears is both error-prone and unnatural. We there-
+                                         using QLoRA while keeping SHuBERT frozen. The model obtains                fore adopt an utterance-then-translate design: the system
+                                         a validation BLEU of 16.7 and, on the test split, BLEU 15.9 and            continuously ingests a signing stream, detects when an utter-
+                                         BLEURT 44.7. The main contribution is a hardware-aware stream-             ance ends, and emits a translation shortly afterwards. The
+                                         ing system: a Raspberry Pi 4B reference client provides camera cap-        engineering goal is to balance the contextual accuracy of a
+
+
+
+
+arXiv:2607.09611v1 [cs.CL] 10 Jul 2026
+                                         ture, local text display, and speech output, while compute-intensive       sentence-level model against a response latency low enough
+                                         perception and translation run on a CPU/GPU backend. The capture           for near real-time communication.
+                                         protocol remains client-agnostic, so the same backend can serve a
+                                                                                                                       To realize this design we build on SHuBERT (Gueuwou
+                                         browser, phone, or laptop. Chunked ingestion, bounded queues, par-
+                                         allelized perception, temporal reordering, and a sentence-boundary
+                                                                                                                    et al., 2025), a self-supervised model that learns sign repre-
+                                         state machine reduce mean post-finalization response latency from          sentations from roughly a thousand hours of sign-language
+                                         1.873 to 1.354 seconds (27.71%) and P95 latency from 2.919 to              video. We do not train a new sign encoder from scratch.
+                                         2.130 seconds (27.03%) over the complete 9,872-example working             Instead, we attach a byte-level decoder and fine-tune the
+                                         subset.                                                                    translation stack on a resource-constrained, uniformly sam-
+                                                                                                                    pled subset of the How2Sign benchmark (Duarte et al., 2021),
+                                                                                                                    updating only a small set of parameters while SHuBERT re-
+                                         1     Introduction                                                         mains frozen. The resulting model is computationally heavy,
+                                                                                                                    which is precisely why the core of this work is a hardware-
+                                         Sign languages are complete natural languages with their                   aware real-time stack. Our reference implementation uses
+                                         own lexicon, grammar, and non-manual grammatical mark-                     a Raspberry Pi 4B with a camera, display, speaker, battery,
+                                         ers. Computational work on sign languages has historically                 and enclosure as the interaction endpoint, while CPU/GPU
+                                         concentrated on isolated sign language recognition (ISLR),                 inference is offloaded to a backend. The network contract
+                                         in which a short, trimmed clip is mapped to a single gloss                 is client-agnostic: a browser, phone, or laptop can replace
+                                         or word. This framing is convenient for data collection,                   the Raspberry Pi as long as it samples, chunks, and uploads
+                                         annotation, training, and evaluation, because every exam-                  frames through the same interface.
+                                         ple contains exactly one linguistic unit, allowing a model
+                                         to focus on discriminative visual cues such as hand shape,
+                                         hand location, movement direction, facial expression, and                  Contributions. The primary focus of this paper is real-
+                                         body posture. However, a single sign is a coarse unit of                   time deployment, and our contributions reflect that empha-
+                                         meaning: in isolation it often fails to carry the speaker’s full           sis.1 (i) Real-time streaming inference (main contribution).
+                                         communicative intent.                                                      We present a streaming pipeline for continuous signing that
+                                            In real interaction, signers do not produce discrete words              combines chunked ingestion, bounded queues, parallelized
+                                         separated by clean boundaries. They produce continuous                     landmark perception, temporal reordering, and a sentence-
+                                         streams of signs in which movements are chained together,                  boundary state machine. With the model and decoding set-
+                                         co-articulated, and modulated in rhythm. For this reason                   tings held fixed, the optimized runtime reduces mean post-
+                                         we shift the target from word-level recognition to sentence-               finalization response latency by 27.71% and P95 by 27.03%.
+                                         level sign language translation (SLT), where the input is                  (ii) Hardware-aware edge deployment. We realize the inter-
+                                         an entire continuous utterance and the output is a complete                action loop on a portable Raspberry Pi 4B appliance with
+                                         text sentence (Camgöz et al., 2018, 2020). Operating at                    camera capture, local display, and speech output, while of-
+                                         the sentence level lets the model learn contextual relations               floading heavy inference to a GPU backend. The hardware
+                                         between signs, resolve ambiguities that arise when a sign                  prototype is a reference client, not a protocol dependency;
+                                         appears alone, and produce output that can be shown as text                browser, phone, and laptop clients use the same HTTPS in-
+                                         or spoken directly, rather than a sequence of gloss labels.                  1 Code is available at https://github.com/NguyenDoanTha
+                                            This shift comes at a cost. Sentence-level SLT must pro-                nhHoang/Toward-Real-Time-Sentence-Level-Sign-Lan
+                                         cess longer video with more frames, contend with fuzzy                     guage-Translation.
+
+
+                                                                                                                1
+terface. (iii) How2Sign fine-tuning. We fine-tune a frozen            Perception and evaluation. For per-frame geometry we
+SHuBERT encoder with a ByT5 decoder on a uniformly                    rely on MediaPipe (Lugaresi et al., 2019) and its pose esti-
+sampled 9,872-example How2Sign subset using QLoRA, ob-                mator (Bazarevsky et al., 2020). For translation quality we
+taining validation BLEU 16.7 and test BLEU 15.9, together             report BLEU (Papineni et al., 2002) and BLEURT (Sellam
+with a test BLEURT score of 44.7.                                     et al., 2020).
+
+
+2    Related Work                                                     3     Translation Model
+                                                                      Our model does not translate raw pixels directly. Instead
+From isolated recognition to translation. Early sign-
+                                                                      it first converts video into structured visual signals—hand
+language systems targeted ISLR, mapping trimmed clips
+                                                                      and face geometry, upper-body pose, cropped hand and face
+to glosses. Generic skeleton-based video encoders such
+                                                                      regions, and their evolution over time—and then passes those
+as PoseConv3D (Duan et al., 2022) provide motion repre-
+                                                                      signals through three learned stages. Figure 1 summarizes
+sentations, while NLA-SLR (Zuo et al., 2023) specifically
+                                                                      the cascade. We describe each stage in turn and clarify
+targets isolated sign recognition; neither method directly gen-
+                                                                      which components are learned during adaptation and which
+erates fluent sentences. Neural SLT reframes the problem
+                                                                      are frozen.
+as sequence-to-sequence generation: Camgöz et al. (2018)
+introduced neural sign language translation, and Camgöz
+et al. (2020) jointly modeled recognition and translation with        3.1    Geometric perception
+transformers. Yin and Read’s STMC-Transformer (Yin and                The first stage is a visual perception layer that estimates the
+Read, 2020) strengthened translation sequence modeling and            structure of the signer in every frame. We use MediaPipe (Lu-
+highlighted limitations of gloss-based representations. Later         garesi et al., 2019) with three branches: a face landmarker, a
+work removed the dependence on gloss supervision through              hand landmarker for both hands, and a pose estimator for the
+visual–language pretraining and gloss-free end-to-end train-          upper body. These branches are not translation models; they
+ing (Zhou et al., 2023; Lin et al., 2023). Community bench-           produce geometric coordinates that tell the system where to
+marks such as WMT-SLT (Müller et al., 2022) have further              look before any deep encoder runs.
+standardized evaluation. Our system follows the gloss-free,              The three branches play complementary linguistic roles.
+translation-oriented line: it maps continuous signing directly        The hands are the primary carrier of lexical content. The
+to sentences without an intermediate gloss decoding step,             face supplies expression, mouthing, and other non-manual
+avoiding error propagation from a gloss recognizer into the           markers that can flip a statement into a question or change
+language model.                                                       sentiment. The pose stabilizes the interpretation of move-
+                                                                      ment direction and helps detect whether the signer is active.
+Self-supervised representations. Self-supervised pretrain-            Because these channels carry distinct information, none can
+ing has reshaped speech and vision. HuBERT (Hsu et al.,               be dropped without risking a loss of meaning, particularly
+2021) learns speech representations by masked prediction              in sentences where expression or trajectory is grammatically
+over clustered targets. SHuBERT (Gueuwou et al., 2025)                load-bearing.
+carries this idea to sign language: it is a self-supervised
+transformer encoder trained on roughly 1,000 hours of Amer-           3.2    Regional visual features
+ican Sign Language video that predicts clustered targets over
+multiple visual streams—hands, face, and body pose—and                Rather than feeding whole frames to the temporal encoder,
+reaches state-of-the-art results across sign language transla-        we use the landmarks to localize the hands and face, crop
+tion, isolated sign recognition, and fingerspelling detection.        those regions, and resize them to 224 × 224. Each region is
+SHuBERT is the backbone of our system: we take its pre-               encoded by DINOv2 (Oquab et al., 2024), a self-supervised
+trained multi-stream encoder as a frozen temporal sign repre-         Vision Transformer, into a 384-dimensional feature vector
+sentation and adapt only a byte-level decoder on top of it for        that compresses hand shape, finger orientation, relative hand
+sentence-level translation (Section 3). On the vision side, DI-       position, and facial expression. This has two benefits. First,
+NOv2 (Oquab et al., 2024) produces robust general-purpose             discarding the background reduces environmental noise. Sec-
+image features from Vision Transformers (Dosovitskiy et al.,          ond, DINOv2 features are more stable than raw pixels, letting
+2021) without labels; we use it as the frozen regional feature        the downstream translator focus on the semantic evolution
+extractor that supplies SHuBERT’s per-frame inputs.                   of a sign rather than re-solving low-level vision.
+
+                                                                      3.3    Temporal sign encoding
+Text generation and efficient adaptation. T5 (Raffel
+et al., 2020) casts NLP tasks as text-to-text generation; ByT5        Given per-frame features, the model must understand how
+(Xue et al., 2022) removes the fixed subword vocabulary by            they change over time. This is the role of SHuBERT (Gueu-
+operating on bytes, which suits short, free-form target sen-          wou et al., 2025), a sequence encoder for sign language in-
+tences. Because full fine-tuning of such models is expensive,         spired by HuBERT (Hsu et al., 2021). SHuBERT consumes
+we adopt parameter-efficient adaptation: LoRA (Hu et al.,             four channels—left hand, right hand, face, and upper-body
+2022) injects low-rank updates into attention projections,            pose. Hands and face are represented by their 384-d DI-
+and QLoRA (Dettmers et al., 2023) combines this with 4-bit            NOv2 vectors, while pose is reduced to a low-dimensional
+quantization so that adaptation runs on modest hardware.              geometric vector derived from nose, shoulder, elbow, and
+
+
+                                                                  2
+RGB frame         MediaPipe        ROI crop         DINOv2                SHuBERT                    Linear         ByT5            English
+ stream           landmarks        224×224          encoder            temporal encoder            projection      decoder          sentence
+
+                  hands / face /                     384-d re-            4 streams →                              byte-level
+                  pose branches                    gion features          768-d context                            generation
+
+                                       Pose geometry
+                                      (low-dim vector)
+
+
+Figure 1: The sentence-level translation cascade. Landmarks locate the hands, face, and upper body; hand and face crops
+are encoded by DINOv2 into 384-d region features, while the pose branch contributes a low-dimensional geometric vector.
+SHuBERT fuses the four streams into a 768-d contextual sequence, and a linear projection feeds ByT5, which decodes an
+English sentence. Only the projection and selected ByT5 parameters are trained; SHuBERT is frozen.
+
+
+wrist points. The channels are projected into a common                   Component                   Role in the reference client
+space, fused per time step, and encoded by a transformer
+                                                                         Raspberry Pi 4B             Coordinates capture, display, audio,
+(Vaswani et al., 2017) into a 768-dimensional contextual                                             and networking.
+representation of the whole utterance. Because this repre-               USB HD webcam               Captures the continuous signing
+sentation integrates past and future frames within the same                                          stream.
+sentence, it disambiguates signs that share a hand shape but             On-device display           Shows the translated sentence.
+differ in trajectory or context.                                         Speaker + amplifier         Speaks the translation aloud.
+                                                                         Battery, converter, fan     Provides portable power and thermal
+                                                                                                     stability.
+3.4    Text generation                                                   3D-printed enclosure        Packages the components as a hand-
+                                                                                                     held appliance.
+The final stage is ByT5 (Xue et al., 2022), an encoder–
+decoder text generator. After SHuBERT produces the con-
+                                                                       Table 1: Reference edge hardware. The client handles cap-
+textual representation, a projection layer maps it into the
+                                                                       ture and user interaction; compute-intensive models are of-
+decoder’s latent space, and ByT5 generates the English sen-
+                                                                       floaded to the backend.
+tence step by step. Operating at the byte level frees the output
+from a fixed subword vocabulary, which is convenient for
+the short, free-form target sentences in our data. During real-        on-device, while preserving the same backend contract for
+time inference we use a small beam width to keep decoding              other client types. Figure 2 shows the resulting runtime.
+fast; in preliminary runs, larger beams did not improve short
+sentences and sometimes added trailing artifacts.
+                                                                       4.1 Hardware prototype and client abstrac-
+                                                                           tion
+3.5    Parameter-efficient adaptation
+                                                                       The reference deployment is a portable Raspberry Pi 4 Model
+We initialize the translation stack from pretrained SHuBERT            B appliance that implements the complete user-facing loop:
+and ByT5, then fine-tune it for SLT on the uniformly sam-              a USB webcam captures the signer, an on-device screen dis-
+pled How2Sign working subset (Duarte et al., 2021) with                plays the translated sentence, and a small speaker driven by a
+QLoRA (Dettmers et al., 2023). This is task adaptation                 Class-D amplifier reads it aloud. A battery pack, step-down
+on How2Sign rather than training the sign encoder from                 converter, cooling fan, and 3D-printed enclosure make the
+scratch. The base ByT5 weights are quantized to 4-bit NF4              unit portable and thermally stable (Table 1). The Raspberry
+with an FP16 compute type, and low-rank LoRA (Hu et al.,               Pi coordinates capture, local I/O, and networking; CPU/GPU-
+2022) updates (r = 4) are trained on the query and value               intensive perception and translation are executed on a back-
+projections together with the SHuBERT→ByT5 projection                  end reached over Wi-Fi/HTTPS.
+layer. SHuBERT itself is frozen. This choice preserves the                The hardware is deliberately separated from the client pro-
+self-supervised sign prior, restricts trainable parameters to          tocol. The backend requires only that a client sample frames,
+components that directly affect generation, and makes fine-            encode them, group them into chunks, and upload them over
+tuning affordable: the whole run fits on two NVIDIA T4                 HTTPS. The Raspberry Pi is therefore a concrete deployment
+GPUs (Section 5).                                                      and evaluation client, while a browser, phone, or laptop can
+                                                                       replace it without changing the model or server-side stream-
+                                                                       ing logic. Throughout the remainder of the paper, client
+4 Real-Time System and Deployment                                      denotes this generic interface and Raspberry Pi prototype
+                                                                       denotes the physical reference implementation.
+The learned model is accurate but heavy, so practical re-
+sponsiveness depends on hardware–software co-design. We
+                                                                       4.2     Chunked ingestion
+separate three concerns: (1) a capture and interaction client,
+(2) a CPU runtime for ingestion, perception, ordering, and             The client samples the incoming video below the native
+boundary detection, and (3) a GPU translation stage. This              camera rate to reduce computation while preserving motion,
+separation lets the Raspberry Pi prototype provide a complete          normalizes each frame to a fixed size, compresses it to JPEG,
+assistive interface without requiring the full model to execute        and groups a small number of frames into a chunk. Chunking
+
+
+                                                                   3
+                                                                            Perception
+                                                                             worker 1
+
+   Capture client:          HTTPS                  Bounded                                  Reorder         Boundary             Translation           Text /
+Pi / browser / phone       ingestion              raw queue                                  buffer       state machine            (GPU)              speech
+
+                           early loading                                                                     finalize on ut-
+                            / decoding                                      Perception                         terance end
+                                                                             worker 2
+
+                                                                            CPU perception
+                                                                       four-thread pool for con-
+                                                                      current MediaPipe modules
+
+
+Figure 2: The streaming inference pipeline. The reference capture client is a Raspberry Pi appliance, but the interface also
+accepts browser, phone, or laptop clients. Frames are sampled, chunked, and sent over HTTPS. A bounded queue feeds
+two CPU perception workers whose MediaPipe modules execute concurrently; a reorder buffer restores temporal order; a
+boundary state machine finalizes the utterance; and the GPU translation stage emits text, which the client may also speak
+aloud.
+
+                            false start                                                   Optimization            Effect
+                              stable
+                              hands                                                       Early loading           Lowers per-chunk start-up delay.
+                                                                                          Bounded queue           Keeps latency stable under bursty ar-
+                   WAIT                         REC
+                                                                                                                  rival.
+                                                                                          Chunk coalescing        Reduces tail latency while limiting infor-
+                                                                                                                  mation loss.
+          emit &                        new            hands gone /
+           reset                       motion           down / idle                       Two     perception      Increases CPU throughput while
+                                                                                          workers                 bounded queues limit backlog.
+                                                                                          Concurrent Medi-        Perception drops from 107–111 to 45–
+                   FINAL                        HOLD
+                                                                                          aPipe modules           48 ms/frame.
+                               hold                                                       Reorder buffer          Preserves temporal correctness under
+                             elapsed
+                                                                                                                  parallelism.
+                                                                                          Safe drain              Avoids losing end-of-utterance chunks.
+Figure 3: Sentence-boundary detection as a finite-state ma-
+chine. Transitions are governed by motion thresholds and                                       Table 2: Runtime optimizations and their effect.
+timing windows; the HOLD state prevents duplicate finaliza-
+tions from a single ending gesture.
+                                                                                        4.4        Temporal synchronization
+                                                                                        Signing is sequential, so frame order matters as much as
+amortizes network cost relative to sending single frames, yet
+                                                                                        frame content. With several workers running in parallel,
+the chunks remain short enough for near real-time response.
+                                                                                        chunks may finish out of order. A reorder buffer holds com-
+Concretely, the client samples at 15 fps, normalizes to 640 ×
+                                                                                        pleted chunks and releases them to the translator only when
+480 at JPEG quality 72, and groups ten consecutive frames
+                                                                                        all earlier chunks are ready, so the system exploits paral-
+per chunk (Section 5).
+                                                                                        lelism while preserving the temporal logic of the utterance.
+
+
+
+                                                                                        4.5        Latency optimizations
+4.3    Sentence-boundary detection
+                                                                                        Table 2 lists the optimizations. Early loading decodes and
+Because we translate whole utterances, the system must                                  enqueues data as soon as enough sub-frames arrive, instead
+decide when an utterance begins and ends. A boundary                                    of waiting for a full request. A bounded queue caps depth
+detector runs as a state machine (Figure 3). In the WAITING                             to keep latency stable when the arrival rate exceeds instan-
+state no stable signing is observed. When hands and motion                              taneous throughput; under overload the system coalesces
+become sufficiently stable, it moves to RECORDING and                                   incoming data into the most recent chunk rather than let-
+accumulates features. A brief, unstable appearance is treated                           ting a backlog grow. Two perception workers increase CPU
+as a false start and returns the machine to WAITING. When                               throughput, and within each worker the face, hand, and pose
+the hands disappear, drop, or become nearly still beyond a                              modules execute concurrently through a four-thread pool,
+threshold, the machine enters a short HOLD to avoid emitting                            so wall-clock perception time is governed by the slowest
+duplicate sentences from a single ending gesture, and finally                           module rather than the sum of all three. The reorder buffer
+FINALIZED, at which point the model generates the sentence.                             preserves correctness, and a safe-drain rule finishes in-flight
+When the user stops manually, the system still drains already-                          chunks before producing the final output so that no end-of-
+received chunks before closing the session.                                             utterance content is lost.
+
+
+                                                                                    4
+                Property                     Value                      Parameter              Value          Meaning
+                Total examples               9,872                      Min. utterance         600 ms         discard false starts
+                Unique target sentences      9,746                      Hands absent           400 ms         finalize after disappear-
+                Signers                          9                                                            ance
+                Avg. examples per sentence   1.013                      Hands lowered          500 ms         finalize after lowering
+                                                                        Hands idle             900 ms         finalize after sustained
+                Train split                  7,000
+                                                                                                              stillness
+                Validation split             1,121
+                                                                        Hand motion            0.004          below threshold is jit-
+                Test split                   1,751
+                                                                                                              ter/stillness
+                                                                        Body motion            0.018          suppress natural postural
+Table 3:  Resource-constrained, uniformly sampled                                                             sway
+How2Sign working subset: statistics and data splits.
+                                                                       Table 5: Sentence-boundary detection parameters used at
+      Component             Setting                                    inference.
+      Training hardware     2 × NVIDIA T4
+      Quantization          QLoRA 4-bit (NF4), FP16 compute
+      LoRA rank             r=4                                        requests. These measurements therefore include the refer-
+      Trainable             ByT5 q, v + projection layer               ence hardware/client path, while the server API remains
+      Frozen                SHuBERT                                    unchanged for browser, phone, or laptop clients.
+      Effective batch       16 × 16 × 2 = 512
+
+            Table 4: Final fine-tuning configuration.                  5.4    Metrics
+                                                                       Quality. We report BLEU (Papineni et al., 2002) and
+5      Experimental Setup                                              BLEURT (Sellam et al., 2020). BLEU measures n-gram
+                                                                       overlap and applies a brevity penalty, while BLEURT is a
+5.1      Data                                                          learned BERT-based metric intended to capture semantic and
+How2Sign (Duarte et al., 2021) is a large-scale continuous             fluency similarities that lexical overlap can miss. BLEURT
+American Sign Language corpus of instructional videos in               is reported for the held-out test split.
+which each example pairs a signing clip with an English
+sentence. The original corpus contains substantially more
+                                                                       Latency. For real-time behavior we measure the delay be-
+data than we could process within the available compute and
+                                                                       tween the moment the system finalizes an utterance and the
+storage budget. We therefore extract a uniformly sampled
+                                                                       moment it emits text. For evaluated clip i,
+working subset of 9,872 clip–sentence pairs from the avail-
+able corpus. The extracted subset contains 9 signers and
+                                                                                         Li = toutput,i − tfinalize,i ,             (1)
+is split into 7,000 training, 1,121 validation, and 1,751 test
+examples (Table 3). The subset retains the sentence-level
+                                                                       and the mean latency over N clips is N1 i Li . We also
+                                                                                                                  P
+clip–text task while fitting the available resource budget. Of
+the 9,872 target sentences, 9,746 are unique (≈1.013 exam-             report the 95th percentile (P95). For an aggregate latency
+ples per sentence), indicating low exact-sentence repetition.          statistic M (mean or P95), the relative reduction is
+We report this as a dataset statistic rather than as evidence of
+                                                                                                        Mbase − Mopt
+an open-vocabulary setting.                                                     ReductionM (%) =                     × 100.         (2)
+                                                                                                           Mbase
+
+5.2      Training configuration
+                                                                       Boundary-detection parameters. The real-time evalua-
+Fine-tuning on the sampled How2Sign working subset fol-                tion uses the state-specific timing and normalized-motion
+lows the QLoRA recipe of Section 3.5. Table 4 lists the                thresholds in Table 5. Separate windows for absent, lowered,
+configuration. Training runs on two NVIDIA T4 GPUs with                and idle hands avoid forcing all end-of-utterance conditions
+an effective batch size of 512, formed from a per-device               into a single timeout.
+batch of 16 accumulated over 16 steps across 2 devices. The
+base ByT5 is loaded in 4-bit NF4 with FP16 compute, LoRA
+rank is r = 4, and only the ByT5 query/value projections
+and the sign→text projection are trainable; SHuBERT is                 6     Results and Analysis
+frozen.
+                                                                       6.1    Translation quality
+5.3      Runtime deployment configuration
+                                                                       Table 6 reports the final quality after fine-tuning on the sam-
+The reference latency path uses the Raspberry Pi 4B client             pled How2Sign working subset. BLEU is 16.7 on validation
+described in Section 4.1. It samples video at 15 fps, re-              and 15.9 on test; the held-out test split additionally obtains
+sizes frames to 640 × 480, encodes JPEG at quality 72, and             BLEURT 44.7. The validation and test BLEU scores differ
+sends chunks over Wi-Fi/HTTPS to the backend. The opti-                by 0.8 points. BLEURT provides a complementary semantic
+mized setting uses ten frames per chunk and five concurrent            measure beyond surface n-gram overlap.
+
+
+                                                                   5
+              Split          BLEU       BLEURT                                 Metric                    Baseline       Optimized    Reduction
+              Validation      16.7         –                                   Mean latency                   1.873 s      1.354 s     27.71%
+              Test            15.9        44.7                                 P95 latency                    2.919 s      2.130 s     27.03%
+
+Table 6: Final translation quality after fine-tuning on the           Table 8: Post-finalization latency over the complete 9,872-
+sampled How2Sign working subset.                                      example How2Sign working subset.
+
+ Factor                    Baseline              Optimized                                                                              2.92
+                                                                                          3        Baseline
+ Data loading              multipart             early loading                                     Optimized                               2.13
+
+
+                                                                            Latency (s)
+ Workers                   1                     2                                        2 1.87
+ MediaPipe execution       sequential            concurrent (4-                                1.35
+                                                 thread pool)                             1
+ Sampling rate             15 fps                15 fps
+ Frames / chunk            15                    10                                       0
+ Concurrency               1                     5                                            Mean                                        P95
+ Final beam                2                     2
+ Image / JPEG              640×480, 72%          640×480, 72%
+                                                                       Figure 4: Mean and P95 latency, baseline vs. optimized.
+Table 7: Baseline vs. optimized runtime configuration.
+Model and input quality are held fixed.                               utterances retain proportionally larger absolute savings, con-
+                                                                      sistent with per-frame perception being the main cost.
+6.2   Real-time latency
+                                                                      6.5                 Recommended defaults
+We compare a sequential baseline configuration with the
+optimized configuration; the two differ only in runtime set-          From these experiments we recommend, as project defaults:
+tings (Table 7) and share the same translation model, image           two perception workers; a four-thread intra-worker pool for
+quality, sampling rate, frame size, and final beam width, so          MediaPipe; ten frames per chunk; five concurrent client re-
+any difference is attributable to the streaming stack rather          quests; a final beam of two; and state-specific finalization
+than the model.                                                       windows of 400/500/900 ms for hands disappearing, lower-
+   Runtime evaluation covers every example in the complete            ing, or remaining idle. This configuration keeps the trans-
+9,872-example working subset. The optimized system re-                lation model and decoding settings fixed while materially
+duces mean latency from 1.873 s to 1.354 s (a 27.71% re-              reducing latency and remaining simple enough to reason
+duction) and P95 latency from 2.919 s to 2.130 s (27.03%);            about as a real-time system.
+see Table 8 and Figure 4. The aggregate results therefore
+reflect the full sampled working corpus rather than a small
+sentence-level evaluation slice. This is a systems workload           7         Conclusion
+measurement; it should not be interpreted as an estimate
+of translation generalization on the training portion of the          We presented a hardware-aware, sentence-level sign lan-
+subset.                                                               guage translation system whose main objective is responsive
+                                                                      deployment. The translation stack is fine-tuned with QLoRA
+                                                                      on a uniformly sampled 9,872-example How2Sign subset
+6.3   Where the gains come from                                       while SHuBERT remains frozen, reaching BLEU 16.7 on
+                                                                      validation and, on test, BLEU 15.9 and BLEURT 44.7. The
+The dominant factor is perception time. In the sequential
+                                                                      central contribution is the runtime and deployment design:
+baseline, each frame waits for the face, hand, and pose
+                                                                      a portable Raspberry Pi 4B interaction client paired with a
+branches in turn, so per-frame cost approximates the sum of
+                                                                      client-agnostic HTTPS interface and an offloaded CPU/GPU
+the branches (about 107–111 ms). Running the MediaPipe
+                                                                      backend. Chunked ingestion, bounded queues, concurrent
+modules concurrently through a four-thread pool makes wall-
+                                                                      perception, temporal reordering, and sentence-boundary de-
+clock perception time track the slowest module instead, drop-
+                                                                      tection reduce mean post-finalization response latency from
+ping it to about 45–48 ms/frame. Early loading and con-
+                                                                      1.873 to 1.354 seconds (27.71%) and P95 from 2.919 to
+current requests further shorten the client–server wait by
+                                                                      2.130 seconds (27.03%). The hardware prototype demon-
+letting the pipeline begin before a full request has arrived.
+                                                                      strates the complete camera-to-text-and-speech loop, while
+Throughout these runs the raw and prepared queues never
+                                                                      the generic client contract allows the same backend to sup-
+exceeded a depth of one and never saturated, confirming that
+                                                                      port browser, phone, or laptop capture.
+the bottleneck was perception latency rather than queueing.
+
+
+6.4   Qualitative examples                                            Limitations
+Table 9 shows representative sentences with their baseline            Several limitations remain. First, the system responds af-
+and optimized latencies. The optimized system is consis-              ter an utterance ends rather than translating incrementally
+tently faster across short and long sentences, and longer             while the user is still signing; truly incremental decoding is
+
+
+                                                                  6
+   Sentence                                     Base     Opt             com/content_cvpr_2018/html/Camgoz_Ne
+                                                                         ural_Sign_Language_CVPR_2018_paper.h
+   Hi!                                          1.163   0.846
+   And ukuleles are different.                  1.138   0.828
+                                                                         tml.
+   And this is the base plate.                  1.441   1.027          Necati Cihan Camgöz, Oscar Koller, Simon Hadfield, and
+   All telescopes should come with a finder.    1.428   1.047            Richard Bowden. Sign language transformers: Joint end-
+   Everything fused really nice.                1.356   0.972
+                                                                         to-end sign language recognition and translation. In Pro-
+   And that’s how you tune a ukulele.           1.242   0.894
+   Again, one more time we’ll show it for       1.996   1.433
+                                                                         ceedings of the IEEE/CVF Conference on Computer Vi-
+   you.                                                                  sion and Pattern Recognition, pages 10023–10033, 2020.
+   Each has a unique feel, and there’s no one   3.044   2.175            URL https://openaccess.thecvf.com/cont
+   particular one that’s right for everyone.                             ent_CVPR_2020/html/Camgoz_Sign_Langu
+                                                                         age_Transformers_Joint_End-to-End_Sig
+Table 9: Representative sentences and their latency (s) under            n_Language_Recognition_and_Translati
+the baseline and optimized configurations.                               on_CVPR_2020_paper.html.
+                                                                       Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke
+future work. Second, post-finalization latency is measured               Zettlemoyer. QLoRA: Efficient finetuning of quantized
+over the complete 9,872-example working subset under con-                LLMs. In Advances in Neural Information Processing
+trolled deployment conditions; absolute numbers may shift                Systems, volume 36, pages 10088–10115, 2023. URL
+under network variability or heavier concurrent load. Third,             https://proceedings.neurips.cc/paper
+although the client protocol is generic, the reported hardware-          _files/paper/2023/hash/1feb87871436031
+backed latency measurements use the Raspberry Pi reference               bdc0f2beaa62a049b-Abstract-Conference.
+client; browser, phone, and laptop clients require separate              html.
+benchmarking. Finally, the multi-stage pipeline is computa-            Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov,
+tionally non-trivial, and pushing the full model to run entirely         Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner,
+on the edge remains challenging.                                         Mostafa Dehghani, Matthias Minderer, Georg Heigold,
+                                                                         Sylvain Gelly, Jakob Uszkoreit, and Neil Houlsby. An im-
+                                                                         age is worth 16x16 words: Transformers for image recog-
+Ethics Statement                                                         nition at scale. In International Conference on Learning
+                                                                         Representations, 2021. URL https://openreview
+The intended use of this work is accessibility: supporting
+                                                                         .net/forum?id=YicbFdNTTy.
+communication for deaf and hard-of-hearing signers and
+non-signers. Because the input is video of a person, privacy           Haodong Duan, Yue Zhao, Kai Chen, Dahua Lin, and Bo Dai.
+is a first-order concern; the system de-identifies faces by              Revisiting skeleton-based action recognition. In Proceed-
+graying and blurring while retaining the eyes and mouth,                 ings of the IEEE/CVF Conference on Computer Vision
+which are linguistically necessary for non-manual markers,               and Pattern Recognition, pages 2969–2978, 2022. URL
+thereby reducing identity exposure without discarding signal.            https://openaccess.thecvf.com/content/
+Responsible deployment requires informed consent for data                CVPR2022/html/Duan_Revisiting_Skelet
+collection, attention to signer diversity so the model does not          on-Based_Action_Recognition_CVPR_202
+systematically fail for underrepresented signers or dialects,            2_paper.html.
+and clear communication that automatic translations can be
+wrong and should not be relied upon in high-stakes settings            Amanda Duarte, Shruti Palaskar, Lucas Ventura, Deepti
+without human confirmation.                                             Ghadiyaram, Kenneth DeHaan, Florian Metze, Jordi Tor-
+                                                                        res, and Xavier Giro-i Nieto. How2Sign: A large-scale
+                                                                        multimodal dataset for continuous american sign language.
+Acknowledgments                                                         In Proceedings of the IEEE/CVF Conference on Computer
+                                                                        Vision and Pattern Recognition, pages 2735–2744, 2021.
+We thank Dr. Ninh Khánh Duy for his valuable feedback and               URL https://openaccess.thecvf.com/cont
+guidance throughout this project.                                       ent/CVPR2021/html/Duarte_How2Sign_A_
+                                                                        Large-Scale_Multimodal_Dataset_for_Co
+                                                                        ntinuous_American_Sign_Language_CVPR
+References                                                              _2021_paper.html.
+
+Valentin Bazarevsky, Ivan Grishchenko, Karthik Raveen-                 Shester Gueuwou, Xiaodan Du, Greg Shakhnarovich, Karen
+  dran, Tyler Zhu, Fan Zhang, and Matthias Grundmann.                    Livescu, and Alexander H. Liu. SHuBERT: Self-
+  BlazePose: On-device real-time body pose tracking, 2020.               supervised sign language representation learning via multi-
+  URL https://arxiv.org/abs/2006.10204.                                  stream cluster prediction. In Proceedings of the 63rd
+                                                                         Annual Meeting of the Association for Computational Lin-
+Necati Cihan Camgöz, Simon Hadfield, Oscar Koller, Her-                  guistics (Volume 1: Long Papers), pages 28792–28810,
+  mann Ney, and Richard Bowden. Neural sign language                     Vienna, Austria, 2025. Association for Computational Lin-
+  translation. In Proceedings of the IEEE Conference on                  guistics. doi: 10.18653/v1/2025.acl-long.1397. URL
+  Computer Vision and Pattern Recognition, pages 7784–                   https://aclanthology.org/2025.acl-lon
+  7793, 2018. URL https://openaccess.thecvf.                             g.1397/.
+
+
+                                                                   7
+Wei-Ning Hsu, Benjamin Bolte, Yao-Hung Hubert Tsai,                for Computational Linguistics. doi: 10.3115/1073083.10
+ Kushal Lakhotia, Ruslan Salakhutdinov, and Abdelrah-              73135. URL https://aclanthology.org/P02
+ man Mohamed. HuBERT: Self-supervised speech repre-                -1040/.
+ sentation learning by masked prediction of hidden units.
+ IEEE/ACM Transactions on Audio, Speech, and Language             Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee,
+ Processing, 29:3451–3460, 2021. doi: 10.1109/TASLP.                Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li,
+ 2021.3122291. URL https://ieeexplore.ieee.                         and Peter J. Liu. Exploring the limits of transfer learning
+ org/document/9585401.                                              with a unified text-to-text transformer. Journal of Machine
+                                                                    Learning Research, 21(140):1–67, 2020. URL https:
+Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-            //www.jmlr.org/papers/v21/20-074.html.
+  Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu
+  Chen. LoRA: Low-rank adaptation of large language               Thibault Sellam, Dipanjan Das, and Ankur Parikh. BLEURT:
+  models. In International Conference on Learning Repre-            Learning robust metrics for text generation. In Pro-
+  sentations, 2022. URL https://openreview.net                      ceedings of the 58th Annual Meeting of the Association
+  /forum?id=nZeVKeeFYf9.                                            for Computational Linguistics, pages 7881–7892, On-
+                                                                    line, 2020. Association for Computational Linguistics.
+Kezhou Lin, Xiaohan Wang, Linchao Zhu, Ke Sun, Bang                 doi: 10.18653/v1/2020.acl-main.704. URL https:
+  Zhang, and Yi Yang. Gloss-free end-to-end sign language           //aclanthology.org/2020.acl-main.704/.
+  translation. In Proceedings of the 61st Annual Meeting
+  of the Association for Computational Linguistics (Volume        Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszko-
+ 1: Long Papers), pages 12904–12916, Toronto, Canada,               reit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, and
+  2023. Association for Computational Linguistics. doi:             Illia Polosukhin. Attention is all you need. In Advances in
+ 10.18653/v1/2023.acl-long.722. URL https://acla                    Neural Information Processing Systems, volume 30, 2017.
+  nthology.org/2023.acl-long.722/.                                  URL https://proceedings.neurips.cc/pap
+                                                                    er/7181-attention-is-all-you-need.
+Camillo Lugaresi, Jiuqiang Tang, Hadon Nash, Chris Mc-
+  Clanahan, Esha Uboweja, Michael Hays, Fan Zhang,                Linting Xue, Aditya Barua, Noah Constant, Rami Al-Rfou,
+  Chuo-Ling Chang, Ming Guang Yong, Juhyun Lee, Wan-                Sharan Narang, Mihir Kale, Adam Roberts, and Colin
+  Teh Chang, Wei Hua, Manfred Georg, and Matthias                   Raffel. ByT5: Towards a token-free future with pre-
+  Grundmann. MediaPipe: A framework for building per-               trained byte-to-byte models. Transactions of the As-
+  ception pipelines, 2019. URL https://arxiv.org/                   sociation for Computational Linguistics, 10:291–306,
+  abs/1906.08172.                                                   2022. doi: 10.1162/tacl_a_00461. URL https:
+                                                                    //aclanthology.org/2022.tacl-1.17/.
+Mathias Müller, Sarah Ebling, Eleftherios Avramidis,
+ Alessia Battisti, Michèle Berger, Richard Bowden, An-            Kayo Yin and Jesse Read. Better sign language transla-
+ nelies Braffort, Necati Cihan Camgöz, Cristina España-             tion with STMC-transformer. In Proceedings of the 28th
+ bonet, Roman Grundkiewicz, Zifan Jiang, Oscar Koller,              International Conference on Computational Linguistics,
+ Amit Moryossef, Regula Perrollaz, Sabine Reinhard, An-             pages 5975–5989, Barcelona, Spain (Online), 2020. Inter-
+ nette Rios, Dimitar Shterionov, Sandra Sidler-miserez,             national Committee on Computational Linguistics. doi:
+ and Katja Tissi. Findings of the first WMT shared task            10.18653/v1/2020.coling-main.525. URL https://ac
+ on sign language translation (WMT-SLT22). In Proceed-              lanthology.org/2020.coling-main.525/.
+ ings of the Seventh Conference on Machine Translation,
+ pages 744–772, Abu Dhabi, United Arab Emirates (Hy-              Benjia Zhou, Zhigang Chen, Albert Clapés, Jun Wan, Yanyan
+ brid), 2022. Association for Computational Linguistics.            Liang, Sergio Escalera, Zhen Lei, and Du Zhang. Gloss-
+ doi: 10.18653/v1/2022.wmt- 1.71. URL https:                        free sign language translation: Improving from visual-
+ //aclanthology.org/2022.wmt-1.71/.                                 language pretraining. In Proceedings of the IEEE/CVF In-
+                                                                    ternational Conference on Computer Vision, pages 20871–
+Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy V.              20881, 2023. URL https://openaccess.thecv
+ Vo, Marc Szafraniec, Vasil Khalidov, Pierre Fernandez,             f.com/content/ICCV2023/html/Zhou_Glo
+ Daniel Haziza, Francisco Massa, Alaaeldin El-Nouby,                ss-Free_Sign_Language_Translation_Im
+ Mahmoud Assran, Nicolas Ballas, Wojciech Galuba, Rus-              proving_from_Visual-Language_Pretrain
+ sell Howes, Po-Yao Huang, Shang-Wen Li, Ishan Misra,               ing_ICCV_2023_paper.html.
+ Michael Rabbat, Vasu Sharma, Gabriel Synnaeve, Hu Xu,
+ Hervé Jégou, Julien Mairal, Patrick Labatut, Armand              Ronglai Zuo, Fangyun Wei, and Brian Mak. Natural
+ Joulin, and Piotr Bojanowski. DINOv2: Learning ro-                 language-assisted sign language recognition. In Proceed-
+ bust visual features without supervision. Transactions             ings of the IEEE/CVF Conference on Computer Vision
+ on Machine Learning Research, 2024. URL https:                     and Pattern Recognition, pages 14890–14900, 2023. URL
+ //openreview.net/forum?id=a68SUt6zFt.                              https://openaccess.thecvf.com/content/
+                                                                    CVPR2023/html/Zuo_Natural_Language-A
+Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing             ssisted_Sign_Language_Recognition_CV
+  Zhu. BLEU: a method for automatic evaluation of machine           PR_2023_paper.html.
+  translation. In Proceedings of the 40th Annual Meeting of
+  the Association for Computational Linguistics, pages 311–
+  318, Philadelphia, Pennsylvania, USA, 2002. Association
+
+
+                                                              8
+

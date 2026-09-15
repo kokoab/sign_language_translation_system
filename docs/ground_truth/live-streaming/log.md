@@ -7,6 +7,185 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-15 — repair handoff checks complete
+
+Fresh final checks pass:33focused tests,23Python files compiled, report consistency
+assertions, code whitespace andgitdiffcheck. Large-artifact index regenerated.
+Completion audit maps the authorized training-collapse repair to measured full-training,
+held-out, provenance and boundary evidence. Results remain a failed-promotion research
+checkpoint; general continuous recognition and LG remain unsolved. All requested repair
+experiments/results are complete; no additional training or deployment action remains.
+Artifacts:joint_ctc_aligned_v17_20260915/{README.md,verification.json,handoff_checks.json,
+completion_audit.json}. Next action:return the verified result candidly.
+
+## 2026-09-15 — CTC repair verified; training collapse resolved, generalization still fails
+
+Finalepoch42evaluated once on all334frozen development recordings after training-only
+corrections. TRAIN1,088/1,291known matches,32.77%WER,1,901/1,901isolatedCTC;263/334
+development recordings emit known signs. Connected WER98.24% (65S/90D/124I), familiar
+107.72% (112S/74D/93I), contiguous50% (3S/6D/3I). ActualCitizen/SemLex validationCTC
+339/378 (89.68%)/762/978 (77.91%); pooled95.77%/85.28% retained. LG pooled15/57 but
+actualCTC4/57with42empty; trainingcores199/199bothoutputs. Generalization remains weak.
+
+Verified4,520input hashes,54checkpoints, all frozen recipes/full schedules/optimizer
+states, recomputed finaltraining and developmentcounts/gates. CPU/MPS628/628tokens
+agree,63tokenprefix consistent.33focused tests pass. Source-clock latency misses
+158/296signs; runtime excluded. Failedpromotion gates:connecteddeletions,familiarWER,
+medianruntime delay,runtimeinclusion. No Citizen test, confirmation, export or promotion.
+Finalreport:joint_ctc_aligned_v17_20260915/README.md; canonicalcurrentstate updated.
+Decision: training-collapse repair complete, no more tuning from these held-outerrors.
+Next product work must address signer/domain generalization and sequenceprecision;
+this checkpoint is not a deployment candidate. Final handoff: compile/whitespace,
+report consistency and large-artifact index, then return verified results.
+
+## 2026-09-15 — final alignment completed; held-out evaluation started
+
+All six fixed epochs37–42completed. Final TRAIN known matches1,088/1,291 (84.28%),
+169deletions,34substitutions,220insertions,32.77%WER; isolated CTC1,901/1,901 (100%).
+Compared with the original failed joint2/1,291known matches, the CTC training collapse
+is substantially repaired; training sequence accuracy is still imperfect. Final model
+has4,620updates across42epochs; the rejected first12epochpositive-only run is separate.
+Launched the predefined single finalepoch42evaluation on the frozen development suite.
+No held-out outputs informed loss corrections or checkpoint selection. Next: inspect
+all334recordings/isolated/LG results, independently verify provenance and metrics,
+record limitations and report the completed repair result without promoting failures.
+
+## 2026-09-15 — verified-frame phase completed; final alignment launched
+
+All12epochs25–36completed. Final TRAIN:1,263/1,291known matches (97.83%),3deletions,
+25substitutions,1,370insertions,108.29%WER; isolatedCTC1,897/1,901 (99.79%). The
+sign evidence is learnable, but extra outputs still dominate. Launched the predefined
+six-epoch37–42alignment continuation with original target-normalized CTC restored,
+retaining all verified supervision and optimizer state. Loss routing verified directly;
+no held-out evaluation has informed any correction. Next: complete final alignment,
+evaluate fixedepoch42once, verify provenance/metrics and report measured limitations.
+
+## 2026-09-15 — final alignment curriculum prepared from training-only evidence
+
+Verified-frame epoch28 recognizes1,186/1,291known training signs, but2,387insertions
+remain. A controlled original-CTC+CE optimization stays blank from a low-logit start
+(p=0.062706) but preserves a strong nonblank solution from the warm start(p=0.999520).
+This supports temporary frame normalization to escape collapse, followed by restoring
+original sequence alignment strength once sign evidence has been learned.
+
+Prepared a fixed six-epoch37–42continuation after currentepoch36, preserving all
+verified-frame/anchor/pooled/background objectives, model/optimizer/learning rates/data.
+Only original target-normalized complete/positive CTC functions are restored. No
+held-out outputs or decoder changes inform the choice. Minimal runner/plan:
+`joint_ctc_aligned_v17_20260915/`; it reuses the verified-frame training loop. Next:
+complete current run, execute the final alignment pass, then evaluate fixedepoch42
+once and verify all results. No further tuning from held-out errors is planned.
+
+## 2026-09-15 — balanced continuation completed; verified frame refinement audited
+
+All12continuation epochs13–24 completed. Final TRAIN:1,117/1,291matches (86.52%),
+25deletions,149substitutions,2,336insertions and194.42%WER. Isolated CTC1,891/1,901
+(99.47%). Blank suppression is removed, but sequence precision still fails.
+No held-out outputs were inspected. The next dense-frame audit admits150,876training
+tokens:23,454known,103,251OTHER,24,171guarded blank;86,112tokens remain ignored.
+The exact0.10s interior-gap guards are reused; clip edges/overlap/unguarded contexts
+remain unsupervised. Independent reviewer hit a usage limit before this review;
+root directly checked helper/loop routing, global frame population scaling, resume,
+freeze/evaluation and copied imports. No blocking issue found. Next: focused checks,
+then fixed25–36refinement followed by final held-out evaluation and full verification.
+
+## 2026-09-15 — emission locations expose missing continuous-context supervision
+
+Epoch16 TRAIN location probe samples32recordings per source. ASLLRP OTHER produces
+129known emissions for39references:35inside known intervals,52inside OTHER intervals,
+42in gaps. These are timestamp-location diagnostics, not event-alignment accuracy.
+The current recipe teaches one sequence point per sign and blank on standalone
+background windows; it leaves most OTHER motion and short guarded gaps without direct
+sequence-frame supervision. Existing complete annotations can supply those labels.
+
+Prepared `joint_ctc_frame_supervision_v17.py` and two regression tests: known/OTHER
+intervals,0.10s guarded interior gaps, incomplete-annotation refusal, overlap/padding
+masking, gradients and partition-invariant population normalization. Both pass.
+The new recipe adds only this sequence CE after the current fixed epoch24 completes,
+retaining prior objectives/optimizer for25–36. Runner/plan:
+`joint_ctc_frames_v17_20260915/`. No new data, unverified blanks or held-out tuning.
+Next: audit frame coverage/review; complete current run, then execute fixed refinement.
+
+## 2026-09-15 — first frame-normalized epoch confirms blank suppression mechanism
+
+After one unchanged-data continuation epoch, known TRAIN matches rise330→879/1,291,
+deletions fall817→65, and blank steps fall235,498→50,515/236,988. This directly
+supports the loss-scale diagnosis on real training data, beyond the toy counterexample.
+However insertions rise65→2,608 and TRAIN WER is233.93%; emission recovery alone is
+not accurate recognition. Isolated CTC remains1,830/1,901. The fixed epoch13–24 run
+continues; no held-out outputs or decoder tuning informed this result. Next: judge
+final precision/deletions jointly, then evaluate the fixed candidate and verify.
+
+## 2026-09-15 — per-frame CTC correction reviewed and launched
+
+Reviewer cleared nonrecursive loss replacement, complete/positive normalization,
+epoch12 optimizer continuation and provenance/evaluation routing. All31focused tests
+pass. Launched fixed epochs13–24 from the completed anchor checkpoint, changing only
+CTC NLL normalization from targets to valid output frames. All prior objectives,
+learning rates and full coverage remain. Next: verify full-training recognition,
+then evaluate the fixed final candidate and report measured limits.
+
+## 2026-09-15 — anchor run completed; loss-scale counterexample identifies remaining blank basin
+
+All12anchor epochs completed. Final TRAIN:330/1,291known matches,817deletions,
+65insertions,79.47%WER,1,858/1,901isolated CTC correct (97.74%). No development
+results were inspected. A64-training-sequence epoch10 probe finds blank at87/106
+known anchors; removing blank would identify62/106. Both competition and label
+confusion remain, so blank suppression would not solve recognition.
+
+A controlled32frame single-target optimization reproduces a concrete scale failure:
+target-normalized CTC plus positive CE settles at p(target)=0.062706 with blank greedy
+output; frame-normalized CTC plus the same CE reaches0.995391/nonblank. New shared
+`joint_ctc_loss_balance_v17.py` reuses existing CTC validation/autograd and normalizes
+by valid input length. Two red/green tests verify the opposing gradients and padding/
+length scaling;17focused CTC tests pass. A bounded continuation preserves anchor12
+model/optimizer and changes only CTC normalization for epochs13–24. Plan/runner:
+`joint_ctc_balanced_v17_20260915/`. Next: review, train, evaluate and verify full results.
+
+## 2026-09-15 — verified anchors produce earlier nonblank fitting
+
+Corrected anchor epoch4 recovers53/1,291known continuous training signs and correctly
+decodes1,259/1,901isolated training clips, versus0/1,291 and9/1,901 at epoch4 of the
+preceding positive-CTC-only repair. This is an intermediate training-only result;
+it is not yet adequate full-data fitting or evidence of held-signer generalization.
+The original fixed12-epoch run continues without recipe/decoder changes. Next:
+finish the run and evaluate the final candidate before claiming a repair.
+
+## 2026-09-15 — corrected anchor objective reviewed and launched
+
+Reviewer cleared fixed population weighting and its epoch/source scaling; all29
+focused tests pass. The corrected fresh seed17111 run is launched for12epochs with
+full-training recognition measured each epoch. All1,291known training targets have
+anchors. No held-out evaluation or decoder adjustment has occurred. Next: finish
+training, evaluate the final candidate, then independently verify checkpoints,
+full-data coverage, greedy CTC retention and reported development metrics.
+
+## 2026-09-15 — review corrected epoch-level known/OTHER anchor weights
+
+Review found minibatch means would overweight OTHER-only batches. Stopped the new
+run before any checkpoint; preserved its recipe, freeze and log under
+`joint_ctc_anchor_v17_20260915/interrupted_batch_weighting/`. The repaired objective
+uses fixed full-training per-source known/OTHER anchor populations and sum reductions,
+so batch partitioning cannot change total weighting. New partition-invariance test
+passes alongside both anchor safety/gradient checks. Anchor audit covers 7,379/7,380
+training events, including all 1,291 known targets; one ambiguous OTHER is skipped.
+Manifest timing SHA is verified against the original preparation audit. Next: final
+bounded review and run corrected frozen recipe; no held-out outputs inspected.
+
+## 2026-09-15 — first positive repair completed; verified-anchor correction prepared
+
+All 12 positive-CTC epochs completed with complete coverage. Final isolated TRAIN CTC
+is 1,780/1,901 (93.63%), but continuous TRAIN known recall is 183/1,291 (14.18%),
+974 deletions and 87.84% WER. No held-out evaluation was used to choose the correction.
+The missing positive route is repaired; sequence alignment still fits poorly.
+New `joint_ctc_anchors_v17.py` uses one unambiguous token within each verified event,
+and event-balanced CE directly teaches the actual CTC head. Repeated targets remain
+separate; overlapping/unsampled intervals receive no invented target. Two new red/green
+regression tests pass. The next bounded recipe adds these anchors and positive midpoint
+CE while retaining prior objectives, data, architecture, original initialization and
+12-epoch schedule. Report/plan: `joint_ctc_anchor_v17_20260915/`. Next: inspect anchor
+coverage and review, run the frozen training recipe, then evaluate and verify results.
+
 ## 2026-09-14 — train-only probability diagnosis separates CTC marginal and greedy collapse
 
 First direct-positive repair is still training; epoch4 recovers0/1,291known continuous
