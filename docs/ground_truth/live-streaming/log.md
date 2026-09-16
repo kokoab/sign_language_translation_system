@@ -7,6 +7,174 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-16 — clarify Uni-Sign adaptation potential during discussion
+
+User observed that some translations are close and asked about fine-tuning,
+architecture lessons and isolated-sign failures. Rechecked official model/training
+code and paper plus saved predictions. Some full-sentence outputs preserve useful
+content; exact-match count must not be interpreted as semantic accuracy. Rejection
+applies to unchanged deployment, not fine-tuning feasibility. The architecture has
+separate downstream isolated-recognition fine-tuning; the evaluated checkpoint is
+the How2Sign sentence translator. Short-clip failure is confounded with domain,
+signer and capture differences. Added this interpretation to REPORT.md. No training
+or implementation started. A proposed adaptation comparison needs correctly paired
+target-domain data and unseen-signer evaluation; keep the native architecture first.
+
+## 2026-09-16 — reviewed Uni-Sign results; reject drop-in replacement
+
+On the user's status request, verified completed status and all 21 predictions;
+independently recomputed BLEU 8.206457 and chrF 38.059096 over the 12 paired
+development utterances. Strict checkpoint loading succeeded. Nine diagnostics
+remain unscored for English accuracy because they lack expert English references.
+Outputs include invented details (“I really like that” → “And, I like that from a
+spoon”) and a brush sentence on the HELLO HOW YOU annotated clip. Webcam EAT gives
+“I'm sorry, I'm sorry.” These results do not support replacement of Stage 2/Reel
+or a claim of corrected repetition. They do not identify the dominant error cause
+or disprove gloss-free translation generally. Updated REPORT.md and current state.
+No production changes or training. Next safe action remains verified target-domain
+hold/repeat examples before another model change. No new background job launched.
+
+## 2026-09-16 — Uni-Sign worker exit
+
+Detached Uni-Sign baseline completed; see `artifacts/reports/unisign_asl_baseline_20260916/REPORT.md`. Measured 12 paired development utterances and nine diagnostics: BLEU 8.21, chrF 38.06.
+No training or production promotion. Next action: inspect outputs and limitations before deciding whether this challenger helps.
+
+## 2026-09-16 — authorized pretrained Uni-Sign comparison prepared
+
+User approved one inference-only gloss-free ASL comparison and asked to return with
+results, retaining the earlier detached-work/no-polling instruction. Added the
+report-local `unisign_asl_baseline_20260916/run_baseline.py`. Reuses existing download
+and hashing helpers, official model/pose code at eed438bcb49e30405cd6ccdfcccca330c134e830,
+and the released How2Sign checkpoint at eab251b7fe7e8521afc0e67be98add670ea40a0d.
+Full strict state loading is required; mT5 is initialized from its configuration
+before loading the complete checkpoint, avoiding an unused base-weight download.
+
+The available local How2Sign subset is training data. Selected instead the pinned
+validation mirror at 1231830fc1e8d77555a245ca22353b144e168111: first four eligible
+source names in raw validation shard001, at most two sources per filename signer,
+first three sorted sentence IDs of duration 2–12s each. Metadata/remote ZIP-directory
+precheck confirms 12 utterances, four sources, signer IDs 1 and 2. This is a small
+development slice, not signer-disjoint generalization. Raw clips will be cut at
+manually realigned CSV boundaries; original sentence clips have different timing.
+Nine prior difficult recordings have no expert English targets and stay qualitative.
+
+Installed ONNX Runtime 1.19.2 and its missing logging dependencies in a separate
+`data/local/tools/unisign_native_deps` target; main environment unchanged. Native
+pose-only AST adapter excludes unused CUDA training imports without changing the
+selected definitions. Self-check passes shape/direct-output equivalence, confidence
+masking and empty inference targets; compilation and git diff --check pass.
+No model-quality result yet. Final action is detached launch, with REPORT/results/
+summary/provenance or FAILURE, completion record, history update and macOS exit
+notification. No assistant polling, training, runtime replacement, or Citizen test
+access. Next safe action after notification: inspect measured outputs and limitations.
+
+## 2026-09-16 — replay result and decision; repeat errors survive beam decoding
+
+Confirmed completion of all 40 runs over 10 recordings. Rollover correction changes
+zero final outputs; corrected live/offline differ in three long-context runs.
+Window-origin sensitivity affects both count and identity; original I I did not
+reproduce, and saved-video re-extraction cannot recover original camera features.
+
+Following the user's Stage-3 cleanup suggestion, ran one fixed existing beam8/topk12
+control on the new saved emission matrices (no tuning/training). It changes 2/40
+outputs, leaves all EAT/WHEN repeat examples unchanged, and increases labelled
+diagnostic edit errors 32→34 across 32 reference tokens. These 16 labelled runs
+are four correlated phases of four selected clips. Exact phase-zero WHEN sequence
+log probabilities: single -6.460, double -0.00621; the repeated preference is in
+the model emissions. Greedy outputs were checked against all saved report rows.
+
+Added report-local `check_beam.py`, `beam_control.json`, `DECISION.md`; updated
+current ground truth. No production, model, annotation or training changes.
+Stage 3 may improve wording, but equal strings alone cannot establish intended
+event count. Do not implement blanket repeat removal or promote beam decoding.
+Next comparison chosen: one released pose-only Uni-Sign ASL checkpoint at utterance
+level with native preprocessing and fixed paired development references, before
+fine-tuning. That comparison is not launched; no new background job exists.
+
+## 2026-09-16 — boundary correction and detached diagnostic replay prepared
+
+User authorized the proposed diagnosis/correction sequence and requested ending
+the turn after launching long work, with completion/failure notification and no
+polling. Created branch `codex/stage2-held-sign-diagnostics` in the existing checkout,
+preserving all pre-existing changes. No worktree/data/checkpoint duplication.
+
+Added a regression demonstrating that a continuing raw CTC run is emitted again
+at a rolled context start. It failed before implementation. `collapse_ctc_path`
+now accepts the preceding raw token; both live callers retain that token from the
+exiting window and clear boundary state on Finish/reset. 51 focused CTC/Reel tests
+pass, including the actual Reel event-loop fixture spanning multiple rollovers
+and preservation of blank/OTHER-separated repeats. This is a narrow runtime
+correction, not proof of held-sign accuracy or a fix for early short-context errors.
+
+Changed `scripts/live_stage2_ctc_v17.py`, `scripts/live_reel_stage1_v17.py`,
+`test/test_live_stage2_ctc_v17.py`, `test/test_live_reel_continuous_v17.py`.
+Opt-in `--ctc-trace-dir` records compressed emissions, frozen window features and
+source observation times, with exclusive file creation and trace latency included.
+Reel events include raw path, boundary token, context offset and emission file path.
+
+Prepared report-local `run_replay.py`, `manifest.json`, timestamp sidecars and a
+long webcam excerpt in `stage2_held_sign_diagnostics_20260916`. Frozen 10 video
+hashes/readable streams/timestamp arrays verified; 40 runs compare legacy/corrected
+collapse on identical logits and final single-context/stitched output. Four corpus
+references are scored; partial O5S5/webcam remain diagnostics. This re-extracts
+saved low-resolution video and cannot recreate original features or true live latency.
+
+The worker records REPORT/results/summary/provenance plus completion JSON, or a
+failure report, and sends one macOS notification on exit. It does not poll or
+automatically reopen the chat. Launch is the final action of the turn; inspect
+its exit notification/completion report in the next interaction. Training is not
+launched: independent human hold/repetition labels and a justified objective are
+still missing. Plan: `docs/superpowers/plans/2026-09-16-stage2-held-sign-diagnostics.md`.
+
+## 2026-09-16 — held-sign diagnosis, video evidence, and gloss-free research
+
+Completed the user's research request without another runtime patch or training run.
+Read the saved `live_reel_stage1_v17/20260915_220852_978390` session and verified the
+general selector SHA. It predates/does not load the repaired joint epoch-42 model.
+Sampled-frame review finds one chest-point episode decoded as I I at two accepted
+windows (token positions 6,10), before Finish or eight-window rollover. Two separate
+salutation episodes produce HELLO HELLO and are retained as a repetition control.
+Gesture descriptions are provisional, not expert ASL labels. Recorded Stage 3 also
+changes I to “Is that?” and I I to “Is it?”.
+
+Production CTC helper assertions verify held A A A collapses once and A blank A
+twice. An independent synthetic counterexample proves prefix rollover can count a
+single ongoing A run twice. This is not the cause of the early two-window duplicate.
+76/130 session sequence updates are rejected; only accepted windows enter context.
+No raw logits were saved, so the reason the model fragmented the early gesture
+cannot be established retrospectively. Current continuous wrapper defaults differ;
+the report describes both ordinary Finish review and revisable sequence mode.
+
+Created `artifacts/reports/stage2_research_review_20260915/`: standalone nine-video
+viewer, exact annotation/event rows and provenance JSON, report-local builder/checks,
+contact sheets, seven full primary papers and selected official Uni-Sign source.
+The viewer separates recorded live predictions, research continuous CTC predictions,
+and pooled exact-core predictions. LG HELLO (0.46s) and WHEN (0.88s) are misclassified
+as LESS/SIGN even with exact core boundaries. Existing partial/unverified annotations
+are labelled honestly. Webcam frame indices map through saved source timestamps;
+two trailing unmapped frames are excluded. No protected test clips were accessed.
+
+Reviewed GFSLT-VLP, Sign2GPT, FLa-LLM, Uni-Sign, SHuBERT, simultaneous SLT and the
+2026 sentence-finalization preprint. Screened SignLlama's abstract and the standardized
+comparison's abstract/official code notes; comparison PDF requests timed out. Released
+Uni-Sign pose-only ASL checkpoints are the closest structural challenger, but their
+133-keypoint preprocessing/mT5 stack is not compatible with Apple v17 features.
+Gloss-free requires video/English pairs and would replace Stages 2+3; it does not
+automatically resolve online event counting or demonstrate iPhone readiness.
+
+Decision: first freeze a signer-disjoint hold/true-repeat/rest/OTHER evaluation and
+capture framewise logits/absolute time; isolate model emission errors from rollover
+ownership. Retain one encoder/one temporal head as the simple recognition candidate;
+evaluate a released gloss-free ASL model separately before considering replacement.
+No promise that speed changes, bulk data, or a new architecture alone will solve it.
+Verification: report builder passes its production-helper counterexamples, selected
+source/model hashes, nine valid media exports and webcam frame-count checks. Gallery
+links, embedded annotations, JavaScript syntax, Python syntax and research-checkpoint
+hash pass. Contact sheets inspected; browser interaction and expert linguistic review
+remain unperformed. Large-artifact index regenerated; git diff --check passes.
+Verification details are saved in the report's `verification.json`.
+Next safe action: deliver the annotated viewer and report for discussion.
+
 ## 2026-09-15 — repair handoff checks complete
 
 Fresh final checks pass:33focused tests,23Python files compiled, report consistency

@@ -82,6 +82,24 @@ class LiveStage2CTCTests(unittest.TestCase):
         logits[np.arange(6), [0, 2, 2, 0, 2, 3]] = 10
         self.assertEqual(collapse_ctc_path(logits, 6), ((2, 2, 3), (1, 4, 5)))
 
+    def test_rollover_continuation_is_not_a_second_sign(self):
+        # The previous context ended inside token 2's ongoing run.
+        logits = np.full((5, 4), -10., np.float32)
+        logits[np.arange(5), [2, 2, 0, 2, 3]] = 10.
+        actual = collapse_ctc_path(logits, 5, previous_token=2)
+        self.assertEqual(actual, ((2, 3), (3, 4)))
+
+    def test_rollover_preserves_a_repeat_after_blank_or_other(self):
+        for previous, path, expected in [
+            (0, [2, 2, 0], ((2,), (0,))),
+            (2, [0, 2, 2], ((2,), (1,))),
+            (2, [101, 2, 2], ((101, 2), (0, 1))),
+        ]:
+            with self.subTest(previous=previous, path=path):
+                logits = np.full((3, 102), -10., np.float32)
+                logits[np.arange(3), path] = 10.
+                self.assertEqual(collapse_ctc_path(logits, 3, previous_token=previous), expected)
+
     def test_rolling_context_locks_only_first_window_emissions(self):
         locked, hypothesis, positions = roll_ctc_prefix(
             ["HELLO"], ["HOW", "YOU", "GOOD"], [4, 9, 17]
