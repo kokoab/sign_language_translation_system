@@ -7,6 +7,157 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-17 — disk exhaustion identified; verified epoch-7 recovery checkpoint
+
+User reported failed comparison. Baseline actually failed saving epoch 8, then
+errno28 prevented status rename; stale status/GT said training/running. No active
+baseline/comparison process. Comparison stopped on failed prerequisite and never
+started BART or trim evaluation. Assistant missed the prerequisite failure when
+queuing. Verified latest.pth ZIP CRCs and mmap metadata: epoch7, history1–7,
+543 optimizer states. latest.tmp.pth is an invalid ZIP (~1.9GiB); free disk ~3GiB.
+No files deleted. Archived failed status/logs under failed_attempt_02 and corrected
+canonical/status files. Added comparison/DISK_FAILURE_REPORT.md and diagnosis JSON.
+Next: obtain explicit permission for corrupt temporary checkpoint deletion per
+AGENTS.md, prepare epoch7 recovery with disk-space checks, and requeue comparison.
+Keep all valid checkpoints. Current resume helper is hard-coded to epoch1 and
+must not be blindly rerun. No final translation-quality result yet.
+
+## 2026-09-17 — English comparison exit
+
+English model comparison failed; see english_comparison_20260917/FAILURE.md. No model promotion; review predictions and controls.
+
+## 2026-09-17 — English comparison prepared and reviewed; queue launch next
+
+Prepared pinned BART-base weights/tokenizer, 64,000-entry mT5 tokenizer and explicit
+row mapping from 500 Brown documents plus TRAIN-only requirements. All protected
+training/prefix/basic-character token sequences and decoded strings preserved.
+BART target mean 21.56, maximum 63, no truncation. Frozen assets/code/data manifest
+and corpus SHA recorded under english_comparison_20260917. No new GPU work yet.
+
+Added vocab_trim.py, run_comparison.py and focused tests; reused existing fixed
+baseline loading/training/evaluation without modifying its source. CPU check covers
+retained mT5 logits exactly; queue test uses a real short child process exit event.
+Review corrected supervisor exit-code propagation and canonical-status updates;
+second tokenizer/integration review found no further high/medium issues. BART repeat
+suppression explicitly disabled. PRECHECK_REPORT.md explains approval, recipe and
+limits. Next action after final checks: detach queue on existing baseline supervisor
+exit; no polling. Stop/report if baseline fails or fails the zero-visual grounding
+screen. Otherwise trim-evaluate, preflight/reset, train one BART and report results.
+
+## 2026-09-17 — user approved English comparison; preparing event-based queue
+
+User approved the documented BART-base pilot and no-retraining mT5 vocabulary
+comparison, requested results only and no polling. Current baseline still training,
+last checked epoch 5; do not overlap GPU jobs. Preparing new report-local runner
+`artifacts/reports/english_comparison_20260917/run_comparison.py`; reuse existing
+frozen-input loader/train/eval helpers without changing their source or live defaults.
+Queue waits for baseline supervisor process exit with kqueue NOTE_EXIT, then verifies
+successful completion and baseline zero-visual grounding before full new training.
+Focused queue/bucket tests failed first for absent runner, then uncovered Python 3.9
+kqueue lacks a context manager; fixed with contextlib.closing, now 2/2 pass.
+Pinned BART download started; no new GPU computation/optimizer steps yet. BART's
+released no_repeat_ngram_size=3 must be overridden to 0 to honor allowed repetition.
+Independent trim helper/test and bounded runner review underway. Next action: verify
+CPU preparation and freeze hashes, then detach comparison queue; no polling.
+
+## 2026-09-17 — English text-model alternatives researched; approval pending
+
+User requested a review before any further training. Added report-local
+`english_text_model_review_20260917/{REPORT.md,inspect_candidates.py,verification.json}`,
+official pinned configs, inspection log and `bart_api_check.json`. Parameter counts
+use meta allocations only; train-target statistics use the 994 frozen TRAIN
+references. No evaluation references used for vocabulary design and no vocabulary
+actually trimmed. No new pretrained weights, GPU benchmark, optimizer step or new
+training run. Existing run and its files unchanged.
+
+Verified current text parameters 582.40M; embeddings/output 384.17M (65.2% of the
+589.39M hybrid). BART-base hybrid 146.41M; T5 v1.1 and FLAN base 254.57M; FLAN small
+83.88M. Hypothetical 64K / 32K mT5 trims 303.52M / 254.57M. Target mean 24.66,
+median 23, p95 45, maximum 70, padding 64.8%. Tiny random CPU BART compatibility
+forward/generation passes through existing DirectTranslation; this is not accuracy
+evidence. Official model cards and vocabulary-trimming research cited in REPORT.
+
+Recommendation for approval: one BART-base English challenger plus no-retraining
+trimmed-checkpoint comparison after completed mT5 results. Full recipe and proposed
+retention margins documented; 12 existing sentences cannot establish equivalence.
+FLAN is not strictly English-only. No speedup or mobile-readiness claim. Next action
+is user review/approval, not launch. Preserve all existing training and data gates.
+
+## 2026-09-17 — user-requested resumed-run throughput check
+
+Saved provenance confirms MPS, float32, 589,390,373 parameters. Resumed worker
+exists and no completion/failure file is present. Epochs 2/3/4 took approximately
+1,003/1,132/1,123 seconds (497 updates each, 2.02–2.28 seconds/update), versus
+142 seconds for projection-only epoch 1. Full encoder/text training, batch two,
+fixed masked padding and twice-per-step MPS synchronization/cache release explain
+why this is substantially heavier than warmup; individual overhead contributions
+have not been profiled. At recent throughput, 16 remaining epochs take roughly
+five hours plus final evaluation, not a guaranteed completion time. No training
+changes or restart; continue detached and inspect results after exit notification.
+
+## 2026-09-17 — epoch-2 MPS failure diagnosed; checkpoint resume verified
+
+Initial run completed epoch 1 (994 paired / 1,901 isolated examples, 497 steps,
+translation loss 2.902774, isolated loss 0.065100, 142.043 seconds), then failed in
+Adafactor with MPS memory exhaustion. Train-only tiny-fit and gradient checks passed;
+no final translation-quality result. Preserved original run artifacts under
+`stage1_direct_translation_20260917/failed_attempt_01/` and epoch-1 checkpoint as
+`epoch_01_before_resume.pth`.
+
+Changed `active/v17/direct_translation_v17.py`, its focused test and the report-local
+runner: fixed masked source/target padding, unused MPS cache release around optimizer
+updates, checkpoint alias preservation, verified epoch-1 resume and stale completion
+archiving. Two real-network tests pass (including padded/unpadded loss equivalence).
+Four maximum-length real joint train-only updates passed; updates discarded.
+Observed driver allocations at measurement points <=10.33 GB before / 8.78 GB after
+cleanup; not continuous peak measurements. Inputs, architecture, objective and
+20-epoch recipe unchanged; all non-code manifest fields match original. Epoch 2
+restarts with seed + epoch, not the interrupted partial epoch RNG state. Added
+RESUME_REPORT.md and hashed resume_provenance.json. No test-gate access or promotion.
+Next action: detached resume, then inspect exit report after notification; no polling.
+
+## 2026-09-17 — direct-translation worker exit
+
+Stage 1 direct translation failed. See stage1_direct_translation_20260917/FAILURE.md. No production promotion. Inspect saved predictions, training coverage, retention and controls before deciding the next action.
+
+## 2026-09-17 — approved Stage-1 direct-translation pilot prepared
+
+User authorized the hybrid experiment, accepted repetition for this stage, and
+requested results with detached execution/no polling. Kept the existing experiment
+branch and all unrelated changes. Added `active/v17/direct_translation_v17.py`,
+`test/test_direct_translation_v17.py`, the report-local `run_experiment.py` and
+`docs/superpowers/plans/2026-09-17-stage1-direct-translation.md`.
+
+Architecture preserves unpooled, ordered Stage-1 frame tokens, projects them to
+the released ASL mT5 input, and directly generates English. The existing isolated
+head is trained with auxiliary CE. No CTC, gloss decoding or repeat heuristics.
+Full text-component state is required to load strictly from the previously hashed
+Uni-Sign How2Sign checkpoint. This is a hybrid pilot, not native Uni-Sign replication.
+
+Prepared 994 paired TRAIN utterances (How2Sign signers 3/5/8/11), excluding 32 clips
+from adaptation-held signers 1/2 and one previously failed feature extraction.
+Reused existing Apple continuous features. Extracted 21 evaluation videos under
+the same schema; corrected reused extractor bookkeeping to mark validation access.
+Retained verified 1,901 isolated TRAIN / 1,356 validation entries. All 4,272 input
+hashes check; max source tokens 256, max English target tokens 70, no target
+truncation. No official Citizen test access. External mT5 pretraining may include
+evaluation signers; whole-system signer disjointness is not claimed.
+
+Two real-network checks failed first for the missing new module, then pass after
+implementation: variable sequence masks, encoder/projection/text gradient flow,
+isolated-head gradient, target-free generation, and deterministic full coverage.
+Initial data preparation rejected SemLex's different train/val root convention;
+corrected source-specific path checks and reran successfully before training.
+Added an external subprocess wait to report fatal worker crashes without polling.
+
+Fixed 20 epochs (one projection warmup, 19 joint), seed17111, Adafactor, translation
+CE + 0.5 isolated CE, all admitted samples used each epoch. Full-model train-only
+gradient/tiny-fit preflight runs inside the worker and resets before main training.
+Compare final epoch with initialization, unchanged Uni-Sign and zero-visual input;
+report isolated retention, losses, coverage and all translations. Repetition is
+not a failure gate. Final action is detached launch; next action after notification
+is to inspect REPORT/FAILURE. No production replacement or model-quality claim.
+
 ## 2026-09-16 — clarify Uni-Sign adaptation potential during discussion
 
 User observed that some translations are close and asked about fine-tuning,
