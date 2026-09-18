@@ -7,6 +7,126 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-18 — final hybrid results verified; English comparison storage-blocked
+
+User-requested update: baseline completed epoch20, no active processes. Independently
+recomputed saved initialized/final/zero-visual BLEU and chrF, exact matches. Final
+1.076/18.989 vs unchanged Uni-Sign8.206/38.059; training loss0.16688. Citizen isolated
+360/378 unchanged; SemLex832/978 vs834 initially. Inspected translations contain
+unrelated details. Automated weak descriptive-check pass is not translation success.
+Appended review to REPORT.md and replaced stale epoch13 current-state text.
+
+English comparison failed in startup checkpoint-space guard before trim evaluation
+or BART training. Internal free7.7GiB (<8GiB); SSD not mounted. Do not lower safety
+threshold or restart blindly. Next: adequate storage and assessment of poor baseline
+before progressing the approved comparison. No checkpoint changes/test-gate access.
+
+## 2026-09-18 — English comparison exit
+
+English model comparison failed; see english_comparison_20260917/FAILURE.md. No model promotion; review predictions and controls.
+
+## 2026-09-18 — direct-translation worker exit
+
+Stage 1 direct translation completed. See stage1_direct_translation_20260917/REPORT.md. No production promotion. Inspect saved predictions, training coverage, retention and controls before deciding the next action.
+
+## 2026-09-18 — user-requested update: baseline saved epoch14; comparison waiting
+
+One requested status check confirms live MPS baseline worker, completed/saved epoch14
+of20, all994 translation/1901 isolated samples covered that epoch; translation loss
+0.34381 (epoch13 0.41154). Current provenance says recovery fromepoch13, checkpoint
+root internal artifacts/models, consistent with current ground truth. No new failure
+record. Comparison supervisor45994 waits on baseline45878; BART has not started.
+Corrected stale comparison status.json from failed to queued/waiting; canonical
+state was already queued. No running code, model or training changes; no polling.
+
+## 2026-09-18 — epoch13 saved; external EIO at epoch14; verified internal recovery
+
+User requested update. Saved epochs8–13 after file-handle repair; SSD returned EIO
+at epoch14 save/flush. No workers active and no BART training. Epoch13 training
+loss0.411538/isolated0.004517, not validation scores. Copied SSD latest to internal
+epoch_13_before_internal_resume.pth; source/copy hashes, all ZIP CRCs, and epoch13
+mmap metadata verified. All valid source checkpoints retained; no SSD writes in retry.
+
+Both runs now target internal artifacts/models. Internal free14GiB before2.37GB
+recovery copy. Split storage gates:8GiB startup for model loading versus4GiB running
+checkpoint free space (known2.37GB maximum), plus1GiB internal report reserve.
+Added regression for phase-specific limits, archived failed attempt/source manifests,
+recorded internal_recovery.json and EPOCH13_RECOVERY_REPORT.md, refreshed code hashes
+without data/architecture/optimizer/recipe changes. Next: focused checks, epoch14
+resume and comparison event queue; no polling. Final evaluation still pending.
+
+## 2026-09-18 — English comparison exit
+
+English model comparison failed; see english_comparison_20260917/FAILURE.md. No model promotion; review predictions and controls.
+
+## 2026-09-18 — direct-translation worker exit
+
+Stage 1 direct translation failed. See stage1_direct_translation_20260917/FAILURE.md. No production promotion. Inspect saved predictions, training coverage, retention and controls before deciding the next action.
+
+## 2026-09-18 — reproduced SSD native-writer failure; full-size file-handle alternative passed
+
+User requested update. No live workers. Baseline reached epoch8 save then rename
+failed ENOENT; temporary file now exists at exactly1,879,048,192 bytes but invalid
+ZIP. Epoch7 remains valid; BART never started. Disk free14GiB internal/280GiB SSD.
+Reproduced direct-filename torch.save failure using synthetic2.4GB CPU storage test.
+Same-size Python binary file-handle save + flush/fsync/rename passed full ZIP CRC
+verification (2,400,001,577 bytes,27.80s). Evidence JSONs and SSD_WRITE_REPORT.md saved.
+Root PyTorch/ExFAT defect not identified; observed API-path difference verified.
+
+Shared baseline/BART checkpoint writer now uses tested file-handle path and distinct
+latest.filehandle.tmp.pth (old corrupt output retained). All valid checkpoints kept.
+Archived attempt04 baseline and03 comparison; refreshed code/baseline hashes without
+data/recipe changes. Compilation/diff checks pass. Next: resume fromepoch7 and queue
+comparison, with notifications and no polling.
+
+## 2026-09-18 — English comparison exit
+
+English model comparison failed; see english_comparison_20260917/FAILURE.md. No model promotion; review predictions and controls.
+
+## 2026-09-18 — direct-translation worker exit
+
+Stage 1 direct translation failed. See stage1_direct_translation_20260917/FAILURE.md. No production promotion. Inspect saved predictions, training coverage, retention and controls before deciding the next action.
+
+## 2026-09-18 — SSD launch failed on internal ENOSPC before training; reserve raised
+
+User requested update. No live worker; last verified epoch remains7. SSD recovery
+loaded model then failed writing provenance and failure/status due internal ENOSPC.
+Checkpoints on SSD alone did not prevent internal exhaustion during model loading;
+swap/memory pressure is a likely contributor, not separately instrumented. Comparison
+never trained. Current internal free space observed16GiB, SSD282GiB. Archived attempt
+03 baseline and attempt02 comparison, keeping all checkpoints.
+
+Raised internal-space gate from512MiB to8GiB; external8GiB/mount guards unchanged.
+This is conservative headroom, not a guarantee against concurrent disk consumption.
+Refreshed frozen code/baseline-manifest hashes, data unchanged. Next: verify focused
+recovery checks and relaunch from epoch7, requeue comparison without polling.
+
+## 2026-09-18 — English comparison exit
+
+English model comparison failed; see english_comparison_20260917/FAILURE.md. No model promotion; review predictions and controls.
+
+## 2026-09-18 — direct-translation worker exit
+
+Stage 1 direct translation failed. See stage1_direct_translation_20260917/FAILURE.md. No production promotion. Inspect saved predictions, training coverage, retention and controls before deciding the next action.
+
+## 2026-09-18 — approved corrupt-temp cleanup and verified SSD recovery
+
+User explicitly permitted deleting corrupt latest.tmp.pth and using attached SSD.
+Deleted only that invalid ZIP (2,063,536,128 bytes). All valid local checkpoints
+retained. Verified writable ExFAT SSD /Volumes/secret (UUID recorded), ~283GiB free.
+Copied epoch7 to SSD; SHA matches original. Actual mmap load and small atomic
+checkpoint replacement verified on SSD.
+
+Changed baseline runner for external checkpoint root, verified recovery record,
+epoch7 optimizer restoration, mount/path guards, >=8GiB checkpoint free-space and
+>=512MiB internal report-space checks before work/epochs/saves. Comparison runner
+uses external root and recovered baseline launch record. Added test_ssd_recovery_v17;
+red tests exposed original epoch1-only restore and absent space guards, then five
+focused recovery/queue/label tests pass. Archived previous scripts/manifests/failed
+queue terminal files. Updated frozen code hashes in both manifests while asserting
+all input hashes unchanged. Recovery report/record/verification preserve provenance.
+Next: detached epoch8 resume and event-based requeue; no polling. Keep SSD attached.
+
 ## 2026-09-17 — disk exhaustion identified; verified epoch-7 recovery checkpoint
 
 User reported failed comparison. Baseline actually failed saving epoch 8, then
