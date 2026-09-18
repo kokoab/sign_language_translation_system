@@ -7,6 +7,38 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-18 — local storage inventory; no data mutation
+
+Inspected all top-level `data/local/` entries, `data/raw_videos/` roots, and the
+storage-heavy `artifacts/` trees by size, metadata/manifests, current code references,
+and the relevant data-source, Stage-1, Stage-2, live-streaming, deployment, and
+translation reports. `data/local/` occupies 52.84 GiB and `data/raw_videos/` 35.98
+GiB. No files were deleted, moved, or rewritten.
+`data/local/ASL_continuous_synthetic` is explicitly v17-incompatible and
+provenance-only; `open_asl_alternatives_20260913/some` was rejected as predominantly
+one-handed; `popsign_v17_archives` contains only an unfinished paused partial with no
+extracted video; and `stage2_v17_grounded_signer_split_v2_auto` duplicates the original
+dataset's 668 NPZ archives byte-for-byte. These are cleanup candidates pending explicit
+per-path approval. `data/raw_videos/ASL VIDEOS` is 32.10 GiB and remains a source for
+local-deep-clean preparation and legacy extractors; `PHRASES` is 1.27 GiB and remains
+an active local phrase source. `openpose_output` is 2.55 GiB with no current v17 code
+reference, and `NUMBERS` is 39 MiB with no current code reference; both are candidates
+pending approval. Canonical Citizen, ASLLRP, 2M-Flores, STEM, SemLex, phone, portrait,
+and current Stage-2 inputs remain preserved. Artifact storage was also classified:
+`models` 18.20 GiB contains the accepted runtime plus failed/research checkpoints;
+`model_assets` 11.47 GiB contains current v17 extractors and legacy v16 assets;
+`generated` 6.51 GiB contains reproducibility caches, packaged datasets, build/env
+outputs, and failed probes; `reports` 2.24 GiB remains provenance/evidence; `archives`
+1.16 GiB contains legacy recovery bundles; `coreml` 367 MiB contains current v17
+runtime packages; and `mobile_export` 970 MiB is legacy export evidence. None was
+mutated or deleted.
+
+Next safe action: ask the user to approve exact candidate paths, including whether
+legacy v16 compatibility/recovery and failed-experiment reproducibility must be kept;
+perform no deletion until each path is approved.
+
+---
+
 ## 2026-09-14 — O5S5 exact positives materialized with Apple Vision
 
 Resolved the O5S5/Citizen label gate without English normalization or visual guessing.
