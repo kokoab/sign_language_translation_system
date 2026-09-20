@@ -7,6 +7,213 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-20 — strict whole-sign audit completed: ASLLRP identity learnable, localization fails
+
+Detached PID55540 completed in85.7s. It evaluated8,367 strict whole-sign cores and
+42,111 complete-ASLLRP endpoint windows without training. Verification passes;12
+failure/control videos and a contact sheet were generated and inspected. Citizen test
+remained sealed.
+
+The adapted encoder recognizes strict ASLLRP-other cores at901/1,040=86.63% train and
+178/244=72.95% held-out, versus the starting encoder31.15%/51.23%. Limited neighbouring
+context lowers adapted held-out accuracy to67.21%, so missing context is not the current
+identity bottleneck. Contiguous strict-core adapted accuracy is88.14%/82.35% train/
+held-out. This establishes meaningful learnability for clean ASLLRP sign evidence.
+
+O5S5 remains a source/signer failure: adapted strict-core accuracy is101/133=75.94%
+train versus10/43=23.26% LG held-out; cleaning incomplete/overlapping events does not
+close it. Boundary localization remains inadequate: train-selected phase threshold
+has43.14% held-out known recall and79.10% non-known recall (61.12% balanced), original
+three-way phase accuracy49.79%, and correct gloss+phase detects152/261=58.24% eligible
+held-out ASLLRP events. Gloss confidence alone is59.57% balanced. Gaps remain annotation
+gaps, not certified physical transitions.
+
+Decision: keep locked100; reject checkpoint. Use strict whole-sign manifest for identity
+work and separately reviewed boundary evidence for localization. Do not infer a physical
+TRANSITION class from annotation gaps. Reports and playable examples:
+`artifacts/reports/clean_boundary_subset_20260920/`.
+
+The follow-up confident-only manifest further restricts supervision to at least six raw
+target observations,80% hand visibility, maximum1.20s duration and maximum80ms target
+timestamp gaps. It retains5,331 events, including1,017 known and4,314 unknown, across
+61 train classes. Use this manifest for the next controlled experiment; do not silently
+fall back to the combined supervision manifest. Report:
+`artifacts/reports/confident_supervision_v17_20260920/REPORT.md`.
+
+## 2026-09-20 — strict whole-sign recognition/localization audit authorized and prechecked
+
+User authorized the corrective report-only experiment with exit notification and no
+polling. It will evaluate the unchanged phrase-adapted encoder and failed boundary-phase
+checkpoint on one strict derived subset. ASLLRP rows with lost crop-completeness are
+excluded; every retained event is non-overlapping, inside the raw clock, has at least
+four raw target observations, and covers both annotated edges within60ms. O5S5 supplies
+exact sign cores only, never gap/boundary evidence. Annotation gaps remain named gaps,
+not asserted physical transitions. Train-only thresholds will be applied unchanged to
+held-out signers.
+
+Full dry run retained8,367/11,936 annotated cores:1,536 known and6,831 unknown, plus
+42,111 fixed0.27s endpoint windows from complete ASLLRP crops. Exclusions include3,122
+events with fewer than four target observations,60 outside the raw clock,141 within
+incomplete source crops,357 overlapping annotations and65 without both-edge coverage;
+reasons may overlap. Real MPS precheck and100-label/output contracts pass. The worker
+will report whole-core and whole-core-plus-context recognition, known/unknown/gap
+rejection, event localization, and selected playable failures. No training, protected
+test access or automatic promotion. Runner/precheck:
+`artifacts/reports/clean_boundary_subset_20260920/`.
+Detached MPS worker PID55540 launched with one completion/failure notification; do not
+poll it.
+
+## 2026-09-20 — direct boundary-data audit corrects earlier mismatch claim
+
+User requested concrete diagnosis of cropped signs, learnability, and alphabet expansion.
+Compared all 1,166 manifest rows with original ASLLRP CSV/crop provenance, inspected
+sampled frames from six examples, and created ten original-speed source/input excerpts.
+No training ran. Re-evaluated final checkpoint on all 38,043 train and 9,380 validation
+context windows; validation known counts reproduce 708/1,275. ASLLRP-other known gloss
+train/held-out accuracy is 88.14%/59.90%, phase 69.33%/51.04%; O5S5 known 68.39%/32.02%.
+
+21 ASLLRP source crops were previously marked incomplete (22 clipped occurrences, all
+OTHER); materialization did not preserve that flag. All 5,366 known train windows end
+before sign completion, 2,349 have less than half target observations, 31 known events
+produce no window, 46 O5S5 window endpoints overlap another annotation, and two FEEL
+windows contain zero raw target samples. These are not physically cropped exact cores.
+11,428/11,731 TRANSITION windows overlap preceding signs: valid in principle for an
+endpoint task, but annotation gaps were not visually certified as physical transitions.
+Training uses selected event/gap moments; replay samples continuously and fuses durations.
+Thus previous claims of no remaining mismatch and architecture failure were too strong;
+corrected original report and current state, preserving model and metrics.
+
+ASLLRP train OTHER has 5,070 lexical occurrences (83.26%) and 377 fingerspelled (6.19%)
+out of 6,089. Adding alphabet classes would not resolve ordinary unsupported vocabulary.
+73 known classes occur in continuous train annotations; 16 have one signer. Data has
+learnable signal, but no proof of reliable unseen-signer continuous recognition. Next
+safe action: curate complete and unambiguous evidence with reviewed boundaries, then
+separate recognition from localization on that fixed subset before further training.
+Report, measured fit, source audit, videos, and verification:
+`artifacts/reports/boundary_data_audit_20260920/`. Citizen test remains sealed.
+
+## 2026-09-20 — clean boundary-phase experiment completed and rejected
+
+Detached MPS worker PID95985 completed all12 full-coverage epochs in24m52s. The fixed
+0.27s/0.53s trailing-window model used39,944samples and625updates per epoch. Its locked
+100-gloss plus separate KNOWN/UNKNOWN/TRANSITION contract and saved CPU/MPS decisions
+passed64/64 checks; Citizen test remained sealed.
+
+The result fails runtime use: validation phase accuracy50.23%, known-core gloss55.53%
+(708/1,275), and complete-ASLLRP online WER106.82% with86 deletions,110 substitutions,
+133 insertions and55/237 empty transcripts. Isolated Citizen/SemLex fell from the
+starting checkpoint's95.24%/85.28% to93.39%/84.76%. Therefore the earlier failures
+cannot be attributed only to replacement sampling,1.07s dilution, combined NO_EMIT
+competition, or train/live window mismatch. Short independently classified windows do
+not yet generalize reliable phase boundaries and gloss identity. Reject checkpoint;
+default runtime unchanged. Report:
+`artifacts/reports/boundary_phase_v17_20260920/REPORT.md`.
+
+## 2026-09-20 — boundary-phase fixed-window experiment launched
+
+User authorized the researched non-CTC experiment with one exit notification and no
+polling. It keeps the phrase-adapted 100-gloss Stage-1 model and adds one three-way
+endpoint phase head: KNOWN, UNKNOWN or TRANSITION. Both training and online replay use
+the shared 32-frame normalization at0.27s/0.53s; phase is defined at the trailing-window
+endpoint. Held identical glosses stay one run, and the same gloss may repeat only after
+a predicted transition. UNKNOWN is internal and cannot enter the visible transcript.
+
+Strict routing is executable: all1,160 complete ASLLRP rows can supply known cores,
+explicit OTHER intervals as UNKNOWN, and guarded interior gaps as TRANSITION; the six
+incomplete O5S5 rows can supply known cores only. Full normalization dry run produced
+38,043train and9,380validation context windows, with no O5S5 negative target. Every
+admitted training sample will appear exactly once per epoch; no replacement sampler,
+1.07s target or CTC loss is used. All1,166 raw archives,100 label indices, source and
+signer gates, model output shapes, and real-MPS tiny-fit passed. Citizen test remains
+sealed; no automatic runtime promotion. Runner/precheck:
+`artifacts/reports/boundary_phase_v17_20260920/`.
+Detached MPS worker PID95985 is running with one completion/failure notification;
+do not poll it.
+
+## 2026-09-20 — Finish-time CTC completed: lower WER masks deletion collapse
+
+Detached MPS run completed20 epochs in10m16s with full coverage each epoch. The frozen
+Stage-1 + one400,174-parameter bidirectional GRU CTC head reaches83.80% connected and
+88.03% familiar WER versus repaired causal98.24%/107.72%, but deletes215/284 and
+191/259 reference glosses. It emits only74/284 connected and68/259 familiar tokens;
+160/225 connected outputs are empty and familiar exact is0/97. Contiguous WER83.33%,
+LG core2/57, isolated Citizen344/378 and SemLex812/978, verified blanks16/16 empty.
+Six adjacent duplicate outputs remain versus three references; this is not an expert
+held-once/twice evaluation. Locked100 visible-label contract verified; blank/UNKNOWN
+internal, protected test untouched, no promotion.
+
+Root-cause review found the initial reporter summed alignment `match` operations into
+WER. Added a failing regression, centralized the three edit operations, regenerated
+evaluation/report and independently recomputed every source. Model/checkpoint/predictions
+were unchanged. Ten focused tests and compilation pass. Report/correction/verification:
+`artifacts/reports/finish_ctc_v17_20260920/`. Decision: keep current runtime; the simple
+frozen-head recipe underfits continuous training (best71.34%, final74.05% WER), so the
+next work must improve continuous evidence/coverage rather than add decoder heuristics.
+
+## 2026-09-20 — Finish-time bounded CTC experiment authorized and ready to launch
+
+User chose the researched bounded continuous direction and authorized the experiment
+with exit notification and no polling. The fixed spike freezes the Stage-1 encoder and
+trains one bidirectional GRU CTC head on the existing complete phrases, isolated clips,
+verified positive cores and verified blank clips using one objective. Internal outputs
+are blank + locked100 + UNKNOWN; only the100 glosses can reach the visible transcript.
+Seed17201,20 full-coverage epochs, fixed final evaluation against the repaired causal
+CTC on the same334 development recordings; Citizen test remains sealed and no runtime
+promotion is automatic. Nine focused tests, compilation and real MPS packed-GRU
+forward/backward pass. Runner/precheck:
+`artifacts/reports/finish_ctc_v17_20260920/`. Final action is a detached launch with one
+completion/failure notification; do not poll.
+
+## 2026-09-20 — direct-translation root cause established: caption memorization
+
+Completed a read-only audit of frozen data, features, losses, outputs and pairing
+controls. BART reproduces a 994-row training caption exactly on 11/12 held-out clips;
+mT5 has median nearest-training-caption similarity0.803 and six of12 at least0.80.
+BART zero-visual emits one exact training caption for all12 rows. Correct pairing does
+affect chrF, so the visuals weakly route caption choice, but neither hybrid composes a
+translation. The994 pairs cover1.63h/four signers; two supply80.4%. Extraction is not
+globally broken:6/4,813invalid windows,98.7%median hand presence,72/994downsampled.
+Eight rows exceed six English words/s and are viewer flags, not proven bad labels.
+Root cause is the isolated-window encoder/linear bridge trained end-to-end with an
+oversized decoder and insufficient aligned continuous data. Do not rerun another LM
+swap on this recipe. Keep gloss-free work separate; current Stage2 needs one temporal
+blank+100-gloss head and signer-disjoint hold/repeat/rest/transition supervision.
+Report/viewer: `artifacts/reports/direct_translation_failure_diagnosis_20260920/`.
+No training or protected test access. Fresh verification passes report self-check,
+Python compilation,44video-panel HTML audit, JSON parsing, artifact indexing and
+`git diff --check`.
+
+## 2026-09-20 — English comparison complete; independently verified negative translation result
+
+User requested update. No active workers. All20 BART epochs completed,10552.19s.
+Recomputed BART/trim/mismatched BLEU+chrF from saved outputs: exact agreement.
+Trimmed mT5 keeps21/21 predictions identical,303.52M vs589.39M parameters (-48.5%).
+BART146.41M: BLEU1.061/chrF17.464 vs mT5 1.076/18.989; fails1-point chrF margin.
+Mismatched BART BLEU1.287 exceeds paired1.061, weakening grounding claim. Inspected
+predictions contain unrelated content. Isolated Citizen358/378, SemLex841/978.
+No deployment promotion; no new training. Appended interpretation to REPORT and
+updated canonical state. Next safe action: discuss alignment/generalization diagnosis,
+not another unexamined model swap. Twelve correlated sentences insufficient for
+accuracy equivalence; official Citizen test untouched.
+
+## 2026-09-20 — English comparison exit
+
+English model comparison completed; see english_comparison_20260917/REPORT.md. No model promotion; review predictions and controls.
+
+## 2026-09-20 — approved English comparison resumed after storage available
+
+User asked to continue. Baseline already completed epoch20 with poor translations;
+no active worker. Internal free58.5GiB now exceeds startup guard. Verified4,295
+frozen input/code/model/tokenizer hashes and completed baseline checkpoint SHA.
+No missing assets or recipe changes. Prior failed queue records archived under
+english_comparison_20260917/failed_attempt_05; precheck JSON records verification.
+
+Proceed with approved trim evaluation and one BART pilot, internal storage only;
+existing completed mT5 is a weak comparison baseline, not a deployment candidate.
+No model/code modifications or unnecessary training rerun. Final action: detach
+comparison worker with terminal notification, no assistant polling. Need final
+predictions, visual controls and isolated retention before interpreting results.
+
 ## 2026-09-18 — final hybrid results verified; English comparison storage-blocked
 
 User-requested update: baseline completed epoch20, no active processes. Independently
