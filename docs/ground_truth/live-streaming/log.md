@@ -7,6 +7,123 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-21 — matched no-blank CTC ablation failed promotion
+
+Precheck found that the existing aligned grounded CTC run already used source-rate
+1280px ASLLRP, native30fps signer-disjoint local phrases, an8-frame causal window,
+stride4, the exact-core-adapted Stage1 initialization, locked100+OTHER outputs and timed
+alignment. The audit's proposed native-rate CTC was therefore not repeated.
+
+The only missing controlled change removed standalone transition clips labeled blank.
+It completed18 MPS epochs in106s and selected epoch8. Local held-out-signer performance
+regressed from25.5% exact/37.04% WER to16.0%/45.19%; ASLLRP contiguous remained33.33%/
+41.67%; NCSLGR regressed5.41%/78% to0%/84%. Isolated exact improved slightly from
+82.37% to83.19%. The checkpoint fails promotion and runtime remains unchanged. These
+results reject blank clips as the dominant cause and close another decoder/supervision
+patch. Citizen test and external reserved evaluation stayed sealed. Report:
+`artifacts/reports/native_ctc_no_blank_v17_20260921/`.
+
+## 2026-09-21 — data-path audit identifies the next minimal Stage-2 experiment
+
+The source videos and annotations remain usable; the continuous preprocessing contract
+does not preserve them faithfully. The continuous observer caps detection at640px and
+20fps even though all audited ASLLRP videos are1280px on the long side at29.97fps. The
+current confident filter then rejects6,020/11,936 events under its four/six-observation
+floors. This compounds the already measured context-window defect where all6,641 known
+windows ended before the sign end. Exact-core held-out ASLLRP accuracy of72.95%/82.35%
+on other/contiguous data confirms that sign identity survives better than localization.
+
+The next experiment is one small causal frame-sequence CTC head with an exact-core
+classification auxiliary, trained from a native-rate1280px ASLLRP cache plus the
+existing signer-disjoint local phrase split. Short signs stay in through masks rather
+than arbitrary sample floors. O5S5 remains positive-core supervision only. Do not add
+another boundary state machine, slow/interpolate cached sequences, or acquire replacement
+data before evaluating this corrected input contract. Audit:
+`artifacts/reports/stage2_data_path_audit_20260921/`.
+
+## 2026-09-21 — boundary tolerance was strict, but it was not the detector's only failure
+
+The source/Luna review shows that±100ms exact-edge scoring should not be used to declare
+ASLLRP annotations bad. The official source interval and the single-reviewer Luna
+interval differ partly in semantics, especially final holds. However, the coherent
+decoder still reached only40.46% F1 at±200ms and0/20 intentional-repeat probes, so the
+failed promotion is unchanged. Review:
+`artifacts/reports/luna_boundary_annotation_pilot_20260921/comparison.html`.
+
+## 2026-09-21 — frozen coherent decoder improved insertions but still failed
+
+Three user-requested low-effort Luna agents independently audited the failed segment
+head, existing activity code and timing. A Luna implementation then froze the checkpoint,
+averaged overlapping-window state evidence on absolute source timestamps, applied the
+existing v16-style hand-presence outer range and required coherent
+OUTSIDE→START→SIGNING→END paths with END→START repeats. Edge bias was selected only on
+888 training sources; the unchanged0.56 known gate and232 validation sources were used
+once. Predictions overlapping excluded annotations were ignored consistently.
+
+The evaluation improves±100ms boundary F1 from14.44% to18.79% and±200ms F1 from24.41%
+to40.46%. Visible WER improves204.69%→103.65%, mainly because insertions fall261→33,
+but deletions rise66→121; substitutions are45 over192 references. Precision/recall is
+20.96%/17.04% at±100ms and45.12%/36.67% at±200ms. Synthetic probes worsen to2/20 held
+once and0/20 repeated twice. Thus incoherent peak pairing caused many insertions, but the
+learned boundary evidence itself remains inadequate. Do not promote or patch further.
+Verification confirms D+I+S arithmetic, train-only selection, sealed Citizen test and
+unchanged frozen checkpoint. Report:
+`artifacts/reports/segment_first_coherent_decode_v17_20260921/REPORT.md`.
+
+Next authorized action is a small Luna-reviewed offline boundary-annotation pilot. Use
+dense train-only frame strips, require independent agreement and admit only consensus
+edges before deciding whether this can scale. Luna output is provisional supervision,
+not ground truth, until agreement is measured.
+
+The user then required exactly one Luna per clip. The completed24-clip pilot produced19
+medium/high, non-censored provisional intervals, but only6/19 match both existing edges
+within100ms and14/19 within200ms; median absolute end disagreement is128ms. With one
+reviewer per clip there is no independent consensus, and the disagreement is not a
+consistent timing offset. Do not train or scale these pseudo-labels as truth yet. Pilot:
+`artifacts/reports/luna_boundary_annotation_pilot_20260921/`.
+
+## 2026-09-21 — segment-first confident-only experiment completed and rejected
+
+The corrected detached run completed eight full-coverage MPS epochs in5m05s. An
+initial18-second startup attempt failed before epoch1 because the runner required every
+SemLex replay class even though SemLex train lacks CHILD/TAKE/THEY; the failed evidence
+is preserved under `failed_attempt_01/`. The loader now follows the established rule:
+all100 Citizen classes are mandatory and available SemLex classes are optional. The
+expanded precheck exercises the exact replay loaders and counts500 Citizen train,480
+SemLex train,378 Citizen validation and978 SemLex validation examples.
+
+The model fails promotion. Across232 held-out complete ASLLRP sources, absolute boundary
+F1 is14.44% at±100ms and24.41% at±200ms. At±100ms precision is9.44% and recall30.69%;
+at±200ms precision is15.96% and recall51.89%. Visible locked100 WER is204.69% with66
+deletions,261 insertions and66 substitutions over192 reference glosses. Exact-core
+known/unknown balanced accuracy is63.34%; exact-core gloss is169/226=74.78%, including
+ASLLRP contiguous81.82%, ASLLRP other81.22% and O5S538.24%. Matched predicted-segment
+gloss is76/106=71.70%. Isolated validation is Citizen92.33% and SemLex83.23%. Synthetic
+time-warped probes pass6/20 held-once and2/20 intentional-repeat cases.
+
+Verification passes3/3 focused tests, full coverage and64/64 CPU/MPS gloss and gate
+decisions. Citizen test stayed sealed. Do not promote the checkpoint or change runtime.
+The result confirms that clean whole-sign identity is substantially more learnable than
+automatic boundary localization; this four-state frame head does not solve segmentation.
+Report: `artifacts/reports/segment_first_v17_20260921/REPORT.md`.
+
+## 2026-09-21 — segment-first confident-only experiment launched
+
+User authorized the minimal segment-first experiment with one exit notification and no
+polling. Precheck passed the exact builder over all5,331 confident events:7,788 training
+boundary windows,4,303 continuous training segment cores,1,797 validation boundary
+windows and1,028 validation segment cores. It verified the locked100 vocabulary,
+signer-disjoint roles, questionable-annotation masking, zero O5S5 background targets,
+real MPS execution and a tiny fit from1.613 to0.198. Focused tests pass3/3.
+
+Detached PID42246 is training for eight full-coverage epochs from the plain Stage-1
+checkpoint. The model has one OUTSIDE/START/SIGNING/END linear head, one internal
+KNOWN/UNKNOWN head and the existing100-gloss classifier. The final report will measure
+absolute boundary F1, rejection, predicted-segment gloss accuracy, visible WER,
+isolated retention and held/repeat probes. No CTC, alphabet expansion, gap-derived
+transition target, runtime promotion or Citizen-test access is part of this run.
+Report directory: `artifacts/reports/segment_first_v17_20260921/`.
+
 ## 2026-09-20 — strict whole-sign audit completed: ASLLRP identity learnable, localization fails
 
 Detached PID55540 completed in85.7s. It evaluated8,367 strict whole-sign cores and

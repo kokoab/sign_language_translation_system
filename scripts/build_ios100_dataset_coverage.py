@@ -62,13 +62,19 @@ def fetch(url: str, *, byte_range: tuple[int, int] | None = None,
 class HTTPRangeReader(io.RawIOBase):
     """Minimal seekable byte-range reader used by Python's zipfile module."""
 
-    def __init__(self, url: str, size: int):
+    def __init__(self, url: str, size: int, timeout: int = 120):
         self.url = url
         self.size = size
+        self.timeout = timeout
         self.position = 0
 
     def readable(self) -> bool:
         return True
+
+    def readinto(self, buffer: bytearray) -> int:
+        data = self.read(len(buffer))
+        buffer[:len(data)] = data
+        return len(data)
 
     def seekable(self) -> bool:
         return True
@@ -96,7 +102,7 @@ class HTTPRangeReader(io.RawIOBase):
         if size == 0 or self.position >= self.size:
             return b""
         end = min(self.size - 1, self.position + size - 1)
-        data = fetch(self.url, byte_range=(self.position, end))
+        data = fetch(self.url, byte_range=(self.position, end), timeout=self.timeout)
         self.position += len(data)
         return data
 

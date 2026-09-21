@@ -27,6 +27,7 @@ if __package__ in {None, ""}:
     if str(repo) not in sys.path:
         sys.path.insert(0, str(repo))
 
+from active.v17.approved_phrase_data_v17 import DEFAULT_MANIFEST, APPROVED_ROOT, require_training_manifest
 from active.v17.model_unified_streaming_ctc_v17 import (
     UnifiedStreamingCTCConfig, UnifiedStreamingCTCHeadV17,
 )
@@ -53,14 +54,18 @@ def endpoints(frames: int, stride: int, window: int) -> list[int]:
 
 def ncslgr_alignments(
     manifest: Path, labels: dict[str, int], stride: int, window: int,
+    source_frames: dict[str, int],
 ) -> dict[str, np.ndarray]:
     payload = json.loads(manifest.read_text())
     other = len(labels) + 1
     output = {}
     for row in payload["rows"]:
-        if not row["has_strict_target"]:
+        if not row["has_strict_target"] or row["source_item_id"] not in source_frames:
             continue
-        ends = endpoints(int(row["source_frame_count"]), stride, window)
+        frames = source_frames[row["source_item_id"]]
+        if not 0 < frames <= int(row["source_frame_count"]):
+            raise ValueError(f"invalid evidence frame count: {row['source_item_id']}")
+        ends = endpoints(frames, stride, window)
         aligned = np.zeros(len(ends), dtype=np.int64)
         intervals = []
         for event in row["events"]:
@@ -69,6 +74,8 @@ def ncslgr_alignments(
                 int(event["source_start_frame"]),
                 int(event["source_end_frame_exclusive"]), target,
             ))
+        if any(left < 0 or right <= left or right > frames for left, right, _ in intervals):
+            raise ValueError(f"annotation outside cached evidence: {row['source_item_id']}")
         for index, end in enumerate(ends):
             start = max(0, end - window)
             overlaps = [max(0, min(end, right) - max(start, left)) for left, right, _ in intervals]
@@ -96,12 +103,22 @@ def collate_aligned(samples, alignments: dict[str, np.ndarray]):
     for index, sample in enumerate(samples):
         values = alignments.get(sample.identity)
         if values is not None:
-            aligned[index, : min(width, len(values))] = values[:width]
+            length = len(sample.evidence)
+            if len(values) != length:
+                raise ValueError(f"alignment/evidence length mismatch: {sample.identity}")
+            aligned[index, :length] = values
     batch["aligned"] = torch.from_numpy(aligned)
     return batch
 
 
+def supplement_weight(original_count: int, supplemental_count: int, mass: float) -> float:
+    if original_count <= 0 or supplemental_count <= 0 or not 0 < mass <= 1:
+        raise ValueError("invalid supplemental training weight")
+    return original_count * mass / supplemental_count
+
+
 def run(args: argparse.Namespace) -> dict[str, object]:
+    dataset_provenance = require_training_manifest(args)
     for path in (args.phrase_root, args.other_root, args.citizen_root,
                  args.semlex_train_root, args.semlex_val_root):
         if "test" in {part.casefold() for part in path.parts}:
@@ -120,13 +137,13 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     annotations = asllrp_annotations(args.span_manifest, args.segmented_manifest)
 
     train_raw = base_train.phrase_sequences(
-        args.phrase_root, "train", args.rolling_stride, args.window_frames)
+        args.phrase_root, "train", args.rolling_stride, args.window_frames, labels=labels)
     validation_raw = base_train.phrase_sequences(
-        args.phrase_root, "validation", args.rolling_stride, args.window_frames)
+        args.phrase_root, "validation", args.rolling_stride, args.window_frames, labels=labels)
     train_raw += base_train.phrase_sequences(
-        args.other_root, "train", args.rolling_stride, args.window_frames)
+        args.other_root, "train", args.rolling_stride, args.window_frames, labels=labels)
     validation_raw += base_train.phrase_sequences(
-        args.other_root, "validation", args.rolling_stride, args.window_frames)
+        args.other_root, "validation", args.rolling_stride, args.window_frames, labels=labels)
     train_raw += base_train.isolated_sequences([
         args.citizen_root / "train",
         args.semlex_train_root / "full_clean_landmarks_v17",
@@ -140,19 +157,39 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     train = base_train.encode(stage1, train_raw, device, args.embedding_batch_size, "window")
     validation = base_train.encode(
         stage1, validation_raw, device, args.embedding_batch_size, "window")
+    original_train_count = len(train)
+    supplemental_raw = []
+    if getattr(args, "supplement_root", None) is not None:
+        base_train.refuse_protected(args.supplement_root)
+        supplemental_raw = base_train.phrase_sequences(
+            args.supplement_root, "train", args.rolling_stride, args.window_frames, labels=labels)
+        if not supplemental_raw or {sample.source for sample in supplemental_raw} != {"flores_other"}:
+            raise ValueError("supplement must contain only audited flores_other training archives")
+        identities = {sample.identity for sample in train_raw + validation_raw}
+        if any(sample.identity in identities for sample in supplemental_raw):
+            raise ValueError("supplement identity overlaps original data")
+        train += base_train.encode(stage1, supplemental_raw, device, args.embedding_batch_size, "window")
     alignments = ncslgr_alignments(
-        args.ncslgr_manifest, labels, args.rolling_stride, args.window_frames)
+        args.ncslgr_manifest, labels, args.rolling_stride, args.window_frames,
+        {sample.identity: sample.source_frames for sample in train_raw + validation_raw
+         if sample.source == "ncslgr_strict"})
     config = UnifiedStreamingCTCConfig(
         stage1_dim=stage1.config.dim, num_glosses=100,
         hidden_dim=args.hidden_dim, blocks=args.blocks, dropout=args.dropout,
     )
     model = UnifiedStreamingCTCHeadV17(config).to(device)
+    if getattr(args, "initial_head", None) is not None:
+        initial = torch.load(args.initial_head, map_location="cpu", weights_only=False)
+        if initial.get("head_config") != config.to_dict():
+            raise ValueError("initial temporal head configuration mismatch")
+        model.load_state_dict(initial["head_state_dict"], strict=True)
     loader = DataLoader(
         base_train.Sequences(train), batch_size=args.batch_size, shuffle=True,
         collate_fn=lambda samples: collate_aligned(samples, alignments), num_workers=0,
     )
-    counts = Counter(base_train.group(value, config.other_index, True) for value in train)
-    weights = {key: len(train) / (len(counts) * count) for key, count in counts.items()}
+    counts = Counter(base_train.group(value, config.other_index, True) for value in train[:original_train_count])
+    weights = {key: original_train_count / (len(counts) * count) for key, count in counts.items()}
+    added_weight = supplement_weight(original_train_count, len(supplemental_raw), args.supplement_mass) if supplemental_raw else None
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=1e-4)
     ctc = nn.CTCLoss(blank=0, reduction="none", zero_infinity=True)
     best, history = None, []
@@ -165,7 +202,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 batch["lengths"].to(device), batch["target_lengths"].to(device),
             )
             sample_weights = torch.tensor([
-                weights[base_train.group(value, config.other_index, True)]
+                added_weight if value.source == "flores_other" else weights[base_train.group(value, config.other_index, True)]
                 for value in batch["samples"]
             ], dtype=rows.dtype, device=device)
             loss_ctc = (rows * sample_weights).mean()
@@ -176,6 +213,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             loss = loss_ctc + args.alignment_weight * loss_aligned
             optimizer.zero_grad(set_to_none=True); loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 5.0); optimizer.step()
+            ready_fd = os.environ.pop("SLT_TRAIN_READY_FD", None)
+            if ready_fd is not None:
+                os.write(int(ready_fd), b"TRAINING_STARTED\n")
+                os.close(int(ready_fd))
             total += float(loss.detach().cpu()) * len(batch["samples"])
             aligned_total += float(loss_aligned.detach().cpu()) * len(batch["samples"])
             seen += len(batch["samples"])
@@ -201,6 +242,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     args.output_dir.mkdir(parents=True, exist_ok=False)
     output = args.output_dir / "best_model.pth"
     torch.save({
+        "dataset_provenance": dataset_provenance,
         "format": "slt_unified_streaming_ctc_v17", "version": 1,
         "head_config": config.to_dict(), "head_state_dict": model.cpu().state_dict(),
         "base_checkpoint": str(args.base), "base_checkpoint_sha256": sha256(args.base),
@@ -208,15 +250,26 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "other_label": "__OTHER__", "other_index": config.other_index,
         "decode_policy": "greedy causal CTC; no phrase grammar or language prior",
         "ncslgr_alignment_weight": args.alignment_weight,
+        "initial_head": str(args.initial_head) if getattr(args, "initial_head", None) else None,
+        "initial_head_sha256": sha256(args.initial_head) if getattr(args, "initial_head", None) else None,
+        "phrase_root": str(args.phrase_root),
         "selected_epoch": best["epoch"], "validation": best["metrics"],
         "test_accessed": False,
     }, output)
     result = {
+        "dataset_provenance": dataset_provenance,
         "format": "slt_unified_streaming_aligned_grounded_v17", "output": str(output),
         "selected_epoch": best["epoch"], "validation": best["metrics"],
         "history": history, "elapsed_seconds": time.perf_counter() - started,
         "train_samples": len(train), "validation_samples": len(validation),
         "alignment_weight": args.alignment_weight, "test_accessed": False,
+        "initial_head": str(args.initial_head) if getattr(args, "initial_head", None) else None,
+        "phrase_root": str(args.phrase_root),
+        "supplement_mass": args.supplement_mass if supplemental_raw else 0,
+        "supplement_sample_weight": added_weight,
+        "original_group_weights": weights,
+        "training_sources": dict(Counter(sample.source for sample in train_raw + supplemental_raw)),
+        "validation_sources": dict(Counter(sample.source for sample in validation_raw)),
     }
     (args.output_dir / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))
@@ -225,12 +278,11 @@ def run(args: argparse.Namespace) -> dict[str, object]:
 
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(description=__doc__)
+    value.add_argument("--dataset-manifest", type=Path, default=DEFAULT_MANIFEST)
     value.add_argument("--base", type=Path, default=Path(
         "artifacts/models/stage1_v17_asllrp_core_adapt_v1/best_model.pth"))
-    value.add_argument("--phrase-root", type=Path, default=Path(
-        "data/local/stage2_v17_grounded_signer_split"))
-    value.add_argument("--other-root", type=Path, default=Path(
-        "data/local/stage2_v17_asllrp_other_multimodal"))
+    value.add_argument("--phrase-root", type=Path, default=APPROVED_ROOT / "phrases")
+    value.add_argument("--other-root", type=Path, default=APPROVED_ROOT / "other")
     value.add_argument("--ncslgr-manifest", type=Path, default=Path(
         "active/v17/ncslgr_supervised_manifest_v17.json"))
     value.add_argument("--citizen-root", type=Path, default=Path(
@@ -246,6 +298,10 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--output-dir", type=Path, default=Path(
         "artifacts/models/unified_streaming_aligned_grounded_v17_v1"))
     value.add_argument("--epochs", type=int, default=18)
+    value.add_argument("--supplement-root", type=Path)
+    value.add_argument("--supplement-mass", type=float, default=.1)
+    value.add_argument("--initial-head", type=Path,
+                       help="Matched experiment initialization; strict full head state")
     value.add_argument("--batch-size", type=int, default=32)
     value.add_argument("--embedding-batch-size", type=int, default=128)
     value.add_argument("--boundary-per-class", type=int, default=10)
