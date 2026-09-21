@@ -7,6 +7,704 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-21 — one excluded ASLLRP subspan salvaged; v2 canonical
+
+User requested repair where genuine, no compromise, stop at evidence limit. Added
+scripts/salvage_verified_phrases_v17.py and test/test_salvage_verified_phrases_v17.py;
+missing-module test failed first, then41focused tests passed. Scanned excludedASLLRP
+ledger:507established complete/nonoverlapping runs≥2signs with≥1known, only2gap-free.
+Ruling: require adjoining annotation intervals for this salvage pass; unannotated gaps
+are not certified absence of signs. Cost: conservative exclusion of505potential runs;
+not evidence they are bad, not a new global rule invalidating earlier approved phrases.
+
+Recovered WHEN/NOT annotations343321/343322 from originalcrop23882926, sourceframes[5,16).
+Official codesC_03_086/E_01_100 map WHEN/OTHER. Hash-verified rawvideo; native11frames,
+originalorientation/frozenAppleconfig; observedhandfraction1.0;2stride4/window8CTCsteps.
+STILL/HAVE annotations386202/386203 rejected:7frames→1observation cannotfit2targets.
+No artificial extension, relabeling, joined footage, acquisition or new reviewer.
+
+Version2manifest active/v17/approved_phrase_manifest_20260921_v2.json pins prior manifest,
+annotation evidence and salvage script; view data/local/approved_phrases_v17_20260921_v2
+preserves493priorclips and adds1training subspan, total494=283train/211validation.
+Source asllrp_verified_span is explicit. Shared defaults andAGENTSupdated; future recipe
+must handle new source. Originalfullclips remainexcluded and preserved. All494load;
+source-signers/video hashes cross-role disjoint;41tests pass. Current inventory total
+increases by1derivedclip, not1new independentvideo; isolated inventory unmodified.
+Report/verification: artifacts/reports/verified_phrase_salvage_v17_20260921/.
+
+Training_ready remainsfalse. Stop this recovery pass at the evidence limit. Do not
+claim independent unseenOOVbenchmark, broadcoveragegain or thatremainingclipscannever
+be recovered. Next safe work is separately justified annotation coverage/event-core
+supervision and compatible recipe; no training performed. Compile/diffchecks pass;
+largeartifactindex refreshed.
+
+## 2026-09-21 — current usable-inventory count clarification
+
+User asks total remaining data. Read canonical phrase manifest:493 approved whole clips
+(282train/211validation). Counted locked100 *.v17.npz archives using the isolated loader's
+four current roots and checked every features array for finite (32,61,5) shape:
+Citizen1476train/378validation;SemLex1388train/978validation;all4220 structurally pass.
+Combined available isolated + approved phrases =4713 (3146train/1567validation), not a
+fully approved next-run manifest: isolated membership remains unpinned. Historical base
+provenance has1475Citizen training samples, one fewer than current1476; reconcile this
+before admission. Excludes sealed Citizen test, duplicate/overlapping event cores/windows,
+and additional corpora outside these current inputs. No training/dataset changes.
+
+## 2026-09-21 — approved phrase manifest installed and enforced
+
+User authorized versioned manifest, exclusions and training enforcement. Added
+active/v17/approved_phrase_data_v17.py, approved_phrase_manifest_20260921.json,
+scripts/build_approved_phrase_manifest_v17.py and test/test_approved_phrase_manifest_v17.py.
+Updated both unified CTC training entry points and Flores/YouTube-motion run/preflight
+launchers, plus AGENTS.md/current truth. No unrelated edits reverted.
+
+Built non-destructive data/local/approved_phrases_v17_20260921/{phrases,other} symlink view:
+493 admitted, 1,365 excluded from 1,858 repaired/current archives. Admission counts:
+local train232/validation199; ASLLRP contiguous44/12; ASLLRP OTHER6/0. 56 admitted archives
+use recovered evidence. Exclusions:1 hand-detection quality flag;266 unresolved cross-
+corpus (125NCSLGR+141Flores);1,098 unresolved ASLLRP sequence annotations. Whole sequences
+excluded, never targets removed with corresponding video retained. This does not discard
+trusted event cores within excluded sequences. No unseen-OOV evaluation admitted.
+
+Ruling: keep training_ready=false because both old recipes depend on excluded source
+validation metrics; blank/rest/auxiliary inputs and unseen-OOV roles remain unapproved.
+Cost: a recipe/input-contract update is required before next training; this avoids
+silently reintroducing excluded sources or pretending the reduced corpus passes old gates.
+The manifest is specifically phrase admission, not an audit of every isolated/RGB dataset.
+Do not flip the flag alone or bypass via a different legacy trainer.
+
+Verifier pins exact file membership/hashes and admission-evidence/locked-vocabulary hashes.
+Run gates reject stale roots and supplemental datasets before model loading. Checkpoint
+and result writers carry manifest path/hash. Historical experiment launchers guard before
+pretraining/preflight backward operations. Default roots updated. Preserved original files.
+
+Test-first missing-module failure followed by 40 focused passes. Tampered/missing membership,
+modified file/evidence hashes, old roots and early entry-point/launcher guards tested.
+Actual shared loader reads all493 with stride4/window8; source-level signer splits and
+cross-role video hashes checked at construction. Compile/diff checks pass. Report:
+artifacts/reports/approved_phrase_manifest_v17_20260921/{REPORT.md,verification.json}.
+Next safe action: define the reduced-source recipe and approved auxiliary supervision,
+then issue a new manifest version; no training/acquisition/protected test access occurred.
+
+## 2026-09-21 — versioned tail recovery and cross-source OOV exposure check
+
+User authorized continuation, no new acquisition or training. Added
+scripts/recover_phrase_tails_v17.py, scripts/audit_oov_exposure_v17.py and
+ test/test_recover_phrase_tails_v17.py. Recovery range test failed before implementation,
+then passed. Ruling: rebalance the final 32-frame window plus its 1–3-frame tail into two
+16–18-frame windows because the existing extractor requires at least four frames;
+retain earlier windows exactly. Cost: changed normalization/resampling in final windows,
+so future matched experiments must use the new version in both arms.
+
+All 159 videos existed and matched hashes. Recovered 315 missing source-frame intervals
+in 64.5 seconds; 159 landmark-only replacements and 1,699 unchanged symlinks at
+ data/local/phrase_tail_recovery_v17_20260921/. Original archives/video unchanged.
+New metadata records lineage, range policy and actual landmark schema; no stale RGB
+claims. One rebuilt local-validation window fails hand-detection minimum and is explicit
+missing evidence, not labeled rest/blank. All 1,858 pass structural/timing and stride4/
+window8 CTC checks; all 125 NCSLGR alignments pass. Original hashes, repaired targets,
+roles/signers and unaffected window equality verified. 37 focused tests pass.
+
+Exposure report verifies four saved-head/base/initial hashes and Citizen/SemLex base
+manifest hashes, checks admitted 88 NCSLGR and 141 Flores training annotations. Of 276
+OOV development cores, 259 confirmed seen in ASLLRP; 17/13identities unresolved. EYES,
+NEAR and BOTH have Flores raw-string candidates, not certified identity links. Initial
+head files only hold config/state. No globally unseen identity is certified; reused
+validation signer and ambiguous cross-corpus/blank/incidental signs prohibit that claim.
+
+Reports: artifacts/reports/phrase_tail_recovery_v17_20260921/REPORT.md, inventory.json,
+summary.json, verification.json; annotation_identity_audit_v17_20260921/exposure_audit.json.
+Existing historical reports remain pinned to original caches. Active training defaults
+not redirected. Next safe action: prepare trusted event supervision/admission, leave
+unresolved annotations out of OTHER truth, and define seen/unseen/rest evaluation before
+step5. No acquisition, training, protected-test access or promotion. git diff --check
+passes; large-artifact index regenerated for handoff.
+
+## 2026-09-21 — existing-data identity ledger and OTHER core diagnostic
+
+User says continue after steps1–2. Continued mapping audit and development evaluation
+only; acquisition/training remain stopped. Added scripts/audit_annotation_identities_v17.py,
+scripts/evaluate_annotation_cores_v17.py and two focused test files. New reports:
+artifacts/reports/annotation_identity_audit_v17_20260921/; source data/manifests unchanged.
+
+Mapped9,104ASLLRP crop-associated annotation occurrences via exact official SignBank→
+ASLLEX identity and occurrence convention:1,397known/1,844OOV/5,863unresolved. OOV
+requires lexical status and a distinct documented code/lemma; missing links and uncertain
+categories are not OTHER truth. Missing/ambiguous links5,228; occurrence mismatches604;
+nonlexical31. Ledger retains raw labels/timing/signers/reasons. All1,858phrase archives
+have admission sidecars; strict full-sequence rule leaves6ASLLRP OTHER training clips,
+not an instruction to discard corpora. Local user-reviewed/ASLLRP exact-known provenance
+retained; Flores/NCSLGR cross-corpus mapping unresolved for this stricter proposal.
+
+Prepared524unique complete, nonoverlapping cores on existing validation signer JONATHAN:
+248known+276OOV/97identities,≥2hand frames/≥80%frame hand visibility. Of OOV cores,
+259have ASLLRP-train identity exposure;17have unresolved exposure through other sources.
+No globally unseen or independent benchmark claim. Existing validation reused.
+
+Fixed four saved Flores-arm CPU core CTC evaluations (no tuning/training): without/with
+seed17321known exact84/85of248, OOV exactlyOTHER40/32of276, OOV blank211/216; seed17322
+known82/72, OOV exactlyOTHER1/34, OOV blank253/226. OOV false-known counts25/28/22/16.
+Core protocol differs from full-sequence training; not live streaming or Stage1accuracy.
+Blank-only output does not establish UNKNOWN recognition. Checkpoint/ancestor/cache/
+manifest hashes saved;524unique cores and all prediction counts independently checked.
+36focused tests pass, git diff --check passes, large-artifact index regenerated.
+
+Next safe action: recover159incomplete caches from existing video into versioned caches;
+prepare trusted event-core supervision and verify OOV identity exposure. Do not start
+step5until admission, rest/mixed-stream truth and evaluation roles are defined. No new
+acquisition, protected test access, promotion or runtime change.
+
+## 2026-09-21 — authorized steps1–2 repaired;159existing caches blocked
+
+User stopped all new acquisition and approved timing/padding plus loader checks only,
+requesting a recommendation on steps3–5. No training or additional download performed.
+Modified active/v17/train_unified_streaming_{ctc,aligned_grounded}_v17.py and added
+test/test_phrase_data_contract_v17.py. Existing unrelated edits preserved in place.
+
+Test-first reproduction exposed missing input checks and padding-length acceptance.
+NCSLGR now aligns against loaded frame counts and rejects out-of-evidence events;
+collation requires matching per-sample lengths and ignores padding. Shared phrase
+loader enforces Apple schema, finite tensor shape, integral contiguous/nonoverlapping
+ranges, full source coverage, locked target mapping and CTC feasibility including repeats.
+Both training entry points verify checkpoint vocabulary against frozen100mapping.
+Frame-level feasibility uses actual encoder steps. No semantic alias changes.
+
+Fresh actual-loader checks:1,858archives examined,1,699pass,159reject solely for missing
+tails (147previously explicit+12NCSLGR). All113complete NCSLGR alignments pass. Files
+unchanged; no silent filtering. Existing mixed-root training commands now fail clearly
+until affected caches are recovered or explicitly excluded in a versioned manifest.
+34focused tests pass, including zero auxiliary padding gradient and real encoder
+frame/window feasibility; git diff --check passes. No accuracy claim or protected tests.
+
+Report and per-file blockers: artifacts/reports/phrase_contract_repair_v17_20260921/.
+Recommend step3next, step4using only confirmed already-local OOV evidence, and defer
+step5until cache admission and evaluation roles are frozen. Recovery uses existing
+raw video, not new acquisition; no metadata-only claims of complete evidence.
+
+## 2026-09-21 — public-only search finds NCSLGR ELAN route; repair remains proposed
+
+User restricts new data to public/no-account downloads and established mappings;
+no ASL-fluent reviewer is available. No implementation or training authorized by
+this discussion. Proposed repairs and source evidence:
+artifacts/reports/public_dataset_search_v17_20260921/{SEARCH.md,evidence.json}.
+
+Verified DePaul publisher's public elanBUcorpus.zip by unauthenticated GET:
+5,335,358bytes, CRC pass,870parseable EAFs, main and nondominant gloss tiers in all.
+850ncslgr10-series EAFs include166already-local10a–10d files and684additional EAFs;
+these are not684admitted clips. No missing/reversed alignable times; media sync remains
+unverified. Public video.zip Range GET returns206/ZIPmagic,4,108,493,785bytes total.
+No full video archive/clip downloaded. Publisher flags ali, DSP Ski Trip and roadtrip2
+conversion/media defects. Annotation archive retained under
+data/local/dataset_metadata/ncslgr_depaul_public_20260921/; checksum in evidence.
+This public conversion qualifies the prior statement that expansion annotations
+require DAI access. Same underlying corpus, not new independent signer diversity.
+Exact lexical identities, catalog signer roles and media timing must pass admission.
+
+Fresh Citizen train/val metadata-only audit finds2,623ASLLEXcodes outside frozen100:
+38,678train rows/35signers and9,926validation rows/6signers. Propose bounded UNKNOWN
+training/validation with disjoint OOV identities, official signer roles and whole-lineage
+exposure checks. These are candidates, not downloaded/admitted videos. No official test
+metadata/video read. Already-local approved STEM/O5S5 remain useful within existing
+limits; no new broad fully admissible corpus established. No access requests sent.
+
+Next safe action: user reviews repair/OOV/admission proposal. Keep original annotations
+and experiment lineage; fix alignment/masking before changed-data training, distinguish
+unresolved mappings from confirmed OOV, and avoid deleting target tokens while retaining
+their video. No code/runtime/training-manifest changes, no model runs, no acquisition
+resumption. Search source links and measured endpoint checks are in the report.
+
+## 2026-09-21 — v17 annotation-to-training audit, discussion findings
+
+User requests broad local v17 dataset audit, especially annotations/extraction/training,
+and genuine out-of-100 OTHER recognition. Read current state/relevant logs and traced
+current Flores/aligned-loader paths; no training, dataset changes or protected test access.
+New report/evidence: artifacts/reports/dataset_annotation_audit_v17_20260921/.
+
+Fresh structural inspection of all1,858phrase archives across corrected grounded,
+ASLLRP OTHER and Flores OTHER roots: finite tensors, valid target indices/name mapping,
+feasible CTC lengths, matching embedded Apple fingerprint, contiguous non-overlapping
+ranges and no cross-role exact stored video-hash/source-item overlap. These checks do
+not certify semantic labels, global signer separation or near-duplicate separation.
+Corrected local train covers13glosses versus15validation; Flores141clips/93labels.
+
+New confirmed mismatch:12NCSLGR caches (8train/4validation) omit1–3tail frames relative
+to annotation metadata, yielding one extra aligned target step. The actual collator
+copies labels to batch width and can assign a blank CE target to padding on all8train
+cases. Reproduced; no source annotation extends beyond cached end in these12cases.
+Additional147non-Flores caches explicitly record dropped tails (293frames), whereas
+Flores excludes such caches. Total observed incomplete caches159/1,858; this is not
+proof159clips cut lexical signs. Need event-aware completeness review, not blanket deletion.
+
+Current rejection check measures OTHER on known isolated signs, not unseen-OOV recall.
+Known WER removes OTHER; full sequence exact retains it, but selection has no explicit
+OOV gate. No OTHER-only validation examples in checked roots; one Flores training case.
+Flores/NCSLGR exact text mappings still do not prove cross-corpus lexical equivalence.
+Loader probe accepts wrong fingerprint; overlapping-range probe duplicates timeline,
+but current archives are compatible and non-overlapping. All-zero windows: local9train/
+61validation; Flores32train. Unknown rest-versus-detection-loss cause, not semantic evidence.
+
+Existing tests passed:2Flores mapping/device plus13extraction/ASLLRP preparation.
+Public-source spot-check found no verified new immediately admissible corpus beyond logs.
+No downloads, model changes, runtime changes, or running-experiment polling. Next safe
+action: discuss findings, then repair sample-length alignment/masking, define common
+completeness admission and independent OOV evaluation before another changed-data run.
+
+## 2026-09-21 — Flores OTHER MPS retry completed and reviewed
+
+All four arms completed; completion notification returned0. Higher MPS cap avoided
+the previous observed allocation failure. Checkpoints exist, original source weights
+and validation sources match across arms, only141Flores training sequences are added,
+and all saved behavior edit counts were independently recomputed successfully.
+
+Flores improves ASLLRP WER in both seeds54.17→50.00% and62.50→41.67%, and NCSLGR
+92→84% and98→86%. Local WER worsens48.52→55.56% in17321, improves50.19→48.33%
+in17322. Isolated exact83.92→83.41% and83.41→81.12%. No paired gate passes (0/2).
+The stronger behavior warning is local deletions68→204 and52→126, while exact phrases
+fall42→14/200 and43→29/200. Lower insertion counts do not establish better recognition.
+Synthetic hold exact10→7/20 and6→8/20; repeat7→7/20 and6→4/20. Known isolated signs
+with OTHER and no expected sign3→3/1356 and0→8/1356. This diagnostic does not prove
+that OTHER caused all phrase deletions; it does not identify a semantic data defect.
+
+No promotion. Flores contains useful supervision for some development domains, but
+this exact OTHER-span/10%sample-weight recipe sacrifices local completeness and isolated
+retention. These results neither establish unusable Flores data nor justify expanding
+acquisition. Existing development sets were reused, not a fresh unbiased test. Protected
+test/devtest data remain untouched. Any future change needs a separate matched recipe.
+
+
+## 2026-09-21T22:47:43+08:00 — Flores OTHER completion
+
+Flores OTHER experiment complete; reports: artifacts/reports/flores_other_mps_retry_v17_20260921; no promotion or protected test access.
+
+## 2026-09-21T22:38:45+08:00 — higher-cap MPS retry launched
+
+Flores OTHER MPS retry running, PID 98619; first optimizer step acknowledged. Memory fraction .35 (~6.2GiB). Same141clips, two seeds, both arms restarted,18epochs. Reports: artifacts/reports/flores_other_mps_retry_v17_20260921/. Only training detached; no polling; completion/failure notification enabled.
+
+## 2026-09-21 — higher-cap MPS stress check passed
+
+Full batch32longest Flores sequences passed3optimizer steps with finite loss and gradients at .35MPSmemory fraction;289behavior sequences loaded. CPU override/mapping tests, compilation and whitespace checks passed. Launch higher-cap matched training; preserve failures, no data changes.
+
+## 2026-09-21 — user directs MPS retry with increased memory
+
+CPU preflight completed successfully:32longest real Flores sequences,3optimizer steps,
+finite loss/gradients and289behavior input sequences. No CPU training was launched.
+User explicitly requests MPS and use of more available memory. Current memory_pressure
+reports64% free. Raised bounded MPS fraction .12→.35 (approximately2.13→6.2GiB);
+no unbounded allocator setting. MPS full-batch stress preflight underway. New report/model
+roots flores_other_mps_retry_v17_20260921 preserve the failed original and CPU checks.
+All data, batch32,18epochs, two matched seeds, initial weights and10%supplement mass fixed.
+Both arms restart to avoid mixing devices or partially completed experiments.
+Next action: verify higher-cap full-batch check, launch only training, stop monitoring.
+
+
+## 2026-09-21 — Flores OTHER failure diagnosed; CPU retry prepared
+
+User reported failure. status.json and training.log show the without-Flores17321 arm
+completed18epochs and its behavior report, then with-Flores completed1epoch before
+MPS allocation failure at layer normalization:1.09GiB tensor+1.08GiB other allocation,
+2.13GiB cap, failed33KiB request. No complete paired result exists. This proves memory
+exhaustion under the .12 per-process cap, not bad Flores labels or negative transfer.
+The prior longest-single-sequence and tiny end-to-end tests missed sustained full-batch
+memory behavior. Failed outputs and completed baseline are preserved; stale running
+REPORT.md replaced with failure explanation. Failure handler now writes report too.
+
+Added explicit device/report/model flags to runner. CPU override regression first
+failed then passed; both comparison arms will restart CPU/two threads with identical
+batch32,18epochs, seeds, initial states,141Flores clips,10%sample-weight mass and decoder.
+CPU preflight expanded to32longest real Flores sequences and3optimizer steps. New roots:
+artifacts/{reports,models}/flores_other_cpu_v17_20260921. No unbounded GPU allocator.
+
+Other report findings:14Flores caches omit1–3tail frames, recoverable through complete
+re-extraction but excluded here to preserve the controlled dataset; local correction
+already removed55training clips. Historical ASLLRP short-sign/context truncation issues
+belong to earlier preparation paths; native-rate caches already exist and are used.
+Source-local Flores signer IDs cannot prove cross-corpus signer separation. No new
+semantic label defect is established by this resource failure. No protected test access.
+Next action: complete CPU full-batch/integration checks, detach training only, notification.
+
+
+## 2026-09-21T22:27:17+08:00 — Flores OTHER completion
+
+Flores OTHER experiment failed; reports: artifacts/reports/flores_other_v17_20260921; no promotion or protected test access.
+
+## 2026-09-21 — corrected-phrase motion run reviewed
+
+All four checkpoints exist; all saved behavior edit counts independently recomputed.
+Each arm used the corrected232local training clips and identical4554total training /
+2182validation samples. Local evaluation includes200clips/540reference glosses.
+
+Pretraining improves local WER in both seeds (48.52→43.15%;50.19→44.44%), mean
+49.35→43.80% (5.56 percentage points). This is more consistent local evidence than the
+original mixed-label experiment, but it is not a clean overall win. ASLLRP regresses
+54.17→66.67% in seed17321; only1/2 predefined gates pass. Local phrase exact matches
+42→46/200 and43→42/200. In seed17322, insertions90→31 but deletions52→130, so the
+lower WER includes a substantial shift toward omitted signs. Duplicate output pairs
+62→66 and75→38 do not establish held-sign correctness. Synthetic hold exact10→6/20
+and6→6/20; repeat exact7→6/20 and6→5/20. No real adjacent-repeat references exist.
+Conditional matched-token ASLLRP median delay changes0→−33ms and0→33ms on only8–11
+matched events; this is neither an all-token latency score nor hardware latency.
+
+Conclusion: promising local motion transfer, insufficient overall behavior evidence;
+no promotion and no additional YouTube acquisition. Existing development sets were
+reused; no protected test was accessed. Completion notification returned0. The separate
+Flores experiment is unaffected and was not polled during this review.
+
+
+## 2026-09-21T22:24:40+08:00 — Flores OTHER training launched
+
+Flores OTHER matched experiment running, PID 84890; first optimizer step acknowledged. Two seeds with/without 141 complete Flores dev clips, 18 epochs per arm. Only training detached; no polling. Reports: artifacts/reports/flores_other_v17_20260921/. Completion/failure notification enabled; no protected test access or promotion.
+
+## 2026-09-21 — Flores OTHER full preflight passed
+
+Real longest admitted Flores sequence completed finite CTC backward and optimizer step
+on capped MPS. Shared behavior inputs loaded289 sequences. Additional in-session tiny
+integration run exercised the actual optional supplement path:18 training samples
+including2Flores,16validation samples, one epoch, strict checkpoint reload, behavior
+report and isolated OTHER rejection computation all passed. Temporary smoke checkpoint
+was discarded; smoke accuracy is not an experiment result. Mapping/weight tests,
+compilation and whitespace check passed. Source/initial-state hashes saved in provenance.
+Only full paired training is now eligible to detach; no more audit work remains.
+
+
+## 2026-09-21 — parallel Flores OTHER experiment audited and prepared
+
+User authorized the proposed with/without-Flores experiment in parallel with the
+corrected YouTube motion comparison. Implemented main-thread, no agent or LLM job.
+New scripts/train_flores_other_v17.py maps raw full gloss transcripts by exact uppercase
+label match with outer sentence punctuation only; numeric variants, fingerspelling
+and aliases are not normalized into known labels. Consecutive unsupported glosses
+collapse to one OTHER span, known repeats remain. All original raw transcripts retained.
+155 source videos hash-checked and all landmark archives structurally checked;141
+complete caches admitted,14 missing final1–3 frames excluded. Admitted set has476 known
+occurrences covering93 locked labels and462 OTHER spans. Full frame ranges are contiguous,
+arrays finite, schema matches existing Apple b872fa3dcc16aab5, and CTC alignments feasible.
+No exact content overlap with existing phrase train/validation caches. Cross-dataset
+Flores signer identity remains unknown; no signer-disjoint Flores generalization claim.
+Old Flores frozen features use a different Stage1 and are deliberately not reused.
+
+Existing aligned trainer gained optional audited Flores supplement support: original
+source weights stay fixed, Flores total sample-weight mass equals10% of original.
+Two paired baseline-initialized seeds17321/17322,18epochs per arm, same corrected phrases,
+other supervised data, frozen Stage1, selection/decoder. No YouTube SSL in either arm.
+Separate output roots artifacts/{reports,models}/flores_other_v17_20260921 and
+ data/local/stage2_v17_flores_other_20260921 prevent collisions with the running pilot.
+Existing process already imported its trainer; no ongoing training state modified.
+Two CPU threads and .12 MPS memory cap planned (24GiB machine,43% free at initial check).
+
+Focused mapping/CTC-feasibility/weight test first failed for absent module, then passed
+following implementation. Compilation and git diff --check pass. Full audit passed;
+real-device training/evaluation preflight is in-session before detached launch.
+Report metrics include known-sign OTHER rejection, WER, isolated accuracy, synthetic
+hold/repeat and conditional emission delay. No protected test/devtest access or promotion.
+Next safe action: complete real preflight, launch only training with first-step event,
+then stop monitoring and rely on completion/failure notification.
+
+
+## 2026-09-21T22:17:01+08:00 — motion pilot completion
+
+Motion pilot training complete at 2026-09-21T22:17:01+08:00; reports: artifacts/reports/youtube_motion_pretrain_fixed_phrases_v17_20260921. No runtime promotion or protected test access.
+
+## 2026-09-21T22:10:52+08:00 — corrected phrase training launched
+
+Corrected-phrase paired training running, PID 71589; first optimizer step acknowledged. Only training detached; no polling. Reports: artifacts/reports/youtube_motion_pretrain_fixed_phrases_v17_20260921/. Completion/failure notification enabled.
+
+## 2026-09-21 — user-reviewed PHRASES FIXED audited; corrected matched rerun ready
+
+User confirms every retained video was checked against its folder phrase. All 685
+fixed videos match original SHA256 content; 95 removed, zero new/edited/relabeled.
+The admitted cache retains 232 local train / 200 validation, removing 55 training
+clips and no validation clips. Train signers local01/03 and validation local02 remain
+disjoint, with no content overlap. Retained landmarks/ranges/targets verified bitwise
+equal. No GOOD_MORNING phrase training clips remain (20 validation clips remain).
+253 fixed videos are outside the existing admitted cache; no aliases or classes added.
+This records user semantic review, not independent machine transcript verification.
+
+New script scripts/prepare_fixed_local_phrases_v17.py produced
+ data/local/stage2_v17_grounded_phrases_fixed_20260921 and audit reports under
+ artifacts/reports/local_phrases_fixed_audit_20260921. Runner now accepts corrected
+phrase/report/model roots and reuses all four exact saved initial heads; only temporal
+blocks differ between paired initializations. Trainer records source counts and emits
+startup acknowledgement after its first optimizer step. Two seeds, 18 epochs per arm,
+same frozen Stage1, decoder and all other sources. No SSL retraining or test access.
+ASLLRP, NCSLGR, Citizen and SemLex were already included. Flores was previously tested
+on 155 dev sentences with mixed transfer and no promotion; adding it here would change
+the controlled question. O5S5 partial intervals need separate supervision, not blank gaps.
+
+Validation: source hashes and cache equality checked; self-check and real MPS motion/CTC
+backward passed; strict checkpoint loads passed; behavior path checked on 289 sequences
+including 200 local and 20 each synthetic hold/repeat, edit counts independently checked.
+Python compilation and diff whitespace checks passed. Reports/plan:
+artifacts/reports/youtube_motion_pretrain_fixed_phrases_v17_20260921.
+Next action: detach training only after first optimizer step; completion/failure macOS
+notification, no polling, no runtime promotion. Prior pilot results remain historical.
+
+
+## 2026-09-21 — local phrase semantic-label audit gap identified
+
+User reports local phrase folders may mix different phrases. Traced label provenance:
+`audit_stage2_phrase_sources_v17.py` assigns phrase=parent folder after ffprobe/hash
+checks; `prepare_stage2_training_manifest_v17.py` assigns every clip the static
+LOCAL_TARGETS sequence for that folder; `prepare_grounded_streaming_data_v17.py`
+changes signer roles while retaining target_indices. Found source integrity, landmark,
+face-cluster signer audits and a nine-clip rendering reference, but no evidence of a
+corpus-wide per-video semantic transcript audit comparable to isolated cleanup.
+This establishes unverified semantic labels, not yet the number of mislabeled clips.
+Local WER/training conclusions are provisional; do not interpret this pilot as a
+definitive negative pretraining result. Added report/current-state caveat. No data,
+checkpoints or labels changed. Next safe action: clip-level visual transcript audit
+before any new supervised phrase run or label-based evaluation.
+
+## 2026-09-21 — motion pilot reviewed: mixed transfer, no promotion
+
+All four runs completed and macOS notification command returned0. Local WER
+baseline→pretrained46.85→48.89% (seed17321) and49.07→44.44% (seed17322);
+ASLLRP54.17→62.50% and62.50→45.83%; isolated CTC exact84.22→84.00% and
+82.96→84.00%. Only1/2 paired gates passed. Local duplicate output pairs58→82
+and86→87. Synthetic hold exact6→6/20 and4→7/20; synthetic repeat exact4→6/20
+and3→2/20. Conditional matched ASLLRP median sign-end-relative emission delay
+0→0ms and0→66.7ms; these are not real-device latency measurements.
+Masked reconstruction lost to causal last-observation control in both seeds on the
+same endpoint-observed subset (0.01795/0.01661 vs0.01322/0.01322).
+Verified saved connected error totals and temporal-only initialization differences.
+Found and fixed a reporting-only adjacent-repeat bug: five OTHER-separated equal-gloss
+pairs became adjacent after filtering. Full references contain zero true adjacent-repeat
+examples. Added focused regression assertions; corrected behavior/comparison/REPORT files
+without rerunning models or changing predictions/checkpoints/WER.
+Files: `scripts/train_youtube_motion_pilot_v17.py`, report directory comparison, behavior,
+REPORT and verification files; PROJECT_GROUND_TRUTH current decision updated.
+Decision: no consistent benefit established; no promotion or further acquisition.
+Next safe action: inspect objective/transfer limitations using retained data before a
+new run. Official Citizen test stayed sealed.
+
+## 2026-09-21T21:50:48+08:00 — motion pilot completion
+
+Motion pilot training complete at 2026-09-21T21:50:48+08:00; reports: artifacts/reports/youtube_motion_pretrain_v17_20260921/. No runtime promotion or protected test access.
+
+## 2026-09-21 — matched motion training launched
+
+Foreground audit/preparation and real-device preflight completed. Behavior reporting
+passed on289 sequences with independent edit-count checks; combined connected-source
+train/validation signer sets are disjoint. Quality filtering retained6584 windows
+from1166 clips (5811 SSL train/773 source-video-held-out windows). Detached only
+training after an explicit first-optimizer-step handshake. PID 44365.
+Two paired seeds17321/17322,8 SSL epochs and18 CTC epochs per arm. Completion/failure
+reports and macOS notification are configured; no polling and no CLI resume retries.
+See `artifacts/reports/youtube_motion_pretrain_v17_20260921/training_launch.json`.
+
+## 2026-09-21 — foreground audit corrected; causal temporal transfer prepared
+
+User corrected execution: do not detach audit, only training. Checked completed first
+audit:1191 accepted/220 frame-count mismatches; notification command passed but CLI
+resume failed with active-writer conflict. Removed obsolete detached audit runner.
+The original audit stopped validating a clip at its first count discrepancy, so a
+foreground re-audit now separates structural validity from temporal provenance:
+1411/1411 structurally valid,168531 actual frames. Of220 count mismatches,203 are-1,
+three are-2, one is+1 and13 are larger deficits. Quarantine all220 without modifying
+raw data; do not claim corruption from the count mismatch alone.
+Upstream PoseEstimation code confirms pixel XY geometry and reveals different single-
+versus-two-hand assignment rules. New separate46-nodeXY+presence adapter reassigns by
+pose wrists, omits ambiguous assignments, uses one torso scale and masks missing data.
+No face/confidence/depth or frame rate is fabricated. Only the128-wide causal CTC
+temporal blocks transfer; Apple Stage1 stays frozen. Use its pre-local-adaptation
+orientation-robust ancestor to avoid inherited local signer leakage.
+Main agent wrote `scripts/train_youtube_motion_pilot_v17.py`; shared aligned trainer
+adds an optional strictly validated full-head initialization, preserving defaults.
+Foreground MPS SSL/real-CTC backward and temporal-only transfer checks passed; PyTorch
+CTC falls back to CPU. Phrase source signer splits checked disjoint. Two paired
+seeds17321/17322,8SSL epochs then18identical supervised CTC epochs per arm; report
+real-sequence errors and conditional delay, with synthetic held/repeat diagnostics.
+No automatic promotion, acquisition, or protected test use. Training not yet launched
+at this entry; consult the launch handshake and status artifact after notification.
+
+## 2026-09-21 — connected-motion pilot authorized; audit runner prepared
+
+Primary outcome is connected-sign recognition with isolated retention. User requested
+detached execution, no polling/sleeps, reports, completion notification and session
+resume. After user preferred self-written code, stopped the single audit subagent and
+wrote the audit and runner in the main session. Files:
+`scripts/audit_youtube_motion_pilot_v17.py`, `scripts/run_youtube_motion_pilot_v17.py`,
+and `artifacts/reports/youtube_motion_pretrain_v17_20260921/PLAN.md`.
+Audit missing-hand/nonfinite checks and runner report self-check passed; three real
+clips validated275 frames. Both scripts compiled; `git diff --check` passed.
+Direct MediaPipe substitution is unsupported: confidence, timing, chirality and face
+mapping are not established. Apparent-scale depth is derivable, not true detector depth.
+A separate source adapter and compatible temporal-block transfer remain conditional,
+not disproven. No training or protected evaluation ran in this preparation phase.
+Next action: full detached audit, then completion-triggered same-session review using
+GPT-6 Astra medium; no polling, no automatic acquisition or promotion. Consult status
+and completion artifacts only after notification or explicit user request.
+
+## 2026-09-21 — downloads paused by user; 1,411-clip pilot frozen
+
+Stopped managed session47842 (exit130); subsequent process inspection found no Python
+download worker. Saved acquired_manifest.csv containing1,411 locally present members
+and marked download_status.json paused_by_user. No more acquisition until the pilot
+shows value. Proposed experiment compares matched supervised baselines with/without
+masked-motion pretraining; first validate landmark quality and MediaPipe/Apple schema
+compatibility. Captions supply no human sign boundaries. No training started.
+
+## 2026-09-21 — public YouTube-ASL keypoints replace Databrary for transition pretraining
+
+Found and verified an immediately downloadable CC BY 4.0 sentence-level ASL keypoint
+corpus at LINDAT. Its ten range-addressable archives contain390,547 unique JSON
+sequences (347.98GiB compressed). The train/dev annotations contain391,494 rows and
+389,474 join to keypoints (99.48%);8,479 train and943 dev source-video IDs are
+disjoint. Saved both metadata files, the complete compressed archive-member index and
+three selectively extracted samples locally without downloading the full corpus.
+
+The source solves connected-motion availability, not exact gloss timing: supervision
+is English sentence translation, signer IDs are absent and the files are 2D MediaPipe
+keypoints. Use it for masked temporal/motion pretraining on a selective train subset,
+then fine-tune only the locked blank+100 decoder on trusted labeled data. Do not treat
+caption words as aligned glosses. How2Sign landmarks remain the controlled secondary
+source. Rejected the purported 3D Continuous ASL corpus because only2,000/98,196
+referenced tensors are present. Report:
+`artifacts/reports/free_continuous_asl_alternatives_20260921/README.md`.
+
+Froze the selective pilot manifest at2,000 clips from2,000 unique train source-video
+IDs. Each chosen clip has a non-empty caption,50–250 frames and is the candidate nearest
+120 frames for its source video; video IDs are selected in deterministic SHA-256 order.
+The pilot has240,585 frames across all ten shards. Expected transfer is1.91GB compressed
+(1.78GiB) from the full-corpus mean; reserve about6GB for extracted JSON and workspace.
+The earlier managed execution was externally terminated after22 validated clips
+(55MB), before its first25-clip status checkpoint, so its Python failure handler did not
+run. Restarted the same resumable transfer under macOS launchd label
+`org.slt.youtube-asl-pilot`; the22 atomic outputs are retained. It prevents system sleep
+and sends a macOS notification on ordinary success or failure. Do not poll it.
+Managed session78480 later exited on a transient LINDAT DNS resolution failure. The
+shared HTTP helper retried only three times over a few seconds. The pilot downloader now
+reopens each shard up to12 times with bounded backoff, updates status after every clip,
+and resumes all atomic outputs before retrying.
+Managed session32891 reached493 clips but stopped advancing after18:27 while blocked in
+a network read; its stale `running` status was incorrectly reported as live. Added a
+backward-compatible30-second range-read timeout. A LaunchAgent attempt reported
+`spawn failed` and was removed. The transfer now runs independently in detached native
+screen session `11217.slt_youtube_asl_pilot`, resuming493 validated files.
+That session remained alive but advanced only to496 before the remote range endpoint
+stalled again. This confirms server throttling rather than local process loss. Replaced
+the finite retry loop with indefinite network recovery capped at a five-minute cooldown
+and added a one-second inter-clip delay. Restarted from496 atomic files in detached
+screen session `13538.slt_youtube_asl_pilot`.
+Root cause of the repeated apparent stall was then confirmed locally: the Python child
+from screen11217 survived after its screen was closed, so it and screen13538 downloaded
+the same output concurrently and amplified LINDAT throttling. Terminated every stale
+Python/caffeinate worker, removed partial files, and started exactly one verified Python
+worker under detached screen `15719.slt_youtube_asl_pilot`. Do not parallelize this
+range endpoint; shard concurrency would recreate the failure.
+Per explicit user request, monitored the repaired single-worker transfer through five
+new atomic outputs. It advanced497→502 without retry/failure; status remained `running`
+on `raw_keypoints_2.zip`. This establishes current forward progress before detaching.
+Subsequent attempts to move the job into screen and Terminal proved unreliable and were
+removed. Restored the original working managed-execution method as session40900 with
+exactly one worker. After the remote endpoint's initial pause, continuous monitoring
+verified five further atomic outputs,502→507, all on shard2 with `running` status.
+Measured repository throughput directly: an8MiB sequential LINDAT range took23.07s
+(363,558B/s), implying about28.5h for one37GB shard. Files1–493 had arrived in37m37s;
+files507–514 then took11m25s after throttling. A user-requested three-reconnect burst
+test moved only514→515, proving reconnects do not reset the present repository/IP
+limit. A persistent-session exact-member prototype could not finish even the shard
+central-directory lookup under the active throttle and was stopped; no downloader is
+currently running. Further acquisition needs repository cooldown or a different public
+network/IP, followed by exact-range verification before resuming.
+After the user enabled a VPN, the persistent-session exact-range downloader passed a
+five-file CRC/size/JSON gate515→520. The full resumable run then passed a second gate
+520→538 in about30s after ZIP metadata opened. Acquisition is active in managed session
+18670 with one worker; this confirms the prior public IP was the immediate throttle.
+
+## 2026-09-21 — Databrary volume 1249 files are inaccessible to current account
+
+Checked volume 1249 in the signed-in Brave session. Databrary lists session files at
+the Authorized Users release level, but shows zero accessible session files for this
+account; its participant view does not expose downloadable demographics. No files
+were transferred and no access request was sent. The F13 public sample is already
+local. Continue the EAF/demographics-first acquisition after the volume owner grants
+the account access.
+
+## 2026-09-21 — connected-ASL gap search selects ASL-Homework-RGBD
+
+Current public and local sources were rechecked against the actual Stage-2 gap: RGB,
+human per-sign onset/offset glosses, stable signer IDs and enough signers for a real
+held-out split. ASL-Homework-RGBD is the only identified direct match:935 continuous
+recordings from45 people (24 fluent,21 learners),1920x1080 RGB and ELAN tiers for
+Signing Happening, exact gloss timing, nonmanuals and errors. Full data are restricted
+to authorized Databrary users at volume1249; the public F13 sample is already local.
+No legitimate anonymous mirror was found. Acquire EAFs/demographics before media and
+prioritize fluent signers with verified locked100 overlap.
+
+Downloaded and hash-verified the official full NCSLGR index and legacy SignStream
+database bundle without media. The index has1,887 utterances/38 collections. Of76
+previously screened target-bearing parents outside the local166-clip subset,59 front
+video endpoints currently respond, representing50 unique videos/223,521,002bytes.
+Media transfer was deliberately skipped because per-sign XML and complete participant
+metadata still require a free DAI account; NCSLGR has only8 corpus participants and is
+secondary to ASL-Homework. Existing local ASL STEM review already supplies111 approved
+spans/31 glosses/18 participants, but only18 glosses have at least3 participants.
+How2Sign, FLEURS-ASL, OpenASL and YouTube-ASL do not provide the required public human
+locked-gloss timing. Report:
+`artifacts/reports/continuous_asl_gap_search_20260921/README.md`.
+
+## 2026-09-21 — source data retained; continuous preprocessing must be rebuilt
+
+Audited the complete local Stage-2 path across1,160 ASLLRP clips, the confident-event
+manifest, existing frontend ablations, all780 unique local phrase videos and the
+signer-disjoint local phrase evaluation. ASLLRP is not low-resolution: every audited
+clip is1280x720 or1280x960 at29.97fps, all produced features, and ASLLRP-other training
+signs have99.85% median hand-node presence and92.48% at p10. The local phrase videos
+are640x480 at30fps and remain usable, although landmark coverage varies by recording.
+
+The current continuous observer discards evidence by detecting at a640px maximum and
+sampling20fps. A controlled11-clip/22-token ablation improved WER from45.45% at
+640px/source-rate to36.36% at1280px/source-rate;20Hz also lost an exact sequence.
+Moreover,6,020/11,936 annotated events fail the current four/six-observation floors,
+which disproportionately excludes short signs. Slowing cached sequences doubles frame
+rows but not the69 independent source observations, so it cannot repair the loss.
+
+The prior local phrase manifest is invalid as generalization evidence because all three
+signers occur in both train and validation. The existing signer-disjoint split trains on
+signers01/03 and validates on200 signer02 clips, yielding25.5% exact and37.04% WER; it
+covers only15 glosses. Keep the source ASLLRP annotations and local phrases, re-extract
+ASLLRP at source timing with1280px detection, preserve short events with masks, and use
+only signer-disjoint validation. Citizen test stayed sealed and no training ran. Report:
+`artifacts/reports/stage2_data_path_audit_20260921/`.
+
+## 2026-09-21 — source/Luna comparison corrects the boundary-quality interpretation
+
+Built a24-clip side-by-side HTML review with the original video, source and Luna
+intervals, proportional timelines, seek/play controls, signed edge differences, the
+exact24-frame Luna sheet and agreement filters. All24 video paths resolve and the page
+renders correctly in a local browser.
+
+The review and ASLLRP's published annotation convention correct an earlier overstatement:
+the pilot does not establish that the source annotations are wrong. ASLLRP excludes
+preparatory movement and release into the next sign from its linguistic sign interval
+and may annotate final holds separately. Luna reviewers sometimes included a fuller
+visible articulation or hold. The±100ms band was too strict to serve as an annotation
+quality verdict, although the coherent detector still failed at±200ms, so tolerance
+alone does not explain the model failure.
+
+Confirmed defects remain downstream:21/1,160 derived ASLLRP crops clip at least one
+annotation (22 occurrences, all mapped to OTHER), and the earlier context-window
+objective ended every known training window before its annotated sign end. Comparison:
+`artifacts/reports/luna_boundary_annotation_pilot_20260921/comparison.html`.
+
+## 2026-09-21 — one-Luna-per-clip boundary pilot completed
+
+Following user direction,24 train-only known ASLLRP signs were assigned to24 separate
+Luna-low runs, exactly one visual reviewer per clip. Each reviewer saw a blind24-frame
+timestamped contact sheet and the target gloss but not the source boundary timestamps.
+All24 returned valid intervals:23 medium confidence and1 low. Four touch the first or
+last review frame and are censored. After excluding low-confidence and censored rows,
+19 remain as provisional annotations.
+
+Against the reserved source timestamps, all24 have median absolute start/end differences
+of68ms/145ms; only6/24 agree at both edges within100ms and16/24 within200ms. The19
+provisional rows have55ms/128ms median differences,6/19 agreement within100ms and14/19
+within200ms. Signed differences are inconsistent, so a global offset cannot reconcile
+them. These single-reviewer Luna outputs are pseudo-labels, not verified ground truth;
+do not scale them directly into training without a stronger reference or agreement gate.
+Citizen test stayed sealed. Report and per-clip annotations:
+`artifacts/reports/luna_boundary_annotation_pilot_20260921/`.
+
 ## 2026-09-20 — confident-only continuous supervision frozen
 
 Created a derived manifest without modifying or copying source data. Starting from all

@@ -1,0 +1,85 @@
+{
+  "audit": {
+    "requested": 1411,
+    "validated": 1411,
+    "errors": [],
+    "quarantined_count_mismatch": 220,
+    "admitted_count": 1191,
+    "count_delta_histogram": {
+      "-121": 1,
+      "-110": 1,
+      "-97": 1,
+      "-96": 1,
+      "-76": 1,
+      "-70": 1,
+      "-64": 1,
+      "-63": 1,
+      "-59": 1,
+      "-58": 1,
+      "-55": 1,
+      "-22": 1,
+      "-15": 1,
+      "-2": 3,
+      "-1": 203,
+      "0": 1191,
+      "1": 1
+    },
+    "complete_manifest": true,
+    "manifest_sha256": "fb1a72fdd687c333ff49e260e812938af7bb71ca72f4c64f4075aa336830654b"
+  },
+  "coverage": {
+    "frames": 168531,
+    "left_present_frames": 122140,
+    "right_present_frames": 144800,
+    "either_hand_frames": 157158,
+    "both_hand_frames": 109782,
+    "points": 88484711,
+    "zero_pairs": 0,
+    "out_of_image_points": 1874193
+  },
+  "coordinates": {
+    "streams": "raw keypoints only; cropped coordinates excluded",
+    "size_metadata_clips": 1411,
+    "size_convention": "[height,width], verified in upstream predict_pose.py mdeiapipe_to_xy",
+    "outside_image_is_not_automatically_corrupt": true,
+    "point_dimension": 2
+  },
+  "timing": {
+    "clips_with_temporal_field_names": 0,
+    "frame_ranges": "inclusive filename range checked against manifest and actual frames",
+    "seconds_validated": false
+  },
+  "identity_and_splits": {
+    "unique_source_videos": 1411,
+    "signer_disjointness_verified": false,
+    "caption_used_for_supervision": false,
+    "protected_evaluation_accessed": false
+  },
+  "chirality": {
+    "slots": "left_hand_landmarks/right_hand_landmarks",
+    "anatomical_mapping_verified": false
+  },
+  "channel_mapping": {
+    "xy": "pixel XY; body-relative normalization is feasible after geometry verification",
+    "presence": "empty lists and zero pairs can be masked",
+    "confidence": "not available",
+    "depth": "not provided; Apple scale proxy is a separate derived quantity"
+  },
+  "gate": {
+    "direct_existing_encoder_transfer": false,
+    "adapter_temporal_transfer": "conditional",
+    "blocking_issues": [
+      "Detector confidence is absent from raw XY point pairs; Apple confidence cannot be reconstructed.",
+      "Hand slot names do not verify anatomical chirality or source mirroring without paired visual evidence.",
+      "No validated MediaPipe input adapter into the selected Apple temporal encoder exists in this pilot.",
+      "Exact face semantics and the Apple relative log-scale channel require explicit mapping, not zero padding.",
+      "No frame-rate/timestamp fields found; frame order exists but elapsed-time motion is unverified."
+    ],
+    "required_bridge_validation": [
+      "Use a separately fingerprinted 2D input adapter, never relabel MediaPipe as Apple features.",
+      "Validate geometry/chirality from source code or paired local evidence.",
+      "Transfer only compatible temporal blocks; retain Apple frontend and supervised decoder.",
+      "Keep unknown timing explicit; frame-index reconstruction is possible but not timing validation."
+    ]
+  }
+}

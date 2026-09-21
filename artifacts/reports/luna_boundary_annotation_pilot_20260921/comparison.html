@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASLLRP source vs Luna boundary review</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#637083;--line:#dbe1ea;--source:#2166d1;--luna:#e87817;--good:#16784a;--warn:#9b5b00;--bad:#b52e3a}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,sans-serif} main{max-width:1240px;margin:auto;padding:28px 18px 64px} h1{font-size:clamp(28px,5vw,48px);line-height:1.05;margin:.2em 0} h2{display:inline;margin:0 0 0 8px;font-size:22px} a{color:var(--source)} .intro,.finding,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 18px #1720330b} .intro,.finding{padding:18px 20px;margin:14px 0} .finding strong{color:var(--bad)} .controls{display:flex;gap:10px;align-items:center;margin:22px 0 12px} select,button{font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);padding:8px 10px;cursor:pointer} .count{color:var(--muted)} .card{padding:18px;margin:14px 0} .card>header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px} .item,.meta{color:var(--muted);font-size:13px} .badges{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px} .badge{border-radius:999px;padding:4px 9px;font-size:12px;background:#edf1f6} .badge.within100{background:#d9f3e5;color:var(--good)} .badge.within200{background:#fff0cf;color:var(--warn)} .badge.outside200,.badge.censored{background:#ffe1e3;color:var(--bad)} .media{display:grid;grid-template-columns:minmax(280px,43%) 1fr;gap:18px} video{width:100%;max-height:430px;background:#0c1018;border-radius:10px} .times{display:grid;gap:5px} .times div{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding:5px 0} .timeline{margin:18px 0 10px} .track{height:34px;position:relative;background:#eef1f5;border-radius:7px;margin:6px 0;overflow:hidden} .track span{position:absolute;top:0;bottom:0;border-radius:6px} .track b{position:relative;z-index:1;display:block;padding:6px 9px;color:#fff;text-shadow:0 1px 2px #0009} .track.source span{background:var(--source)} .track.luna span{background:var(--luna)} .axis{display:flex;justify-content:space-between;color:var(--muted);font-size:12px} .buttons{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0} .reason{margin:14px 0 4px} details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px} summary{cursor:pointer;font-weight:650} details img{display:block;width:100%;height:auto;margin-top:10px;border-radius:8px} .legend{display:flex;gap:18px;flex-wrap:wrap} .dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px} .dot.source{background:var(--source)} .dot.luna{background:var(--luna)}
+@media(max-width:760px){.media{grid-template-columns:1fr}.card>header{display:block}.badges{justify-content:flex-start;margin-top:8px}.times div{display:block}}
+@media(prefers-color-scheme:dark){:root{--bg:#10141d;--panel:#181f2b;--text:#edf2fa;--muted:#aab4c4;--line:#344052}.track{background:#293241}.badge{background:#2b3544}}
+</style></head><body><main>
+<p class="item">24 train-only ASLLRP examples · one blind Luna-low review per clip</p>
+<h1>Source annotation vs Luna boundary review</h1>
+<section class="intro">
+  <p><b>The two intervals do not use perfectly identical semantics.</b> ASLLRP marks the linguistic sign interval: preparatory movement is excluded, the sign ends before movement into the next sign, and a final hold may be annotated separately. The Luna prompt asked for the first through last frame belonging to the named sign, which reviewers often interpreted as the full visible articulation or hold.</p>
+  <p class="legend"><span><i class="dot source"></i>ASLLRP source interval</span><span><i class="dot luna"></i>Luna visual review</span></p>
+  <p>Source convention: <a href="https://www.bu.edu/asllrp/asllrpr11.pdf">ASLLRP annotation conventions</a>. Dataset context: <a href="https://www.bu.edu/asllrp/2.html">ASLLRP SignStream corpora</a>.</p>
+</section>
+<section class="finding">
+  <p><strong>Correction:</strong> the pilot does not show that ASLLRP annotated these signs incorrectly. Calling the source boundaries “questionable” was too strong. The disagreement mixes a definition mismatch, coarse sampled frames, and a single reviewer.</p>
+  <p>The ±100 ms score was strict for exact-edge evaluation and should not be a data-quality verdict. It was not the whole model failure: the coherent decoder reached only 40.46% boundary F1 even at ±200 ms and still failed held-sign/repetition checks.</p>
+  <p>The confirmed source-pipeline problems were narrower: 21 of 1,160 derived ASLLRP crops clipped at least one annotation (22 clipped occurrences, all mapped to OTHER), and the earlier context-window objective stopped every known training window before its annotated sign end. Those are preprocessing and supervision defects, not evidence that the original study annotations are broadly wrong.</p>
+</section>
+<div class="controls"><label for="filter">Show</label><select id="filter"><option value="all">all 24 clips</option><option value="within100">both edges ≤100 ms</option><option value="within200">both edges ≤200 ms</option><option value="outside200">an edge &gt;200 ms</option><option value="censored">review range censored</option></select><span class="count" id="count"></span></div>
+
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_01</span><h2>NIGHT</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/NIGHT_WHY/83937096_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.534s</span></div>
+        <div><b>Luna review</b><span>0.231s → 0.384s</span></div>
+        <div><b>Difference</b><span>start +64 ms; end -150 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.884s">
+        <div class="track source"><span style="left:18.875%;width:41.526%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:26.087%;width:17.391%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.884s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.5338666666666667">source end</button>
+        <button data-time="0.23057391304347824">Luna start</button>
+        <button data-time="0.38428985507246377">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.5338666666666667">play source</button>
+        <button data-start="0.23057391304347824" data-end="0.38428985507246377">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The hands form a clear two-hand interaction around frames 6–10; after frame 10 the dominant hand rises toward the face, appearing to leave that configuration. The sign identity and exact transition are not clear enough for high confidence.</p>
+      <p class="meta">asllrp_contiguous · confidence low · sampled frame 6–10</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_01.jpg" alt="Timestamped frame sheet for NIGHT"></details>
+</article>
+<article class="card" data-group="within100">
+  <header><div><span class="item">item_02</span><h2>WORK</h2></div><div class="badges"><span class="badge within100">both edges ≤100 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/WORK_WHERE/633534_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.501s</span></div>
+        <div><b>Luna review</b><span>0.222s → 0.518s</span></div>
+        <div><b>Difference</b><span>start +55 ms; end +17 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.851s">
+        <div class="track source"><span style="left:19.616%;width:39.232%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:26.087%;width:34.783%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.851s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.5005000000000001">source end</button>
+        <button data-time="0.22186956521739132">Luna start</button>
+        <button data-time="0.517695652173913">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.5005000000000001">play source</button>
+        <button data-start="0.22186956521739132" data-end="0.517695652173913">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The repeated two-fist WORK movement is clear by frame 6 and continues through frame 14; later frames change handshape into a different movement. The lead-in is ambiguous.</p>
+      <p class="meta">asllrp_contiguous · confidence medium · sampled frame 6–14</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_02.jpg" alt="Timestamped frame sheet for WORK"></details>
+</article>
+<article class="card" data-group="within100">
+  <header><div><span class="item">item_03</span><h2>HOME</h2></div><div class="badges"><span class="badge within100">both edges ≤100 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/HOME_WHEN/83940451_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.434s</span></div>
+        <div><b>Luna review</b><span>0.170s → 0.511s</span></div>
+        <div><b>Difference</b><span>start +4 ms; end +77 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.784s">
+        <div class="track source"><span style="left:21.286%;width:34.058%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:21.739%;width:43.478%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.784s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.4337666666666667">source end</button>
+        <button data-time="0.1703840579710145">Luna start</button>
+        <button data-time="0.5111521739130435">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.4337666666666667">play source</button>
+        <button data-start="0.1703840579710145" data-end="0.5111521739130435">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The dominant hand reaches the chin at frame 5, moves to the cheek, and remains in the HOME position through frame 15; it lowers from the face at frame 16.</p>
+      <p class="meta">asllrp_contiguous · confidence medium · sampled frame 5–15</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_03.jpg" alt="Timestamped frame sheet for HOME"></details>
+</article>
+<article class="card" data-group="censored">
+  <header><div><span class="item">item_04</span><h2>NOW</h2></div><div class="badges"><span class="badge censored">at least one edge &gt;200 ms</span><span class="badge censored">review range censored</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/NOW_WHY/83937293_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.567s</span></div>
+        <div><b>Luna review</b><span>0.239s → 0.917s</span></div>
+        <div><b>Difference</b><span>start +72 ms; end +350 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.917s">
+        <div class="track source"><span style="left:18.189%;width:43.653%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:26.087%;width:73.913%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.917s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.5672333333333334">source end</button>
+        <button data-time="0.23927826086956522">Luna start</button>
+        <button data-time="0.9172333333333333">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.5672333333333334">play source</button>
+        <button data-start="0.23927826086956522" data-end="0.9172333333333333">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The raised right hand transitions into the NOW sign by frame 6; the signing handshape and repeated movement remain visible through the final sampled frame, with no clear release in the sheet.</p>
+      <p class="meta">asllrp_contiguous · confidence medium · sampled frame 6–23</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_04.jpg" alt="Timestamped frame sheet for NOW"></details>
+</article>
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_05</span><h2>TAKE</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/TAKE_WORK/173949_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.501s</span></div>
+        <div><b>Luna review</b><span>0.185s → 0.629s</span></div>
+        <div><b>Difference</b><span>start +18 ms; end +128 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.851s">
+        <div class="track source"><span style="left:19.616%;width:39.232%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:21.739%;width:52.174%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.851s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.5005000000000001">source end</button>
+        <button data-time="0.18489130434782608">Luna start</button>
+        <button data-time="0.6286304347826087">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.5005000000000001">play source</button>
+        <button data-start="0.18489130434782608" data-end="0.6286304347826087">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The extended hand begins its inward grasping motion at frame 5 and remains in the completed position through frame 17; both hands begin moving together at frame 18.</p>
+      <p class="meta">asllrp_contiguous · confidence medium · sampled frame 5–17</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_05.jpg" alt="Timestamped frame sheet for TAKE"></details>
+</article>
+<article class="card" data-group="censored">
+  <header><div><span class="item">item_06</span><h2>WHEN</h2></div><div class="badges"><span class="badge censored">both edges ≤200 ms</span><span class="badge censored">review range censored</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/HOME_WHEN/83940550_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.534s → 0.934s</span></div>
+        <div><b>Luna review</b><span>0.683s → 1.068s</span></div>
+        <div><b>Difference</b><span>start +150 ms; end +133 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.184s to 1.068s">
+        <div class="track source"><span style="left:39.599%;width:45.301%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:56.522%;width:43.478%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.184s</span><span>1.068s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.5338666666666667">source start</button>
+        <button data-time="0.9342666666666667">source end</button>
+        <button data-time="0.6834434782608696">Luna start</button>
+        <button data-time="1.0677333333333334">Luna end</button>
+        <button data-start="0.5338666666666667" data-end="0.9342666666666667">play source</button>
+        <button data-start="0.6834434782608696" data-end="1.0677333333333334">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The earlier chin-level hand movement appears to lead into the sign; the two-hand configuration becomes clear at frame 13 and remains active through the final sampled frame.</p>
+      <p class="meta">asllrp_contiguous · confidence medium · sampled frame 13–23</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_06.jpg" alt="Timestamped frame sheet for WHEN"></details>
+</article>
+<article class="card" data-group="outside200">
+  <header><div><span class="item">item_07</span><h2>MAYBE</h2></div><div class="badges"><span class="badge outside200">at least one edge &gt;200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/MAYBE_MORE_IMPORTANT/18858050_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.400s</span></div>
+        <div><b>Luna review</b><span>0.196s → 0.620s</span></div>
+        <div><b>Difference</b><span>start +29 ms; end +219 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.750s">
+        <div class="track source"><span style="left:22.233%;width:31.126%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:26.087%;width:56.522%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.750s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.40040000000000003">source end</button>
+        <button data-time="0.1957565217391304">Luna start</button>
+        <button data-time="0.619895652173913">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.40040000000000003">play source</button>
+        <button data-start="0.1957565217391304" data-end="0.619895652173913">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The two hands move into the signing space by frame 6 and continue the target movement through their return toward center at frame 19; the next frames begin release/lowering.</p>
+      <p class="meta">asllrp_contiguous · confidence medium · sampled frame 6–19</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_07.jpg" alt="Timestamped frame sheet for MAYBE"></details>
+</article>
+<article class="card" data-group="within100">
+  <header><div><span class="item">item_08</span><h2>TIME</h2></div><div class="badges"><span class="badge within100">both edges ≤100 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/TIME_FRIEND/61830116_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.501s</span></div>
+        <div><b>Luna review</b><span>0.222s → 0.407s</span></div>
+        <div><b>Difference</b><span>start +55 ms; end -94 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.851s">
+        <div class="track source"><span style="left:19.616%;width:39.232%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:26.087%;width:21.739%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.851s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.5005000000000001">source end</button>
+        <button data-time="0.22186956521739132">Luna start</button>
+        <button data-time="0.4067608695652174">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.5005000000000001">play source</button>
+        <button data-start="0.22186956521739132" data-end="0.4067608695652174">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The index finger is clearly directed toward the opposite wrist by frame 6 and remains at the wrist through frame 11; the hands then separate into the next movement.</p>
+      <p class="meta">asllrp_contiguous · confidence medium · sampled frame 6–11</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_08.jpg" alt="Timestamped frame sheet for TIME"></details>
+</article>
+<article class="card" data-group="outside200">
+  <header><div><span class="item">item_09</span><h2>WHY</h2></div><div class="badges"><span class="badge outside200">at least one edge &gt;200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/BAD_OTHER_WHY_OTHER/7980799_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>2.970s → 3.270s</span></div>
+        <div><b>Luna review</b><span>2.968s → 3.576s</span></div>
+        <div><b>Difference</b><span>start -2 ms; end +307 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 2.620s to 3.620s">
+        <div class="track source"><span style="left:34.990%;width:30.021%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:34.783%;width:60.870%"></span><b>Luna</b></div>
+        <div class="axis"><span>2.620s</span><span>3.620s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="2.9696333333333333">source start</button>
+        <button data-time="3.2699333333333334">source end</button>
+        <button data-time="2.967563768115942">Luna start</button>
+        <button data-time="3.5764420289855074">Luna end</button>
+        <button data-start="2.9696333333333333" data-end="3.2699333333333334">play source</button>
+        <button data-start="2.967563768115942" data-end="3.5764420289855074">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The signer brings the index finger to the temple and performs the WHY movement through frame 22; the hand leaves the face at frame 23, ending the sign.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 8–22</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_09.jpg" alt="Timestamped frame sheet for WHY"></details>
+</article>
+<article class="card" data-group="within100">
+  <header><div><span class="item">item_10</span><h2>HAVE</h2></div><div class="badges"><span class="badge within100">both edges ≤100 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_HAVE_OTHER/47665653_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>4.805s → 5.072s</span></div>
+        <div><b>Luna review</b><span>4.791s → 5.085s</span></div>
+        <div><b>Difference</b><span>start -14 ms; end +14 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 4.455s to 5.422s">
+        <div class="track source"><span style="left:36.197%;width:27.606%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:34.783%;width:30.435%"></span><b>Luna</b></div>
+        <div class="axis"><span>4.455s</span><span>5.422s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="4.8048">source start</button>
+        <button data-time="5.071733333333333">source end</button>
+        <button data-time="4.791124637681159">Luna start</button>
+        <button data-time="5.085408695652174">Luna end</button>
+        <button data-start="4.8048" data-end="5.071733333333333">play source</button>
+        <button data-start="4.791124637681159" data-end="5.085408695652174">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The transition into the two-handed HAVE sign is clear by frame 8; frames 8–15 hold its forward handshape before both hands shift inward into the next movement at frame 16.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 8–15</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_10.jpg" alt="Timestamped frame sheet for HAVE"></details>
+</article>
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_11</span><h2>FRIEND</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/FRIEND_OTHER/83942524_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.601s</span></div>
+        <div><b>Luna review</b><span>0.124s → 0.744s</span></div>
+        <div><b>Difference</b><span>start -43 ms; end +143 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.951s">
+        <div class="track source"><span style="left:17.550%;width:45.631%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:13.043%;width:65.217%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.951s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.6006">source end</button>
+        <button data-time="0.12399130434782607">Luna start</button>
+        <button data-time="0.7439478260869564">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.6006">play source</button>
+        <button data-start="0.12399130434782607" data-end="0.7439478260869564">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The two hands meet and begin the repeated contact motion by frame 3; the target continues through frame 18, before the right hand rises away into the next movement at frame 19.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 3–18</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_11.jpg" alt="Timestamped frame sheet for FRIEND"></details>
+</article>
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_12</span><h2>TALK</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/WHEN_OTHER_TALK_OTHER/7568755_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>1.568s → 1.802s</span></div>
+        <div><b>Luna review</b><span>1.584s → 1.949s</span></div>
+        <div><b>Difference</b><span>start +15 ms; end +147 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 1.218s to 2.152s">
+        <div class="track source"><span style="left:37.491%;width:25.019%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:39.130%;width:39.130%"></span><b>Luna</b></div>
+        <div class="axis"><span>1.218s</span><span>2.152s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="1.5682333333333334">source start</button>
+        <button data-time="1.8018">source end</button>
+        <button data-time="1.5835420289855073">Luna start</button>
+        <button data-time="1.9488507246376812">Luna end</button>
+        <button data-start="1.5682333333333334" data-end="1.8018">play source</button>
+        <button data-start="1.5835420289855073" data-end="1.9488507246376812">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The hand reaches the mouth at frame 9 and remains in the signing configuration through frame 18; frames 19 onward show the hands lowering into release.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 9–18</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_12.jpg" alt="Timestamped frame sheet for TALK"></details>
+</article>
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_13</span><h2>TOMORROW</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/HAVE_OTHER_TOMORROW/40386216_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.868s → 1.201s</span></div>
+        <div><b>Luna review</b><span>0.766s → 1.122s</span></div>
+        <div><b>Difference</b><span>start -101 ms; end -80 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.518s to 1.335s">
+        <div class="track source"><span style="left:42.833%;width:40.834%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:30.435%;width:43.478%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.518s</span><span>1.335s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.8675333333333334">source start</button>
+        <button data-time="1.2012">source end</button>
+        <button data-time="0.7662260869565218">Luna start</button>
+        <button data-time="1.1215014492753623">Luna end</button>
+        <button data-start="0.8675333333333334" data-end="1.2012">play source</button>
+        <button data-start="0.7662260869565218" data-end="1.1215014492753623">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The hand reaches the chin in the TOMORROW handshape by frame 7 and maintains the target position through frame 17; it begins moving away at frame 18.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 7–17</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_13.jpg" alt="Timestamped frame sheet for TOMORROW"></details>
+</article>
+<article class="card" data-group="within100">
+  <header><div><span class="item">item_14</span><h2>WHERE</h2></div><div class="badges"><span class="badge within100">both edges ≤100 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_WHERE/632544_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>1.869s → 2.603s</span></div>
+        <div><b>Luna review</b><span>1.889s → 2.577s</span></div>
+        <div><b>Difference</b><span>start +21 ms; end -25 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 1.519s to 2.736s">
+        <div class="track source"><span style="left:28.747%;width:60.291%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:30.435%;width:56.522%"></span><b>Luna</b></div>
+        <div class="axis"><span>1.519s</span><span>2.736s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="1.8685333333333334">source start</button>
+        <button data-time="2.6026000000000002">source end</button>
+        <button data-time="1.8890869565217394">Luna start</button>
+        <button data-time="2.577257971014493">Luna end</button>
+        <button data-start="1.8685333333333334" data-end="2.6026000000000002">play source</button>
+        <button data-start="1.8890869565217394" data-end="2.577257971014493">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The index finger is clearly raised and held in the repeated sign posture from frame 7 through frame 20; the earlier frames show movement from the hand near the face, and the hand lowers at frame 21.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 7–20</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_14.jpg" alt="Timestamped frame sheet for WHERE"></details>
+</article>
+<article class="card" data-group="censored">
+  <header><div><span class="item">item_15</span><h2>SORRY</h2></div><div class="badges"><span class="badge censored">at least one edge &gt;200 ms</span><span class="badge censored">review range censored</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_SORRY_OTHER/3379841_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>3.604s → 4.304s</span></div>
+        <div><b>Luna review</b><span>3.254s → 4.045s</span></div>
+        <div><b>Difference</b><span>start -350 ms; end -259 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 3.254s to 4.654s">
+        <div class="track source"><span style="left:24.988%;width:50.025%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:0.000%;width:56.522%"></span><b>Luna</b></div>
+        <div class="axis"><span>3.254s</span><span>4.654s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="3.6036">source start</button>
+        <button data-time="4.3043000000000005">source end</button>
+        <button data-time="3.2536">Luna start</button>
+        <button data-time="4.0453">Luna end</button>
+        <button data-start="3.6036" data-end="4.3043000000000005">play source</button>
+        <button data-start="3.2536" data-end="4.0453">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> SORRY&#x27;s fist circles over the chest through frame 13; at frame 14 the hand opens and moves outward into the next sign.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 0–13</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_15.jpg" alt="Timestamped frame sheet for SORRY"></details>
+</article>
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_16</span><h2>SMALL</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_SMALL_OTHER/97998228_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.467s → 0.767s</span></div>
+        <div><b>Luna review</b><span>0.291s → 0.943s</span></div>
+        <div><b>Difference</b><span>start -176 ms; end +176 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.117s to 1.117s">
+        <div class="track source"><span style="left:34.990%;width:30.021%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:17.391%;width:65.217%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.117s</span><span>1.117s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.46713333333333334">source start</button>
+        <button data-time="0.7674333333333333">source end</button>
+        <button data-time="0.29109855072463775">Luna start</button>
+        <button data-time="0.9434681159420291">Luna end</button>
+        <button data-start="0.46713333333333334" data-end="0.7674333333333333">play source</button>
+        <button data-start="0.29109855072463775" data-end="0.9434681159420291">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The small-distance hand configuration is clear from frame 4 through 19; frame 3 is still approach, and the hands transition out at frame 20.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 4–19</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_16.jpg" alt="Timestamped frame sheet for SMALL"></details>
+</article>
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_17</span><h2>SLEEP</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_MAYBE_OTHER_SLEEP/338219_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>3.737s → 4.071s</span></div>
+        <div><b>Luna review</b><span>3.600s → 3.920s</span></div>
+        <div><b>Difference</b><span>start -137 ms; end -151 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 3.387s to 4.204s">
+        <div class="track source"><span style="left:42.833%;width:40.834%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:26.087%;width:39.130%"></span><b>Luna</b></div>
+        <div class="axis"><span>3.387s</span><span>4.204s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="3.7370666666666668">source start</button>
+        <button data-time="4.070733333333333">source end</button>
+        <button data-time="3.6002318840579712">Luna start</button>
+        <button data-time="3.9199797101449274">Luna end</button>
+        <button data-start="3.7370666666666668" data-end="4.070733333333333">play source</button>
+        <button data-start="3.6002318840579712" data-end="3.9199797101449274">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The hand opens beside the temple by frame 6, moves down across the face through frame 15, then settles at the upper chest by frame 16.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 6–15</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_17.jpg" alt="Timestamped frame sheet for SLEEP"></details>
+</article>
+<article class="card" data-group="within100">
+  <header><div><span class="item">item_18</span><h2>NAME</h2></div><div class="badges"><span class="badge within100">both edges ≤100 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_NAME_OTHER/75784414_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.767s → 1.001s</span></div>
+        <div><b>Luna review</b><span>0.823s → 1.067s</span></div>
+        <div><b>Difference</b><span>start +56 ms; end +66 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.417s to 1.351s">
+        <div class="track source"><span style="left:37.491%;width:25.019%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:43.478%;width:26.087%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.417s</span><span>1.351s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.7674333333333333">source start</button>
+        <button data-time="1.0010000000000001">source end</button>
+        <button data-time="0.823331884057971">Luna start</button>
+        <button data-time="1.0668710144927536">Luna end</button>
+        <button data-start="0.7674333333333333" data-end="1.0010000000000001">play source</button>
+        <button data-start="0.823331884057971" data-end="1.0668710144927536">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> Frames 10–16 show the two-handed contact and repeated hand movement consistent with NAME; the preceding raised-hand pose appears to be the prior sign, and frame 17 begins a clear transition away.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 10–16</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_18.jpg" alt="Timestamped frame sheet for NAME"></details>
+</article>
+<article class="card" data-group="outside200">
+  <header><div><span class="item">item_19</span><h2>SCHOOL</h2></div><div class="badges"><span class="badge outside200">at least one edge &gt;200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_SCHOOL_OTHER/24918677_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.334s → 0.801s</span></div>
+        <div><b>Luna review</b><span>0.200s → 1.051s</span></div>
+        <div><b>Difference</b><span>start -134 ms; end +250 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 1.151s">
+        <div class="track source"><span style="left:28.994%;width:40.592%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:17.391%;width:73.913%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>1.151s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.33366666666666667">source start</button>
+        <button data-time="0.8008000000000001">source end</button>
+        <button data-time="0.20013913043478262">Luna start</button>
+        <button data-time="1.0507304347826087">Luna end</button>
+        <button data-start="0.33366666666666667" data-end="0.8008000000000001">play source</button>
+        <button data-start="0.20013913043478262" data-end="1.0507304347826087">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The dominant hand lifts and moves into the repeated palm contact by frames 4–10, then remains in the sign posture through frame 21; the raised hand at frame 22 appears to be release.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 4–21</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_19.jpg" alt="Timestamped frame sheet for SCHOOL"></details>
+</article>
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_20</span><h2>LIKE</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/LIKE_OTHER/7982575_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.167s → 0.400s</span></div>
+        <div><b>Luna review</b><span>0.065s → 0.457s</span></div>
+        <div><b>Difference</b><span>start -102 ms; end +56 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.000s to 0.750s">
+        <div class="track source"><span style="left:22.233%;width:31.126%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:8.696%;width:52.174%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.000s</span><span>0.750s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.16683333333333333">source start</button>
+        <button data-time="0.40040000000000003">source end</button>
+        <button data-time="0.06525217391304347">Luna start</button>
+        <button data-time="0.45676521739130427">Luna end</button>
+        <button data-start="0.16683333333333333" data-end="0.40040000000000003">play source</button>
+        <button data-start="0.06525217391304347" data-end="0.45676521739130427">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The right hand moves from the chest into a forward-facing handshape by frame 2 and remains the isolated sign through frame 14; both hands begin joining into a different movement by frame 15.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 2–14</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_20.jpg" alt="Timestamped frame sheet for LIKE"></details>
+</article>
+<article class="card" data-group="outside200">
+  <header><div><span class="item">item_21</span><h2>FAMILY</h2></div><div class="badges"><span class="badge outside200">at least one edge &gt;200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_FAMILY_OTHER/7985632_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.567s → 0.901s</span></div>
+        <div><b>Luna review</b><span>0.397s → 1.206s</span></div>
+        <div><b>Difference</b><span>start -170 ms; end +305 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.217s to 1.251s">
+        <div class="track source"><span style="left:33.860%;width:32.280%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:17.391%;width:78.261%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.217s</span><span>1.251s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.5672333333333334">source start</button>
+        <button data-time="0.9009">source end</button>
+        <button data-time="0.3970014492753624">Luna start</button>
+        <button data-time="1.205957971014493">Luna end</button>
+        <button data-start="0.5672333333333334" data-end="0.9009">play source</button>
+        <button data-start="0.3970014492753624" data-end="1.205957971014493">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The hands move from the initial separated setup into the repeated paired circular family sign by frame 4; the meaningful movement continues through frame 22 before the hands settle and begin release at frame 23.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 4–22</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_21.jpg" alt="Timestamped frame sheet for FAMILY"></details>
+</article>
+<article class="card" data-group="within200">
+  <header><div><span class="item">item_22</span><h2>YES</h2></div><div class="badges"><span class="badge within200">both edges ≤200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_YES/58734316_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>2.636s → 3.103s</span></div>
+        <div><b>Luna review</b><span>2.493s → 2.989s</span></div>
+        <div><b>Difference</b><span>start -143 ms; end -115 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 2.286s to 3.237s">
+        <div class="track source"><span style="left:36.819%;width:49.141%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:21.739%;width:52.174%"></span><b>Luna</b></div>
+        <div class="axis"><span>2.286s</span><span>3.237s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="2.6359666666666666">source start</button>
+        <button data-time="3.1031">source end</button>
+        <button data-time="2.49261884057971">Luna start</button>
+        <button data-time="2.988584057971014">Luna end</button>
+        <button data-start="2.6359666666666666" data-end="3.1031">play source</button>
+        <button data-start="2.49261884057971" data-end="2.988584057971014">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The hand leaves the chin setup at frame 5, performs the forward wrist movement through frame 17, then lowers toward the lap at frame 18.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 5–17</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_22.jpg" alt="Timestamped frame sheet for YES"></details>
+</article>
+<article class="card" data-group="censored">
+  <header><div><span class="item">item_23</span><h2>TIRED</h2></div><div class="badges"><span class="badge censored">at least one edge &gt;200 ms</span><span class="badge censored">review range censored</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_TIRED_TIRED_OTHER/97997440_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>0.400s → 0.667s</span></div>
+        <div><b>Luna review</b><span>0.261s → 1.017s</span></div>
+        <div><b>Difference</b><span>start -140 ms; end +350 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.050s to 1.017s">
+        <div class="track source"><span style="left:36.197%;width:27.606%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:21.739%;width:78.261%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.050s</span><span>1.017s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="0.40040000000000003">source start</button>
+        <button data-time="0.6673333333333333">source end</button>
+        <button data-time="0.26060289855072466">Luna start</button>
+        <button data-time="1.0173333333333332">Luna end</button>
+        <button data-start="0.40040000000000003" data-end="0.6673333333333333">play source</button>
+        <button data-start="0.26060289855072466" data-end="1.0173333333333332">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The hand movement into the chest-directed tired sign is clear by frame 5; the same repeated sign posture continues through the final sampled frame, so the clip does not show its release.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 5–23</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_23.jpg" alt="Timestamped frame sheet for TIRED"></details>
+</article>
+<article class="card" data-group="outside200">
+  <header><div><span class="item">item_24</span><h2>IMPORTANT</h2></div><div class="badges"><span class="badge outside200">at least one edge &gt;200 ms</span></div></header>
+  <div class="media">
+    <video controls preload="metadata" src="../../../data/local/asllrp_other_ctc_v17/spans/train/asllrp_other_ctc/OTHER_IMPORTANT_OTHER/17593192_span00.mp4"></video>
+    <div class="details">
+      <div class="times">
+        <div><b>ASLLRP source</b><span>1.268s → 1.535s</span></div>
+        <div><b>Luna review</b><span>1.086s → 1.801s</span></div>
+        <div><b>Difference</b><span>start -182 ms; end +266 ms</span></div>
+      </div>
+      <div class="timeline" aria-label="Boundary comparison from 0.918s to 1.885s">
+        <div class="track source"><span style="left:36.197%;width:27.606%"></span><b>source</b></div>
+        <div class="track luna"><span style="left:17.391%;width:73.913%"></span><b>Luna</b></div>
+        <div class="axis"><span>0.918s</span><span>1.885s</span></div>
+      </div>
+      <div class="buttons">
+        <button data-time="1.2679333333333334">source start</button>
+        <button data-time="1.5348666666666666">source end</button>
+        <button data-time="1.0860956521739131">Luna start</button>
+        <button data-time="1.8007855072463768">Luna end</button>
+        <button data-start="1.2679333333333334" data-end="1.5348666666666666">play source</button>
+        <button data-start="1.0860956521739131" data-end="1.8007855072463768">play Luna</button>
+      </div>
+      <p class="reason"><b>Luna rationale:</b> The raised dominant hand moves into the sign around frame 4; the two hands settle into the palm-up configuration by frame 12 and continue its small finishing motion through frame 21. Frames 22–23 appear to release from that configuration.</p>
+      <p class="meta">asllrp_other_ctc · confidence medium · sampled frame 4–21</p>
+    </div>
+  </div>
+  <details><summary>Show the exact 24-frame sheet reviewed by Luna</summary><img loading="lazy" src="sheets/item_24.jpg" alt="Timestamped frame sheet for IMPORTANT"></details>
+</article>
+</main><script>
+const cards=[...document.querySelectorAll('.card')], filter=document.querySelector('#filter'), count=document.querySelector('#count');
+function apply(){let n=0;for(const card of cards){const show=filter.value==='all'||card.dataset.group===filter.value;card.hidden=!show;n+=show}count.textContent=`${n} shown`} filter.addEventListener('change',apply);apply();
+document.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;const video=button.closest('.card').querySelector('video');if(button.dataset.time){video.currentTime=Number(button.dataset.time);video.pause();return}const end=Number(button.dataset.end);video.currentTime=Number(button.dataset.start);video.play();const stop=()=>{if(video.currentTime>=end){video.pause();video.removeEventListener('timeupdate',stop)}};video.addEventListener('timeupdate',stop)});
+</script></body></html>
