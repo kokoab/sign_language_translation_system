@@ -3,9 +3,131 @@
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
 `rg` this file before re-running an experiment to see if it already failed.
 
-17 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+18 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-09-21 — saved clean-baseline train/validation diagnosis
+
+User approved fit comparison. Added scripts/diagnose_phrase_fit_v17.py and focused
+ test/test_phrase_fit_diagnostic_v17.py (failedmissingmodule thenpassed repeated-token/
+OTHERcountcheck). MPSinferenceonly, frozen evidence/cache/checkpointhashes verified.
+Train283/val211perseed; allvalpredictionsandmetrics reproduce previousresults exactly.
+
+Seeds17321/17322 trainknownWER2.60/0.27%,exact264/283/281/283; valWER50.27/49.38%,
+exact34/211/31/211. Localtrainexact226/232and232/232 versusval31/199and30/199.
+ASLLRPtrainWER13.04/2.17% versusval58.33%both. Notjustsourcemix; stronggeneralizationgap.
+TrainOTHERfullsequenceexact6/7and7/7 is fittingonly, no OOVvalidation added.
+Stage2train44knownclasses,val26;GOOD20/MORNING20/BAD1valoccurrences have noStage2train
+targets. Stage1stillcontainsall100. Seen-label190valslice remainsWER46.24/45.47%,
+exact34/31. Sharedtargetsequence182valclips exact31/30. Originalsplit/scoreunchanged.
+
+TOMORROW SCHOOL GO0/19exactboth;SCHOOLtokenmatches1/19both despite25trainoccurrences;
+FRIEND7/27and8/27 despite31train; HOW35/60and22/60 despite74train. Matching usesexisting
+minimum-editalignment, notisolatedaccuracy. Fullperphrase/class breakdown andpredictions
+in artifacts/reports/clean_phrase_baseline_v17_20260921/fit_diagnostic.json, diagnostic
+coverage/rankedslices in fit_slices.json, interpretation FIT_DIAGNOSIS.md. No promotion.
+
+Decision: do not increaseepochs basedonthisrun; nexttest shouldtargetgeneralization with
+history-informed predefinedregularization/realisticaugmentation, retainingseeds/split.
+Coverageholes warrant establishedlocaltrainingevidence but donotexplain thelargegap.
+No new training/acquisition/protectedtestaccess. Focusedtest/compile/diffchecks pass;
+largeartifactindex refreshed. No specific architectural cause proven.
+
+## 2026-09-21 — clean phrase baseline complete; weak held-out result verified
+
+User said runcompleted, authorizing artifactreview. statuscomplete, both18epochs;
+training12.40scombined onMPS. Seeds17321/17322 epoch8/11: knownWER50.27/49.38%,
+exact34/211(16.11%)/31/211(14.69%),S/D/I92/119/71and70/114/93,blank-only15/8,
+OTHER-emission0/1. Local199clipsWER49.91/48.98%,exact31/30;ASLLRP12clipsWER58.33%
+both,exact3/1. NoOOVvalidation, noUNKNOWNrecall claim. Initialhead487.52%WER is only
+an untrained insertion-heavy sanity reference, not a trained-model comparison.
+
+Verified all211unique predictionsperseed,recomputed metrics,independent editdistance,
+18historyrows andearliestminimum epochselection, checkpoint/base/manifest hashes,
+recipeMPS andtestfalse flags. No modelrerun/training/protectedtestaccess. Added
+artifacts/reports/clean_phrase_baseline_v17_20260921/REVIEW.md andreview_verification.json;
+currenttruthupdated. Baselineobjectivefulfilled, no promotion. Nextsafeaction is saved
+checkpoint train-versus-val metrics and perphrase/class diagnosis; no unsupported claim
+that data shortage or badlabels alone explain weakrecognition. Index/diffcheck refreshed.
+
+## 2026-09-21 — user-required MPS baseline prepared and launched detached
+
+User explicitly changed device toMPS during CPU preparation. SentSIGINT only to own
+verified preparationPID67014 (exit130); no savedcache/manifest/optimizerstep existed.
+Probe confirms MPSavailable but aten::_ctc_loss unsupported. Runner now uses MPS for
+encoder/head, differentiablelogits.cpu() for CTC, and backpropagates toMPS; actual finite
+loss/nonzeroMPSgrad test passed. Allocatorcap.35, encoderbatch16, headbatch16, CPUthreads2.
+Recipe/PLANupdated; user preference overrides initial CPU choice.
+
+MPSpreparationcompleted12.716seconds,283train/211validation loaded from exactapproved
+v2identityset,finiteCTCforward,nooptimizersteps. Encoded evidence.pt,base,data/codehashes
+pinned by active/v17/clean_phrase_baseline_manifest_20260921.json,sha256
+661eac1b318f54b80e13a45848be2d9225447479eefb33cc107227ee20eaab3d.
+Onlydedicatedphrasebaselinerunnerauthorized;legacytrainersrejectscopedmanifest.
+42focusedtests previouslypassed,addedMPSbackwardtest and5targetedtests pass;compile/
+diffchecks pass. No acquisition/isolatedreplay/blankrest/Flores/NCSLGR/protectedtest.
+
+Launched2026-09-21T15:51:26UTC via caffeinate -i venv/bin/python -u
+scripts/train_clean_phrase_baseline_v17.py,detachedstart_new_session,PID71737;receipt
+artifacts/reports/clean_phrase_baseline_v17_20260921/launch.json. Seeds17321/17322,
+18epochs each; frozenStage1;notification oncompletion/failure. No trainingpolling and
+no completion/result claim. Checkpoints/results carrymanifesthash;generalv2gatefalse.
+Nextsafeaction: nextsessionreadstatusandselectedresultsfields,reviewbothseedswith
+source-levelWER/exact/deletions/blank/OTHERmetrics;neverpromotefromlaunchreceipt.
+
+## 2026-09-21 — authorized clean phrase-only baseline preparation
+
+User approved proposed two-seed frozen-Stage1/CTC-head baseline. New runner:
+scripts/train_clean_phrase_baseline_v17.py; metric regression test:
+test/test_clean_phrase_baseline_v17.py. Reuses pooled encode/collate, existing causal
+CTC architecture and edit alignment; no new architecture or dependencies. Scoped
+manifest gate added to approved_phrase_data_v17.py so legacy trainers cannot consume
+this experiment's permission. Existing defaults remainv2/blocked for broad recipes.
+
+Recipe:283train/211validation approved phrases only;Stage1orientation-robust checkpoint
+same as prior Flores comparison, frozen;stride4/window8;head128/3blocks/dropout0.1;
+seeds17321/17322;18epochs;CPU2threads;batch16;AdamW.002/weightdecay.0001;eachcliponce
+per shuffled epoch;CTCloss mean per sequence,zero_infinity=false,clipgrad5. Select
+mean local/ASLLRP-contiguous knownWER,earliestties. Report per-source/overall WER,
+exact,edits,blank-only andOTHER emission plusfinalpredictions andinitialhead diagnostic.
+
+Ruling: auxiliary/rest/unseen-OOV blockers do not prevent a *phrase-only diagnostic*
+that never uses or claims those capabilities. Cost: results cannot certify UNKNOWN,
+full100continuous recognition, live boundaries or iPhone readiness. Legacy recipes
+stayblocked; a dedicated runmanifest pins code/base/data/cached frozen evidence.
+
+42focusedtests pass; metrics test first failed before implementation. Compilation and
+diffchecks pass. Preparation computes the frozen evidence in-session and runs forward
+CTC only (nooptimizer); training will launch detached only after preflight succeeds.
+No acquisition or protected-test access. Plan:
+artifacts/reports/clean_phrase_baseline_v17_20260921/PLAN.md. Record launch receipt
+separately; no assistant polling of training.
+
+## 2026-09-21 — v16 local phrase history comparison
+
+Located documented117-file v16phrase evaluation:20.2%overall mean-per-clip WER,9.1%on75multi-clip files. Exact~15%not found. Evaluator explicitly same-signer/random15%file holdout; current200local clips hold out signer02 and use corpusWER. v16full-sequence attention and potentially unfrozen encoder differ from current frozen causal motion-pilot head. Missing historical checkpoint path prevents reproduction. No inference/training run. Full evidence: artifacts/reports/v16_phrase_history_review_20260921/REPORT.md. Next: recover original checkpoint/predictions before matched comparison; do not dismiss architecture differences or attribute all gap to split.
+
+
+## 2026-09-21 — native-rate CTC was already tested; removing blank clips regressed
+
+The launch precheck corrected the data-path audit's proposed next step. Existing
+`stage2_v17_asllrp_other_multimodal` and grounded signer-split archives already contain
+source-rate1280px ASLLRP and native30fps local features. The prior aligned grounded
+experiment already uses an8-frame causal window, stride4, locked100+OTHER CTC, timed
+alignment, exact-core-adapted Stage1 and signer-disjoint local validation. Its result is
+25.5% local exact/37.04% WER,33.33% ASLLRP-contiguous exact/41.67% WER, and5.41%
+NCSLGR exact/78% WER. Repeating it would not test the audit hypothesis.
+
+Ran the missing matched ablation with only standalone transition-as-blank samples
+removed. MPS training completed18 epochs in106s and selected epoch8. Local held-out
+exact regressed25.5%→16.0% and WER37.04%→45.19%; ASLLRP contiguous stayed33.33% exact/
+41.67% WER; NCSLGR regressed5.41%→0% exact and78%→84% WER. Aggregate isolated exact
+rose82.37%→83.19%. The candidate fails promotion, default runtime is unchanged, and
+Citizen test stayed sealed. Standalone blank supervision is not the dominant failure.
+Do not rerun native rolling CTC or the four-state head; broader signer-disjoint connected
+coverage is now the justified next input. Report:
+`artifacts/reports/native_ctc_no_blank_v17_20260921/`.
 
 ## 2026-09-14 — full data audit and architecture research completed
 

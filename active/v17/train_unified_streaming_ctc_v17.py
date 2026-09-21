@@ -26,12 +26,15 @@ if __package__ in {None, ""}:
     if str(repo) not in sys.path:
         sys.path.insert(0, str(repo))
 
+from active.v17.approved_phrase_data_v17 import DEFAULT_MANIFEST, APPROVED_ROOT, require_training_manifest
 from active.v17.model_unified_streaming_ctc_v17 import (
     UnifiedStreamingCTCConfig,
     UnifiedStreamingCTCHeadV17,
 )
 from active.v17.model_v17 import SLTStage1V17, Stage1V17Config
 from active.v17.geometry_v17 import resample_features
+from active.v17.schema_stage2_features_v17 import landmark_config
+from active.v17.schema_v17 import schema_fingerprint
 from active.v17.train_stage_1_reel_emission_v17 import (
     asllrp_annotations,
     collect_samples,
@@ -50,6 +53,7 @@ class RawSequence:
     targets: tuple[int, ...]
     source: str
     identity: str
+    source_frames: int | None = None
 
 
 @dataclass(frozen=True)
@@ -89,9 +93,49 @@ def rolling_windows(
     ])
 
 
+def validate_phrase_archive(cached, ranges, targets, metadata, labels):
+    """Reject incompatible or incomplete supervision before temporal resampling."""
+    fingerprint = metadata.get("schema", {}).get(
+        "landmark_schema_fingerprint", metadata.get("schema_fingerprint"))
+    if fingerprint != schema_fingerprint(landmark_config()):
+        raise ValueError("incompatible landmark schema")
+    if cached.ndim != 4 or cached.shape[1:] != (32, 61, 5) or not np.isfinite(cached).all():
+        raise ValueError("invalid landmark tensor")
+    if (not len(cached) or ranges.shape != (len(cached), 2)
+            or not np.issubdtype(ranges.dtype, np.integer)
+            or ranges[0, 0] != 0 or np.any(ranges[:, 1] <= ranges[:, 0])
+            or np.any(ranges[1:, 0] != ranges[:-1, 1])):
+        raise ValueError("source ranges must be contiguous, non-overlapping and start at zero")
+    frames = metadata.get("sampled_source_frames")
+    if (not isinstance(frames, int) or isinstance(frames, bool)
+            or frames != int(ranges[-1, 1]) or metadata.get("dropped_tail_frames", 0) != 0):
+        raise ValueError("incomplete source-frame coverage; recover/review cache before admission")
+    if (targets.ndim != 1 or not len(targets) or not np.issubdtype(targets.dtype, np.integer)
+            or np.any(targets < 0) or np.any(targets > len(labels))):
+        raise ValueError("invalid target indices")
+    names = metadata.get("target_sequence")
+    # Some existing NCSLGR metadata preserves raw unsupported gloss names.
+    # This checks the stored mapping, not the semantic validity of an OOV label.
+    if (not isinstance(names, list) or len(names) != len(targets)
+            or any(not isinstance(name, str) for name in names)
+            or [labels.get(name, len(labels)) for name in names] != targets.tolist()):
+        raise ValueError("target names disagree with frozen vocabulary indices")
+
+
 def phrase_sequences(
     root: Path, role: str, rolling_stride: int, rolling_window_frames: int = 32,
+    *, labels: dict[str, int] | None = None,
+    evidence_level: str = "window",
 ) -> list[RawSequence]:
+    refuse_protected(root / role)
+    if (rolling_stride < 0 or not 1 <= rolling_window_frames <= 32
+            or evidence_level not in {"window", "frame"}):
+        raise ValueError("invalid rolling window configuration")
+    manifest = json.loads(Path(__file__).with_name("citizen100_manifest.json").read_text())
+    frozen = {row["canonical_label"]: row["class_index"] for row in manifest["classes"]}
+    if labels is not None and labels != frozen:
+        raise ValueError("checkpoint vocabulary differs from frozen Citizen100 mapping")
+    labels = frozen
     output = []
     for path in sorted((root / role).glob("*/*.npz")):
         with np.load(path, allow_pickle=False) as payload:
@@ -99,19 +143,28 @@ def phrase_sequences(
             if metadata["role"] != role:
                 raise ValueError(f"split mismatch: {path}")
             cached = payload["landmarks"].astype(np.float32)
+            ranges, indices = payload["window_source_ranges"], payload["target_indices"]
+            try:
+                validate_phrase_archive(cached, ranges, indices, metadata, labels)
+            except ValueError as error:
+                raise ValueError(f"{path}: {error}") from error
             if rolling_stride:
                 frames = restore_source_frames(
-                    cached, payload["window_source_ranges"]
+                    cached, ranges
                 )
                 windows = rolling_windows(
                     frames, rolling_stride, rolling_window_frames
                 )
             else:
                 windows = cached
-            targets = tuple(int(value) + 1 for value in payload["target_indices"])
+            targets = tuple(int(value) + 1 for value in indices)
+            minimum_steps = len(targets) + sum(a == b for a, b in zip(targets, targets[1:]))
+            if evidence_level == "window" and minimum_steps > len(windows):
+                raise ValueError(f"{path}: CTC target cannot fit available observation steps")
         output.append(RawSequence(
             windows, targets, str(metadata["source"]),
             str(metadata["source_item_id"]),
+            int(ranges[-1, 1]),
         ))
     return output
 
@@ -212,6 +265,10 @@ def encode(
             sample.targets,
             sample.source, sample.identity,
         ))
+        minimum_steps = len(sample.targets) + sum(
+            a == b for a, b in zip(sample.targets, sample.targets[1:]))
+        if minimum_steps > len(output[-1].evidence):
+            raise ValueError(f"{sample.identity}: CTC target cannot fit encoded evidence")
         cursor += count
     return output
 
@@ -323,6 +380,7 @@ def evaluate(
 
 
 def run(args: argparse.Namespace) -> dict[str, object]:
+    dataset_provenance = require_training_manifest(args)
     refuse_protected(
         args.phrase_root, args.other_root, args.citizen_root,
         args.semlex_train_root, args.semlex_val_root,
@@ -348,19 +406,19 @@ def run(args: argparse.Namespace) -> dict[str, object]:
 
     train_raw = phrase_sequences(
         args.phrase_root, "train", args.rolling_stride,
-        args.rolling_window_frames,
+        args.rolling_window_frames, labels=labels, evidence_level=args.evidence_level,
     )
     validation_raw = phrase_sequences(
         args.phrase_root, "validation", args.rolling_stride,
-        args.rolling_window_frames,
+        args.rolling_window_frames, labels=labels, evidence_level=args.evidence_level,
     )
     train_raw += phrase_sequences(
         args.other_root, "train", args.rolling_stride,
-        args.rolling_window_frames,
+        args.rolling_window_frames, labels=labels, evidence_level=args.evidence_level,
     )
     validation_raw += phrase_sequences(
         args.other_root, "validation", args.rolling_stride,
-        args.rolling_window_frames,
+        args.rolling_window_frames, labels=labels, evidence_level=args.evidence_level,
     )
     if args.full_local_root is not None:
         other_index = len(labels) + 1
@@ -485,6 +543,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     args.output_dir.mkdir(parents=True, exist_ok=False)
     output = args.output_dir / "best_model.pth"
     torch.save({
+        "dataset_provenance": dataset_provenance,
         "format": "slt_unified_streaming_ctc_v17", "version": 1,
         "head_config": config.to_dict(), "head_state_dict": model.cpu().state_dict(),
         "base_checkpoint": str(args.base), "base_checkpoint_sha256": sha256(args.base),
@@ -507,6 +566,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "test_accessed": False, "external_evaluation_reserved_accessed": False,
     }, output)
     result = {
+        "dataset_provenance": dataset_provenance,
         "format": "slt_unified_streaming_ctc_experiment_v17",
         "output": str(output), "device": str(device),
         "elapsed_seconds": time.perf_counter() - started,
@@ -535,15 +595,12 @@ def run(args: argparse.Namespace) -> dict[str, object]:
 
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(description=__doc__)
+    value.add_argument("--dataset-manifest", type=Path, default=DEFAULT_MANIFEST)
     value.add_argument("--base", type=Path, default=Path(
         "artifacts/models/stage1_v17_phrase_adapt_reel_v2/best_model.pth"
     ))
-    value.add_argument("--phrase-root", type=Path, default=Path(
-        "data/local/stage2_v17_multimodal"
-    ))
-    value.add_argument("--other-root", type=Path, default=Path(
-        "data/local/stage2_v17_asllrp_other_multimodal"
-    ))
+    value.add_argument("--phrase-root", type=Path, default=APPROVED_ROOT / "phrases")
+    value.add_argument("--other-root", type=Path, default=APPROVED_ROOT / "other")
     value.add_argument("--citizen-root", type=Path, default=Path(
         "data/local/citizen100_v17/landmarks"
     ))
