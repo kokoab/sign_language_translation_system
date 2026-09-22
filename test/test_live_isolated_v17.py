@@ -9,6 +9,7 @@ from scripts.live_isolated_v17 import (
     BoundaryConfig,
     OllamaNaturalizer,
     ObservedFrame,
+    SessionRecorder,
     TinyStage3Naturalizer,
     clicked_control,
     clicked_mode,
@@ -41,6 +42,20 @@ def observed_at(seconds: float, motion: float, x: float) -> ObservedFrame:
     value = observed(seconds, motion)
     value.assigned = {"left": None, "right": hand}
     return value
+
+
+class SessionRecorderTests(unittest.TestCase):
+    def test_finishing_video_releases_the_writer_only_once(self):
+        released = []
+        recorder = SessionRecorder.__new__(SessionRecorder)
+        recorder.writer = SimpleNamespace(release=lambda: released.append(True))
+        recorder.video_finished = False
+
+        recorder.finish_video()
+        recorder.finish_video()
+
+        self.assertEqual(released, [True])
+        self.assertTrue(recorder.video_finished)
 
 
 class AutoBoundaryTests(unittest.TestCase):

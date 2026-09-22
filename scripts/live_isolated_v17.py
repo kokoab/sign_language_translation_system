@@ -84,8 +84,27 @@ DEFAULT_NATURALIZER_MANIFEST = (
     REPO / "active/v17/stage3_mobile_naturalizer_manifest_v17.json"
 )
 DEFAULT_STAGE3_TINY = (
+    REPO / "artifacts/models/stage3_v17_asl_order_v1"
+)
+# The previous default, kept reachable for comparison and rollback. It renders ASL in
+# the order it receives and cannot drop a recognizer error.
+LEGACY_STAGE3_TINY = (
     REPO / "artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1"
 )
+# Written beside a checkpoint that expects per-gloss confidence tokens. Reading the
+# contract from the checkpoint means a caller that never heard of the flag, such as
+# scripts/live_continuous_v17.py, still feeds the model the input it was trained on.
+STAGE3_INPUT_CONTRACT = "stage3_input_contract.json"
+
+
+def stage3_encoding_for(checkpoint: Path) -> str:
+    contract = Path(checkpoint) / STAGE3_INPUT_CONTRACT
+    if not contract.exists():
+        return "plain"
+    try:
+        return str(json.loads(contract.read_text(encoding="utf-8"))["encoding"])
+    except (ValueError, KeyError, OSError):
+        return "plain"
 HAND_CONNECTIONS = (
     (0, 1), (1, 2), (2, 3), (3, 4),
     (0, 5), (5, 6), (6, 7), (7, 8),
@@ -172,7 +191,12 @@ class OllamaNaturalizer:
                 "error": f"{type(exc).__name__}: {exc}",
             }
 
-    def rephrase(self, glosses: list[str]) -> dict[str, object]:
+    def rephrase(
+        self, glosses: list[str], confidences: list[float] | None = None,
+    ) -> dict[str, object]:
+        # This backend renders gloss text only. Per-gloss evidence is accepted so the
+        # call site stays uniform across naturalizers, and is ignored here rather than
+        # silently changing the prompt.
         started = time.perf_counter()
         fallback, fallback_mode = self._fallback(glosses)
         prompt = (
@@ -241,6 +265,14 @@ class TinyStage3Naturalizer:
     def __init__(self, args: argparse.Namespace):
         self.checkpoint = args.stage3_checkpoint
         self.device_name = args.stage3_device
+        # The ASL-order checkpoint expects a confidence bucket before each gloss and the
+        # legacy one never saw those tokens, so the encoding follows the checkpoint
+        # unless the caller overrides it. Guessing wrong silently feeds the model an
+        # input format it was never trained on.
+        requested = getattr(args, "stage3_encoding", "auto")
+        self.encoding = (
+            stage3_encoding_for(self.checkpoint) if requested == "auto" else requested
+        )
         self.manifest = json.loads(DEFAULT_NATURALIZER_MANIFEST.read_text(encoding="utf-8"))
         self.templates = {
             tuple(row["glosses"]): str(row["english"])
@@ -275,24 +307,36 @@ class TinyStage3Naturalizer:
             self.checkpoint, local_files_only=True
         ).to(self.device).eval()
 
-    def _generate(self, glosses: list[str]) -> str:
+    def _model_input(self, glosses: list[str], confidences: list[float] | None) -> str:
+        if self.encoding == "evidence":
+            from active.v17.stage3_asl_encoding_v17 import encode
+
+            return encode(glosses, confidences)
+        return " ".join(glosses).lower()
+
+    def _generate(self, glosses: list[str], confidences: list[float] | None = None) -> str:
         import torch
 
         self._ensure_loaded()
+        # Evidence encoding spends two tokens per gloss, so it needs the wider window.
+        # The plain path keeps 48 exactly: raising it changes what the deployed
+        # checkpoint emits once an input passes about 41 tokens, and that path is not
+        # being retrained here.
+        limit = 64 if self.encoding == "evidence" else 48
         encoded = self.tokenizer(
-            " ".join(glosses).lower(), return_tensors="pt", truncation=True,
-            max_length=48,
+            self._model_input(glosses, confidences), return_tensors="pt",
+            truncation=True, max_length=limit,
         ).to(self.device)
         with torch.inference_mode():
             output = self.model.generate(
-                **encoded, max_new_tokens=48, num_beams=1, do_sample=False
+                **encoded, max_new_tokens=limit, num_beams=1, do_sample=False
             )
         return self.tokenizer.decode(output[0].cpu(), skip_special_tokens=True).strip()
 
     def warm(self) -> dict[str, object]:
         started = time.perf_counter()
         try:
-            self._generate(["HELLO"])
+            self._generate(["HELLO"], None)
             return {
                 "ok": True,
                 "naturalizer": "t5_efficient_tiny",
@@ -308,12 +352,18 @@ class TinyStage3Naturalizer:
                 "error": f"{type(exc).__name__}: {exc}",
             }
 
-    def rephrase(self, glosses: list[str]) -> dict[str, object]:
+    def rephrase(
+        self, glosses: list[str], confidences: list[float] | None = None,
+    ) -> dict[str, object]:
         started = time.perf_counter()
+        if confidences is not None and len(confidences) != len(glosses):
+            confidences = None
         fallback, fallback_mode = self._fallback(glosses)
         result: dict[str, object] = {
             "model": str(self.checkpoint),
             "input_glosses": list(glosses),
+            "input_confidences": None if confidences is None else list(confidences),
+            "stage3_encoding": self.encoding,
             "literal_sentence": literal_render(glosses, self.manifest),
             "fallback_sentence": fallback,
             "fallback_mode": fallback_mode,
@@ -327,7 +377,7 @@ class TinyStage3Naturalizer:
             })
         else:
             try:
-                sentence = " ".join(self._generate(glosses).split())
+                sentence = " ".join(self._generate(glosses, confidences).split())
                 if not sentence or len(sentence) > 300:
                     raise ValueError("tiny Stage-3 model returned an empty or overlong sentence")
                 result.update({
@@ -589,8 +639,12 @@ def landmarks_from_observations(
 
 def trim_to_motion(
     observations: list[ObservedFrame], threshold: float, context_frames: int = 2,
+    *, enabled: bool = True,
 ) -> tuple[list[ObservedFrame], dict[str, object]]:
     """Remove live neutral padding while retaining the complete moving interval."""
+    if not enabled:
+        return observations, {"motion_trim_start": 0, "motion_trim_end_exclusive": len(observations),
+                              "motion_trim_disabled": True}
     active = np.flatnonzero(np.asarray([item.motion for item in observations]) > threshold)
     if len(active) < 2:
         return observations, {
@@ -857,7 +911,8 @@ class IsolatedClassifier:
         mode = self.mode
         original = observations
         observations, motion_diagnostics = trim_to_motion(
-            observations, self.args.quiet_motion
+            observations, self.args.quiet_motion,
+            enabled=not getattr(self.args, "no_motion_trim", False),
         )
         try:
             features, landmark_diagnostics = landmarks_from_observations(
@@ -1114,6 +1169,7 @@ class SessionRecorder:
         self.history_path = self.root / "history.json"
         self.video_path = self.root / "session_lowres.mp4"
         self.writer = None
+        self.video_finished = False
         self.next_video_seconds = -1.0
         self.args = args
         self.data = {
@@ -1144,6 +1200,8 @@ class SessionRecorder:
                 "ollama_url": args.ollama_url,
                 "ollama_timeout": args.ollama_timeout,
                 "ollama_enabled": not args.no_ollama,
+                "speech_voice": getattr(args, "voice", None),
+                "speech_rate": getattr(args, "speech_rate", DEFAULT_SPEECH_RATE),
             },
             "models": classifier.provenance(),
             "video": str(self.video_path),
@@ -1156,6 +1214,8 @@ class SessionRecorder:
         atomic_json(self.history_path, self.data)
 
     def write_frame(self, frame: np.ndarray, seconds: float) -> None:
+        if getattr(self, "video_finished", False):
+            return
         if self.next_video_seconds < 0:
             self.next_video_seconds = seconds
         if seconds + 1e-6 < self.next_video_seconds:
@@ -1192,10 +1252,17 @@ class SessionRecorder:
         atomic_json(self.history_path, self.data)
 
     def close(self) -> None:
-        if self.writer is not None:
-            self.writer.release()
+        self.finish_video()
         self.data["finished_utc"] = datetime.now(timezone.utc).isoformat()
         atomic_json(self.history_path, self.data)
+
+    def finish_video(self) -> None:
+        """Flush MP4 metadata as soon as capture ends, before slow model cleanup."""
+        if getattr(self, "video_finished", False):
+            return
+        if self.writer is not None:
+            self.writer.release()
+        self.video_finished = True
 
 
 def draw_detection(frame: np.ndarray, item: ObservedFrame | None, mirror: bool) -> np.ndarray:
@@ -1345,16 +1412,99 @@ def clicked_control(x: int, y: int, width: int, height: int) -> str | None:
     return None
 
 
+# Softest-first.  macOS does not expose Siri's own voice to any speech API, so
+# the closest available is Apple's neural "premium" tier, which has to be
+# installed by hand:
+#   System Settings > Accessibility > Spoken Content > System Voice > Manage Voices
+# Everything here degrades quietly to whatever is actually present.
+PREFERRED_VOICES = (
+    "com.apple.voice.premium.en-US.Ava",
+    "com.apple.voice.premium.en-US.Zoe",
+    "com.apple.voice.enhanced.en-US.Ava",
+    "com.apple.voice.enhanced.en-US.Zoe",
+    "com.apple.voice.enhanced.en-US.Samantha",
+    "com.apple.voice.compact.en-US.Samantha",
+)
+DEFAULT_SPEECH_RATE = 190.0
+
+
+def resolve_voice(requested: str | None, available: list[str]) -> str | None:
+    """An identifier from `available`, or None to keep the system default.
+
+    A request may be a full identifier, a voice name such as "Ava (Premium)", or
+    just "ava"; anything unmatched falls through to the preference list rather
+    than failing, because a missing voice must never stop a session.
+    """
+    wanted = (requested or "").strip().lower()
+    if wanted:
+        for identifier in available:
+            if identifier.lower() == wanted:
+                return identifier
+        for identifier in available:
+            if wanted in identifier.lower().split(".")[-1].lower():
+                return identifier
+        for identifier in available:
+            if wanted in identifier.lower():
+                return identifier
+    for identifier in PREFERRED_VOICES:
+        if identifier in available:
+            return identifier
+    return None
+
+
+def make_speaker(args: argparse.Namespace):
+    """Build the speaker from parsed flags and say which voice was chosen."""
+    speaker = LiveSpeaker(
+        getattr(args, "voice", None),
+        getattr(args, "speech_rate", DEFAULT_SPEECH_RATE),
+    )
+    if not speaker.premium:
+        print(
+            f"speech: {speaker.voice_name} at {speaker.rate:.0f} wpm "
+            "(compact voice; install a Premium voice in System Settings > "
+            "Accessibility > Spoken Content > System Voice > Manage Voices "
+            "for a softer one)"
+        )
+    else:
+        print(f"speech: {speaker.voice_name} at {speaker.rate:.0f} wpm")
+    return speaker
+
+
 class LiveSpeaker:
     """Queue native speech so gloss and sentence audio never interrupt each other."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, voice: str | None = None, rate: float = DEFAULT_SPEECH_RATE,
+    ) -> None:
         from AppKit import NSSpeechSynthesizer
 
-        self.synthesizer = NSSpeechSynthesizer.alloc().initWithVoice_(None)
-        self.synthesizer.setRate_(220.0)
+        available = list(NSSpeechSynthesizer.availableVoices())
+        self.voice = resolve_voice(voice, available)
+        self.requested_voice = voice
+        self.synthesizer = NSSpeechSynthesizer.alloc().initWithVoice_(self.voice)
+        self.rate = float(rate)
+        self.synthesizer.setRate_(self.rate)
         self.queue: deque[dict[str, object]] = deque()
         self.current: dict[str, object] | None = None
+
+    @property
+    def voice_name(self) -> str:
+        """What the listener actually hears, for the session record."""
+        if not self.voice:
+            return "system default"
+        try:
+            from AppKit import NSSpeechSynthesizer
+
+            attributes = NSSpeechSynthesizer.attributesForVoice_(self.voice)
+            return str(attributes.get("VoiceName") or self.voice)
+        except Exception:
+            return str(self.voice)
+
+    @property
+    def premium(self) -> bool:
+        return bool(self.voice) and (
+            ".premium." in self.voice or ".enhanced." in self.voice
+        )
 
     @property
     def current_text(self) -> str | None:
@@ -1371,6 +1521,7 @@ class LiveSpeaker:
         if not self.queue:
             return None
         self.current = self.queue.popleft()
+        # Lowercased so an all-caps gloss is spoken as a word, not spelled out.
         self.synthesizer.startSpeakingString_(str(self.current["text"]).lower())
         return self.current
 
@@ -1382,7 +1533,7 @@ class LiveSpeaker:
 
 def run(args: argparse.Namespace) -> dict[str, object]:
     classifier = IsolatedClassifier(args)
-    speaker = None if args.no_speech else LiveSpeaker()
+    speaker = None if args.no_speech else make_speaker(args)
     naturalizer = make_naturalizer(args)
     source = str(args.video) if args.video else f"camera:{args.camera}"
     recorder = SessionRecorder(args, classifier, source)
@@ -1700,6 +1851,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             else:
                 service_speech()
 
+        recorder.finish_video()
         if future is None:
             clip = (
                 list(observations)
@@ -1748,6 +1900,7 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--minimum-point-confidence", type=float, default=0.15)
     value.add_argument("--start-motion", type=float, default=0.012)
     value.add_argument("--quiet-motion", type=float, default=0.006)
+    value.add_argument("--no-motion-trim", action="store_true", help="retain complete reviewed/learned sign intervals instead of wrist-motion trimming")
     value.add_argument("--quiet-seconds", type=float, default=0.20)
     value.add_argument("--minimum-score", type=float, default=0.25)
     value.add_argument("--minimum-margin", type=float, default=0.08)
@@ -1760,10 +1913,26 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--no-display", action="store_true")
     value.add_argument("--no-speech", action="store_true")
     value.add_argument(
+        "--voice", default=None,
+        help="speech voice: an identifier, a name like 'Ava (Premium)', or 'ava'; "
+             "unmatched falls back to the softest installed voice",
+    )
+    value.add_argument(
+        "--speech-rate", type=float, default=DEFAULT_SPEECH_RATE,
+        help="words per minute; lower is calmer",
+    )
+    value.add_argument(
         "--naturalizer", choices=("tiny", "ollama", "literal"), default="tiny",
         help="FINISH renderer; tiny is the promoted local 15.6M checkpoint",
     )
     value.add_argument("--stage3-checkpoint", type=Path, default=DEFAULT_STAGE3_TINY)
+    value.add_argument(
+        "--stage3-encoding", choices=("auto", "plain", "evidence"), default="auto",
+        help=(
+            "auto reads the input contract beside the checkpoint; plain sends gloss "
+            "text only; evidence prefixes each gloss with its confidence bucket"
+        ),
+    )
     value.add_argument(
         "--stage3-device", choices=("cpu", "mps", "auto"), default="cpu",
         help="CPU avoids competing with the live Stage-1 MPS workload",
