@@ -3,9 +3,76 @@
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
 `rg` this file before re-running an experiment to see if it already failed.
 
-42 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+45 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-09-22 — combined dataset manifest created and fully loaded
+
+User requested creation immediately. Created data/local/combined_dataset_v17_20260922/manifest.json
+from all five finalized supplement lists plus all494baseline records, including431localphrases.
+6421records=4547train/1874validation; source roles, hashes, representations, targets and
+139sharedASLLRPparent records preserved. Source manifests/vocabulary pinned. No file copying,
+source mutation, downloads, test features, or training. Manifest SHA256:
+089da8b13943b65663691cc7e23c8bd1dcb279fceca56ab1675fa768d19c95f2.
+Added scripts/build_combined_dataset_v17.py with representation-aware load_features.
+Initial check failed because isolated positive-core per-window hand floor was applied to
+approved full phrases with natural rest windows; corrected shared feature_check to allow
+explicit require_hands=False only for phrase supervision. Structural checks unchanged;
+existing supplement callers retain defaultTrue. Full rerun saved/reopened6421records and
+verified7367windows plus feature/raw/source/evidencehashes andCTCtargets. Focusedtest passes.
+Report artifacts/reports/combined_dataset_v17_20260922/REPORT.md and verification.json.
+Next: dedicated combined recipe consuming this manifest; no automatic legacy trainer
+migration or training launch. Validation never becomes training due to signer policy.
+
+
+## 2026-09-22 — existing supplements finalized, signer overlap no longer an admission gate
+
+User explicitly permits shared/missing signer IDs and inclusion of local phrases; keep
+existing roles and describe metrics honestly. Finalized five per-source lists under
+artifacts/reports/supplement_finalization_v17_20260922/: 5,927 records (4,264train/1,663val):
+Citizen1475/378, SemLex1388/953, ASLLRPsegmented1116/254, reviewedSTEM90/21, O5S5cores195/57.
+Three incomplete tails safely recovered into separate landmark-only archives from pinned
+raw video (STEM exact reviewed intervals); 252 exact O5S5 cores materialized. Originals kept.
+36 exclusions:1knownCitizenreject,6missingSemLexfeatures,25exacttrain/valSemLexduplicates,
+4O5S5intervals with fewer than2cachedobservations. No signer-based exclusions. SemLex951
+retainedvalidationrows share training signer IDs; descriptive familiar-signer metrics.
+Five manifests pin exact labels/codes/features/raw hashes and source evidence; oldSemLex
+approvalflag resolved by frozenbase explicitapproval and matching selectionhash.
+Scripts finalize_supplements_v17.py / verify_finalized_supplements_v17.py and focused
+feature-contract test added. Full frozenStage1MPS verification:5,927records/5,937windows,
+finite100classoutputs,zerooptimizersteps; no exactrawhashoverlap with494baseline. ASLLRP
+parent utterance overlap tracked, not independent-event count. No protectedtestfeatures,
+download,training,orcombinedmanifest. 494+5927=6421records(4547train/1874val),not allphrases.
+Next: combined recipe/manifest using these pinned lists and existing494 (includinglocal),
+with explicit representation loading and parent-aware sampling. No learnability guarantee.
+
+
+## 2026-09-22 — broad existing-source reconciliation corrects narrow audit scope
+
+User challenged omittedFlores/O5S5/etc and required complete trustworthycounts. Confirmed
+lastbaseline mixedlocal/ASLLRPwithin epochs, notonecorpusatime, butomittedotherestablished
+supervision. Prior494count wasneverwholeprojectusableinventory. No sourcefilesdeleted.
+
+Restored explicit prioradmissions:ASLLRPsegmented1116train/254val;O5S5officialpositive
+intervals199/57across53classes(sixrawApplecachesexist);STEMfinalreview111spans31classes,
+features90train/21val. Freshvalidator over1370ASLLRP+111STEM:1ASLLRPtraintail and2STEM
+traintailsblocked;1369+256+109=1734supplementalrecords(1402/332), notuniquevideos.
+ExistingCitizen1476/378,SemLex1388/978;Citizenextra1stillunresolvedagainstbase1475.
+Localdeepclean13381/2896exists withownerlabelapproval/familiar-signer restriction;
+ASLLVD175officialexacttrain-onlyfeatures exist, schema/global signer compatibilitypending.
+Flores155/141completeOTHERcache;NCSLGR166/125strict-targetphrasecache remainconditional
+lexicalsupervision, notblanketbadcorpora. Motion-onlyrawpathsverifiedHow2Sign1027,
+YouTube128,OpenASL3,NCSLGR166;phone5. Reviewed prior acquisition restrictions forRWTH201,
+Epee1200,MoLo/RIT,SoMeexcluded,PopSignpaused. Do notcountcachedwindowsasnewvideos.
+
+RWTHconflict explicit:olderprosepermitsauxiliaryuse butacquisitionaudittrainingeligiblefalse
+pendingexactidentity/signerreview;keptconditional. Do notsilentlyrevoke existingpositive
+O5S5/STEMadmissionsbecausenotwholephrases;do notpromoteunresolvedmappingsforlarger totals.
+Outputartifacts/reports/dataset_reconciliation_v17_20260922/{REPORT.md,evidence.json};
+evidencepinshashes/currentcounts/blockedpaths. AGENTS/currenttruthcorrected. Nextsafeaction
+iscompatiblemixed-supervisionregistry withsource-event/global-signer dedup,threecacherepairs
+andCitizenextra reconciliation;no new traininglaunched, noacquisition/protectedtestaccess.
 
 ## 2026-09-21 — one excluded ASLLRP subspan salvaged; v2 canonical
 

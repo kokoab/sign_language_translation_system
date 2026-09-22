@@ -7,6 +7,26 @@ stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
 ---
 
+## 2026-09-21 — canonical phrase version2 retains exclusion and training gates
+
+Use active/v17/approved_phrase_manifest_20260921_v2.json (494clips) as current phrase
+manifest. Version1 is historical evidence, not the default. One contiguous established
+WHEN/OTHER subspan admitted from an excluded parent does not re-admit the full parent.
+No unlabeled gap or retiming was used to force salvage. Training-ready remainsfalse;
+future recipe must recognize asllrp_verified_span and retain all prior blockers.
+Evidence: artifacts/reports/verified_phrase_salvage_v17_20260921/REPORT.md.
+
+## 2026-09-21 — canonical phrase admission requires enforced versioned manifest
+
+New v17 phrase training must honor active/v17/approved_phrase_manifest_20260921.json
+and its verifier, not historical broad directory roots. 493 whole clips pass established
+identity and recovery/quality rules;1,365 excluded sequences remain preserved. Never
+turn unresolved identity into OTHER or delete a target without its video. Current manifest
+is not training-ready; source-dependent recipe metrics, auxiliary/rest supervision and
+unseen-OOV evaluation remain unresolved. New training needs a reviewed new manifest and
+compatible recipe; do not toggle training_ready alone or bypass through a legacy trainer.
+Evidence: artifacts/reports/approved_phrase_manifest_v17_20260921/REPORT.md.
+
 ## 2026-09-14 — O5S5 exact direct positives; SoMe excluded; RWTH auxiliary-only
 
 User visual review excludes SoMe ASL from all training because its predominantly
@@ -241,3 +261,16 @@ at this timestamp it is active with no observed failures.
 
 The counts in this entry were superseded at 19:03 PST after replacing the accidentally
 selected fingerspelling class with lexical `WHAT1`. The corrected total is 3,102.
+
+## 2026-09-22 — user-authorized supplemental admission and signer policy
+
+Use five hash-pinned manifests in artifacts/reports/supplement_finalization_v17_20260922/
+plus the approved494phrase manifest for the next combined dataset. Shared/missing signer
+IDs are descriptive, not disqualifying; preserve existing roles. Exact duplicate videos
+must not appear on both sides of evaluation. Keep verified labels, features, source
+boundaries, and exclusions enforced. Include local phrases; do not inflate independent
+phrase counts with isolated signs or shared-parent segments. See REPORT.md and verification.json.
+
+Combined entrypoint (2026-09-22): `data/local/combined_dataset_v17_20260922/manifest.json`
+now materializes the six pinned inputs:6421records(4547train/1874validation). Future combined
+trainers must explicitly consume and verify it; legacy trainers were not switched.
