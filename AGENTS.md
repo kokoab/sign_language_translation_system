@@ -1,5 +1,42 @@
 # SLT working guide
 
+## Canonical repaired phrase dataset (2026-09-21)
+
+Before any new v17 phrase training, read
+`active/v17/approved_phrase_manifest_20260921_v2.json` using targeted fields and run
+`venv/bin/python -m active.v17.approved_phrase_data_v17`.
+Use only its approved roots; do not restore historical dataset defaults or bypass the
+training gate through another trainer. It currently admits 494 phrase clips (493 whole clips plus one verified contiguous subspan) and
+is **not training-ready**: the old recipe requires excluded sources, and auxiliary
+blank/rest supervision plus evaluation need resolution. Do not flip that flag alone.
+Prepare a new version with reviewed recipe/input contracts before enabling training.
+The verifier protects file membership and hashes; future checkpoints record the manifest
+hash. All source datasets are preserved. Full details:
+`artifacts/reports/approved_phrase_manifest_v17_20260921/REPORT.md`.
+
+
+## Authorized clean phrase baseline (2026-09-21)
+
+The user authorized the bounded two-seed phrase-only experiment in
+`artifacts/reports/clean_phrase_baseline_v17_20260921/PLAN.md`.
+Launched detached on MPS (2026-09-21); only unsupported CTC loss stays on CPU.
+Its dedicated `scripts/train_clean_phrase_baseline_v17.py` uses the recipe-scoped
+`active/v17/clean_phrase_baseline_manifest_20260921.json` once preparation passes.
+This is not permission to enable older mixed-data trainers. Stage1 remains frozen;
+only283train/211validation phrase clips are used. No isolated replay, blank/rest clips,
+Flores, NCSLGR or protected test data. Run training detached with completion notification;
+do not poll it. Read status/results next session before assuming it completed.
+
+## Complete source inventory (2026-09-22)
+
+Before proposing dataset scarcity, exclusions or a broader training mixture, read
+`artifacts/reports/dataset_reconciliation_v17_20260922/REPORT.md`.
+The 494-phrase allowlist is one baseline view, not all usable supervision. Preserve prior
+ASLLRP segmented, O5S5 positive-only and reviewed STEM admissions. Keep isolated, whole
+sequences, interval supervision and motion-only data distinct; do not count overlapping
+representations as independent examples. The source inventory is not blanket permission
+to bypass signer/identity/schema gates. No acquisition is authorized.
+
 ## Token-efficient workflow
 
 Read this file and `PROJECT_GROUND_TRUTH.md`, then inspect only task-relevant files and

@@ -78,12 +78,12 @@ def _font(style: Type):
     return font
 
 
-@lru_cache(maxsize=512)
-def _text_width(style: Type, text: str) -> int:
+@lru_cache(maxsize=4096)
+def text_width(style: Type, text: str) -> int:
     return int(math.ceil(_font(style).getlength(text)))
 
 
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=2048)
 def _tile(
     style: Type, text: str, color: tuple[int, int, int], alpha: int
 ) -> Image.Image:
@@ -115,14 +115,14 @@ def _blit(
     image.paste(tile, (x, y), tile)
 
 
-def _text(
+def draw_text(
     image: Image.Image, position: tuple[int, int], text: str, style: Type,
     color: tuple[int, int, int], *, alpha: int = 255, anchor: str = "lt",
 ) -> None:
     _blit(image, position, _tile(style, text, color, alpha), anchor)
 
 
-def _shadowed(
+def draw_shadowed_text(
     image: Image.Image, position: tuple[int, int], text: str, style: Type,
     color: tuple[int, int, int], *, alpha: int = 255, anchor: str = "lt",
     offset: int = 2,
@@ -133,8 +133,152 @@ def _shadowed(
     _blit(image, (x, y), _tile(style, text, color, alpha), anchor)
 
 
-def _scale(width: int) -> float:
+def scale(width: int) -> float:
     return max(0.45, min(1.6, width / 1280.0))
+
+
+# --- shared drawing surface -------------------------------------------------
+# Every page composites the same way, whether it starts from a camera frame or
+# from nothing, so one set of primitives serves the live overlay and the rest.
+
+def frame_canvas(frame: np.ndarray) -> Image.Image:
+    """The live surface: a BGR camera frame lifted into PIL."""
+    return Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
+
+def canvas(
+    width: int, height: int, *, fill: tuple[int, int, int] = INK
+) -> Image.Image:
+    """A page surface with no camera behind it."""
+    return Image.new("RGB", (max(1, width), max(1, height)), fill)
+
+
+def to_frame(image: Image.Image) -> np.ndarray:
+    """Back to the BGR array OpenCV shows."""
+    return cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
+
+
+# --- rect tables ------------------------------------------------------------
+# Drawing and hit-testing always share one source; nothing hard-codes a box it
+# did not ask for.
+
+def hit(
+    rects: dict[str, tuple[int, int, int, int]], x: int, y: int
+) -> str | None:
+    for name, (left, top, right, bottom) in rects.items():
+        if left <= x <= right and top <= y <= bottom:
+            return name
+    return None
+
+
+def row_rects(
+    labels: tuple[str, ...], width: int, top: int, scale_value: float, *,
+    style: Type | None = None, height: int | None = None, gap: int | None = None,
+    pad: int | None = None, align: str = "center",
+) -> dict[str, tuple[int, int, int, int]]:
+    """Evenly spaced pills on one line, sized to their own text."""
+    style = style or Type(int(15 * scale_value), "Semibold")
+    height = height or int(46 * scale_value)
+    gap = int(12 * scale_value) if gap is None else gap
+    pad = int(22 * scale_value) if pad is None else pad
+    widths = [text_width(style, label) + 2 * pad for label in labels]
+    span = sum(widths) + gap * max(0, len(labels) - 1)
+    if align == "center":
+        x = max(0, (width - span) // 2)
+    elif align == "right":
+        x = max(0, width - span - int(24 * scale_value))
+    else:
+        x = int(24 * scale_value)
+    rects: dict[str, tuple[int, int, int, int]] = {}
+    for label, box_width in zip(labels, widths):
+        rects[label] = (x, top, x + box_width, top + height)
+        x += box_width + gap
+    return rects
+
+
+def grid_rects(
+    count: int, width: int, top: int, bottom: int, scale_value: float, *,
+    columns: int = 5, gap: int | None = None, margin: int | None = None,
+    aspect: float = 0.75, offset: int = 0,
+) -> tuple[dict[int, tuple[int, int, int, int]], int]:
+    """Tile boxes for a scrolling grid, plus the total row count.
+
+    Only the rows visible between `top` and `bottom` are returned; `offset` is
+    the first row to draw, so scrolling never rasterises what is off-screen.
+    """
+    columns = max(1, columns)
+    gap = int(16 * scale_value) if gap is None else gap
+    margin = int(24 * scale_value) if margin is None else margin
+    usable = max(1, width - 2 * margin - gap * (columns - 1))
+    tile_width = usable // columns
+    tile_height = max(1, int(tile_width * aspect))
+    rows = (max(0, count) + columns - 1) // columns
+    rects: dict[int, tuple[int, int, int, int]] = {}
+    for index in range(max(0, count)):
+        row, column = divmod(index, columns)
+        if row < offset:
+            continue
+        box_top = top + (row - offset) * (tile_height + gap)
+        if box_top + tile_height > bottom:
+            break
+        left = margin + column * (tile_width + gap)
+        rects[index] = (left, box_top, left + tile_width, box_top + tile_height)
+    return rects, rows
+
+
+# --- navigation -------------------------------------------------------------
+
+NAV_PAGES = ("HOME", "LIVE", "GLOSSES", "PRACTICE", "HISTORY")
+
+
+def nav_height(width: int) -> int:
+    return int(56 * scale(width))
+
+
+def nav_rects(width: int) -> dict[str, tuple[int, int, int, int]]:
+    scale_value = scale(width)
+    box_height = int(34 * scale_value)
+    return row_rects(
+        NAV_PAGES, width, (nav_height(width) - box_height) // 2, scale_value,
+        style=Type(int(15 * scale_value), "Semibold"), height=box_height,
+        gap=int(6 * scale_value), pad=int(14 * scale_value), align="center",
+    )
+
+
+def clicked_nav(x: int, y: int, width: int) -> str | None:
+    return hit(nav_rects(width), x, y)
+
+
+def draw_nav(
+    image: Image.Image, draw: ImageDraw.ImageDraw, width: int, active: str, *,
+    note: str | None = None,
+) -> None:
+    """The navigation every page carries, including over the live feed.
+
+    There is no bar behind it, so the labels sit directly on whatever is below —
+    a dark page or a bright camera frame.  Each one is shadowed to stay readable
+    on both; the active page keeps its filled pill.
+    """
+    scale_value = scale(width)
+    bar_height = nav_height(width)
+    style = Type(int(15 * scale_value), "Semibold")
+    for page, (left, top, right, bottom) in nav_rects(width).items():
+        centre = (left + right) // 2, (top + bottom) // 2
+        if page == active:
+            panel(
+                draw, (left, top, right, bottom), (bottom - top) // 2,
+                fill=ACCENT, alpha=235,
+            )
+            draw_text(image, centre, page, style, INK, anchor="mm")
+        else:
+            draw_shadowed_text(
+                image, centre, page, style, WHITE, alpha=205, anchor="mm",
+            )
+    if note:
+        draw_shadowed_text(
+            image, (width - int(18 * scale_value), bar_height // 2), note,
+            Type(int(13 * scale_value), "Medium"), WHITE, alpha=170, anchor="rm",
+        )
 
 
 def reel_control_button_rects(
@@ -158,15 +302,10 @@ def reel_control_button_rects(
 
 
 def clicked_reel_control(x: int, y: int, width: int, height: int) -> str | None:
-    for action, (left, top, right, bottom) in reel_control_button_rects(
-        width, height
-    ).items():
-        if left <= x <= right and top <= y <= bottom:
-            return action
-    return None
+    return hit(reel_control_button_rects(width, height), x, y)
 
 
-def _panel(
+def panel(
     draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], radius: int,
     *, fill=INK, alpha: int = PANEL_ALPHA, outline: tuple[int, int, int] | None = None,
 ) -> None:
@@ -175,7 +314,7 @@ def _panel(
         draw.rounded_rectangle(box, radius, outline=(*outline, 90), width=1)
 
 
-def _dot(
+def dot(
     draw: ImageDraw.ImageDraw, centre: tuple[int, int], radius: int,
     color: tuple[int, int, int], alpha: int = 255,
 ) -> None:
@@ -185,14 +324,14 @@ def _dot(
     )
 
 
-def _chip_size(text: str, style: Type, scale: float, *, dot: bool) -> tuple[int, int]:
+def chip_size(text: str, style: Type, scale: float, *, dot: bool) -> tuple[int, int]:
     width = _text_width(style, text) + 2 * int(12 * scale)
     if dot:
         width += int(14 * scale)
     return width, int(30 * scale)
 
 
-def _chip(
+def chip(
     image: Image.Image, draw: ImageDraw.ImageDraw, x: int, y: int, text: str,
     style: Type, scale: float, *, dot: tuple[int, int, int] | None = None,
     color=WHITE, fill=INK, alpha: int = CHIP_ALPHA,
@@ -209,8 +348,8 @@ def _chip(
     return width
 
 
-@lru_cache(maxsize=32)
-def _wrap(text: str, style: Type, limit: int, lines: int) -> tuple[str, ...]:
+@lru_cache(maxsize=512)
+def wrap(text: str, style: Type, limit: int, lines: int) -> tuple[str, ...]:
     rows: list[str] = []
     current = ""
     for word in text.split():
@@ -275,6 +414,8 @@ class ReelHud:
         ctc_hypothesis: list[str] | None = None,
         stats: dict[str, object] | None = None,
         revisable_transcript: bool = False,
+        top_inset: int = 0,
+        minimal: bool = False,
     ) -> np.ndarray:
         if not glosses and not finishing_glosses:
             self._committed = None
@@ -293,7 +434,8 @@ class ReelHud:
         height, width = frame.shape[:2]
         scale = _scale(width)
         margin = int(24 * scale)
-        image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        top_row = margin + top_inset  # nav bar, when a shell reserves the strip
+        image = frame_canvas(frame)
         draw = ImageDraw.Draw(image, "RGBA")
 
         shown_glosses = (
@@ -323,29 +465,41 @@ class ReelHud:
             f"{state}   {fps:.1f} FPS", style, scale, dot=True
         )[0] + int(16 * scale)
         _chip(
-            image, draw, margin, margin, f"{state}   {fps:.1f} FPS", style, scale,
+            image, draw, margin, top_row, f"{state}   {fps:.1f} FPS", style, scale,
             dot=state_color, alpha=PANEL_ALPHA,
         )
-        self._gloss_rail(
-            image, draw, width - margin, margin, scale, shown_glosses,
-            max(rail_left, int(width * 0.34)), revisable_tail=revisable_transcript,
-        )
-        self._sentence(
-            image, draw, margin, int(80 * scale), width, scale,
-            sentence, speech_text, finish_pending, revisable_transcript,
-        )
-        if revisable_transcript and not finish_pending:
+        # A practice round judges one sign at a time: no running buffer, no
+        # naturalised sentence, and no controls to reset or finish it.
+        if not minimal:
+            self._gloss_rail(
+                image, draw, width - margin, top_row, scale, shown_glosses,
+                max(rail_left, int(width * 0.34)),
+                revisable_tail=revisable_transcript,
+            )
+            self._sentence(
+                image, draw, margin, int(80 * scale) + top_inset, width, scale,
+                sentence, speech_text, finish_pending, revisable_transcript,
+            )
+        if minimal:
+            # A running hypothesis is buffer too, wherever it is drawn.
+            ctc_hypothesis = None
+        elif revisable_transcript and not finish_pending:
             _shadowed(
-                image, (margin, int(216 * scale)), "Live transcript · may change",
+                image, (margin, int(216 * scale) + top_inset),
+                "Live transcript · may change",
                 Type(int(17 * scale), "Medium"), AMBER,
             )
         elif self.provisional and ctc_hypothesis and not finish_pending:
             suggestion = "Sequence suggestion (review): " + " ".join(ctc_hypothesis)
             style = Type(int(17 * scale), "Medium")
             for index, row in enumerate(_wrap(suggestion, style, width - 2 * margin, 2)):
-                _shadowed(image, (margin, int((216 + 23 * index) * scale)), row, style, AMBER)
-        controls_top = min(
-            rect[1] for rect in reel_control_button_rects(width, height).values()
+                _shadowed(
+                    image, (margin, int((216 + 23 * index) * scale) + top_inset),
+                    row, style, AMBER,
+                )
+        controls_top = (
+            height if minimal else
+            min(rect[1] for rect in reel_control_button_rects(width, height).values())
         )
         panel_bottom = controls_top - int(14 * scale)
         self._center(image, draw, width, panel_bottom, scale, lock, active)
@@ -356,8 +510,9 @@ class ReelHud:
         self._candidates(
             image, draw, width - margin, panel_bottom, scale, latest_result
         )
-        self._controls(image, draw, width, height, scale, finish_pending)
-        return cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
+        if not minimal:
+            self._controls(image, draw, width, height, scale, finish_pending)
+        return to_frame(image)
 
     def _gloss_rail(
         self, image: Image.Image, draw: ImageDraw.ImageDraw, right: int, top: int,
@@ -582,3 +737,35 @@ class ReelHud:
                 image, ((left + right) // 2, (top + bottom) // 2),
                 "WORKING" if working else action.upper(), style, color, anchor="mm",
             )
+
+
+# --- internal aliases -------------------------------------------------------
+# The primitives above were private when only ReelHud drew with them.  The
+# short names stay so every existing call site is untouched by the promotion.
+
+_panel = panel
+_dot = dot
+_chip = chip
+_chip_size = chip_size
+_text = draw_text
+_shadowed = draw_shadowed_text
+_wrap = wrap
+_text_width = text_width
+_scale = scale
+
+__all__ = [
+    # tokens
+    "INK", "WHITE", "MUTED", "ACCENT", "AMBER", "PANEL_ALPHA", "CHIP_ALPHA",
+    "Type",
+    # surface
+    "canvas", "frame_canvas", "to_frame", "scale",
+    # primitives
+    "panel", "chip", "chip_size", "dot", "draw_text", "draw_shadowed_text",
+    "wrap", "text_width",
+    # layout and hit-testing
+    "hit", "row_rects", "grid_rects",
+    # navigation
+    "NAV_PAGES", "nav_height", "nav_rects", "clicked_nav", "draw_nav",
+    # live overlay
+    "ReelHud", "reel_control_button_rects", "clicked_reel_control",
+]

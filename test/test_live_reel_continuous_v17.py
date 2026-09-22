@@ -46,7 +46,8 @@ class Executor:
 
 def replay(root, continuous, finish=True, actions=None, language_delay=3,
            stability_hits=2, verification_delay=3, label_boundary=1, sequence_preview=False,
-           revisable_transcript=False, sequence_hypotheses=None, frame_count=70):
+           revisable_transcript=False, sequence_hypotheses=None, frame_count=70,
+           sequence_path=None):
     args = reel.parser().parse_args([
         '--video', 'fixture.mp4', '--no-display', '--no-speech',
         '--no-finish-gesture', '--naturalizer', 'literal',
@@ -88,16 +89,24 @@ def replay(root, continuous, finish=True, actions=None, language_delay=3,
                     model_score=0.9, diagnostics={})
     verify.delay_ticks = verification_delay
 
-    def classify_window(frames, prior):
+    def classify_window(frames, prior, previous_token=0):
         sequence_calls.append((camera.index, [f.seconds for f in frames]))
         index = len(sequence_calls) - 1
         hypothesis = (
             sequence_hypotheses[min(index, len(sequence_hypotheses) - 1)]
             if sequence_hypotheses else ['WRONG', 'WORDS']
         )
+        path = [0] * ((len(prior) + 1) * 8)
+        positions = list(range(len(hypothesis))) if sequence_preview else [0, 9]
+        if sequence_path is not None:
+            path = sequence_path[:len(path)]
+            logits = np.full((len(path), 101), -20., np.float32)
+            logits[np.arange(len(path)), path] = 20.
+            tokens, positions = reel.collapse_ctc_path(logits, len(path), previous_token)
+            hypothesis = [['VISUAL', 'FINAL'][t-1] for t in tokens]
         return np.zeros((32, 612)), dict(
             accepted=True, hypothesis=hypothesis,
-            token_positions=list(range(len(hypothesis))) if sequence_preview else [0, 9],
+            token_positions=list(positions), ctc_argmax=path,
             window_count=len(prior) + 1, latency_ms={'total': 1},
         )
 
@@ -115,8 +124,10 @@ def replay(root, continuous, finish=True, actions=None, language_delay=3,
     )
     detection = FrameDetection([], np.zeros((19, 2)), np.zeros(19),
                                np.zeros((4, 2)), np.zeros(4))
-    def rephrase(words):
-        return {'sentence': ' '.join(words)}
+    def rephrase(words, confidences=None):
+        # Mirrors the real naturalizer interface, which now also receives the
+        # per-gloss recognizer evidence behind each committed word.
+        return {'sentence': ' '.join(words), 'input_confidences': confidences}
     rephrase.delay_ticks = language_delay
     naturalizer = SimpleNamespace(warm=lambda: {}, rephrase=rephrase)
     replacements = {
@@ -146,6 +157,39 @@ def replay(root, continuous, finish=True, actions=None, language_delay=3,
 
 
 class ContinuousReelTests(unittest.TestCase):
+    def test_finish_hands_stage3_one_confidence_per_committed_gloss(self):
+        """Stage 3 can only drop a gloss on evidence if the evidence lines up.
+
+        A drifted score list would silently mislabel which sign was weak, so the
+        alignment is asserted on a real replay rather than trusted.
+        """
+        with tempfile.TemporaryDirectory() as root:
+            _, _, _, history, _ = replay(root, True)
+        utterances = history['utterances']
+        self.assertTrue(utterances, 'replay produced no utterance to check')
+        for utterance in utterances:
+            glosses = utterance['glosses']
+            scores = utterance.get('gloss_scores')
+            if scores is None:
+                # Selection paths without per-gloss evidence pass none, which the
+                # renderer treats as fully confident.
+                continue
+            self.assertEqual(len(scores), len(glosses))
+            for value in scores:
+                self.assertGreaterEqual(value, 0.0)
+                self.assertLessEqual(value, 1.0)
+            self.assertEqual(utterance.get('input_confidences'), scores)
+
+    def test_revisable_rollover_keeps_one_continuing_emission(self):
+        with tempfile.TemporaryDirectory() as root:
+            _, _, _, history, _ = replay(
+                root, True, finish=False, revisable_transcript=True,
+                frame_count=380, sequence_path=[1] * 64,
+            )
+        updates = [e for e in history['events'] if e['type'] == 'stage2_sequence_update']
+        self.assertTrue(any(e['context_start_step'] > 0 for e in updates))
+        self.assertTrue(all(e['hypothesis'] == ['VISUAL'] for e in updates))
+
     def test_revisable_transcript_replaces_a_wrong_tail_and_finish_uses_visual_decode(self):
         with tempfile.TemporaryDirectory() as root:
             _, _, _, history, summary = replay(

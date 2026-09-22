@@ -1,0 +1,297 @@
+{
+  "format": "slt_live_stage2_ctc_v17_session",
+  "version": 1,
+  "prototype_scope": "accepted v17 general CTC selector over non-overlapping continuous windows",
+  "started_utc": "2026-09-21T17:17:43.151253+00:00",
+  "source": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_MAYBE/7345233_span00.mp4",
+  "mode": "stage2-ctc",
+  "score_semantics": "greedy CTC sequence; no calibrated confidence claim",
+  "config": {
+    "processing_fps": 30.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": false,
+    "window_source_frames": 32,
+    "window_seconds": 1.0666666666666667,
+    "maximum_windows": 8,
+    "tokens_per_window": 8,
+    "live_face_display": "MediaPipe overlay every processed frame",
+    "model_face_sampling": "every eighth processed frame, matching v17 training",
+    "capture_policy": "latest-frame webcam; sequential saved video"
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    }
+  },
+  "video": "artifacts/reports/continuous_recovery_v17_20260922/replay_validation_full/20260922_011743_151031/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06673333333333334,
+    0.13346666666666668,
+    0.20020000000000002,
+    0.26693333333333336,
+    0.33366666666666667,
+    0.40040000000000003,
+    0.46713333333333334,
+    0.5338666666666667,
+    0.6006,
+    0.6673333333333333,
+    0.7340666666666666,
+    0.8008000000000001,
+    0.8675333333333334,
+    0.9342666666666667,
+    1.0010000000000001,
+    1.0677333333333334,
+    1.1344666666666667,
+    1.2012,
+    1.2679333333333334,
+    1.3346666666666667,
+    1.4014,
+    1.4681333333333333,
+    1.5348666666666666,
+    1.6016000000000001,
+    1.6683333333333334,
+    1.7350666666666668
+  ],
+  "predictions": [
+    {
+      "accepted": true,
+      "hypothesis": [
+        "FRIEND"
+      ],
+      "ctc_tokens": [
+        92
+      ],
+      "ctc_argmax": [
+        0,
+        0,
+        0,
+        0,
+        92,
+        0,
+        0,
+        0
+      ],
+      "previous_ctc_token": 0,
+      "token_positions": [
+        4
+      ],
+      "other_rejections": 0,
+      "primary_tokens": [
+        92
+      ],
+      "specialist_tokens": [
+        79,
+        36,
+        79
+      ],
+      "specialist_selected": false,
+      "window_count": 1,
+      "emissions_path": "artifacts/reports/continuous_recovery_v17_20260922/replay_validation_full/trace/emissions_000001.npz",
+      "frames": 32,
+      "start_seconds": 0.0,
+      "end_seconds": 1.0343666666666667,
+      "diagnostics": {
+        "normalization_scale": 0.1750321090221405,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.78125,
+        "source_frames": 32,
+        "observed_hand_frames": 32,
+        "hand_presence_fraction": 1.0,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.78125,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 2.0129999999998205,
+        "hand_image_encoding": 251.62687499999947,
+        "frozen_encoder": 7.40604200000039,
+        "ctc_selector": 3.100166000000293,
+        "trace_write": 2.6151249999992743,
+        "total": 266.7612079999993
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "FRIEND"
+      ]
+    },
+    {
+      "accepted": true,
+      "hypothesis": [
+        "FRIEND",
+        "STOP"
+      ],
+      "ctc_tokens": [
+        92,
+        37
+      ],
+      "ctc_argmax": [
+        0,
+        0,
+        0,
+        0,
+        92,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        37,
+        0,
+        0,
+        0
+      ],
+      "previous_ctc_token": 0,
+      "token_positions": [
+        4,
+        12
+      ],
+      "other_rejections": 0,
+      "primary_tokens": [
+        92,
+        37
+      ],
+      "specialist_tokens": [
+        79,
+        36,
+        79,
+        22
+      ],
+      "specialist_selected": false,
+      "window_count": 2,
+      "emissions_path": "artifacts/reports/continuous_recovery_v17_20260922/replay_validation_full/trace/emissions_000002.npz",
+      "frames": 22,
+      "start_seconds": 1.0677333333333334,
+      "end_seconds": 1.7684333333333333,
+      "diagnostics": {
+        "normalization_scale": 0.17904411256313324,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.7727272727272727,
+        "source_frames": 22,
+        "observed_hand_frames": 22,
+        "hand_presence_fraction": 0.991815447807312,
+        "face_presence_fraction": 0.78125,
+        "body_presence_fraction": 0.78125,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 1.6288339999999124,
+        "hand_image_encoding": 228.35245799999893,
+        "frozen_encoder": 6.935167000001741,
+        "ctc_selector": 2.722332999999466,
+        "trace_write": 2.268875000000392,
+        "total": 241.90766700000043
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "FRIEND",
+        "STOP"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-21T17:17:43.189332+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-21T17:17:44.415902+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 1.8018,
+      "active_glosses": [
+        "FRIEND",
+        "STOP"
+      ],
+      "buffered_frames": 0
+    },
+    {
+      "recorded_utc": "2026-09-21T17:17:44.416182+00:00",
+      "type": "finish_submitted",
+      "utterance_id": "ctc-0001",
+      "requested_utc": "2026-09-21T17:17:44.416179+00:00",
+      "glosses": [
+        "FRIEND",
+        "STOP"
+      ],
+      "stream_epoch": 0
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "ctc-0001",
+      "requested_utc": "2026-09-21T17:17:44.416179+00:00",
+      "glosses": [
+        "FRIEND",
+        "STOP"
+      ],
+      "stream_epoch": 0,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"FRIEND\", \"STOP\"]",
+      "input_glosses": [
+        "FRIEND",
+        "STOP"
+      ],
+      "literal_sentence": "Friend stop.",
+      "fallback_sentence": "Friend stop.",
+      "fallback_mode": "literal_fallback",
+      "sentence": "Friend stop.",
+      "rendering_mode": "literal_fallback",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.027167000000716257,
+      "completed_utc": "2026-09-21T17:17:44.416503+00:00",
+      "displayed_and_spoken": true
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_processed": 54,
+    "landmark_observations": 54,
+    "stale_camera_frames_dropped": 0
+  },
+  "finished_utc": "2026-09-21T17:17:44.417167+00:00"
+}

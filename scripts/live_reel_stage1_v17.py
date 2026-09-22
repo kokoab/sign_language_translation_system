@@ -48,6 +48,7 @@ from scripts.live_isolated_v17 import (
     HAND_CONNECTIONS,
     IsolatedClassifier,
     LiveSpeaker,
+    make_speaker,
     ObservedFrame,
     SessionRecorder,
     atomic_json,
@@ -274,7 +275,8 @@ class ReelCascadeClassifier:
         """Return a landmark-only proposal; visual verification is scheduled later."""
         started = time.perf_counter()
         original = observations
-        trimmed, motion = trim_to_motion(observations, self.args.quiet_motion)
+        trimmed, motion = trim_to_motion(observations, self.args.quiet_motion,
+                                         enabled=not getattr(self.args, "no_motion_trim", False))
         try:
             features, diagnostics = landmarks_from_observations(trimmed, V17Config())
         except ValueError as error:
@@ -889,9 +891,50 @@ def final_revisable_decode(arbiter, retained: RetainedFrozenWindows) -> dict[str
     }
 
 
-def run(
+def build_components(
     args: argparse.Namespace, classifier_factory=ReelCascadeClassifier,
 ) -> dict[str, object]:
+    """Construct the expensive models once.
+
+    This is the ~11s of work that used to sit at the top of `run()` and be paid
+    again on every session.  It touches no window and no camera, so a shell may
+    call it on a background thread while its first page is already on screen.
+    """
+    window_backend = getattr(args, "transcript_backend", "ctc") == "stage1-window"
+    sequence_preview = getattr(args, "sequence_preview", False)
+    if getattr(args, "revisable_transcript", False):
+        sequence_preview = True
+    sequence_arbiter = (
+        None if window_backend or args.no_stage2_arbiter else LiveStage2CTC(args)
+    )
+    return {
+        "sequence_arbiter": sequence_arbiter,
+        "classifier": (
+            Stage1WindowClassifier(args) if window_backend
+            else sequence_arbiter if sequence_preview
+            else classifier_factory(args)
+        ),
+        "lip_disambiguator": (
+            None if window_backend or args.no_lip_marker_verifier
+            else LipMarkerDisambiguator(args.lip_marker_model)
+        ),
+        "naturalizer": make_naturalizer(args),
+        "speaker": None if args.no_speech else make_speaker(args),
+    }
+
+
+def run(
+    args: argparse.Namespace, classifier_factory=ReelCascadeClassifier, shell=None,
+    prebuilt: dict[str, object] | None = None,
+) -> dict[str, object]:
+    # The shell owns the window and decides which page the frame becomes.  With
+    # none supplied this is the single-page behaviour the script always had.
+    if shell is None:
+        shell = getattr(args, "shell", None)
+    if shell is None:
+        from scripts.app_shell_v17 import NullShell
+
+        shell = NullShell()
     window_backend = getattr(args, "transcript_backend", "ctc") == "stage1-window"
     preserve_pending = getattr(args, "preserve_pending_frames", False)
     stage2_at_finish = getattr(args, "stage2_at_finish", False)
@@ -907,26 +950,18 @@ def run(
             raise ValueError("sequence preview requires Stage2")
         stage2_at_finish = False
         stage2_review_only = True
-    sequence_arbiter = (
-        None if window_backend or args.no_stage2_arbiter else LiveStage2CTC(args)
-    )
-    classifier = (
-        Stage1WindowClassifier(args) if window_backend
-        else sequence_arbiter if sequence_preview
-        else classifier_factory(args)
-    )
-    lip_disambiguator = (
-        None if window_backend or args.no_lip_marker_verifier
-        else LipMarkerDisambiguator(args.lip_marker_model)
-    )
+    components = prebuilt or build_components(args, classifier_factory)
+    sequence_arbiter = components["sequence_arbiter"]
+    classifier = components["classifier"]
+    lip_disambiguator = components["lip_disambiguator"]
     if window_backend:
         provisional_glosses = True
         sequence_preview = False
         revisable_transcript = False
         stage2_at_finish = False
         stage2_review_only = False
-    naturalizer = make_naturalizer(args)
-    speaker = None if args.no_speech else LiveSpeaker()
+    naturalizer = components["naturalizer"]
+    speaker = components["speaker"]
     source = str(args.video) if args.video else f"camera:{args.camera}"
     recorder = SessionRecorder(args, classifier, source)
     recorder.data.update({
@@ -1044,6 +1079,11 @@ def run(
     pending_speech: deque[dict[str, object]] = deque()
     results: list[dict[str, object]] = []
     glosses: list[str] = []
+    # Commit confidence per entry of `glosses`, kept in lockstep so Stage 3 can be
+    # told how strong the evidence for each gloss was. Only the Stage-1 commit path
+    # produces a score; other selection paths leave this empty and Stage 3 then
+    # treats every gloss as confident.
+    gloss_scores: list[float] = []
     pending_pair: dict[str, object] | None = None
     ctc_buffer = ElapsedWindowBuffer(args.stage2_window_seconds)
     ctc_ready = DeferredWindows() if stage2_at_finish else deque()
@@ -1056,6 +1096,8 @@ def run(
     sequence_prefix = StreamingCTCPrefix()
     ctc_context_hypothesis: list[str] = []
     ctc_context_positions: list[int] = []
+    ctc_context_path: list[int] = []
+    ctc_previous_token = 0
     ctc_hypothesis: list[str] = []
     last_stage2_hypothesis: list[str] = []
     ctc_results: list[dict[str, object]] = []
@@ -1097,21 +1139,12 @@ def run(
     warm_logged = False
 
     if not args.no_display:
-        cv2.namedWindow(WINDOW_NAME)
-
-        def on_mouse(event, x, y, _flags, _parameter):
-            if event != cv2.EVENT_LBUTTONUP:
-                return
-            action = clicked_reel_control(x, y, display_size[0], display_size[1])
-            seconds = time.perf_counter() - wall_started
-            if (
-                action is not None
-                and seconds - last_button_seconds[action] >= 0.25
-            ):
+        def on_control(action: str, seconds: float) -> None:
+            if seconds - last_button_seconds[action] >= 0.25:
                 last_button_seconds[action] = seconds
                 ui_actions.append((action, seconds))
 
-        cv2.setMouseCallback(WINDOW_NAME, on_mouse)
+        shell.attach(WINDOW_NAME, display_size, wall_started, on_control)
 
     def clear_candidate(
         *, keep_after: float | None = None, consumed_until: float | None = None,
@@ -1215,6 +1248,7 @@ def run(
     def submit_ctc() -> None:
         nonlocal ctc_future, ctc_future_epoch
         nonlocal ctc_locked, ctc_context_hypothesis, ctc_context_positions, ctc_position_offset
+        nonlocal ctc_previous_token
         if preserve_pending and finish_requested:
             submit()
         if sequence_arbiter is None or ctc_future is not None or not ctc_ready:
@@ -1222,6 +1256,8 @@ def run(
         if stage2_at_finish and (not finish_requested or future is not None):
             return
         if len(ctc_prior) >= MAXIMUM_WINDOWS:
+            ctc_previous_token = ctc_context_path[7]
+            del ctc_context_path[:8]
             ctc_locked_positions.extend(ctc_position_offset + p for p in ctc_context_positions if p < 8)
             ctc_position_offset += 8
             ctc_locked, ctc_context_hypothesis, ctc_context_positions = (
@@ -1234,7 +1270,7 @@ def run(
         prior = list(ctc_prior)
         ctc_future_epoch = epoch
         ctc_future = ctc_executor.submit(
-            sequence_arbiter.classify_window, window, prior
+            sequence_arbiter.classify_window, window, prior, ctc_previous_token
         )
 
     def collect_ctc(wait: bool = False) -> None:
@@ -1252,6 +1288,7 @@ def run(
         if result.get("accepted") and not ignored:
             ctc_context_hypothesis = list(result["hypothesis"])
             ctc_context_positions = list(result["token_positions"])
+            ctc_context_path[:] = result['ctc_argmax']
             ctc_hypothesis = [*ctc_locked, *ctc_context_hypothesis]
             result["context_hypothesis"] = list(ctc_context_hypothesis)
             result["locked_prefix"] = list(ctc_locked)
@@ -1294,6 +1331,10 @@ def run(
             "ignored_after_reset": ignored,
             "window_count": result.get("window_count"),
             "token_positions": result.get("token_positions"),
+            "ctc_argmax": result.get("ctc_argmax"),
+            "previous_ctc_token": result.get("previous_ctc_token"),
+            "emissions_path": result.get("emissions_path"),
+            "context_start_step": ctc_position_offset,
             "start_seconds": result.get("start_seconds"),
             "end_seconds": result.get("end_seconds"),
             "latency_ms": result.get("latency_ms"),
@@ -1431,11 +1472,20 @@ def run(
         future_result = None
         future_proposal = None
         if emitted is not None:
+            committed_score = None
+            if verifier:
+                committed_score = verifier.get("commit_score")
+            if committed_score is None:
+                committed_score = result.get("model_score")
             lip_source = verifier.get("diagnostics", {}).get("targeted_lip_source")
             if emitted in {"GOOD", "THANKYOU"} and lip_source != "media_pipe_lip_markers":
                 pending_pair = {
                     "fallback": emitted, "reference": len(results) - 1,
                     "created_utc": utc_now(),
+                    # Held with the gloss it belongs to: when this pair resolves later,
+                    # the evidence reported for it must be its own, not the score of
+                    # whatever sign happened to follow.
+                    "score": committed_score,
                 }
                 result["pending_ambiguous_pair"] = True
                 recorder.add_event({
@@ -1449,6 +1499,10 @@ def run(
                         str(pending_pair["fallback"]), emitted
                     )
                     glosses.append(resolved)
+                    pending_score = pending_pair.get("score")
+                    gloss_scores.append(
+                        float(pending_score) if pending_score is not None else 1.0
+                    )
                     pending_speech.append({
                         "text": resolved, "kind": "gloss",
                         "reference": pending_pair["reference"],
@@ -1459,6 +1513,9 @@ def run(
                     })
                     pending_pair = None
                 glosses.append(emitted)
+                gloss_scores.append(
+                    float(committed_score) if committed_score is not None else 1.0
+                )
                 pending_speech.append({
                     "text": emitted, "kind": "gloss", "reference": len(results) - 1,
                 })
@@ -1483,7 +1540,7 @@ def run(
         nonlocal ctc_hypothesis, last_stage2_hypothesis
         nonlocal ctc_context_hypothesis, ctc_context_positions
         nonlocal activity_first_seconds, activity_last_seconds
-        nonlocal latest_result, finish_started_at, ctc_position_offset
+        nonlocal latest_result, finish_started_at, ctc_position_offset, ctc_previous_token
         nonlocal stage1_next_end
         submit_ctc()
         if not warm_logged and warm_future.done():
@@ -1497,6 +1554,10 @@ def run(
             if pending_pair is not None:
                 resolved = str(pending_pair["fallback"])
                 glosses.append(resolved)
+                trailing_score = pending_pair.get("score")
+                gloss_scores.append(
+                    float(trailing_score) if trailing_score is not None else 1.0
+                )
                 recorder.add_event({
                     "type": "ambiguous_pair_resolved", "gloss": resolved,
                     "following_gloss": None,
@@ -1562,8 +1623,14 @@ def run(
                     else 1000 * (time.perf_counter() - finish_started_at)
                 ),
             })
+            finished_scores = (
+                list(gloss_scores)
+                if list(finished) == list(glosses) and len(gloss_scores) == len(glosses)
+                else None
+            )
             finishing_glosses[:] = finished
             glosses.clear()
+            gloss_scores.clear()
             lock.reset()
             commit_lock.reset()
             clear_candidate()
@@ -1576,6 +1643,8 @@ def run(
             sequence_prefix.reset()
             ctc_context_hypothesis = []
             ctc_context_positions = []
+            ctc_context_path.clear()
+            ctc_previous_token = 0
             ctc_hypothesis = []
             ctc_results.clear()
             retained_frozen.clear()
@@ -1596,12 +1665,13 @@ def run(
                     "utterance_id": f"reel-{len(recorder.data['utterances']) + 1:04d}",
                     "requested_utc": utc_now(),
                     "glosses": finished,
+                    "gloss_scores": finished_scores,
                     "epoch": epoch,
                     "finish_started_at": finish_started_at,
                 }
                 finish_started_at = None
                 naturalizer_future = language_executor.submit(
-                    naturalizer.rephrase, finished
+                    naturalizer.rephrase, finished, finished_scores
                 )
         if naturalizer_future is not None and naturalizer_future.done():
             value = naturalizer_future.result()
@@ -1647,11 +1717,12 @@ def run(
         nonlocal ctc_context_hypothesis, ctc_context_positions
         nonlocal latest_result
         nonlocal last_preview, last_stage2_hypothesis
-        nonlocal last_probe_end, finish_started_at, ctc_position_offset
+        nonlocal last_probe_end, finish_started_at, ctc_position_offset, ctc_previous_token
         nonlocal stage1_next_end
         epoch += 1
         cleared = list(glosses)
         glosses.clear()
+        gloss_scores.clear()
         pending_pair = None
         finishing_glosses.clear()
         lock.reset()
@@ -1666,6 +1737,8 @@ def run(
         sequence_prefix.reset()
         ctc_context_hypothesis = []
         ctc_context_positions = []
+        ctc_context_path.clear()
+        ctc_previous_token = 0
         ctc_hypothesis = []
         ctc_results.clear()
         retained_frozen.clear()
@@ -1742,6 +1815,15 @@ def run(
                 camera_sequence = sequence
                 frame_index += 1
             last_source_seconds = seconds
+            if not args.no_display and shell.paused:
+                # Another page is up: keep any finish in flight moving, but do no
+                # detection, no inference and no recording.
+                service_language()
+                key = shell.present(raw, glosses)
+                service_speech()
+                if key in (ord("q"), 27):
+                    break
+                continue
             canonical = orient_frame(raw, args.rotation, args.input_mirrored)
             recorder.write_frame(canonical, seconds)
             collect()
@@ -1795,12 +1877,14 @@ def run(
                 )
                 display_latest = copy.copy(latest)
                 display_latest.detection = visible_detection
+                allow_finish = getattr(shell, "allow_finish", True)
                 gesture_triggered = (
-                    False if args.no_finish_gesture
+                    False if args.no_finish_gesture or not allow_finish
                     else finish_gesture.update(assigned, seconds)
                 )
                 gesture_frame = (
-                    not args.no_finish_gesture and finish_gesture.active
+                    not args.no_finish_gesture and allow_finish
+                    and finish_gesture.active
                 )
                 processed += 1
                 next_process = max(next_process + 1.0 / args.processing_fps, seconds)
@@ -1905,9 +1989,10 @@ def run(
                         "sequence_review": stage2_review_only and not revisable_transcript,
                     },
                     revisable_transcript=revisable_transcript or window_backend,
+                    top_inset=shell.top_inset,
+                    minimal=getattr(shell, "minimal_hud", False),
                 )
-                cv2.imshow(WINDOW_NAME, shown)
-                key = cv2.waitKey(1) & 0xFF
+                key = shell.present(shown, glosses)
                 service_speech()
                 while ui_actions:
                     action, action_seconds = ui_actions.popleft()
@@ -1925,6 +2010,9 @@ def run(
                 service_speech()
 
         capture_elapsed = time.perf_counter() - wall_started
+        # A quit has stopped capture. Finalize MP4 metadata before waiting for
+        # outstanding model work, which can otherwise leave the file unreadable.
+        recorder.finish_video()
         while future is not None:
             collect(wait=True)
         if args.finish_at_eof:
@@ -2053,6 +2141,8 @@ def parser() -> argparse.ArgumentParser:
         "--stage2-window-seconds", type=float, default=32.0 / 30.0,
     )
     value.add_argument("--stage2-encoder", type=Path, default=DEFAULT_ENCODER)
+    value.add_argument('--ctc-trace-dir', type=Path,
+                       help='save diagnostic CTC logits/features/timestamps to a fresh directory')
     value.add_argument("--stage2-primary", type=Path, default=DEFAULT_PRIMARY)
     value.add_argument("--stage2-specialist", type=Path, default=DEFAULT_SPECIALIST)
     value.add_argument("--stage2-selector", type=Path, default=DEFAULT_SELECTOR)

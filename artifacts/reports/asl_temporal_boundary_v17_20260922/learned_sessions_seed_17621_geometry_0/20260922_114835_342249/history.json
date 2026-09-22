@@ -1,0 +1,348 @@
+{
+  "format": "slt_live_isolated_v17_session",
+  "version": 2,
+  "prototype_scope": "ASL temporal boundary candidate; literal stable events; not promoted",
+  "started_utc": "2026-09-22T03:48:35.342362+00:00",
+  "source": "/Users/frnzlo/Documents/machine_learning/SLT/data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_NOW/841415_span00.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated softmax over model/fused scores",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": false,
+    "speech_voice": null,
+    "speech_rate": 190.0
+  },
+  "models": {
+    "boundary_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/asl_temporal_boundary_v17_20260922/seed_17621_geometry_0.pth",
+    "sha256": "5521ac6c3e89ce76650b7bd8a7001740e2fc5c8dc2fc13be797613a70549c3ed",
+    "recipe_sha256": "25b24499633df10cebf69bbe99f49f571c020986a8145f017a65b6917dc057ad",
+    "future_context_frames": 4,
+    "boundary_device": "cpu",
+    "promoted": false,
+    "reel": {
+      "unified_checkpoint": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_unified_phrase_activity_adapt_reel_v2/best_model.pth",
+        "sha256": "278a9933df25508aa83823cf6a8e050fbf4ba729eb39b1c790c97e55032a6558"
+      },
+      "image_encoder": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+        "sha256": "mlpackage"
+      },
+      "stage1_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1UnifiedPhraseActivityAdaptReelV17FP16.mlpackage",
+        "sha256": "mlpackage"
+      },
+      "orientation_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1PhraseAdaptReelV17.mlpackage",
+        "sha256": "mlpackage"
+      },
+      "reel_no_emit": {
+        "enabled": false,
+        "probability_threshold": null
+      }
+    }
+  },
+  "video": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/asl_temporal_boundary_v17_20260922/learned_sessions_seed_17621_geometry_0/20260922_114835_342249/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06673333333333334,
+    0.13346666666666668,
+    0.20020000000000002,
+    0.26693333333333336,
+    0.33366666666666667,
+    0.40040000000000003,
+    0.46713333333333334,
+    0.5338666666666667,
+    0.6006,
+    0.6673333333333333,
+    0.7340666666666666,
+    0.8008000000000001
+  ],
+  "predictions": [
+    {
+      "start_seconds": 0.0,
+      "end_seconds": 0.3670333333333333,
+      "available_seconds": 0.5672333333333334,
+      "committed_gloss": null,
+      "context_seconds": 0.1,
+      "proposal": {
+        "gloss": "UNKNOWN",
+        "candidate_gloss": "FRIEND",
+        "model_score": 0.34349364042282104,
+        "margin": 0.0026880502700805664,
+        "gate_score": 0.34349364042282104,
+        "gate_margin": 0.0026880502700805664,
+        "top3": [
+          {
+            "gloss": "FRIEND",
+            "model_score": 0.34349364042282104
+          },
+          {
+            "gloss": "WHEN",
+            "model_score": 0.3408055901527405
+          },
+          {
+            "gloss": "SMALL",
+            "model_score": 0.02422735095024109
+          }
+        ],
+        "accepted": false,
+        "rejection_reasons": [
+          "low_margin"
+        ],
+        "mode": "reel-cascade-landmark",
+        "frames": 9,
+        "motion_trimmed_frames": 9,
+        "start_seconds": 0.0,
+        "end_seconds": 0.40040000000000003,
+        "diagnostics": {
+          "normalization_scale": 0.17396193742752075,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 1.0,
+          "source_frames": 9,
+          "trim_start": 0,
+          "trim_end_exclusive": 9,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 1.0,
+          "body_presence_fraction": 1.0,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 9,
+          "motion_trim_disabled": true,
+          "cascade_primary_score": 0.34349364042282104,
+          "cascade_primary_gloss": "FRIEND",
+          "cascade_score_threshold": 0.55,
+          "cascade_fallback_used": false,
+          "mouth_pixels_used": false,
+          "lip_markers_used_for_general_classification": false,
+          "no_emit_probability": 0.0,
+          "no_emit_probability_threshold": null
+        },
+        "latency_ms": {
+          "tensor_extraction": 9.610750000007329,
+          "hand_image_encoding": 0.0,
+          "classification": 0.0,
+          "total": 9.610750000007329
+        }
+      },
+      "verifier": {
+        "gloss": "FRIEND",
+        "candidate_gloss": "FRIEND",
+        "model_score": 0.48245593905448914,
+        "margin": 0.2947103679180145,
+        "gate_score": 0.48245593905448914,
+        "gate_margin": 0.2947103679180145,
+        "top3": [
+          {
+            "gloss": "FRIEND",
+            "model_score": 0.48245593905448914
+          },
+          {
+            "gloss": "WHEN",
+            "model_score": 0.1877455711364746
+          },
+          {
+            "gloss": "HOW",
+            "model_score": 0.02052367478609085
+          }
+        ],
+        "accepted": true,
+        "rejection_reasons": [],
+        "mode": "fast",
+        "frames": 9,
+        "motion_trimmed_frames": 9,
+        "start_seconds": 0.0,
+        "end_seconds": 0.40040000000000003,
+        "diagnostics": {
+          "normalization_scale": 0.17396193742752075,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 1.0,
+          "source_frames": 9,
+          "trim_start": 0,
+          "trim_end_exclusive": 9,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 1.0,
+          "body_presence_fraction": 1.0,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 9,
+          "motion_trim_disabled": true,
+          "live_auxiliary_interval": 8,
+          "raw_clip_seconds": 0.40040000000000003,
+          "motion_trimmed_seconds": 0.40040000000000003,
+          "observed_processing_fps": 19.98001998001998,
+          "mouth_pixels_used": false,
+          "visual_tie_break": false
+        },
+        "latency_ms": {
+          "tensor_extraction": 35.78966700000308,
+          "hand_image_encoding": 359.60904200000243,
+          "classification": 9.419291000000385,
+          "total": 404.8180000000059
+        }
+      },
+      "recognition_seconds": 0.4145267910000001,
+      "ignored_after_reset": false,
+      "completed_elapsed_seconds": 0.9985182080000072,
+      "completed_observed_seconds": 0.8008000000000001
+    }
+  ],
+  "events": [],
+  "utterances": [],
+  "test_accessed": false,
+  "boundary_trace": [
+    {
+      "seconds": 0.0,
+      "available_seconds": 0.20020000000000002,
+      "probabilities": [
+        0.9886771440505981,
+        0.7485993504524231
+      ],
+      "events": [],
+      "compute_seconds": 0.0012807090000137578
+    },
+    {
+      "seconds": 0.06673333333333334,
+      "available_seconds": 0.26693333333333336,
+      "probabilities": [
+        0.98600834608078,
+        0.5532786846160889
+      ],
+      "events": [],
+      "compute_seconds": 0.001412874999999758
+    },
+    {
+      "seconds": 0.10010000000000001,
+      "available_seconds": 0.3003,
+      "probabilities": [
+        0.8795313239097595,
+        0.1830196976661682
+      ],
+      "events": [],
+      "compute_seconds": 0.002262749999999869
+    },
+    {
+      "seconds": 0.16683333333333333,
+      "available_seconds": 0.3670333333333333,
+      "probabilities": [
+        0.8034913539886475,
+        0.0655093640089035
+      ],
+      "events": [],
+      "compute_seconds": 0.0009488750000059554
+    },
+    {
+      "seconds": 0.20020000000000002,
+      "available_seconds": 0.40040000000000003,
+      "probabilities": [
+        0.9226602911949158,
+        0.0035393573343753815
+      ],
+      "events": [],
+      "compute_seconds": 0.0010477089999909595
+    },
+    {
+      "seconds": 0.26693333333333336,
+      "available_seconds": 0.46713333333333334,
+      "probabilities": [
+        0.047558434307575226,
+        0.08676636964082718
+      ],
+      "events": [],
+      "compute_seconds": 0.0011554999999958682
+    },
+    {
+      "seconds": 0.3003,
+      "available_seconds": 0.5005000000000001,
+      "probabilities": [
+        0.13920238614082336,
+        0.4416191577911377
+      ],
+      "events": [],
+      "compute_seconds": 0.0012692079999965244
+    },
+    {
+      "seconds": 0.3670333333333333,
+      "available_seconds": 0.5672333333333334,
+      "probabilities": [
+        0.18745355308055878,
+        0.7345196008682251
+      ],
+      "events": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 0.3670333333333333
+        }
+      ],
+      "compute_seconds": 0.0010639999999995098
+    },
+    {
+      "seconds": 0.40040000000000003,
+      "available_seconds": 0.6006,
+      "probabilities": [
+        0.35907629132270813,
+        0.5935524702072144
+      ],
+      "events": [],
+      "compute_seconds": 0.000875665999998887
+    },
+    {
+      "seconds": 0.46713333333333334,
+      "available_seconds": 0.6673333333333333,
+      "probabilities": [
+        0.6071919798851013,
+        0.8985318541526794
+      ],
+      "events": [],
+      "compute_seconds": 0.05108354200000065
+    },
+    {
+      "seconds": 0.5005000000000001,
+      "available_seconds": 0.7007,
+      "probabilities": [
+        0.402385950088501,
+        0.888626754283905
+      ],
+      "events": [],
+      "compute_seconds": 0.05672345899999698
+    },
+    {
+      "seconds": 0.5672333333333334,
+      "available_seconds": 0.7674333333333333,
+      "probabilities": [
+        0.5309308767318726,
+        0.5045903325080872
+      ],
+      "events": [],
+      "compute_seconds": 0.0010405000000019982
+    },
+    {
+      "seconds": 0.6006,
+      "available_seconds": 0.8008000000000001,
+      "probabilities": [
+        0.7532821893692017,
+        0.2573283612728119
+      ],
+      "events": [],
+      "compute_seconds": 0.0013323329999934685
+    }
+  ],
+  "unscored_tail_seconds": 0.2,
+  "hypothesis": [],
+  "capture_stats": {
+    "landmark_observations": 17,
+    "elapsed_seconds": 1.0244856670000075
+  },
+  "finished_utc": "2026-09-22T03:48:36.367683+00:00"
+}

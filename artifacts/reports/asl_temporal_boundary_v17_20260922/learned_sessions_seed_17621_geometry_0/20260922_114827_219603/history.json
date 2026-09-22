@@ -1,0 +1,317 @@
+{
+  "format": "slt_live_isolated_v17_session",
+  "version": 2,
+  "prototype_scope": "ASL temporal boundary candidate; literal stable events; not promoted",
+  "started_utc": "2026-09-22T03:48:27.219853+00:00",
+  "source": "/Users/frnzlo/Documents/machine_learning/SLT/data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/LIKE_READ/31657946_span00.mp4",
+  "mode": "cascade",
+  "score_semantics": "uncalibrated softmax over model/fused scores",
+  "config": {
+    "processing_fps": 20.0,
+    "detection_image_side": 640,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": false,
+    "speech_voice": null,
+    "speech_rate": 190.0
+  },
+  "models": {
+    "boundary_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/asl_temporal_boundary_v17_20260922/seed_17621_geometry_0.pth",
+    "sha256": "5521ac6c3e89ce76650b7bd8a7001740e2fc5c8dc2fc13be797613a70549c3ed",
+    "recipe_sha256": "25b24499633df10cebf69bbe99f49f571c020986a8145f017a65b6917dc057ad",
+    "future_context_frames": 4,
+    "boundary_device": "cpu",
+    "promoted": false,
+    "reel": {
+      "unified_checkpoint": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_unified_phrase_activity_adapt_reel_v2/best_model.pth",
+        "sha256": "278a9933df25508aa83823cf6a8e050fbf4ba729eb39b1c790c97e55032a6558"
+      },
+      "image_encoder": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+        "sha256": "mlpackage"
+      },
+      "stage1_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1UnifiedPhraseActivityAdaptReelV17FP16.mlpackage",
+        "sha256": "mlpackage"
+      },
+      "orientation_coreml": {
+        "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1PhraseAdaptReelV17.mlpackage",
+        "sha256": "mlpackage"
+      },
+      "reel_no_emit": {
+        "enabled": false,
+        "probability_threshold": null
+      }
+    }
+  },
+  "video": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/asl_temporal_boundary_v17_20260922/learned_sessions_seed_17621_geometry_0/20260922_114827_219603/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06673333333333334,
+    0.13346666666666668,
+    0.20020000000000002,
+    0.26693333333333336,
+    0.33366666666666667,
+    0.40040000000000003,
+    0.46713333333333334,
+    0.5338666666666667,
+    0.6006,
+    0.6673333333333333
+  ],
+  "predictions": [
+    {
+      "start_seconds": 0.0,
+      "end_seconds": 0.16683333333333333,
+      "available_seconds": 0.3670333333333333,
+      "committed_gloss": null,
+      "context_seconds": 0.1,
+      "proposal": {
+        "gloss": "UNKNOWN",
+        "candidate_gloss": "LIKE",
+        "model_score": 0.15625698864459991,
+        "margin": 0.07743679732084274,
+        "gate_score": 0.15625698864459991,
+        "gate_margin": 0.07743679732084274,
+        "top3": [
+          {
+            "gloss": "LIKE",
+            "model_score": 0.15625698864459991
+          },
+          {
+            "gloss": "MY",
+            "model_score": 0.07882019132375717
+          },
+          {
+            "gloss": "WOMAN",
+            "model_score": 0.05511905997991562
+          }
+        ],
+        "accepted": false,
+        "rejection_reasons": [
+          "low_score",
+          "low_margin"
+        ],
+        "mode": "reel-cascade-landmark",
+        "frames": 5,
+        "motion_trimmed_frames": 5,
+        "start_seconds": 0.0,
+        "end_seconds": 0.20020000000000002,
+        "diagnostics": {
+          "normalization_scale": 0.17430755496025085,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 0.2,
+          "source_frames": 5,
+          "trim_start": 0,
+          "trim_end_exclusive": 5,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 0.125,
+          "body_presence_fraction": 0.125,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 5,
+          "motion_trim_disabled": true,
+          "cascade_primary_score": 0.15625698864459991,
+          "cascade_primary_gloss": "LIKE",
+          "cascade_score_threshold": 0.55,
+          "cascade_fallback_used": false,
+          "mouth_pixels_used": false,
+          "lip_markers_used_for_general_classification": false,
+          "no_emit_probability": 0.0,
+          "no_emit_probability_threshold": null
+        },
+        "latency_ms": {
+          "tensor_extraction": 8.28816599999982,
+          "hand_image_encoding": 0.0,
+          "classification": 0.0,
+          "total": 8.28816599999982
+        }
+      },
+      "verifier": {
+        "gloss": "LIKE",
+        "candidate_gloss": "LIKE",
+        "model_score": 0.426244854927063,
+        "margin": 0.3886047974228859,
+        "gate_score": 0.426244854927063,
+        "gate_margin": 0.3886047974228859,
+        "top3": [
+          {
+            "gloss": "LIKE",
+            "model_score": 0.426244854927063
+          },
+          {
+            "gloss": "YOUR",
+            "model_score": 0.037640057504177094
+          },
+          {
+            "gloss": "WOMAN",
+            "model_score": 0.02858830988407135
+          }
+        ],
+        "accepted": true,
+        "rejection_reasons": [],
+        "mode": "fast",
+        "frames": 5,
+        "motion_trimmed_frames": 5,
+        "start_seconds": 0.0,
+        "end_seconds": 0.20020000000000002,
+        "diagnostics": {
+          "normalization_scale": 0.17430755496025085,
+          "normalization_scale_source": "shoulder_width",
+          "shoulder_coverage": 0.2,
+          "source_frames": 5,
+          "trim_start": 0,
+          "trim_end_exclusive": 5,
+          "hand_frame_fraction": 1.0,
+          "face_presence_fraction": 0.125,
+          "body_presence_fraction": 0.125,
+          "motion_trim_start": 0,
+          "motion_trim_end_exclusive": 5,
+          "motion_trim_disabled": true,
+          "live_auxiliary_interval": 8,
+          "raw_clip_seconds": 0.20020000000000002,
+          "motion_trimmed_seconds": 0.20020000000000002,
+          "observed_processing_fps": 19.98001998001998,
+          "mouth_pixels_used": false,
+          "visual_tie_break": false
+        },
+        "latency_ms": {
+          "tensor_extraction": 7.678417000008153,
+          "hand_image_encoding": 221.19933300000127,
+          "classification": 5.586542000003192,
+          "total": 234.46429200001262
+        }
+      },
+      "recognition_seconds": 0.24283870800000784,
+      "ignored_after_reset": false,
+      "completed_elapsed_seconds": 0.6258299160000007,
+      "completed_observed_seconds": 0.5005000000000001
+    }
+  ],
+  "events": [],
+  "utterances": [],
+  "test_accessed": false,
+  "boundary_trace": [
+    {
+      "seconds": 0.0,
+      "available_seconds": 0.20020000000000002,
+      "probabilities": [
+        0.8017909526824951,
+        0.1425568014383316
+      ],
+      "events": [],
+      "compute_seconds": 0.0010982920000088825
+    },
+    {
+      "seconds": 0.06673333333333334,
+      "available_seconds": 0.26693333333333336,
+      "probabilities": [
+        0.4833816587924957,
+        0.23667745292186737
+      ],
+      "events": [],
+      "compute_seconds": 0.0013094580000085898
+    },
+    {
+      "seconds": 0.10010000000000001,
+      "available_seconds": 0.3003,
+      "probabilities": [
+        0.3538379669189453,
+        0.2687050700187683
+      ],
+      "events": [],
+      "compute_seconds": 0.0009988750000076152
+    },
+    {
+      "seconds": 0.16683333333333333,
+      "available_seconds": 0.3670333333333333,
+      "probabilities": [
+        0.2718654274940491,
+        0.6327274441719055
+      ],
+      "events": [
+        {
+          "start_seconds": 0.0,
+          "end_seconds": 0.16683333333333333
+        }
+      ],
+      "compute_seconds": 0.0007844999999946367
+    },
+    {
+      "seconds": 0.20020000000000002,
+      "available_seconds": 0.40040000000000003,
+      "probabilities": [
+        0.2015722095966339,
+        0.5508835315704346
+      ],
+      "events": [],
+      "compute_seconds": 0.04616362500000548
+    },
+    {
+      "seconds": 0.26693333333333336,
+      "available_seconds": 0.46713333333333334,
+      "probabilities": [
+        0.020732680335640907,
+        0.8555522561073303
+      ],
+      "events": [],
+      "compute_seconds": 0.0008380000000016707
+    },
+    {
+      "seconds": 0.3003,
+      "available_seconds": 0.5005000000000001,
+      "probabilities": [
+        0.03358199819922447,
+        0.9006038308143616
+      ],
+      "events": [],
+      "compute_seconds": 0.0008059999999971978
+    },
+    {
+      "seconds": 0.3670333333333333,
+      "available_seconds": 0.5672333333333334,
+      "probabilities": [
+        0.7317560315132141,
+        0.8458439111709595
+      ],
+      "events": [],
+      "compute_seconds": 0.0007141659999945205
+    },
+    {
+      "seconds": 0.40040000000000003,
+      "available_seconds": 0.6006,
+      "probabilities": [
+        0.9601002335548401,
+        0.5309852957725525
+      ],
+      "events": [],
+      "compute_seconds": 0.0006692500000013979
+    },
+    {
+      "seconds": 0.46713333333333334,
+      "available_seconds": 0.6673333333333333,
+      "probabilities": [
+        0.9722628593444824,
+        0.1761961579322815
+      ],
+      "events": [],
+      "compute_seconds": 0.0007257919999972273
+    }
+  ],
+  "unscored_tail_seconds": 0.2,
+  "hypothesis": [],
+  "capture_stats": {
+    "landmark_observations": 14,
+    "elapsed_seconds": 0.6797274579999879
+  },
+  "finished_utc": "2026-09-22T03:48:27.900592+00:00"
+}

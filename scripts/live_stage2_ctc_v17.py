@@ -55,6 +55,7 @@ from active.v17.schema_v17 import (
 )
 from scripts.live_isolated_v17 import (
     LiveSpeaker,
+    make_speaker,
     ObservedFrame,
     SessionRecorder,
     atomic_json,
@@ -127,12 +128,12 @@ def validate_preservation_runtime(args, payload, selector):
 
 
 def collapse_ctc_path(
-    logits: np.ndarray, length: int
+    logits: np.ndarray, length: int, previous_token: int = 0,
 ) -> tuple[tuple[int, ...], tuple[int, ...]]:
     prediction = np.asarray(logits).reshape(-1, logits.shape[-1])[:length].argmax(-1)
     tokens: list[int] = []
     positions: list[int] = []
-    previous = -1
+    previous = previous_token
     for position, value in enumerate(prediction):
         token = int(value)
         if token != 0 and token != previous:
@@ -652,22 +653,29 @@ class LiveStage2CTC:
             "window_count": len(windows),
         }
 
-    def decode_frozen_windows(self, windows: list[np.ndarray]) -> dict[str, object]:
+    def decode_frozen_windows(
+        self, windows: list[np.ndarray], previous_token: int = 0,
+    ) -> dict[str, object]:
         """Decode up to the model's real eight-window context from retained vision features."""
         chosen, metadata = self.decode_frozen_logits(windows)
-        tokens, positions = collapse_ctc_path(chosen, len(chosen))
+        tokens, positions = collapse_ctc_path(chosen, len(chosen), previous_token)
+        if getattr(self.args, 'ctc_trace_dir', None) is not None:
+            self.last_ctc_logits = chosen.copy()
         other_rejections = tokens.count(101)
         tokens, positions = supported_ctc_path(tokens, positions)
         return {
             "hypothesis": [self.labels[token - 1] for token in tokens],
             "ctc_tokens": list(tokens),
+            "ctc_argmax": chosen.argmax(-1).tolist(),
+            "previous_ctc_token": previous_token,
             "token_positions": list(positions),
             "other_rejections": other_rejections,
             **metadata,
         }
 
     def classify_window(
-        self, observations: list[ObservedFrame], prior: list[np.ndarray]
+        self, observations: list[ObservedFrame], prior: list[np.ndarray],
+        previous_token: int = 0,
     ) -> tuple[np.ndarray | None, dict[str, object]]:
         started = time.perf_counter()
         landmarks, diagnostics = stage2_landmarks_from_observations(observations)
@@ -705,8 +713,23 @@ class LiveStage2CTC:
         })[self.encoder_output]).reshape(1, MAXIMUM_WINDOWS, 32, FROZEN_FEATURE_DIM)[0, 0]
         encoded = time.perf_counter()
 
-        decoded = self.decode_frozen_windows([*prior, frozen])
+        decoded = self.decode_frozen_windows([*prior, frozen], previous_token)
         inferred = time.perf_counter()
+        trace_dir = getattr(self.args, 'ctc_trace_dir', None)
+        if trace_dir is not None:
+            trace_dir.mkdir(parents=True, exist_ok=True)
+            self.trace_index = getattr(self, 'trace_index', 0) + 1
+            trace_path = trace_dir / f'emissions_{self.trace_index:06d}.npz'
+            # Exclusive creation prevents a later run from overwriting its evidence.
+            with trace_path.open('xb') as stream:
+                np.savez_compressed(
+                    stream, logits=self.last_ctc_logits, frozen_window=frozen,
+                    source_frame_times=np.asarray([o.seconds for o in observations]),
+                    previous_token=np.int64(previous_token),
+                    prior_window_count=np.int64(len(prior)),
+                )
+            decoded['emissions_path'] = str(trace_path)
+        completed = time.perf_counter()
         return frozen, {
             "accepted": True,
             **decoded,
@@ -719,7 +742,8 @@ class LiveStage2CTC:
                 "hand_image_encoding": 1000 * (hands_done - landmark_done),
                 "frozen_encoder": 1000 * (encoded - hands_done),
                 "ctc_selector": 1000 * (inferred - encoded),
-                "total": 1000 * (inferred - started),
+                "trace_write": 1000 * (completed - inferred),
+                "total": 1000 * (completed - started),
             },
         }
 
@@ -796,7 +820,7 @@ def draw_stage2_hud(
 def run(args: argparse.Namespace) -> dict[str, object]:
     classifier = LiveStage2CTC(args)
     naturalizer = make_naturalizer(args)
-    speaker = None if args.no_speech else LiveSpeaker()
+    speaker = None if args.no_speech else make_speaker(args)
     source = str(args.video) if args.video else f"camera:{args.camera}"
     recorder = SessionRecorder(args, classifier, source)
     recorder.data.update({
@@ -840,6 +864,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     locked_glosses: list[str] = []
     context_hypothesis: list[str] = []
     context_positions: list[int] = []
+    context_path: list[int] = []
+    previous_ctc_token = 0
     hypothesis: list[str] = []
     finishing_glosses: list[str] = []
     results: list[dict[str, object]] = []
@@ -883,10 +909,12 @@ def run(args: argparse.Namespace) -> dict[str, object]:
 
     def submit(observations: list[ObservedFrame]) -> None:
         nonlocal future, future_epoch, locked_glosses
-        nonlocal context_hypothesis, context_positions, hypothesis
+        nonlocal context_hypothesis, context_positions, hypothesis, previous_ctc_token
         if future is not None or len(observations) < 4:
             return
         if len(frozen_features) >= MAXIMUM_WINDOWS:
+            previous_ctc_token = context_path[TOKENS_PER_WINDOW - 1]
+            del context_path[:TOKENS_PER_WINDOW]
             locked_glosses, context_hypothesis, context_positions = roll_ctc_prefix(
                 locked_glosses, context_hypothesis, context_positions
             )
@@ -894,7 +922,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             hypothesis = [*locked_glosses, *context_hypothesis]
         future_epoch = epoch
         future = classifier_executor.submit(
-            classifier.classify_window, list(observations), list(frozen_features)
+            classifier.classify_window, list(observations), list(frozen_features), previous_ctc_token
         )
 
     def collect(wait: bool = False) -> None:
@@ -909,6 +937,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             frozen_features.append(feature)
             context_hypothesis = list(result["hypothesis"])
             context_positions = [int(value) for value in result["token_positions"]]
+            context_path[:] = result['ctc_argmax']
             hypothesis = [*locked_glosses, *context_hypothesis]
             result["locked_prefix"] = list(locked_glosses)
             result["full_hypothesis"] = list(hypothesis)
@@ -930,7 +959,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
 
     def start_naturalizer() -> None:
         nonlocal finish_requested, naturalizer_future, naturalizer_context, sentence
-        nonlocal locked_glosses, context_hypothesis, context_positions
+        nonlocal locked_glosses, context_hypothesis, context_positions, previous_ctc_token
         glosses = list(hypothesis)
         finishing_glosses[:] = glosses
         finish_requested = False
@@ -940,6 +969,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         locked_glosses.clear()
         context_hypothesis.clear()
         context_positions.clear()
+        context_path.clear()
+        previous_ctc_token = 0
         hypothesis.clear()
         stable_speaker.reset()
         if not glosses:
@@ -1002,7 +1033,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             recorder.add_event({"type": "speech_started", **started})
 
     def reset_display(seconds: float, source_name: str) -> None:
-        nonlocal epoch, sentence, finish_requested
+        nonlocal epoch, sentence, finish_requested, previous_ctc_token
         cleared = list(hypothesis)
         epoch += 1
         window_buffer.reset()
@@ -1011,6 +1042,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         locked_glosses.clear()
         context_hypothesis.clear()
         context_positions.clear()
+        context_path.clear()
+        previous_ctc_token = 0
         hypothesis.clear()
         finishing_glosses.clear()
         stable_speaker.reset()
@@ -1235,6 +1268,8 @@ def parser() -> argparse.ArgumentParser:
         help="disable the display-only MediaPipe lip overlay",
     )
     value.add_argument("--expected-sequence", nargs="*", default=())
+    value.add_argument('--ctc-trace-dir', type=Path,
+                       help='save diagnostic CTC logits/features/timestamps to a fresh directory')
     value.add_argument(
         "--finish-at-eof", action="store_true",
         help="exercise the FINISH/naturalizer path after a saved-video replay",

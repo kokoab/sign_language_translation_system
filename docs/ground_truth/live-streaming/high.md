@@ -1,11 +1,63 @@
 # live-streaming — high
 
+
+## 2026-09-22 — boundary adaptation must preserve and control the BIO readout
+
+OriginalBIO swaps recover most of the expanded recognition lost by START/END adaptation;
+backbone, readout and decoder must be separated before attributing failure to representation
+or capacity. Keep frozen pretrainedBIO as reference. Expanded72 is comparison only. Existing
+boundary calibration offers only2complete locked-vocabulary sequences/4signs, insufficient
+for robust whole-video checkpoint selection; resolve that scoring contract before new fitting.
+No automatic deployment/distillation. Evidence: boundary_adaptation_diagnostic_v17_20260922/REPORT.md.
+
 Dated evidence for constraints that still bind. The constraints themselves are
 stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
-10 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+11 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-09-20 — the 994-pair direct-text recipe memorizes captions
+
+The completed mT5 and BART hybrids do not support another text-model swap. BART emits
+an exact training caption on11/12 held-out rows; mT5 median nearest-training-caption
+similarity is0.803. Zero-visual BART emits the same exact training caption for all12.
+The visual input weakly changes caption selection but does not produce compositional
+translation. The isolated Stage1 head remains valid for its100-class task; a linear
+bridge plus20 epochs over994 fixed sentence pairs does not create an open-vocabulary
+continuous encoder. Future gloss-free work must retain/pretrain an aligned continuous
+pose encoder on full paired data and use retrieval controls. For the current bounded
+mobile system, keep one temporal blank+100-gloss head and collect targeted signer-
+disjoint hold/repeat/rest/transition supervision. Evidence:
+`artifacts/reports/direct_translation_failure_diagnosis_20260920/`.
+
+## 2026-09-15 — distinguish repaired training collapse from held-out recognition
+
+Pooled isolated/core CE cannot supervise a separate CTC head. The completed repair
+uses direct positiveCTC, verifiedanchors, temporaryframe-normalizedCTC, verified
+sequence-frameCE and restored originalCTC alignment to escape the measured blank basin.
+It achieves84.28%known TRAIN recovery/32.77%WER and100%isolated TRAIN CTC. This binds
+future interpretation: the existing data can train substantial CTC recognition.
+
+It does not solve generalization: connected98.24%WER, familiar107.72%WER and LG actual
+CTC4/57 (42empty) fail promotion despite pooled95.77%Citizen/85.28%SemLex retention.
+Always report actual CTC and pooled metrics separately. No validation-driven decoder
+suppression or more repeats of the failed original recipe are justified by this result.
+All150,876dense labels come from completeverifiedsign intervals or0.10sguardedinterior
+gaps;86,112otherpositions remain ignored. Preserve that annotation boundary. Citizen
+test remains sealed; runtime latency/device readiness remains unverified. Evidence:
+artifacts/reports/joint_ctc_aligned_v17_20260915/{README.md,verification.json}.
+
+## 2026-09-14 — isolated retention and lower WER do not rescue CTC blank collapse
+
+Matched12-epoch frozen/joint CTC arms both emitted no known signs on all334development
+recordings at every epoch. Joint pooled Citizen/SemLex accuracy retained95.50%/85.99%,
+and O5S5 training raw-core accuracy reached93.47%, but LG remained21.05% and the CTC
+head recovered only2/1,291known ASLLRP training signs. Pooled isolated retention is not
+evidence of CTC emission ability. Establish full-data training emissions before another
+signer-generalization comparison; do not promote all-deletion100%WER over a higher-WER
+baseline or scale the failed recipe. All24checkpoints failed; no confirmation/export.
+Evidence: `artifacts/reports/joint_ctc_v17_20260914/verification.json` and `README.md`.
 
 ## 2026-09-14 — O5S5 WER improvement does not pass the continuation gate
 

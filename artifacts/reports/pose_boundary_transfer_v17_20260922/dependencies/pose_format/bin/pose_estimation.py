@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+import argparse
+import os
+
+from simple_video_utils.metadata import video_metadata
+from simple_video_utils.frames import read_frames_exact
+from pose_format.utils.holistic import load_holistic
+
+
+def pose_video(input_path: str, output_path: str, format: str, additional_config: dict = {'model_complexity': 1}, progress: bool = True, pose_workers: int = 1):
+    # Load video metadata
+    print('Loading video ...')
+    metadata = video_metadata(input_path)
+    width = metadata.width
+    height = metadata.height
+    fps = metadata.fps
+    frames = read_frames_exact(input_path)
+
+    # Perform pose estimation
+    print('Estimating pose ...')
+    if format == 'mediapipe':
+        pose = load_holistic(frames,
+                             fps=fps,
+                             width=width,
+                             height=height,
+                             progress=progress,
+                             additional_holistic_config=additional_config,
+                             pose_workers=pose_workers)
+    else:
+        raise NotImplementedError('Pose format not supported')
+
+    # Write
+    print('Saving to disk ...')
+    with open(output_path, "wb") as f:
+        pose.write(f)
+
+
+def parse_additional_config(config: str):
+    if not config:
+        return {}
+    config = config.split(',')
+
+    def parse_value(value):
+        try:
+            return int(value)
+        except ValueError:
+            pass
+        try:
+            return float(value)
+        except ValueError:
+            pass
+        if value.lower() == 'true':
+            return True
+        if value.lower() == 'false':
+            return False
+        return value
+
+    return {k: parse_value(v) for k, v in [c.split('=') for c in config]}
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', required=True, type=str, help='path to input video file')
+    parser.add_argument('-o', required=True, type=str, help='path to output pose file')
+    parser.add_argument('--format',
+                        choices=['mediapipe'],
+                        default='mediapipe',
+                        type=str,
+                        help='type of pose estimation to use')
+    parser.add_argument('--additional-config', type=str, help='additional configuration for the pose estimator')
+    parser.add_argument('--workers', type=int, default=1, help='number of parallel holistic instances (0 = all CPUs)')
+
+    args = parser.parse_args()
+
+    if not os.path.exists(args.i):
+        raise FileNotFoundError(f"Video file {args.i} not found")
+
+    additional_config = parse_additional_config(args.additional_config)
+    pose_video(args.i, args.o, args.format, additional_config, pose_workers=args.workers)
+
+    # pip install . && video_to_pose -i como.mp4 -o como1.pose --format mediapipe
+    # pip install . && video_to_pose -i como.mp4 -o como2.pose --format mediapipe --additional-config="model_complexity=2,smooth_landmarks=false,refine_face_landmarks=true"
+    # pip install . && video_to_pose -i sparen.mp4 -o sparen.pose --format mediapipe --additional-config="model_complexity=2,smooth_landmarks=false,refine_face_landmarks=true"

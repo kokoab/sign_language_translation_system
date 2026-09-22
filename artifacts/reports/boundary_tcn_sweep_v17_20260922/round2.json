@@ -1,0 +1,196 @@
+{
+ "round": 2,
+ "objective": "output formulation and supervision coverage at a fixed trunk; selected on mean end-to-end WER over the 89-clip local tuning pool",
+ "trunk": {
+  "hidden": 64,
+  "dilations": [
+   1,
+   2,
+   4,
+   8,
+   16
+  ]
+ },
+ "seeds": [
+  17621,
+  17622
+ ],
+ "gap_max_seconds": 0.4,
+ "hand_geometry": true,
+ "reel": {
+  "unified_checkpoint": {
+   "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage1_v17_unified_phrase_activity_adapt_reel_v2/best_model.pth",
+   "sha256": "278a9933df25508aa83823cf6a8e050fbf4ba729eb39b1c790c97e55032a6558"
+  },
+  "image_encoder": {
+   "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+   "sha256": "mlpackage"
+  },
+  "stage1_coreml": {
+   "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1UnifiedPhraseActivityAdaptReelV17FP16.mlpackage",
+   "sha256": "mlpackage"
+  },
+  "orientation_coreml": {
+   "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage1PhraseAdaptReelV17.mlpackage",
+   "sha256": "mlpackage"
+  },
+  "reel_no_emit": {
+   "enabled": false,
+   "probability_threshold": null
+  }
+ },
+ "results": [
+  {
+   "arm": "edges",
+   "supervised_frames": 54076,
+   "runs": [
+    {
+     "seed": 17621,
+     "calibration_loss": 0.8216032412547254,
+     "summary": {
+      "substitutions": 43,
+      "deletions": 97,
+      "insertions": 14,
+      "references": 226,
+      "correct": 86,
+      "wer": 0.6814159292035398,
+      "exact_videos": 9,
+      "videos": 89,
+      "proposed_intervals": 298
+     }
+    },
+    {
+     "seed": 17622,
+     "calibration_loss": 0.839453480255295,
+     "summary": {
+      "substitutions": 38,
+      "deletions": 111,
+      "insertions": 19,
+      "references": 226,
+      "correct": 77,
+      "wer": 0.7433628318584071,
+      "exact_videos": 4,
+      "videos": 89,
+      "proposed_intervals": 297
+     }
+    }
+   ],
+   "mean_wer": 0.7123893805309734,
+   "seed_spread": 0.06194690265486735
+  },
+  {
+   "arm": "edges_wide",
+   "supervised_frames": 64183,
+   "runs": [
+    {
+     "seed": 17621,
+     "calibration_loss": 0.5335739275373186,
+     "summary": {
+      "substitutions": 36,
+      "deletions": 124,
+      "insertions": 12,
+      "references": 226,
+      "correct": 66,
+      "wer": 0.7610619469026548,
+      "exact_videos": 3,
+      "videos": 89,
+      "proposed_intervals": 289
+     }
+    },
+    {
+     "seed": 17622,
+     "calibration_loss": 0.5363125659750367,
+     "summary": {
+      "substitutions": 36,
+      "deletions": 134,
+      "insertions": 11,
+      "references": 226,
+      "correct": 56,
+      "wer": 0.8008849557522124,
+      "exact_videos": 4,
+      "videos": 89,
+      "proposed_intervals": 264
+     }
+    }
+   ],
+   "mean_wer": 0.7809734513274336,
+   "seed_spread": 0.039823008849557584
+  },
+  {
+   "arm": "edges_gap_o",
+   "supervised_frames": 60749,
+   "runs": [
+    {
+     "seed": 17621,
+     "calibration_loss": 0.9413394413256799,
+     "summary": {
+      "substitutions": 35,
+      "deletions": 132,
+      "insertions": 10,
+      "references": 226,
+      "correct": 59,
+      "wer": 0.7831858407079646,
+      "exact_videos": 3,
+      "videos": 89,
+      "proposed_intervals": 249
+     }
+    },
+    {
+     "seed": 17622,
+     "calibration_loss": 0.9529480918717372,
+     "summary": {
+      "substitutions": 29,
+      "deletions": 121,
+      "insertions": 15,
+      "references": 226,
+      "correct": 76,
+      "wer": 0.7300884955752213,
+      "exact_videos": 6,
+      "videos": 89,
+      "proposed_intervals": 284
+     }
+    }
+   ],
+   "mean_wer": 0.7566371681415929,
+   "seed_spread": 0.053097345132743334
+  },
+  {
+   "arm": "bio_gap",
+   "supervised_frames": 29493,
+   "runs": [
+    {
+     "seed": 17621,
+     "calibration_loss": 0.8748023284908991,
+     "summary": {
+      "substitutions": 28,
+      "deletions": 103,
+      "insertions": 15,
+      "references": 226,
+      "correct": 95,
+      "wer": 0.6460176991150443,
+      "exact_videos": 10,
+      "videos": 89,
+      "proposed_intervals": 282
+     }
+    },
+    {
+     "seed": 17622,
+     "calibration_loss": 0.8781603966677096,
+     "summary": {
+      "substitutions": 23,
+      "deletions": 130,
+      "insertions": 12,
+      "references": 226,
+      "correct": 73,
+      "wer": 0.7300884955752213,
+      "exact_videos": 7,
+      "videos": 89,
+      "proposed_intervals": 218
+     }
+    }
+   ],
+   "mean_wer": 0.6880530973451328,
+   "seed_spread": 0.08407079646017701
+  }
+ ]
+}

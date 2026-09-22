@@ -1,0 +1,21 @@
+{
+  "hashes": {
+    "artifacts/reports/boundary_local_calibration_v17_20260922/calibration.json": "b9f7d2e463722c1c35fa45eb7ba2a7e8094b1f5e0687d31d4018b3d3bc305db1",
+    "artifacts/reports/boundary_local_calibration_v17_20260922/confirmation.json": "51d78b9a08ad5ccc591755112515e3f1c5237b49aa7ce09c0b2b3fe788752f7e",
+    "artifacts/reports/boundary_local_calibration_v17_20260922/manifest.json": "436a66e958ebbf68c0e44d47c134fff67b1ff86490d1f9ca2c325f9924b203ff",
+    "artifacts/reports/reel_rejection_replay_v17_20260922/replay.py": "44aa987df50110529548f1edccabf9bf0c22d15a1324b2a50a317712722646ea",
+    "scripts/live_boundary_v17.py": "3ff4e3adc93644bdbe8385462c801ad63a4449da2f2858663c7d08e5a45237ec",
+    "scripts/live_reel_stage1_v17.py": "cf7394a64cb581ea12579373869d0ba5cd7ee5d9c994e0c261cd1cf10b09f38c"
+  },
+  "policy": "Keep every original commit. Rescue rejected intervals only when final verifier score>=existing instant threshold(.8), final top-two margin>=existing minimum(.08), and both models have no non-confidence rejection. No new sweep.",
+  "thresholds": {
+    "commit_hits": 1,
+    "commit_score": 0.45,
+    "instant_commit_score": 0.8,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08
+  },
+  "gate": "strictly lowerWER, no fewercorrects/no extra insertions, all baselinecorrect referencepositions retained",
+  "confirmation": "Only evaluate fixed candidate if calibration passes",
+  "scope": "cached interval decisions, not live stateful scheduling"
+}

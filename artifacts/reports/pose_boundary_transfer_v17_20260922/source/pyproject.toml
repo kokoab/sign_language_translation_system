@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sign-language-segmentation"
+description = "Sign language pose segmentation model on both the sentence and sign level"
+version = "0.0.1"
+authors = [
+    { name = "Amit Moryossef", email = "amitmoryossef@gmail.com" },
+    { name = "Zifan Jiang", email = "jiang@cl.uzh.ch" },
+    { name = "Ziv Lazarov", email = "ziv.lazarov@nagish.com" }
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pose-format>=0.8.1",
+    "numpy",
+    "pympi-ling",
+    "torch",
+    "pose-anonymization",
+    "scikit-learn",
+    "pytorch-lightning",
+    "safetensors",
+]
+
+[project.optional-dependencies]
+dgs = [
+    "lxml",
+]
+train = [
+    "sign-language-segmentation[dgs]",
+    "wandb",
+    "optuna",
+    "optuna-integration[pytorch_lightning]",
+    "pyyaml",
+]
+dev = [
+    "pytest",
+    "ruff",
+]
+server = [
+    "Flask",
+    "Werkzeug",
+    "gunicorn",
+    "Flask-Cors",
+    "Flask-Compress",
+    "Flask-Caching",
+]
+hf = [
+    "huggingface_hub>=0.20.0",
+]
+publish = [
+    "sign-language-segmentation[hf]",
+    "sign-language-segmentation[train]",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+ignore = [
+    "E501",  # line too long (handled by line-length)
+    "F401",  # unused imports in __init__.py re-exports
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sign_language_segmentation*"]
+
+[tool.setuptools.package-data]
+sign_language_segmentation = ["**/*.json", "**/*.safetensors", "**/*.yaml", "**/*.md"]
+
+[tool.pytest.ini_options]
+addopts = "-v"
+testpaths = ["sign_language_segmentation"]
+
+[project.scripts]
+pose_to_segments = "sign_language_segmentation.bin:main"

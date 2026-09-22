@@ -36,6 +36,7 @@ from scripts.live_isolated_v17 import (
     MODE_BUTTONS,
     IsolatedClassifier,
     LiveSpeaker,
+    make_speaker,
     ObservedFrame,
     SessionRecorder,
     atomic_json,
@@ -168,7 +169,7 @@ def draw_stream_hud(
 def run(args: argparse.Namespace) -> dict[str, object]:
     classifier = IsolatedClassifier(args)
     naturalizer = make_naturalizer(args)
-    speaker = None if args.no_speech else LiveSpeaker()
+    speaker = None if args.no_speech else make_speaker(args)
     source = str(args.video) if args.video else f"camera:{args.camera}"
     recorder = SessionRecorder(args, classifier, source)
     recorder.data.update({

@@ -1,0 +1,194 @@
+{
+  "format": "slt_live_stage2_ctc_v17_session",
+  "version": 1,
+  "prototype_scope": "accepted v17 general CTC selector over non-overlapping continuous windows",
+  "started_utc": "2026-09-21T17:16:11.846647+00:00",
+  "source": "artifacts/reports/continuous_recovery_v17_20260922/media/49985301_1.avi",
+  "mode": "stage2-ctc",
+  "score_semantics": "greedy CTC sequence; no calibrated confidence claim",
+  "config": {
+    "processing_fps": 30.0,
+    "detection_image_side": 720,
+    "maximum_image_side": 1280,
+    "record_width": 640,
+    "minimum_score": 0.25,
+    "minimum_margin": 0.08,
+    "maximum_accept_seconds": 2.5,
+    "end_on_low_motion": false,
+    "naturalizer": "literal",
+    "stage3_checkpoint": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage3_v17_t5_efficient_tiny_locked100_v1",
+    "stage3_device": "cpu",
+    "ollama_model": "llama3.2:1b",
+    "ollama_url": "http://127.0.0.1:11434/api/generate",
+    "ollama_timeout": 10.0,
+    "ollama_enabled": false,
+    "window_source_frames": 32,
+    "window_seconds": 1.0666666666666667,
+    "maximum_windows": 8,
+    "tokens_per_window": 8,
+    "live_face_display": "MediaPipe overlay every processed frame",
+    "model_face_sampling": "every eighth processed frame, matching v17 training",
+    "capture_policy": "latest-frame webcam; sequential saved video"
+  },
+  "models": {
+    "general_selector": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+      "sha256": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d"
+    },
+    "selector_report": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+      "sha256": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7"
+    },
+    "frozen_encoder_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "primary_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "specialist_coreml": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    },
+    "image_encoder": {
+      "path": "/Users/frnzlo/Documents/machine_learning/SLT/artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+      "sha256": "validated_mlpackage"
+    }
+  },
+  "video": "artifacts/reports/continuous_recovery_v17_20260922/replay_49985301_1/20260922_011611_846401/session_lowres.mp4",
+  "video_source_timestamps_seconds": [
+    0.0,
+    0.06673340006673341,
+    0.13346680013346682,
+    0.2002002002002002,
+    0.26693360026693363,
+    0.33366700033366703,
+    0.4004004004004004
+  ],
+  "predictions": [
+    {
+      "accepted": true,
+      "hypothesis": [
+        "SIGN"
+      ],
+      "ctc_tokens": [
+        99
+      ],
+      "ctc_argmax": [
+        0,
+        0,
+        0,
+        0,
+        99,
+        0,
+        0,
+        0
+      ],
+      "previous_ctc_token": 0,
+      "token_positions": [
+        4
+      ],
+      "other_rejections": 0,
+      "primary_tokens": [
+        99
+      ],
+      "specialist_tokens": [
+        99
+      ],
+      "specialist_selected": false,
+      "window_count": 1,
+      "emissions_path": "artifacts/reports/continuous_recovery_v17_20260922/replay_49985301_1/trace/emissions_000001.npz",
+      "frames": 13,
+      "start_seconds": 0.0,
+      "end_seconds": 0.4004004004004004,
+      "diagnostics": {
+        "normalization_scale": 0.26360437273979187,
+        "normalization_scale_source": "shoulder_width",
+        "shoulder_coverage": 0.6923076923076923,
+        "source_frames": 13,
+        "observed_hand_frames": 13,
+        "hand_presence_fraction": 0.992559552192688,
+        "face_presence_fraction": 0.6875,
+        "body_presence_fraction": 0.53125,
+        "detector_world_depth_fraction": 0.0
+      },
+      "latency_ms": {
+        "landmark_tensor": 1.6382089999993354,
+        "hand_image_encoding": 209.68220800000114,
+        "frozen_encoder": 7.43816699999833,
+        "ctc_selector": 2.954250000000158,
+        "trace_write": 2.6187079999999696,
+        "total": 224.33154199999893
+      },
+      "stream_epoch": 0,
+      "ignored_after_reset": false,
+      "locked_prefix": [],
+      "full_hypothesis": [
+        "SIGN"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "recorded_utc": "2026-09-21T17:16:11.898711+00:00",
+      "type": "naturalizer_warmup",
+      "ok": false,
+      "disabled": true,
+      "latency_ms": 0.0
+    },
+    {
+      "recorded_utc": "2026-09-21T17:16:12.426292+00:00",
+      "type": "finish_requested",
+      "source": "video_eof",
+      "seconds": 0.4337671004337671,
+      "active_glosses": [
+        "SIGN"
+      ],
+      "buffered_frames": 0
+    },
+    {
+      "recorded_utc": "2026-09-21T17:16:12.426604+00:00",
+      "type": "finish_submitted",
+      "utterance_id": "ctc-0001",
+      "requested_utc": "2026-09-21T17:16:12.426600+00:00",
+      "glosses": [
+        "SIGN"
+      ],
+      "stream_epoch": 0
+    }
+  ],
+  "utterances": [
+    {
+      "utterance_id": "ctc-0001",
+      "requested_utc": "2026-09-21T17:16:12.426600+00:00",
+      "glosses": [
+        "SIGN"
+      ],
+      "stream_epoch": 0,
+      "model": "llama3.2:1b",
+      "url": "http://127.0.0.1:11434/api/generate",
+      "prompt": "Convert this recognized ASL gloss sequence into one short, natural English sentence. Preserve its meaning and order. Do not add people, objects, actions, negation, time, or facts not represented by the glosses. Use every input gloss exactly once in used_glosses and in the same order. Return only JSON with keys sentence and used_glosses. Recognized glosses: [\"SIGN\"]",
+      "input_glosses": [
+        "SIGN"
+      ],
+      "literal_sentence": "Sign.",
+      "fallback_sentence": "Sign.",
+      "fallback_mode": "literal_fallback",
+      "sentence": "Sign.",
+      "rendering_mode": "literal_fallback",
+      "safe_fallback_used": true,
+      "error": "ollama_disabled",
+      "latency_ms": 0.03787500000029809,
+      "completed_utc": "2026-09-21T17:16:12.426953+00:00",
+      "displayed_and_spoken": true
+    }
+  ],
+  "test_accessed": false,
+  "capture_stats": {
+    "frames_processed": 13,
+    "landmark_observations": 13,
+    "stale_camera_frames_dropped": 0
+  },
+  "finished_utc": "2026-09-21T17:16:12.427878+00:00"
+}

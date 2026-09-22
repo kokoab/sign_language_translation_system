@@ -1,11 +1,1622 @@
 # live-streaming — log
 
+## 2026-09-22 evening — six more negatives; coarticulation identified; selection was the flaw
+
+Commit-gate rescue FAILED its gate (49.33->48.67% WER but +3 insertions; unfiltered verifier
+56.67%). Blocking stages: proposal_rejected_first 42, verifier_after_proposal 18, commit_score 12 -
+the commit score is NOT the main blocker. Rescue admits duplicates (HELLO HOW HOW HOW YOU) because
+the boundary model over-proposes; the gate was compensating for that.
+
+reel_context_adapt selected epoch 0. Deletions never moved (52->52). Isolated retention held, so
+the recipe worked mechanically and nothing transferred. SCHOOL is systematically committed as STOP.
+
+Crop-width sweep (89 clips): 100ms already optimal; 150/200/300/400ms give 52.65/53.10/57.96/64.60%.
+SCHOOL 0% at every width. Crop is not cutting off evidence.
+
+Hand/video diagnostics: local video IS darker (brightness 91.97 vs 118.45, 27.2% vs 17.3% pixels
+<40) but hand detection is BETTER (both-hands 39.5% vs 13.9%, confidence 0.625 vs 0.499). Data
+quality does not explain the failures.
+
+Synthetic phrases built (scripts/build_synthetic_phrases_v17.py, 139 phrases/39 signers/333 signs,
+within-signer, user-authorized over the Citizen caution). Validity: 18.62% WER, SCHOOL 82% - EASIER
+than the isolated clips it came from. With segmentation perfect in both, synthetic 92% verifier vs
+real continuous 67%. COARTICULATION POSITIVELY IDENTIFIED as the mechanism. No model trained on it.
+
+CORRECTION 1: "only 44 continuous phrases" was wrong - that is asllrp_contiguous only. Real
+inventory 1,017 known events in continuous video, 65 glosses, 147 videos with >=2 known signs, plus
+ncslgr_strict 88/37.
+CORRECTION 2: the -0.73 correlation between ASLLRP continuous coverage and local recall is
+CONFOUNDED by sign complexity and REFUTED by the existing ablation - removing asllrp_other_ctc costs
+7 WER points (42.02->49.02%) and 12 exact phrases. PLEASE has 0 ASLLRP events and still scores 50%.
+
+Prior art found: 2026-08-16 stage1-architecture/high.md already rejected synthetic window-phase
+augmentation (v3, 54.17% WER) and recorded that the limitation is scarce genuine continuous phrase
+supervision. Today re-derived that independently.
+
+Multi-source weighted selection built (scripts/score_multisource_v17.py): local 0.40, other three
+0.20 each, weighted macro not pooled, isolated as a retention constraint not an aggregate term,
+per-source no-regression gates. Local is the EASIEST continuous source (37.78% WER) not the hardest;
+ncslgr 86% and asllrp_other 77% hold the headroom. Ranking 26 checkpoints: the reference
+unified_streaming_grounded_ctc_v17_v1 ranks 14th; unified_streaming_aligned_grounded_v17_v1 PASSES
+every gate at 53.96% weighted, -3.01 points, isolated 82.4% vs 81.6%. Note 3-source checkpoints
+renormalize over sources excluding ncslgr and are not comparable.
+
+Next safe action: switch to aligned_grounded_v17_v1; adopt score_multisource_v17.py as the gate;
+boundary = frozen backbone + ORIGINAL BIO head/decoder, drop the START/END edge head (14 WER points
+at identical weights). 25% is not reachable by segmentation - oracle boundaries still give 50% WER
+on ASLLRP12 - it needs target-domain continuous video from more than three signers. Full writeup
+artifacts/reports/boundary_investigation_summary_v17_20260922/FINDINGS_PART2.md.
+
+
+## 2026-09-22 — Reel context head adaptation completed
+
+Finished 14epochs in 0.04min fitting. Selected epoch0; no promotion. Baseline WER49.33%, best trained 51.33%. Full retention/isolated validation gates are in history.json; best trained does not necessarily qualify. Report artifacts/reports/reel_context_adapt_v17_20260922/REPORT.md. Next read report/confirmation before any deployment or further unfreezing.
+
+
+## 2026-09-22 — Reel preparation/automatic fitting launched
+
+PreparationPID42156; detached native-kqueue supervisorPID46990
+waits for process exit without polling, then invokes --train only after cache_manifest
+exists and no failure.json. Completion/failure notifications enabled. Exact frozen
+verifier landmark/hand tensor lineage check passes; focused independent review found
+no blockers. Unit,syntax,diffchecks pass. Preparation measured75/555videos in3min;
+estimate20–30min totalpreparation, fitting under5min from measuredheadbenchmark.
+Report is explicitly RUNNING, no improvement claim. Automatic completion records
+results in currentstate/log and updates artifact index. No defaultchanges.
+
+
+## 2026-09-22 — authorized Reel context adaptation, preparation started
+
+Added scripts/train_reel_context_adapt_v17.py, one focused runnable regression check,
+and artifacts/reports/reel_context_adapt_v17_20260922/PLAN.md. Recipe pins672 reviewed
+ASLLRP positive events (47contiguous/625OTHER), occurrence-deduplicated with original
+parent/signer roles; OTHER names the source crop, not a training class. Equal local
+phrase partitions excluded. O5S5 exact-core-only/unspecified completeness is not silently
+reclassified as complete contextual supervision; STEM and other data preserved.
+Ruling: heads-only first bounded phase, both proposal classifier and verifier fusion;
+all image/temporal encoders frozen, no automatic block-unfreezing or architecture change.
+Exact Citizen1475/SemLex1388 replay cache membership,378/978validation retention planned.
+89local evaluation clips excluded; frozen BIO saved windows and unchanged acceptance.
+Canonical494 verifier passes with generictraining_ready=false unchanged. One test passed
+(crop-neighbour overlap and recognition retention guard). Actual runtime first-window
+CoreML/PyTorch logit parity passes. CPU128head batch3.6ms measured; fitting projected
+under5minutes, preparation separate. Preparation is running, no newtraining or promotion
+yet. User permits training polling only if under5minutes. Next: full baseline parity,
+source-cache checks and review, then bounded fitting if all pass.
+
+
+
+## 2026-09-22 — fixed verifier-aware rejection replay, no live change
+
+User requested tackling rejection losses and reports. New diagnostic-only
+artifacts/reports/reel_rejection_replay_v17_20260922/{replay.py,policy.json,calibration.json,
+unfiltered_verifier_diagnostic.json,REPORT.md}. Fixed policy before scoring: preserve
+all originalcommits; rescue with finalverifier>=.8, actualtop2margin>=.08; bypass only
+low_score/low_margin, retain all other rejection safeguards. No threshold sweep,
+modelinference/training or productchanges. Reconstructed currentVerifiedCommitLock
+with originaldefaults/hits1 reproduces every savedintervalcommit and editcount exactly.
+Policyguard assertions and finalsource/codehashchecks pass.
+
+59clips150sign calibration baseline82correct/16S52D6I/49.33%WER. Candidate86correct/
+16S48D9I/48.67%,retains82/82,14exactunchanged.7rescues =>4more transcriptcorrect and
+3moreinsertions; fails predeclared noextraI guard. Confirmation not evaluated (source
+hashed only). Firstblocker72rejections:proposal42,verifierafterproposal18,commitafter
+bothaccepted12; not recoverable-correctcounts. Unfilteredverifierdiagnosticonly102correct/
+28S20D37I/56.67%,not oracle/deployableupperbound. No annotation gapclaim.
+Decision retainpolicy; next discuss continuousidentity/context adaptation rather than
+blanketthresholdlowering. Doesnotruleoutallothergatepolicies. Existingdatasets/splits,
+checkpoints and live defaults preserved. Individualchangedcases included inREPORT.
+
+
+## 2026-09-22 — final BIO completed; investigation synthesis corrected
+
+User requested FINDINGS.md review and nextdirection. Completion1081.75s/18.03min,
+12epochs,selectedepoch0 frozen. Epoch8calWER47.33% vs49.33%,correct84vs82,retains74/82;
+failedretentionguard,not proof of zerolearning. Confirmation selected=frozen46/76,43.42%.
+No new training/deployment. Findings read and checked against probe/code/CTClog.
+Citizenprobe57clips,55verifiercorrect/33correctcommits,5distinctsigners,not19pergloss.
+All193probe clips34signers. 232/232train30/199val belongs to cleanStage2CTC17321/17322,
+not demonstrated memorization of currentReel weights. Frozenrandomedgehead precision
+is not frozenBIOquality; selectedepoch7precision cannot prove trainingprecisionceiling.
+Boundarynever-bottleneck is unsupported: annotationoracle12commits vs6predictedASLLRP.
+Moreproposals thanrefs doesnot prove sufficient correctlyaligned intervals.
+
+Concrete decisionpath: live_isolated acceptance tests gate_score/gate_margin, which
+can usefastlandmark evidence even when finalverifiermodel_score ishigh; classify_interval
+requires proposal.accepted AND verifier.accepted before VerifiedCommitLock. Withhits1,
+instant_score is redundant afterminimumscorepass; sweepinghits inone-decisioninterval
+evaluation doesn't model live repeatedstability. Existing59cal frozenrejections: verifier
+low_score23/low_margin18/insufficienthands9;proposal low_score28/low_margin27/
+insufficienthands9;12blockedafterbothaccepted. Categoriesoverlap,not correctsigncounts.
+
+Nextproposedwork: freezeBIO andReelweights; replay existingcalibration decisions with
+explicit rejectionattribution and a small verification-aware policy change, score retained
+corrects plus substitutions/insertions on wholevideos, then validate actualapp scheduling.
+No blanketthresholdlowering. If verifier alreadywrong on reliableintervals, target continuous
+identity/context adaptation rather than another boundaryrun. Preserve currentdatasets/splits.
+
+## 2026-09-22 — isolated signer probe: commit gate, not signer diversity, is the largest loss
+
+Read-only diagnostic, no training/promotion/protected test. Ran frozen Reel over 193 held-out
+(role=validation) isolated citizen/semlex/stem clips, 34 signers, covering exactly the 15-gloss local
+phrase vocabulary; whole clip as one interval through the same classify_interval path as the phrase
+evaluation. Script kept in session scratchpad; results
+artifacts/reports/isolated_signer_probe_v17_20260922/probe.json.
+
+By source: citizen n=57 proposal 96%/verifier 96%/committed-correct 58%; semlex n=133 52%/54%/45%;
+stem n=3 all zero. Overall n=193: 64%/66%/48%.
+
+Findings. (1) Signer diversity is NOT the binding constraint - 96% across ~19 signers per gloss on
+citizen. The 88 unused isolated-dataset signers would add variation the model already handles.
+(2) The commit gate is the largest single measured loss: citizen verifier 96% correct but 58%
+committed; across all sources 34 of 127 correctly-verified clips (27%) never emitted, median verifier
+score 0.908, and only 5 of those 34 had verifier_accepted=True - the accept criterion rejects correct
+~0.9-confidence answers. Same pattern as 51-of-79 blocked intervals on local60, now shown where
+segmentation plays no part. (3) SCHOOL 67% across 18 signers isolated vs 0/6 in local phrases;
+FRIEND 67% vs 1/6 - context transfer, not sign or signer. (4) Inversion rules out sign difficulty:
+GOOD 37% isolated but 6/6 in phrases. (5) SemLex 52% vs citizen 96% is a domain gap; semlex is 33 of
+the 88 signers.
+
+Decision: do NOT build the synthetic phrase-concatenation pipeline as the next step; it is a
+multi-hour build against a non-binding variable. External acquisition (YouTube-ASL ~2500 signers
+video-ID list, OpenASL CC BY-NC-ND) deferred for the same reason; neither carries gloss boundaries.
+Caveats: 193 clips; stem n=3 and HOW n=4 uninterpretable; citizen figure rests on 57 clips; Reel
+decides over the full 100-gloss vocabulary.
+
+Next safe action: sweep commit_score/instant_commit_score/commit_hits and inspect the verifier accept
+criterion, then test classifier context beyond 100ms. Consolidated writeup
+artifacts/reports/boundary_investigation_summary_v17_20260922/FINDINGS.md.
+
+
+
+## 2026-09-22 — authorized final planned BIO adaptation launched, no polling
+
+User authorized BIO-preserving training and explicitly forbade polling. Added dedicated
+scripts/train_pretrained_bio_final_v17.py,test/test_pretrained_bio_final_v17.py, versioned
+active/v17/pretrained_bio_final_recipe_20260922.json and reportPLAN/targets/evalposepins.
+Generic phrase verifier remains training_ready=false; dedicated boundary contract only.
+Only originalBIOhead +lastattention block train (1,330,948params); CNN/norm/first3blocks
+frozen and cached. Originalpretrained initialization, seed17621. Train3019B/21065I/5930
+masked windows; Bfirstobserved inside, Ithroughinclusiveend; overlaps/unknown=-1, no
+inventedO. ClassweightedCE +2xKL to frozenBIO on same trainingwindow/augmentation; KL
+is a prior,not annotated background. Existing clean+2poseaugmentationvariants reused.
+59localcalibration selects via fullvideoWER/retention/insertion guards every4epochs;
+30confirmation once afterlockedselection. Both reused development,not fresh independent
+test. Expanded72 untouched; no training overlap. Max80,12epochswithouteligiblegain stop;
+scheduler initialized withbaselineWER so epoch8reduction gets time before12stop.
+Selectedepoch0frozen fallback preserved alongside best_trained actualcandidate. No auto
+promotion or claim next model must improve. Existing89local reservations preserved.
+
+25focusedtests pass; tests first failed missingnewmodule. Fulltarget/source/hash audit,
+realraw->existingCNNcache parity, first3prefix/fullpath parity and finiteMPSbackward pass,
+zero preflightoptimizersteps. Independent narrowreview found no blockers. Diffcheckpass.
+RecipeSHA256da9fa22ac2c0c84d1cfe0de6b2553dc7d020bb747bf5a98fa09bd836995e6453.
+Detached caffeinatePID32926 launched2026-09-22T11:49:17Z. Do not poll. Notification on
+completion/failure; reports at artifacts/reports/pretrained_bio_final_v17_20260922/.
+Estimated1–2hours remains planningestimate, potentially longer if improvement continues
+toward80; single preflightbackward timing is not steady training benchmark. Launch is
+not completion. Next read completion/selection/confirmation/REPORT on user update.
+
+
+## 2026-09-22 — local BIO calibration completed, no improvement
+
+User authorized fast bounded calibration/report. New diagnostic run.py reuses original
+BIO and frozenReel;59calibration/150signs,30confirmation/76signs,282unused candidates.
+15signer/phrase strata; exacthash disjoint from boundaryfit/expanded72. Video/feature
+hashes verified. Familiar3signers/6templates/15glosses; no session/near-duplicate guarantee.
+Reserve89clips from future boundaryfit; original roles unchanged. Four predeclared
+frozen/adapted x min3/min5 options. Duration variants reuse intervalpredictions.
+CalibrationWER49.33/56.00/53.33/57.33percent, correct82/70/81/73 of150, insertions6/4/11/9.
+No challenger qualified under lowerWER/nondecreasingcorrect/noextraI/98percentretention.
+Frozenmin3 selected before confirmation; confirmation baselineonly43.42%WER,46/76,
+3insertions,8of30exact. No challenger test/improvement on confirmation claimed.
+Elapsed669.06s/11.15min; no training/deployment. Selection/filter/split checks and final
+sourcehash checks pass. Report/manifest/selection/predictions/by_signer under
+artifacts/reports/boundary_local_calibration_v17_20260922/. Postreport helper initially
+used systemPython lackingcv2, rerun with requiredvenv; inference/results unaffected.
+Next discuss BIO-preserving supervision/adaptation; longer minimumsegments lose signs.
+
+
+## 2026-09-22 — existing local calibration candidates clarified
+
+User challenged two-clip calibration scarcity. Targeted manifest join confirms371
+local phrase candidate clips/1006reference signs outside expanded72 and existing
+boundary train/calibration hashes. Existing authorized familiar split assigns371train/
+60heldout:232originaltrain plus139movedlocalvalidation. Candidates cover3signers
+(01=167,02=139,03=65), only6unique phrase sequences. Two complete clips describes the
+old boundary calibration loader intersection, not all available local supervision.
+No split changed/no fitting/no candidate selection. Inventory at diagnostic report
+local_calibration_inventory.json; manifest-level counts, not fresh video/annotation audit.
+Next proposal: verify/deduplicate candidates and version a recognition calibration +
+separate confirmation partition before tuning BIO candidates. Keep72 untouched as reused
+development, not fresh test; preserve originalBIO, score WER/retention/insertions.
+Whole transcripts suffice for sequence metrics; timed boundary/gap metrics still need
+reviewed intervals. Six phrase templates limit generalization claims.
+
+## 2026-09-22 — controlled original-BIO swaps isolate adaptation regression
+
+User authorized fast diagnosis and smallest justified fix after discussion. No new fitting,
+deployment, distillation, data/split changes or old artifact overwrites. Same72videos/186signs,
+same frozen Reel. Frozen127correct/39.78%WER/15insertions hypotheses AND interval boundaries
+reproduced exactly. First adapted backbone + originalBIO: 130correct/40.32%WER/
+19insertions, retains124/127. Augmented+BIO:
+124correct/42.47%WER/17insertions, retains120/127.
+CNN/inputnorm/BIO tensors unchanged exactly; attention and newedgehead are the only changed
+tensors. Major regression is replacement readout/decoder, not wholesale representation loss;
+head quality versus decoder policy (including EOF) remains unresolved.
+
+Changed scripts/evaluate_boundary_expanded_v17.py: explicit readout='bio' independent of
+checkpoint presence, old defaults preserved. Added scripts/diagnose_boundary_adaptation_v17.py
+and OriginalBioReadoutTest in test/test_pretrained_boundary_v17.py. Diagnostic/audit/calibration/
+benchmark/verification scripts and results in artifacts/reports/boundary_adaptation_diagnostic_v17_20260922/.
+Reconstructed all42614cached targets with independent unknown/edge masks, zero unknown loss
+gradients, sampled CPU/raw-cache parity <=5.723e-5; shared20Hz/64frames/target53/500msfuture
+contract intact.23focusedtests pass; readout test first failed missingkeyword then passed.
+Initial audit matching hit missing source_item_id on unrelated combined records; filtering
+that field fixed audit setup only. No training/data changes needed.
+
+Fixed-candidate calibration: only2approved complete locked-vocabulary videos/4signs among
+131boundarycalibration records. Original/fine-tuned/augmented BIO all0correct/100%WER;
+both adaptededge paths1correct/75%WER/0insertions. Predeclared rule chooses firstedgepath,
+not a recoveredBIOcheckpoint. Expanded72never used to override it or tune thresholds/epochs.
+This is not sufficient recognition-selection evidence; no candidate promoted, no newtraining.
+Bounded experiment was fixed-weight readout comparison with zero gradientsteps.
+
+Replay489.26s; calibration15.88s. Isolated synchronizedMPS
+batch1 normalization/CNN/attention/BIO firstadapted median30.19ms,
+p9538.97ms, excludesMediaPipe/Reel/camera and intrinsic500msfuture.
+Per-stage whole-video timings in REPORT.md; notlive/iPhone evidence. Video/checkpoint/oldsource
+hashes and all editcounts/retention recomputed. Next preserve originalBIO reference and resolve
+complete recognition scoring inside existing calibration split before another fine-tune.
+
+
+
+## 2026-09-22 — augmented completion and user-expanded72video TCN comparison
+
+User requested completed run review, expanded-set confirmation and nativeTCN evaluation.
+Augmented run complete2230.48s/37.17min,16epochs/selected8;cal.652261,val.818841.
+Cache677.56s,training/validation1497.21s. OldASLLRP7correct versus9priorfine-tune,
+so lowerBCE did not establish recognition improvement. No new training launched.
+
+Read scripts/evaluate_boundary_expanded_v17.py and saved72video results; verified all
+transcripts/editcounts/aggregateWER against currentsource records.72uniquevideo hashes,
+186refs,60local_signer_02clips162refs. No hash overlap with either boundary training/
+calibration or localfamiliar split train for heldlocal60. Clip-disjoint reused familiar
+signer development,not unseen-signer. No manual relabeling of all videos claimed.
+Found savedmembership only12 and mislabeledASLLRPcandidate counts246/261/287 vs19/21/18;
+current evaluator source already restricts counts but savedJSON stale. WER unaffected.
+Localzero gapcounts meanunavailableannotations,not measuredzerofalse transitions.
+
+Added only artifacts/reports/boundary_expanded_eval_v17_20260922/tcn_comparison/
+check.py,audit.json,evaluation_membership.json,evaluation.json,run.log,REPORT.md.
+All4existingTCNs evaluated via actualBoundaryRecognizer.observe with sharedfrozenReel
+classify_interval/.1context/no wristtrim; sameprovenance verified. Native.2sfuture/unscored
+tail preserved vs pretrained.5s/partialEOF. Conditionalfullvideo,not async live scheduling.
+All72videos/fourarms complete420.37s; finalsource/checkpoint/provenancehash checks pass.
+Audit-only assertion initially compared tuples toJSONlists, correctedserialization; empty
+partial subsets skipped. Model/product code and original suppliedreports unchanged.
+
+Expandedcombined frozen127correct/39.78%WER/17exact/15I; firstfine-tune96/54.30%/5/11I;
+augmented100/53.76%/2/14I. TCN skeleton17621:89/61.83%/6/18I; skeleton17622:78/66.13%/6/15I;
+geometry17621:84/62.90%/3/15I;geometry17622:99/59.68%/7/24I. ASLLRP5/6/7/8correct exactly
+reproduced. Geometrynotconsistentlybetter acrossseeds/local60. BestTCN retains80/127 frozen
+correct; bothadaptedmodelsretain75/121frozencorrectlocal signs. No promotion/distillation.
+Nextdiscussion: frozenpretrained remainsreference; isolate adaptedbackbone versus new
+START/END head/decoder before further fitting. Architecturecapacity not provenbottleneck.
+Update currentstate/index anddiffcheck; no protectedtest/newdata or seed2restart.
+
+## 2026-09-22 — expanded held-out boundary evaluation; 24-sign ranking does not survive
+
+User judged the 12-video/24-sign set too small to separate checkpoints. Added
+scripts/evaluate_boundary_expanded_v17.py (new report dir
+artifacts/reports/boundary_expanded_eval_v17_20260922); no training, no promotion,
+prior reports/checkpoints untouched. Set = frozen 12 ASLLRP development videos (24 signs)
+plus the 60 signer02 clips that local_familiar_signer split_manifest still holds out
+(162 signs) = 186 reference signs. The 139 moved-to-train clips were excluded. Verified
+both checkpoints were trained only on asllrp_other_ctc/asllrp/o5s5 poses, so no
+local_phrases contamination of the boundary models; frozen Reel is the shared constant.
+Subsets summarized separately; pooled column explicitly labelled.
+
+Harness validated: ASLLRP12 reproduces the standalone runs exactly (WER 75.00/62.50/70.83,
+recall@200ms .667/.708/.583).
+
+local60 WER: frozen_pretrained_bio 34.57% (121/162 correct, 29 del, 17/60 exact);
+finetune_epoch7 53.09% (87/162, 53 del, 4/60); augmented_epoch8 51.23% (93/162, 47 del, 2/60).
+Combined186: frozen 39.78% (127), finetune 54.30% (96), augmented 53.76% (100).
+
+Conclusions. The 62.50% vs 70.83% finetune/augmented gap measured on 24 signs does NOT
+survive: on 186 signs they are 54.30% vs 53.76%, and the subset ordering flips. Do not
+draw checkpoint conclusions from the 24-sign set. Separately, the un-adapted frozen
+backbone beats both adapted checkpoints on local60 by ~18 points, but the arms use
+different decoders (frozen sign_bio_head + upstream segment grouping with EOF close;
+adapted edge head + BoundaryDecoder requiring an explicit END, 0.15-4.0s bounds). The
+adapted deletion counts (53/47 vs 29) point at decoder failure to close on short clips,
+but weights and decoder are not separable from this run.
+
+Familiar-signer reused development pool, not unseen-signer and not protected test. One
+seed per checkpoint; no variance estimate. Fixed a reporting defect after the run:
+boundary_candidates accumulated across all 72 videos while printed under the ASLLRP
+heading (recall unaffected, numerator and denominator were both ASLLRP-only).
+
+Next safe action: separate decoder from weights by running the adapted checkpoints through
+the BIO-style decoding path, or the frozen head through BoundaryDecoder, before concluding
+that fine-tuning hurt. Seed 17622 remains unrun.
+
+
+
+## 2026-09-22 — authorized augmented pretrained boundary fine-tune launched
+
+User authorized next fine-tune, asked to eliminate mismatches and give runtime estimate.
+Changed active/v17/pretrained_boundary_v17.py (past-only observation augmentation),
+scripts/train_pretrained_boundary_v17.py (separate augmented run, verified clean-cache
+reuse, two variants, 80max/patience8/no40floor, LR plateau patience3, real-cache benchmark),
+scripts/evaluate_pretrained_boundary_v17.py and evaluate_temporal_boundary_v17.py
+(explicit report path), test/test_pretrained_boundary_v17.py (clock/augmentation,
+row-label alignment, untouched clean batching, stop and report-destination regressions).
+Only one seed17621 from original pretrained weights; head5epochs then all4attention
+blocks. Same20Hz/64frames/target53/500mslookahead, float32, masked unknowns, splits and
+frozenReel. Observation15–20Hz/dropout0–15% before normalization, two training-only
+cached variants plus clean variant, one choice per example per epoch. This is sensor
+sampling augmentation, NOT signing-tempo warping. No re-extraction or new data.
+
+Independent review found evaluation_membership would overwrite old temporal report;
+fixed shared output parameter and pinned COMBINED/CURATED/baseline and trainer dependency.
+COMBINED/CURATED hashes checked against training source manifest. First unlaunched
+augmented contract preserved but superseded by _v2; old trained checkpoints/cache/reports
+not overwritten. 22 focused tests pass, diffcheck passes. Final recipe SHA256
+ a80d7c7683ce469b1042201dbfafe77e15c53c184d88d9de01e262d80508a6e9.
+Preflight finiteMPSgradients4,727,042params/zero trainingsteps; benchmark disposable
+updates discarded. Clean cache parity max5.722e-6 across3splits, augmentedraw/cache parity.
+Measured307.19ms/batch128 +3.72scalibration =>75.91sepoch before paging/I/O/thermals.
+Estimate40–75min includingtwo-variantcache/evaluation near15–25epochs, ~3h if80epochs.
+
+Detached caffeinatePID17054 launched2026-09-22T08:24:42Z. Report:
+artifacts/reports/pretrained_boundary_augmented_v17_20260922/{PLAN.md,launch.json,
+benchmark.json,preflight.json,run.log}; completion/history/evaluation pending. Do not poll.
+Notification on success/failure; fullpairedwholevideo evaluation, no auto-promotion.
+Seed2 not resumed, defaultReel/genericphrasegate unchanged, protectedtest untouched.
+Next read actual completion/retention/false-emission results on authorized update.
+
+
+## 2026-09-22 — seed 1 review, overfitting audit and synchronized latency measurement
+
+User stopped seed2 and requested discussion/verification before another fine-tune.
+Seed1 selectedepoch7 of40,78.15min,calBCE.666061/val.830769. Paired12video24sign
+result:9correct,2S13D0I,62.5%WER,retains2of4,1gapcommit,8EOFpartialcommits;
+frozenbounded6correct/75%WER/retains3of4. No promotion or distillation recommendation.
+Strong overfit; cachedposeaugmentation absent; LR already scheduled. TemporalCNN
+neighbor perturbation disproves per-frameprojectionreuse. Patience8 replay stops15,
+retains7,saves50.59min. NativeTCN8epochcaps do not establish convergence at7–8.
+Added diagnostic-only artifacts/reports/pretrained_boundary_review_v17_20260922/
+measure.py,measurements.json,REVIEW.md; no product/trainer/checkpoint changes.
+Synchronizedbatch1 normalization+model16.50ms median/21.41ms p95; concurrentReel
+p95202.05ms. No MediaPipe/livecamera/iPhone frontend measurement. Trainingmicrobench
+~297–367ms/step; warming confounds sync attribution; no measured2xFP16gain.
+Disposable optimizer updates discarded. Original checkpoint hash verified unchanged.
+Updated current state; seed2 not restarted, new fine-tune not launched. Next discuss
+controlled augmented-cache adaptation, then partial-block ablation and retained-sign/
+false-output whole-video gates. Full hypotheses, limits and timings are in REVIEW.md.
+
+
+## 2026-09-22 — authorized pretrained boundary adaptation implemented and launched
+
+User approved nextplan,wanted enough epochs,then requestedunder30minutesifpossible and
+explicitly emphasized accuracy over speed. Implemented active/v17/pretrained_boundary_v17.py,
+scripts/train_pretrained_boundary_v17.py,scripts/evaluate_pretrained_boundary_v17.py,
+test/test_pretrained_boundary_v17.py,newdedicatedrecipe andreportPLAN/benchmarks.
+Retained currentdirtyworktree; no unrelated changes reverted or product defaults changed.
+
+20Hzpast-observation sampling,64framewindows,target53/10futureframes,per-window upstream
+normalization. Prefix and explicitEOFpadding use zeroconfidence,not fabricated observations;
+model still must predictEND. PretrainedCNN/inputnorm frozen; newstart/end headwarmup5epochs,
+thenall4attentionblocks adapt. Initial final-block-only speedproposal withdrawn after
+useraccuracypriority. All supervisedwindows used:30014train,5007train-parentcalibration,
+7593validation. Original889train/232valsourceposes and4310timings unchanged; unknown gaps
+masked, no BIO-background invention. Two seeds17621/17622,max120,min40before convergence
+stop,patience20,calibrationminimumBCEcheckpoint selection only. AdamWheadLR.001,
+attentionLR.00005,batch128,ReduceLROnPlateau,gradientclip1.0. Best checkpoint may precede
+stopping epoch; never claim later epochs necessarily improve accuracy.
+
+Fresh tests first failedmissingmodule;17focusedtests nowpass,including boundedfuture
+normalization,tailclock,cacheforwardparity,frozenCNN/trainableattention andmin/maxepochs.
+Independent review found cachedpose/rawvideo linkage needed explicit checking; added
+reusedhashagreement,rawvideoprecheck andafterevaluationhashcheck. Canonical494manifest
+verifieswithtraining_ready=false. Dedicatedrecipe121code/weight/dependency pins verified.
+MPS preflight finite gradients4,727,042trainableparameters,zerooptimizersteps. Disposable
+benchmark models performed timing updates only and were discarded. Actual final configuration
+batch1280.28446s/step,~66.85strain/epoch; two-seedestimate~1.5–2hoursnear40epochs,~5hoursnear120.
+Earlier25–35minuteestimate concerned withdrawnlast-block-only adaptation. No30minutehardcap.
+
+DedicatedrecipeSHA2566e80b22a8be08d9abd3d0e5229d990d916cdb6f786c4a1e18e3c743abf76b0ed.
+Detached caffeinatePID94956 launched2026-09-22T06:25:19Z. It buildsfloat32frozenCNNcache,
+trainsbothseeds,evaluatesselectedcheckpointsandfrozenboundedBIOcontrolwithfrozenReel,
+writesreports/index andsendscompletion/failurenotification. No polling. Evaluationruns
+allframesincludingunknownregions; recordsEOFdependence,WER,retainedcorrectpositions,
+regionmatches andguardedgapcommits. Cachedposeconditionalcomposition is NOT live latency;
+smallreused12video24sign set is not newgeneralization/hold/repeat/OOVevidence. Existing
+Reel/original gates/testseal preserved. Next read completion/results on authorizedcheck.
+
+
+## 2026-09-22 — all pretrained pose inputs validated; next training step discussed
+
+User received final notification and requested discussion,not an immediate training launch.
+preparation_completion.json complete1121records (850resumed/271new);
+validation_completion.json passed1121. Full validation.json confirms889train/232validation,
+4310intervals,190797frames,zero missing records/errors or recorded parent/signer role
+crossings. This is structural input validation,not recognition accuracy. The OS-exit
+validation watcher completed successfully; initial kqueue context-manager smoke failed
+and was corrected with contextlib.closing before launch. Existing125-record stale current
+state removed and replaced with final receipts. No training or default changes.
+
+Next discussion proposal: reuse pretrained representation,masked start/end head adaptation
+followed by small-learning-rate fine-tuning; train and evaluate with identical bounded
+future windows (initial target about0.5slookahead). Benchmark full bounded inference and
+training steps first. Keep Reel fixed and assess all-video retention,false outputs and
+latency. Existing12video replay is reused development,not a generalization gate. Dedicated
+recipe/input contract still required; generic/prepared training gates remain unchanged.
+
+
+## 2026-09-22 — requested preparation update: 911/1121
+
+Parallel preparation advanced25records since last check:911/1121(81.3%),
+887train/24validation,210remaining. ParentPID38560and allthreeworkers active;
+no completion receipt or reported traceback. Manifest remains preparing and
+training_ready=false. Training not started; no new accuracy result. No restart.
+
+
+## 2026-09-22 — user-requested parallel preparation status
+
+886/1121cached (79.0%),235remaining; latest manifest statuspreparing,workers3,
+training_ready=false. ParentPID38560elapsed30m44s; allthreeworkers remain CPU-active
+(157%,374%,203% in snapshot). No completion receipt. Completion count last advanced
+around5min into parallel run; firstthreeunfinished sources are long O5S5 narratives:
+007_JAH17972frames/5.0min,027_LR5117frames/2.84min,029_RD14972frames/4.16min.
+This explains why per-video progress is much slower than short ASLLRP clips; CPUactivity
+alone is not a frame-level progress measurement. No restart,code change,training or
+new accuracy result. Wait for completion notification or another authorized status check.
+
+
+## 2026-09-22 — pose preparation resumed with three video workers
+
+
+## Parallel extraction update
+
+User requested multiple video workers. Interrupted serial PID69981 with SIGINT after
+its850-record checkpoint; the resulting KeyboardInterrupt receipt is preserved as
+preparation_completion_serial.json and is an intentional restart,not corrupt input.
+Serial code and manifest snapshots preserved. Native per-video extraction is AST-identical.
+Three spawned worker processes each keep one sequential tracker per video. Parent alone
+writes atomic manifests,now after every completed video. Resume verifies source membership,
+video/pose hashes,shape,clock and finite values; completed entries retain their original
+source role and extraction provenance. Uncheckpointed tail outputs are re-extracted.
+
+Three-video parallel smoke passed; resume accepted a valid cached record and rejected
+changed pose hash,video hash and source identity. git diff --check passed.
+Detached PID38560 launched2026-09-22T05:10:00Z with --workers3;850verified-checkpoint
+records are eligible for reuse and271remaining videos need extraction. See
+prepare_parallel.log and preparation_launch.json. Full completion not yet checked.
+No change to frames,resolution,tracking,model,labels or training gate. No measured
+threefold speed claim. Training still needs a representative step benchmark; cached
+poses eliminate repeated RGB extraction but epoch count determines total runtime.
+
+
+## 2026-09-22 — user-requested pretrained pose preparation status check
+
+PID69981 remains running after58m54s. Log reports802/1121completed (71.5%);
+atomic manifest last checkpoint800records,alltrain so far,statuspreparing,
+training_ready=false. No preparation_completion.json yet; no failure receipt.
+Training has not started and no new recognition measurements exist. No restart or
+poll loop. Next: completion notification/user-requested check, then verify all source
+and pose hashes before the bounded-context transfer recipe.
+
+
+## 2026-09-22 — user-requested preparation status check
+
+Pretrained pose preparation process PID69981 is running after about32minutes.
+Latest log progress456/1121sources (40.7%); last saved manifest450records,
+status=preparing,training_ready=false. No completion/failure receipt yet and no
+traceback/error in the inspected final128KiB of the log. No training has started.
+No further polling; next authorized check reads completion and validates all input
+hashes before the bounded-context transfer recipe. Default Reel unchanged.
+
+
+## 2026-09-22 — user-requested pretrained pose preparation status check
+
+On user “update?”, detachedPID69981 remains running (~12m45s elapsed). Last saved
+prepared_manifest checkpoint contains125/1121records (~11%),all train-role so far;
+source order,not a training/validation admission change. Verified all125pose hashes,
+source manifest hash,exact original membership/roles/interval fields and preparation
+code pins. No completion receipt yet; no training has started. Keep job running with
+its completion notification; no further polling. Next authorized check should inspect
+preparation_completion.json before assuming all inputs are ready. No runtime changes.
+
+
+## 2026-09-22 — pretrained DGS pose boundary verified; real ASL transfer and preparation
+
+User requested continued work and pretrained weights to fine-tune. Downloaded shipped
+sign-language-processing/segmentation weights atcommit22ca3a6f63b6f031bfb1c0d717fcb259143ba7db:
+11.49MB,147tensors,5.734Mparameters,strict load,CPU/MPSdelta3.815e-5,finite synthetic MPS
+gradients,zerooptimizersteps. Isolated source/dependency files stay under report folder;
+no product dependency install. Initial GitHubmaster lookup404 corrected to main; synthetic
+backward harness inference-tensor issue fixed by fresh normal tensors,then passed.
+
+RealMediaPipe/frontend and upstream normalizer+decoder on the same12ASLLRPdev/24refs,
+frozen Reel intervals+100ms/no wristtrim:11correct,3S/10D/0I,54.17%WER,retains4/4baseline,
+2/12exact,22segments. Positive pretrained transfer but not promotion: full-sequence attention,
+symmetricconv and whole-clip normalization use future frames.12.68svideo,17.52sfrontend,
+3.25sboundaryforward includingcoldstarts; Reeladditional. No real-time/iPhone/OOV claim.
+
+Saved decision diagnostic: correct oracle verifiers blocked by proposal acceptance4/24.
+Fixed verifier-authority.45counterfactual14correctoracle/retains4of4 but learnedarms6/7/7/7,
+with geometryregression/newsubstitution. Removing veto also changes scoreauthority and
+removes proposal-boosted commits. No generic gate loosened.
+
+New files: artifacts/reports/pose_boundary_transfer_v17_20260922/{check.py,probe.py,
+prepare.py,PLAN.md,REPORT.md,provenance.json,compatibility.json,probe_results.json,REVIEW.json};
+artifacts/models/pose_boundary_dgs_2026/{model.safetensors,config.json};
+existing boundary report gainsdiagnose.py,decision_diagnostic.json. Currentstateupdated.
+Source-verified trainingpose extraction andserializationroundtrip pass. Native50-joint
+rawpose preparation for all1121alreadyadmittedrecords launched detached caffeinatePID69981
+at2026-09-22T04:06:11Z,notificationoncompletion. No polling,no newdataset,no training.
+Outputtraining_ready=false; nextcheckpreparation_completion.json/prepared_manifest.json,
+thenbounded-contextnormalization/start-endtransferrecipewithunknownregionsmasked.
+No plainBIOgapbackgroundlabels. ExistingReel/phrasegate/protectedtestremainunchanged.
+
+
+## 2026-09-22 — completed ASL boundary experiment reviewed; no promotion
+
+User requested “check”. All four fixed eight-epoch runs and paired evaluation completed
+in 131.44s. Verified eight execution code hashes, recipe SHA256
+25b24499633df10cebf69bbe99f49f571c020986a8145f017a65b6917dc057ad and four checkpoint hashes.
+Same 12 reused development videos / 24 references: baseline 4 correct, 83.33% WER;
+skeleton seeds 5/6 correct, 79.17/75% WER, retain 2/4 baseline positions;
+hand-geometry seeds 7/8 correct, 70.83/66.67% WER, retain 3/4. Geometry deletes
+16/24; every learned arm has zero exact videos. No candidate promoted.
+Boundary recall at ±200ms 37.5–50%; successful-word median end-to-output 0.58–0.65s,
+boundary CPU p95 61–80ms exceeds the 20Hz frame budget. Conditional desktop timings
+are not sustained phone evidence. Baseline and learned arms have zero wholly-gap-contained
+commits; no measured transition false-positive reduction here. No independent hold,
+repeat, low-motion or OOV stress coverage. Oracle 12/24 commits and verifier 16/24
+still identify downstream errors even with reviewed intervals.
+
+Updated PROJECT_GROUND_TRUTH.md, persistent plan and report STATUS.md. Existing REPORT.md
+contains the paired results. Next safe action: inspect saved per-interval proposal,
+verifier and commit decisions to separate boundary misses from identity/commit failures
+before specifying contextual identity adaptation. No new training, default change,
+protected test use or data acquisition. Prior implementation verification: 87 tests pass.
+
+## 2026-09-22 — ASL boundary implementation verified; detached comparison launched
+
+Same authorized plan, no side work. Two independent reviews completed. Corrected decoder
+to require predicted END instead of emitting on another START; independently filled
+unknown edge target cells (two labels had depended on interval order); asserted both
+edges covered by raw samples and exact cached observer/source/video contracts. Inference
+checks its recipe/model-code hash and exact observation settings; rejects commit_hits>1
+because this candidate makes one identity decision per completed event. Finish drains
+completed pending events and records/speaks literal words; reset prevents stale results
+from appearing in session history. Default Reel remains unchanged.
+
+87focused tests pass; full git diff --check passes. Final MPS preflight finite loss/
+gradients,zero optimizer steps,78402parameters,909train/146train-parent-calibration/
+260validationchunks. Final dedicated recipeSHA256
+25b24499633df10cebf69bbe99f49f571c020986a8145f017a65b6917dc057ad.
+Pre-review recipe snapshots preserved. No training used the preliminary edge labels.
+
+Detached caffeinate PID50241 launched2026-09-22T03:47:13Z. Fixed seeds17621/17622,
+skeleton vs added hand-relative geometry,8epochs each; train-parent-calibration selection
+only. Orchestrator artifacts/reports/asl_temporal_boundary_v17_20260922/run_experiment.py
+calls the dedicated trainer, then shared-runtime whole-video evaluation, report generation
+and artifact indexing. It checks code hashes before/after evaluation and sends one macOS
+completion/failure notification. No polling. Receipt launch.json; result completion.json,
+training_results.json,learned_results.json,REPORT.md. Read outcome next session/after
+notification; launch is not evidence of success. Contextual-identity follow-up remains
+conditional on reviewed results, not an automatic broader run. No protected test or
+acquisition. Persistent plan marks tasks1–5complete; task6launched, final review pending.
+
+## 2026-09-22 — authorized ASL temporal boundary implementation and matched baseline
+
+User approved implementation of the step-back plan, then said continue. Persistent plan:
+docs/superpowers/plans/2026-09-22-asl-temporal-boundary.md. Work in current feature branch
+to preserve required uncommitted upstream data/app work; no checkout, revert or commit.
+Added active/v17/temporal_boundary_v17.py, dedicated training/evaluation/live scripts,
+focused test/test_temporal_boundary_v17.py; opt-in app --boundary-checkpoint routing and
+explicit --no-motion-trim in existing classifier helper. Default Reel remains unchanged.
+
+Independent data review: start/end-only supervision, no inside/background class because
+gaps lack certified physical non-sign truth. 4,310events(3518train/792val),1121raw sequences,
+54ASLLRP duplicate occurrences removed by recording+global-frame+label identity with
+role/signer agreement. Broader ASLLRP timing used without lexical/OOV/CTC labels; O5S5
+limited to110strict accepted/current admitted positive events, all other regions masked.
+20Hz Apple raw frontend pinned; no acquisition. New recipe
+active/v17/temporal_boundary_manifest_20260922.json is dedicated-runner only; canonical
+494manifest verifies and generic training_ready remains false. MPS preflight has finite
+loss/gradients,78402parameters,909train/146train-parent-calibration/260validationchunks,
+zero optimizer steps. No full training launched at this entry.
+
+Matched replay artifacts: artifacts/reports/asl_temporal_boundary_v17_20260922/.
+Actual Reel same12developmentvideos/24known references:4correct,1S/19D/0I,83.33%WER.
+Reviewed intervals+100ms:12correct,1S/11D/0I,50%WER,1/12exact,verifier16/24;
+retains3/4baseline correct transcript-aligned reference positions. Tight intervals6correct,
+75%WER; motion-trim on/off identical per context arm. Conditional oracle commit differs
+from live stability scheduler; no causal/oracle deployment claim. Unknown edge fragments
+are retained in annotation metadata and omitted only from known-transcript references.
+Initial evaluator stopped on their mismatch before replay; fixed reference construction,
+failure log preserved. These are reused development figures, no test/phone/low-motion claim.
+
+Ten new focused tests pass including causality, touching edges, repeated identities,
+runtime EOF drain, explicit app mode, trim control and retained-correct accounting;
+45focused integration tests passed before final added metric/runtime tests. Independent
+code review in progress. Next: address review, fixed two-seed skeleton/hand-geometry
+boundary experiment detached with completion notification, then same whole-video replay.
+Identity/commit errors remain even with reviewed timing; defer conditional adaptation
+decision until boundary result, no threshold tuning against reused clips.
+
+## 2026-09-22 — step-back synthesis: boundary learning plus contextual identity
+
+Discussion/research only. User prefers one combined-data direction across available
+signers rather than choosing familiar-signer-first; multiple models acceptable if fast
+and accurate. Clarified that signer count/mixing alone does not establish generalization:
+existing combined adapted arms have local train WER0.48/1.74% versus validation50.84/53.26%.
+No new training, acquisition, runtime edits or gate changes.
+
+Read current state, reconciliation, matched Reel, anchored CTC, Renz, SHuBERT, Zuo,
+Zhao availability and familiar decoder reports; inspected live candidate activation,
+submission and wrist-based trimming. Existing matched cores retain that trimming:
+11/17 verifier identity correct versus5/17 conditional commits is not a clean oracle
+upper bound. Six correct identities blocked; checked WORK gap fools both recognizers.
+SHuBERT reduces correct tight-core commits5->2; Zuo5->0. Protocols differ, tiny reused
+development evidence; no encoder ranking or general low-motion evaluation.
+
+Recommendation remains a hypothesis: continuously observe fingers/hands/body, learn
+ASL start/end or BIO boundaries with bounded future context, retain Reel recognition as
+reference, then adapt identity to real contextual windows if matched oracle-segment
+recognition remains weak. Separate rejection of non-sign activity from unknown lexical
+identity; do not require pauses or a background frame between adjacent signs. Evaluate
+whole-video insertions/deletions/substitutions, retained correct events, repeats/holds,
+low-wrist-motion recall and end-to-display latency against unchanged same-input Reel.
+First controlled comparison separates current segmentation, reviewed boundaries with
+explicit trim policy, and learned boundaries, using identical recognizer/input contracts.
+No claim of a final guaranteed fix, deployable foreign blank head or need for a new backbone.
+
+Primary sources rechecked: Zuo https://arxiv.org/html/2401.05336v2 (context augmentation,
+foreground saliency, matched short-window training/inference); Renz
+https://github.com/RenzKa/sign-segmentation (temporal segmentation); Zhao final paper
+https://www.sign-lang.uni-hamburg.de/lrec/pub/26014.pdf (BIO allows adjacent signs without O);
+SHuBERT https://github.com/ShesterG/SHuBERT (ASL multimodal representation, not ready boundary
+head). Existing background/context/anchor attempts are not new proposals. Proposed
+distinction is native temporal boundary supervision and whole-stream evaluation; copied
+weights or another interval veto do not establish it. Mix eligible sources by supervision:
+isolated identity, verified boundaries, complete transcripts; mask incomplete unknown
+regions, preserve current source roles and deduplicate events. Motion-only data has no
+invented boundary labels. Next safe action: discuss this design, then prepare coverage and
+evaluation contract before any new bounded recipe. Changed only this log and current-state
+discussion note in PROJECT_GROUND_TRUTH.md; no experiment or accuracy result generated.
+
+## 2026-09-22 — Zhao author components recovered; end-to-end contract missing
+
+Reviewed final LREC paper and author GitHub inventory. Found ASL-Handshape and
+SegmentASLTransformer code/weights, correcting earlier search status. Saved selected
+sources, pinned commits, hashes and inventories under zhao_mhb_availability_v17_20260922.
+Downloaded model files only (no training/evaluation payloads). Segment strict34-tensor
+MPS synthetic check passed, CPU/MPS maxdelta5.722e-6; handshape weights65tensors/88outputs.
+Active segment forward ignores handshape labels and requires preseg predictions whose
+producer is absent. No sound real-video accuracy test without that contract; zero/random
+preseg would not reproduce MHB. No failures in the compatibility check, no live promotion.
+Paper/data distinctions and proposed ASL temporal-boundary experiment recorded in REPORT.md.
+Next: reviewed source coverage/full-stream evaluation recipe, then bounded in-domain
+boundary learning; do not tune reused3gaps or bypass training gates. App unchanged.
+
+
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
 `rg` this file before re-running an experiment to see if it already failed.
 
-45 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+50 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-09-22 — actual Zuo online blank transfer completed: rejects correct signs
+
+RecoveredPHOENIXonlinecheckpoint fullyrun withHRNetW48DARKMPS. Same17validationcores+3gaps,
+newexplicit16frame25Hzcentrewindows, notSHuBERTpoolingprotocol. Argmaxblank0 ofmean3head
+softmax, nofit/tuning. All3gapsrejected; falseconditionalcommits1->0. Correctcorecommits5->0:
+4FRIEND+1COLD lost; only4/17corewindowsnonblank.88.86s afterload,73.69pose+11.03recognition.
+No livepromotion/WER. Foreign-trainedhead/domain/letterbox differences preventmethodrejection.
+
+Artifacts zuo_twostream_probe_v17_20260922: transfer.py/recipe/results/check/REPORT/DATASETS,
+model_smoke.py andpose_smoke.py. All938recognizer tensors strict, HRNetstrict. MPS3DpoolCPU
+fallback; CPU/MPSsyntheticprobdelta1.788e-7. Focusedgeometry/membership/vetochecks passed;
+independentreviewconfirmedkeypointorder,BGR,ensembleandmetrics. Poseoverlayvisuallychecked.
+IsolatedMMPose0.29+MMCV1.7.0 installed; repairedpkg_resources/buildpath/Cython dependencies,
+no liveenvironmentreplacement. Initialfailures retained. HRNetCUDA scatteradaptedlocallyforMPS.
+No signingdatasetpayload or training; genericgateunchanged. Datasetaccess andauthorreplacement
+links preserved. NextZhao/MHBavailability, thenreviewallcandidatesbeforein-domainadaptation.
+
+## 2026-09-22 — recovered Zuo online weights; MPS contract smoke passed
+
+Official SharePoint model links404. Authorissue106/107comments provide replacementDrivefolder
+1U-BK7R-fMLmkSDq2M7GpHT9J4aKK9TFa. Listed remoteZIPdirectories; fetchedonlyPHOENIXonline
+checkpoint456022647bytes+vocab12551bytes viaRanges/ZIPCRC, no datasetpayload. Onlinearchive
+2.7GB includes usablecslr_best; older21.3GBarchivePHOENIX14TteacherS2Gentry iserrorplaceholder.
+Sourcepinned38a4f7b00da7a858d59b7fabe5093876a84db8e0. Strict938tensor model load passed;
+synthetic16frameMPSforward3.314s,CPU3Dpool fallback,CPU/MPSprobabilitymaxdelta1.788e-7.
+This is NOT real-video recognition or accuracy.63HRNetchannels required,1116outputs inclblank.
+OfficialHRNetW48DARKwholebodyweights acquired; isolatedlegacy pose runtime setup inprogress.
+Savedaccess/inventory/weights/provenance/data notes/model smoke underzuo_twostream_probe_v17_20260922.
+No live model changes or training. Next: validate actualHRNet extraction thenpairedrealinputprobe.
+
+## 2026-09-22 — SHuBERT paired decision probe complete: mixed result, no promotion
+
+FrozenMPS extraction45videos/1585frames completed in272.02s; face1576/1585,pose1585/1585,
+nozero-facevideos. Same247prior intervals,26fit/7calibration/12validation parents; fixedridge100,
+training-onlycalibration, no neural weight update. SHuBERT rejects2/3held-outgaps includingfalse
+WORK; conditionalfalsegapcommits1->0. But correcttight-corecommits5->2: threeFRIEND successes
+suppressed. Context100ms9->6,250ms5->2. Priorlandmarkgate0/3gapsrejected; DINO/body0/3.
+No stationary-wrist-positive samples, fullstreamWER or live evidence; fullclipnoncausalfeatures.
+
+New artifacts/reports/shubert_decision_probe_v17_20260922/{run.py,check.py,recipe.json,PLAN.md,
+REPORT.md,results.json,audit.json,cache/}. Prior smoke only extended withsource/output/cropargs.
+First scoring aborted beforefit: croppedMP4FPSrounded29.97002997->29.97 excludedendpoints.
+Corrected mapping usesoriginalsourceclock; unchangedcachedfeatures admitted explicitly under
+revisedrecipe; initialrunner/recipe/failurelog retained. Independent audit verifiesdecodedframe
+counts and all247intervalframecounts againstprior evidence. Exactpriorcontrolresults reproduced;
+calibration/veto/split/clockchecks passed. No new data or protectedtest; genericphrasegatefalse.
+Decision: do notdeploy thisgate or tuneon3reusedgaps. KeepSHuBERTcandidate; nextZuo/TwoStream
+comparison beforebroadertraining. Data provenance register retained.
+
+## 2026-09-22 — SHuBERT paired interval comparison started
+
+User authorized continue. New bounded recipe/PLAN/run/check in shubert_decision_probe_v17_20260922.
+Reuses247earlier decision-probe intervals across45videos, existing parent-video calibration,
+fixedridge100 and thresholds preserving all calibration positives. Three held-out gaps only.
+Arms: unchanged/confidence, earlier landmarks, DINO/body, full-context frozenSHuBERT. Encoder
+and image weights remain frozen; generic phrase gate remains false. Approved verifier passed.
+Refactored earlier smoke entrypoint only to accept source/output/crop parameters; new pooling
+and split checks passed. No live changes, new data, protected test, or expanded negative pool.
+Results pending; extraction usesMPS and saves cache/source hashes.
+
+## 2026-09-22 — spoken output given a selectable, softer voice
+
+User asked for a Siri-like soft voice. Hard limit found and stated: macOS exposes no Siri
+voice to any speech API — nothing Siri-related appears among the185 voices
+`NSSpeechSynthesizer` lists, and `say` does not offer one either. The closest reachable is
+Apple's neural premium tier, which must be installed by hand in System Settings >
+Accessibility > Spoken Content > System Voice > Manage Voices. **This machine currently
+has only compact voices**; every English voice installed is `com.apple.voice.compact.*`,
+which is the main reason the output sounded robotic.
+
+`LiveSpeaker` was hard-wired to `initWithVoice_(None)` at220 wpm. It now takes a voice and
+a rate, resolves the voice through `resolve_voice()` — full identifier, then voice name,
+then substring, then a softest-first preference list (premium Ava/Zoe, enhanced Ava/Zoe/
+Samantha, compact Samantha) — and falls back rather than failing, so a voice that is not
+installed can never stop a session. Default rate is now190 wpm per user choice.
+
+Shared change, per user direction: `make_speaker(args)` replaces the four bare
+`LiveSpeaker()` constructions in the reel, isolated, stage2-CTC and streaming scripts, so
+all of them improve together, and `--voice` / `--speech-rate` were added to the shared
+parser. The resolved voice and rate are printed at startup and recorded in the session
+config, with a one-line hint about installing a premium voice when a compact one is in
+use. Speech is presentation only and cannot affect recognition; equivalence re-checked
+anyway — the same six clips decode identically through pre- and post-change modules, 6/6.
+
+A bug was caught in test: a whitespace-only `--voice` was truthy, so the empty substring
+matched the first available voice. A blank request is now treated as no request.
+
+Tests: 231 passing across15 modules (11 new in `test/test_live_speech_voice_v17.py`);
+`git diff --check` clean. Nothing here is audible until a premium voice is installed —
+that step is the user's.
+
+## 2026-09-22 — SHuBERT published-weight MPS frontend/encoder probe
+
+User requested continuing SHuBERT and documenting its data before choosing combined training.
+Downloaded official encoder + face/hand DINO weights, pinned official repositories, saved
+hashes and isolated runtime dependencies. New report/probe/check/data register:
+`artifacts/reports/shubert_probe_v17_20260922/`. No dataset acquisition or head training.
+Strict loads passed. Real approved ASLLRP validation WATER COLD:41frames/1.368seconds,
+finite1x41x768features. Uncropped face detection0/41; published YOLO signer crop restored41/41;
+pose41/41,hands34/41and37/41. Single-clip timings: crop4.727s,MediaPipe2.715s,
+DINOincludingload2.283s,encoder0.456s; not sustained live performance. MPS used for neural
+models; MediaPipe separate runtime. CPU/MPS encoder maxabsdifference1.824e-5; check passed.
+Initial DINO Python3.9 type-annotation failures retained; postponed annotations in two vendor
+files only. OpenCV/in-memory crop adaptation documented, no numerical encoder change.
+
+No recognition/WER or transition-rejection improvement established. Data register distinguishes
+YouTube-ASL984hours/caption supervision, downstream datasets, existing local keypoint pilot,
+and evaluation overlap. Next: bounded frozen-feature sign/transition comparison under reviewed
+recipe and same train/held-out intervals; then other candidates before broader training.
+Live app/default Reel unchanged; no protected test accessed. git diff --check passed.
+
+## 2026-09-22 — user orders pretrained comparison before dataset combination
+
+User reiterated: retain Renz dataset for later experiments together; first see SHuBERT and
+other candidates before deciding. Saved ordered shortlist, evaluation distinctions, official
+Renz dataset URL/schema/archive ID/access caveats in five-step recovery PLAN. Dataset not
+downloaded or admitted; do not conflate already-downloaded weights with data. Immediate
+Renz fine-tuning deferred in favor of pretrained comparisons. No new model runs this turn.
+
+Also recorded preceding authorized live integration: scripts/live_renz_v17.py, app shell
+opt-in mutually exclusive --renz-buffered routing, test/test_live_renz_v17.py. Default remains
+Reel. MPS initially failed unsupported3Dpooling; explicit CPU-pooling fallback added. Report
+renz_live_v17_20260922 retains failure logs, real-video smoke and accelerator smoke.
+60focusedtests passed; actual1.3013second/27observationclip inference10.984seconds;
+4second repeated-image throughput28.9999seconds; CPU/MPSembeddingmaxdelta1.82e-6.
+Bufferedpreview uses4secondwindows/2secondhop/1secondrightcontext, visible backlogskips,
+resetgeneration discards stale results, records decisions/video. No webcam opened by agent.
+Current request changes documentation/priority only; no dataset acquisition or training.
+
+## 2026-09-22 — Renz pretrained offline transfer complete, no promotion
+
+12approvedASLLRPval/24refs; strict publishedI3D+MS-TCN loads. Rawvalid16framewindows omit
+clipedges ->0tokens/100%WER. Edgepadding restoresonefeature/sourceframe ->6tokens/79.17%.
+Publishedmidpointregionextension on samecachedpaddedfeatures ->10tokens,15edits/24=62.50%,
+2/12exact. BestregionIoU>=.5eligiblecorecoverage2/17->9/17->13/17; notmatchingprecision.
+WORK WHERE->WORK WORK; cannotattributepuretransition fromthattranscript alone.
+Conditionalcommit bypasseslivescheduler; nofullReelmatchedstreambaseline, nooverallWERclaim.
+SafeCPUadapter,aspectpreservingpadding differsfrompublishedstretch; noncausal,notmobile.
+50.18sunpadded/100.39spaddedfullpass; finalreplaycache reuse. No training/livechanges.
+Report/scripts/provenance/cachedfeatures/results retainedinrenz_reel_v17_20260922 with
+edge_padded andedge_padded_midpoint subdirs. check.py verifiedsourcecontract/checkpoint
+hashes,coverage,finiteoutputs,editcounts,threepreservedrunnerhashes;gitdiffcheckpassed.
+Next discuss ASLadaptation orSHuBERTreference; neither launched. Data notprovenbad.
+
+## 2026-09-22 — pretrained Renz offline transfer experiment started
+
+User authorized first experiment after research. Downloaded official upstream code commit
+29cc10963b41179c09e6fab4e0585c263f4917c9 and official models.zip via repository download
+script's Drive ID. Download initially timed out at97%, resumed successfully, ZIP verified.
+Extracted defaultBSLCorpus I3D+matchingMS-TCN only; weights_only loading and strictstatekeys
+passed. Code artifacts/vendor/renz_sign_segmentation;weights artifacts/models/renz_pretrained_v17.
+Dedicated runner/provenance/runlog under artifacts/reports/renz_reel_v17_20260922.
+Inference started on12approvedASLLRPvalidation videos; full494approvedmanifest verifierpassed.
+No training,newvideos,testaccess orlivechanges. RGB25Hz,16frames,stride1,segment100featurechunks,
+threshold.5 perpublished demo; actualcenter timestamps retained. CPU, safeffmpegpipe replaces
+upstreamsourceoverwrite. Requiredaspectpreservation addsletterbox before256resize/224crop;
+this is an explicit transferfrontenddeviation, notfaithfulstretch reproduction. FrozenReel
+classifies predictedclass0spans atnative20Hz schedule; conditionalcommit notfullscheduler.
+Models are noncausal offline reference. Results pending; do not claim improvement.
+
+## 2026-09-22 — step-back research: pretrained segmentation and ASL representation alternatives
+
+Discussion only; user challenges pairwise hard-negative patching. Correction: fast ridge fit
+with14traininggaps is not a meaningful rejection of general temporal boundary models.
+Recommend evaluate pretrained category-agnostic segmentation (Renz I3D+MS-TCN) as an offline
+reference before more custom gates; SHuBERT is a stronger ASL representation candidate for
+subsequent adaptation, not an off-the-shelf100sign or transition classifier. Published links
+verified in official READMEs; weights not downloaded/run and transfer/latency unmeasured.
+Renz repo provides302MBmodels archive,I3D andMS-TCN checkpoints/video demo; BSL/PHOENIX
+training, code license does not grant separate model/data rights.
+https://github.com/RenzKa/sign-segmentation
+SHuBERT official repo links encoder+DINOhand/faceweights; ~1000hASLpretraining, feature
+extraction available; downstreamfine-tuningREADME stillTODO. Differentfrontend, not direct
+Apple-feature-compatible. https://github.com/ShesterG/SHuBERT
+Zuo official Online/CSLRREADME links PHOENIX2014T/CSLDailycheckpoints plusTwoStreamteacher;
+German/Chineseheads cannot force-align ourASLglosses without adaptation.
+https://github.com/FangyunWei/SLRT/tree/main/Online/CSLR
+ZhaoMHB authorpreprint hasBIOtemporalSTGCN+canonical87handshapepretraining; adjacent signs
+mayhave noOgap. Methods specifyAlphaPose2D+velocity/acceleration despite3Dabstract wording.
+Important metric qualification: top180.23–83.30% only boundary-matchedsupportedsegments;
+3783/6595groundtruth(57.4%)matched, notoverallWER/randomliveperformance. Random4:1split,
+not evidence of oursignerdisjointgate. No officialMHBweights verified in searched sources.
+https://arxiv.org/html/2511.19907v1
+CommercialSign-SpeakdocumentsASLrecognitionAPI; notverifiedaccuracy/weights/offlineSDK.
+https://app.theneo.io/sign-speak/sign-speak-api/api-specifications/asl-production
+No acquisitions,contact,training orlivechanges. Preferred generalizing question is where
+sign boundaries occur using temporalhandshape/bodyevidence, not cataloging allsignpairs.
+
+## 2026-09-22 — fast temporal Reel decision probe failed; no promotion
+
+User authorized fast test. Reused56approvedASLLRP sources and current frozenReel models.
+Approved494membership/hash verifier passed; dedicated recipe pins exact source/script hashes,
+raw video hashes checked. Generictraininggate remainsfalse. Four temporal landmark bins plus
+proposal/verifier scores -> class-balanced ridge100; fixed linear probe, not full RGB temporal
+head. Original44train parents split deterministically for fit/calibration;12validation untouched.
+Fit48coresx3+14gaps;cal11coresx3+2gaps;val17coresx3+3gaps. Threshold preservescalpositives.
+Bothcalgapsrejected but0/3valgapsrejected; falseWORKstillpasses. Correctconditionalcommits
+core5->5,+100ms9->8,+250ms5->4. Confidencebaseline unchangedcommitcounts, also missesWORK.
+No promotion/model/livechanges. NotfullstreamWER, no stationarywrist or trueGOODBYE coverage
+claim. Linear temporal bins omit learnedRGBembeddings and candidateidentity; cannot dismiss
+all decisionmodels from this result. Small negative coverage and feature support unresolved.
+run.py, recipe.json, check.py, evidence.json, results.json, REPORT.md, run.log under
+artifacts/reports/reel_decision_probe_v17_20260922. Schedule/overlap/linearfit selfchecks and
+full previousvalidationprediction/commit parity passed; gitdiffcheck passed. Next audit existing
+training-source confusing gaps plus genuineconfusable signs before richer temporalhead;
+never tune against or move the validationWORKgap into training.
+
+## 2026-09-22 — researched recommendation: temporal Reel emission decision experiment
+
+User asks whether a decision model can reject transitions. Recommendation only; no training,
+weights, runtime thresholds or data roles changed. Freeze current Reel recognition models;
+compare existing commit logic, a calibrated score-only rejection baseline, and a small causal
+temporal emission head using rolling visual/landmark evidence plus candidate identity.
+Train on reviewed training-source false candidates and real contextual positives, including
+true GOODBYE/WORK and low-wrist-motion signs. Do not turn every unlabeled gap, O5S5 outside-
+positive interval, or CTC blank into transition truth. Preserve mixed sign/context positives;
+mask uncertain boundaries. Validation-discovered WORK gap stays diagnostic/validation, never
+silently becomes a training example. Split by parent video before overlapping window creation.
+Match runtime sampling/normalization and retain temporal handshape/body evidence, not just
+softmax confidence or wrist movement. First rejection comparison keeps candidate generation
+fixed; separately evaluate fixed-cadence, untrimmed candidates for low-motion recall, because
+an added veto cannot recover windows the current wrist gate never supplies.
+Evaluate full stream insertions, deletions, correct-sign recall, WER, repeated signs and
+emission latency; choose threshold on separate calibration sources. Proposed practical target
+(not achieved): halve transition insertions with <=2 percentage-point correct-sign recall loss,
+plus latency measurement. Three diagnostic gaps are not a sufficient promotion benchmark.
+Failure at matched recall means do not stack another gate; inspect representation/label support.
+
+Research: Zuo et al. EMNLP2024 Table5 background alone devWER62.6->49.1; adding contextual
+augmentation24.4, fullrecipe22.2. These are paper-specific numbers, not projected ASL results.
+https://arxiv.org/html/2401.05336v2
+Zhao et al. LREC2026 abstract supports separate boundary detection using 3D handshape and
+skeletal dynamics followed by recognition; no claim its offline method supplies live latency.
+https://aclanthology.org/2026.signlang-1.52/
+Kong/Ranganath2014 separates SIGN/movement-epenthesis before recognition; feasibility evidence,
+not a performance guarantee on our data. https://doi.org/10.1016/j.patcog.2013.09.014
+
+## 2026-09-22 — executed matched Reel core/context/gap comparison
+
+User authorized doing comparison. CurrentCoreMLproposal+fullverifier re-extracted12approved
+ASLLRPdevelopmentvideos; hashesverified. Same17cores: verifier11/17tight,11/17+100ms,
+7/17+250ms; correctconditionalcommits5/17,9/17,5/17; wrong1/0/1. Modestcontext helpssome
+commits; largercontext harmsidentity. Gap842935(0.5205–0.8475s): proposalWORK.5943/verifier
+WORK.5173, bothaccepted+conditionalcommit;1/3checkedgaps pass. Sixcorrectcoreverifiertop1
+blocked; oneFRIENDproposal overridden toANSWER passescommit. No single threshold diagnosis.
+Conditionalcommit bypasses activation/proposalstability/history; not actualstreamWER.
+All17cores passwithin-windowwriststart; staticwrist behavior notcovered.
+
+First replay incorrectly advanceddeadlinefromcurrenttime (effectively15Hzon30fpsinput).
+Preservedinitialoutputs, fixed to actualReelmax(previousdeadline+1/20,currenttime), added
+selfcheck, reranall12clips and assertedpaired17identities. Only correctedresults count.
+Recent5appMP4unreadable, so no exactuserHELLO→MY replay. Report/script/results:
+artifacts/reports/reel_matched_windows_v17_20260922/.
+
+Separateboundedrecordingfix: SessionRecorder.finish_video() releasesMP4 beforemodelcleanup;
+appnativewindowclose signalsquit. Historicalmissingmoov/unfinishedhistory shows nofinalization,
+notproof ofexactexitroute. Worker and parent independently ran89focusedtests, allpass.
+No modelweights,thresholds,training or dataset roleschanged. Next hard-negative+truepositive
+comparison and replayableliveinput; preserveReeldefault.
+
+## 2026-09-22 — conditional twenty-minute Zuo request feasibility
+
+User authorizes execution ifunder20minutes. Checked priortrainer andmeasuredruntime:
+O5S5window12epochs108.43sMPS, but this omits prep/implementation/evaluation. Existing
+traineralreadyhasbackground,contextforegroundCE,balanced sampling andteacherKL, so
+rerunning/addforegroundalone is not newZuo-styletest. Missing exactpaperloss/grouping,
+currentrecipecontract andend-to-endvalidation remainunprepared/untimed. No defensible
+under20min total estimate; no newtraininglaunched. Feasibility recorded in
+artifacts/reports/reel_streaming_research_v17_20260922/TIME_FEASIBILITY.md.
+
+## 2026-09-22 — Zuo replication feasibility and YouTube pilot clarified
+
+User asks if study can be replicated without more acquisition and what happened to
+YouTube keypoints. Re-read paper sections3.1/3.2/A.1/A.3, dataset reconciliation and both
+motionpilot reports. Distinguish faithful RGB+keypoint TwoStream/S3D reproduction from
+method adaptation using currentReel architecture. Paper's dictionary derives from a
+strong offlineCTC teacher plus known gloss transcripts, not unlabeledmotion alone.
+Existing ASLLRP/O5S5/STEM timedpositives and rawparentcontext support a bounded adapted
+replication without newdownloads. Positive-only labels do not establish surrounding
+background; intervalcoverage across100 and ambiguousgapreview still required. Additional
+annotation of existingvideo may be necessary; sufficient100signcontextcoverage unproven.
+Earlier background/window failures are partialattempts, not evidence of fullfaithfulreplication.
+
+YouTube retained1411JSON,1191countconsistent(220quarantined), separate46nodeXY/presence
+branch. Masked6frame spans/32framewindows, transferonly3causalCTCblocks; AppleStage1frozen.
+Correctedphrase rerunlocalWER48.52→43.15 and50.19→44.44, butseed17321ASLLRP54.17→66.67,
+seed17322deletions52→130, holds/repeatsnotimproved. No promotion; not adopted by current
+livecandidate/Reel. Earlier reconstruction failed causalcarryforward baseline. This is
+mixed evidence for a particularSSLobjective/transfer, not proof keypointsuseless.
+Do not count unlabeledYouTube as semantictransitiontargets or restart acquisition.
+Recommend explicit paper-component/data-coverage audit before anotherboundedreplication;
+retainYouTube for optionalcontrolledpretraining, not primarysignboundarytruth.
+Sources: https://arxiv.org/html/2401.05336v2 and
+artifacts/reports/youtube_motion_pretrain_fixed_phrases_v17_20260921/REVIEW.md.
+No runtime/training/data changes.
+
+## 2026-09-22 — research: retain Reel UX/reference, replace wrist-only segmentation hypothesis
+
+User asks whether CSLR target is realistic, reports HELLO→MY falseGOODBYE. Reviewed
+EMNLP2024onlineCSLR and AT4SSL2023linguisticfeatures paper, current wrist activation/
+trim and disablednoemit, and earlierwindow/background failures. Recommendation is
+continuous sign spotting using current trusted Reel evidence plus learned emission,
+not freezing current wristgates or promising a freshhead solves everything. Preserve
+holds/fingerchanges, use reviewed real hard-negative transitions and positiveGOODBYE,
+measure arbitrarycompositions/insertions/deletions/stablelatency. Existingwindowmodel
+alreadyfailed316.20%WER/770insertions,16/16transitionemissions; background class alone
+notnovel or sufficient. First collect replayable commoninput/modeltraces, diagnose,
+then bounded frozenencoder comparison before broadertraining. No runtime/trainingchange.
+Report: artifacts/reports/reel_streaming_research_v17_20260922/REPORT.md.
+
+## 2026-09-22 — user live familiar failure on I GO; Reel history confirms emissions
+
+User reports candidate recognizes familiar greeting but misses I GO; requested Reel history
+comparison. Reviewed candidate sessions074639/074748 and Reelapp074918Sep22. Reel committed
+I27.17/41.44s andGO29.54/42.95s (verifiersI.915/.962,GO.771/.768). Candidate logs emitted neither;
+mostlyHELLO/HOW/YOU/OTHER/TOMORROW. These are distinct runs, not pairedgroundtruth/WER.
+Training coverage: I28isolated and115phraseclips allPLEASE HELP I;GO23isolated and33phraseclips
+allTOMORROW SCHOOL GO;zeroI GO pairs. Selectedcandidatecachedisolatedval I15/17headexact,
+GO9/16; labelsnotmissing. CandidateusesolderasllrpcoreStage1, not currentReelproposal/verifier.
+No liveLMenabled. Six-template19.14%validation did not establish user's arbitrary signing.
+
+Livecandidate13.34/16.90observedfps with30Hzduplicatedfeatureticks and causalnormalization
+remainpossibleinput-domain causes, not demonstrated attribution. Candidate saved onlydecoded
+events, no video/features/logits: instrumentation insufficient to diagnose missedrealattempts.
+Tried bounded same-recording replay via AppleVision, but latestReelMP4 lacksmoovatom and cannot
+open;no replayheadprobabilities. No running app process atcheck; nonfinalizationcauseunknown.
+New report/replaydiagnostic: artifacts/reports/live_familiar_diagnosis_v17_20260922/.
+No thresholds/model/training changed. Keepcandidate experimental; next safeaction capture
+replayable commoninput and per-window base/head evidence before trainingorLMpromotion.
+
+## 2026-09-22 — familiar candidate available through app shell
+
+User requested live command and concurrent decoder experiment, then explicitly selected
+scripts/app_shell_v17.py. Added opt-in --familiar-ctc-checkpoint branch to existing shell
+warm/start; default Reel path preserved. New active/v17/familiar_live_v17.py verifies
+reviewed candidate hash and original base/head provenance, restores familiar state, uses
+8sourceframes/stride4 and bounded15evidence-step causal history with greedy CTC collapse.
+No wrist-motion emission gate, no language prior, no English completion. Existing
+scripts/live_continuous_v17.py supports prebuilt model/shell presentation; navigation
+pauses extraction and resets model state, literal single-line transcript, Enter clears,
+Q quits. Camera normalization is past-only and differs from cached clip normalization;
+batch parity does not establish live accuracy. Candidate events saved under continuous_live_v17;
+not yet integrated into app HISTORY's SessionRecorder format.
+
+Command: venv/bin/python scripts/app_shell_v17.py --familiar-ctc-checkpoint
+artifacts/models/local_familiar_ctc_v17_20260922/seed_17521_familiar.pth
+
+Validation: real checkpoint CPU streaming logits match batch including residual endpoint
+and boundedhistory (>15steps), CTC tokens match, reset/nonfinite rejection checked. MPS
+live forward finite. 95 focused tests pass across new runtime, app pages/shell and causal
+vision; CLI help pass; diffcheck pass. No camera opened by agent, no protectedtest access,
+no live default promotion. Offline decoder comparison running separately on CPU; initial
+weak bigram gains require uniform-prior control to distinguish a length penalty effect.
+
+Offline decoder comparison COMPLETE, fixed1735validationrecords/two familiar heads,
+beam8 and priorweight0.1,51distinct trainingphrase transcripts only. Local60WER:
+17521 greedy19.14/beam17.90/uniform16.67/bigram16.05%;17522 22.22/22.84/21.60/20.99%.
+Uniform prior isolates constant extension length penalty: learned pair preference adds
+only one fewer edit (0.62percentagepoint) and one more exact clip per seed beyond uniform.
+Most improvement is not demonstrated linguistic-context gain. All60local targetsequences
+seen in training;9/12ASLLRPsequences novel and noWERchange(33.33%). No liveLM promotion.
+Report/results/scripts/tests under familiar_decoder_v17_20260922 and
+scripts/evaluate_familiar_decoder_v17.py. Decoderfocusedtests pass; no hypothesis weights
+tuned on validation. CPUbigramdecode2.90/2.92msperexample averages, not camera latency.
+Next safe action is user live app-shell evaluation of visually decoded candidate; use
+novel combinations to assess reliability before promoting any language prior.
+
+## 2026-09-22 — familiar-signer trial completed; language-prior research
+
+Reviewed all4completedruns: checkpoint hashes/earliest-best selection/paired baselines/
+coverage verified. Same60localclips: control35.80%WER(epoch0both), familiar19.14%(epoch6)
+and22.22%(epoch5); exact20→33/27of60. LocaltrainWER4.87/6.26%familiar. AllS/D/Ifell.
+ASLLRP12knownWER33.33%both; O5S5still77–79%. Familiar-signer/six-template reused development
+results, not arbitrary live/unseen-signer proof. FrozenStage1 means no evidence of new
+encoder coarticulation learning. Added139clips also changes data amount/composition.
+Previous standalone211evaluator countsOTHER; this trainer removesOTHER for knownWER;
+localmetricsunaffected, do not compare cross-report pooledscores without normalization.
+
+User asks next action and next-word research. Read2025 Sign Spotting Disambiguation using
+Large Language Models: visual candidates+gloss conditional probabilities via beam search,
+top1 latefusionWER47.24→44.38/44.73%, top5notdeployabletop1. Recommended candidate streaming
+parity/live stress evaluation first; add separate offline greedy/beam/weaksmoothedglossprior
+comparison with training-only transcripts, no forced phrase completion, unseen combinations
+and latency/insertions checks. Then actual-context jitter as separate visual intervention.
+No live promotion/newtraining/LM implementation. Full report:
+artifacts/reports/local_familiar_signer_v17_20260922/RESULTS_REVIEW.md.
+
+## 2026-09-22 — older matched evaluation; authorized familiar-signer experiment prepared
+
+User requested evaluation, relaxing local-phrase signer separation, and research on
+transition augmentation. Evaluated older aligned-grounded causal pipeline on exact current
+211 approved validation phrases: WER39.0374%, local199WER38.7337%, ASLLRP12WER45.8333%;
+55/211 exact. Earlier pipeline beats recent50.98–53.65% on this development benchmark;
+multiple pipeline components differ, so this is not a head-only causal comparison.
+No old-head training source-item overlap; broader historical base exposure not fully audited.
+Report: artifacts/reports/previous_ctc_approved_v17_20260922/REPORT.md; evaluator
+scripts/evaluate_previous_ctc_approved_v17.py. No live promotion.
+
+Reviewed source labels and three papers (EMNLP2024 online CSLR, IberSPEECH2021 synthetic
+sentences, ICCV2021 VAC). Report: artifacts/reports/coarticulation_research_v17_20260922/REPORT.md.
+2863 training singles carry clip identity only; 1401 have interval-derived provenance.
+Current single-sign training does not supply uniform entry/core/exit targets. Actual
+continuous-context jitter and smooth synthetic transitions are supported hypotheses;
+transition-only noise is not established as sufficient. No augmentation implemented here.
+
+Prepared split_manifest.json and CONTRACT.md under local_familiar_signer_v17_20260922:
+139 previously-validation local signer02 clips moved to experimental training, 60 held out;
+raw-video hashes separate; other roles unchanged. User-authorized local exception only,
+not a waiver of Citizen splits. Same6421 records, control4547/familiar4686train;
+common1735validation incl60local+12ASLLRP+1663singles. These are reused familiar-signer
+held-out clips, not independent/unseen-signer results. Historical211benchmark retires for
+new candidate selection after139clips enter training.
+
+Dedicated scripts/train_local_familiar_ctc_v17.py, test/test_local_familiar_ctc_v17.py,
+active/v17/local_familiar_ctc_manifest_20260922.json: frozen older Stage1, cached evidence,
+control/familiar arms, seeds17521/17522,6epochs,headLR1e-4,WD1e-3,epoch0 allowed.
+Two focused tests passed. Review caught pre-launch report-directory, FP32 cache, dependency
+pinning, correlation weights, known-WER/OTHER and failure notification issues; corrected.
+MPS zero-step preflight and independent review completed.
+Launch verified after final equality guard and repinned zero-step preflight:
+6421records/15430windows, cache/direct maxdelta4.7684e-6, finite/nonzeroheadgradients,
+basegradientsabsent,2focusedtestspass. Detached caffeinatePID78465 launched
+2026-09-21T23:31:43.656638UTC (Sep22PHT), recipeSHA
+ a91c756a3f8b04eda63f7d7185f373288efbfcc079243cb20908503f1e9437c9.
+Completion not yet observed; no training polling. Read status/results next session, compare
+both arms on common60local clips and source retention before deciding. Index regenerated;
+git diff --check passed. Allfive recovery steps retained; liveUI/model unchanged.
+
+
+## 2026-09-22 — transition-anchor comparison complete; no improvement over control
+
+User requested update. All4runs completed3epochs; checkpoint hashes, earliest-best selector
+includingepoch0, saved validation and4264/536single/phrase exposure verified. PhraseWER
+control50.98/52.41%, anchored50.98/52.41%; exact29/24versus29/22of211. Seed17421bothselect
+unchangedepoch0; seed17422controlselectepoch2andanchoredepoch1. Anchoredseed2source-balanced
+selector worse(.57228vs.55237). All-sourceWER27.56/31.25%controlvs27.56/31.47%anchored.
+No benefit demonstrated from this bounded timed-anchor refinement. No promotion or extra
+training. Review artifacts transition_anchors_v17_20260922/REVIEW.md,REVIEW_SUMMARY.json.
+Scope remainslimited: frozenencoder,3epochs,0.25loss,59traincores/27gaps; does not establish
+transition supervision is impossible. Nextdecision must revisit intervention/data support,
+not automatically repeat or extend the failed recipe. Live model/application untouched.
+
+## 2026-09-22 — requested interim timed-anchor update
+
+User requested status; one snapshot shows state running, three of four runs saved with
+all3epochs each. Seed17421control and anchored both selectedepoch0: neither beats initial
+validation selector; both retain combinedphraseWER50.98%. Seed17422control selectedepoch2,
+combinedphraseWER52.41% (initial53.65%), all-sourceWER31.25%. Seed17422anchored has no saved
+history/result in this snapshot. No overall anchor benefit established; do not infer final
+result or promote from partial results. No trainingparameters changed or backgroundpolling.
+Next: completion notification / next requested status; then full paired comparison.
+
+## 2026-09-22 — timed sign/transition head comparison launched
+
+User asked for faster work and actual transition learning. Independent review cleared
+anchor prep/contract and runner0cdb5b345116b24ef949b2df17fa83dc12f14963dd1848ebda97fa1445212bad.
+Focused anchor-loss test passed, including blank0/known1..100, ignored tokens and finite
+nonzero gradients. ActualMPSpreflight passed6421records/7367richwindows perseed; cached
+versus direct logits maxdifference0.0both; each gradientprobe included4known/2blank regions,
+allheadgradientsfinite/nonzero, basegradientsabsent, zerooptimizersteps. gitdiffcheckclean.
+
+Launched detachedcaffeinate PID40294 at2026-09-21T22:57:08.955694UTC (Sep22PHT).
+Two selected adapted initializations17421/17422; control and anchored arms;3epochs each.
+Stage1frozen, richfeaturescachedonceperseed. Anchored loss adds0.25intervalCE to unchanged
+CTCloss, central signcores plus bounded internalgapblank hypothesis. Genericgateunchanged.
+Recipe SHA03b2fac300e3b8fb45a5be62fa8147c20b406867007c530e21649f55e503fe74;
+preflightSHA8cb563bc79287a142b3508c4d88c4751776dba87fffe5b696ccfffb00bf8b8a6.
+Newfiles: scripts/train_transition_anchors_v17.py, test/test_transition_anchors_v17.py,
+scripts/prepare_transition_anchors_v17.py, active/v17/transition_anchors_manifest_20260922.json;
+reports under artifacts/reports/transition_anchors_v17_20260922. Earlier matched diagnostic
+script/report and sourceinterval audit retained. No trainingpolling or completionclaim.
+
+Nextsafeaction: readnewstatus/results nextsession, compare anchored vscontrol acrossboth
+seeds includingepoch0, phraseWER/exact, single-source retention and selectedtrainfit.
+No livepromotion based solely on auxiliary loss falling; step5stilldepends on quality,
+holds/repeats and latency. Currentapp/livecode/model defaults untouched; no protectedtest,
+acquisition or blanket extraction. Allfive recovery steps retained.
+
+## 2026-09-22 — matched diagnostic completed; timed-anchor refinement prepared
+
+User asked faster progress and explicit transition learning. Replayed all56approvedASLLRP
+contiguous clips with all4selectedcheckpoints in9sMPS; checkpoint hashes and whole-sequence
+exact counts match prior saved results. Contextual token-classifier core evidence on59train/
+17validation eligible intervals: frozen30/59and10/17 bothseeds; adapted50/59,12/17 and51/59,
+9/17. Adapted whole validation exact0/12both. FRIEND MAYBE: frozen can have both corelabels
+correct but outputSCHOOL/blank; adapted outputsOTHER MAYBE MAYBE orSCHOOL MAYBE and its
+FRIEND core evidence isYEAR/WE. Both identity and emission problems remain; not proof that
+blank-only training fixes them. Gap-located spikes are timing observations, not certified
+false-positive signs. Core evidence is not independent isolated classification.
+
+Newdiagnostic scripts/diagnose_combined_transitions_v17.py and
+artifacts/reports/combined_transition_diagnostic_v17_20260922/{REPORT.md,results.json}.
+The diagnostic initially compared one-based predictions to zero-based annotation IDs;
+corrected before interpreting results. This was diagnostic-only, not an old training bug.
+
+Prepared scripts/prepare_transition_anchors_v17.py and recipe-scoped anchor JSON:
+59train central sign-core regions/27internal gaps,17validationcores/3gaps across41admitted
+clips. Known targets use lockedlabel+1; blanks0only internalgaps between consecutiveeligible
+known events with0.05s margins and no overlap with ANYannotation. Verified no native-frame
+subsampling inall56clips; originalwindowextractor disables trimming. Independent contract/
+anchor reviewclear; source/feature/annotation hashes pinned. Blankalignment is a bounded
+hypothesis, not physicalrest truth. Oldgeneric gate untouchedfalse.
+
+NewCONTRACT.md and blocked active/v17/transition_anchors_manifest_20260922.json define
+3epochs perheadarm/seed, selectedadaptedStage1frozen, cache richevidence once forspeed,
+CTConlycontrol versusCTC+0.25timedintervalCE; epoch0selection allowed. Newrunner/test in
+review; no newtraining launched yet. Need focusedchecks, finiteMPSpreflight and reviewed
+codepins before detachedlaunch. No live/application changes or newdatasetacquisition.
+
+## Aggregate clarification — 2026-09-22
+
+Previously reported60.89/66.85% frozen and50.84/53.26% adapted WER referred only to199local phrase validation clips. Token-weighted combined phrase validation (211clips,561reference signs): frozen60.96/66.49%, adapted50.98/53.65%. All admitted validation sources combined (1874records,2224reference signs): frozen38.67/39.03%, adapted27.56/32.69%. Single-sign validation alone (1663records): frozen31.15/29.77%, adapted19.66/25.62% CTC WER. Aggregate computed as total substitutions+deletions+insertions divided by total reference signs, not mean source WER. It describes only this recipe's validation membership, not all datasets in the repository. The aggregate is dominated by single-sign examples and cannot stand in for continuous performance.
+
+Next-step recommendation is a bounded matched identity-versus-sequence diagnostic, not an established unique best intervention. Existing gap proves weak generalization under this evaluation, not its cause. Compare whole-sequence versus annotated-core outputs with the same selected weights, documenting any frontend/resampling differences; review whether failures follow source/input conditions before choosing new training or extraction. No additional training authorized by this clarification alone beyond the existing recovery scope.
+
+## 2026-09-22 — combined comparison complete, no promotion
+
+User requested update. Saved status complete; all four checkpoint SHA256 hashes match,
+12epochs/arm, earliest-best selection matches saved validation, all epochs4264unique
+single visits/536phrase visits. Selected epochs frozen9/11, adapted8/3. Local validation
+WER frozen60.89/66.85%, adapted50.84/53.26%; adapted local trainingWER0.48/1.74%, exact
+validation29/199 and22/199. Strong remaining generalization gap; not a working continuous
+model. ASLLRP phrase validation adapted54.17/62.50%WER, zero exact of12both. Citizen
+pooled Stage1 validation95.24%initial→94.71/94.18%; ASLLRPsegmented53.54%→86.61/82.68%.
+These are validation-source metrics, not protected-test or globally signer-disjoint claims.
+Review artifacts: combined_frozen_joint_v17_20260922/REVIEW.md and REVIEW_SUMMARY.json.
+No live promotion/retraining. Next: selected-checkpoint per-record identity/alignment
+analysis on existing annotated examples; do not simply add epochs. All five steps retained.
+
+## 2026-09-22 — navigation centred and its backing bar removed
+
+User request. `nav_rects` now lays the pills out through the shared `row_rects` helper
+with `align="center"` instead of its own left-aligned loop, so there is one layout
+routine rather than two, and `clicked_nav` follows automatically because it has always
+read the same rect table. `draw_nav` no longer paints the full-width panel behind the
+bar.
+
+Without that panel the labels sit directly on whatever is beneath them, which on the live
+page is a camera frame that may be bright. Inactive labels are therefore drawn with
+`draw_shadowed_text` in white at alpha205 rather than flat MUTED; the active page keeps
+its filled ACCENT pill with INK text. Checked against a dark backdrop, a bright poster
+grid and a lit camera frame.
+
+One test had pinned the old geometry by hard-coding `clicked_nav(30, 28, 1280) ==
+"HOME"`; it now derives the point from `nav_rects`, and a second test asserts the row is
+centred within two pixels rather than against the left edge. `nav_height` is unchanged, so
+`top_inset` and every page's content offset are untouched. Tests:218 passing across14
+modules; `git diff --check` clean.
+
+## 2026-09-22 — EXPERIMENTAL badge removed from the app at user request
+
+User asked for the badge gone everywhere. Removed: the home-screen footer line and the
+word from the practice setup footer. No other UI text carries it. The app now states
+nothing about promotion status.
+
+This is a UI label only. The repository's own record is unchanged and still governs:
+`PROJECT_GROUND_TRUTH.md` continues to mark Live/streaming as "Nothing promoted", and
+session records still carry `score_semantics: "uncalibrated Stage-1 softmax with temporal
+agreement"`. Two footers still note that scores are uncalibrated — the history page and
+the practice result page — since the request named the experimental badge specifically.
+
+While making the change, `scripts/app_pages_v17.py` was found edited outside this session
+with `_footer` stripped of its `note` parameter while its `draw_text` call still expected
+the text argument and four call sites still passed one; every page render raised
+`TypeError: _footer() takes 5 positional arguments but 6 were given`. Restored the
+parameter and dropped the home call site instead. Tests: 217 passing across 14 modules;
+`git diff --check` clean.
+
+## 2026-09-22 — practice stripped to one sign at a time; home mosaic rejected
+
+User direction: remove reset, buffer and finish triggers from practice; add a skip
+button; remove the home-screen photo mosaic, which looked bad.
+
+`ReelHud.draw` gained `minimal: bool = False`. In minimal mode it omits the committed
+gloss rail, the naturalised sentence, the running CTC hypothesis (in both places it was
+drawn) and the RESET/FINISH control row, and extends the lower panels into the freed
+space. The default is byte-identical to before, asserted in test. A practice round judges
+one sign, so a running buffer is not just clutter, it is the wrong model of the task.
+
+Finish has three trigger paths and all three are now closed during a round: the buttons
+are not drawn and clicks on the practice page never route to `clicked_reel_control`; `r`
+and `f` are swallowed by the shell; and the ten-finger gesture is gated by a new
+`shell.allow_finish`, checked in `scripts/live_reel_stage1_v17.py` beside the existing
+`args.no_finish_gesture`. `NullShell` reports `allow_finish=True` and `minimal_hud=False`,
+so the standalone script is unchanged. After every judged commit the shell queues an
+internal reset, so each attempt starts from an empty buffer without exposing a control.
+Verified end to end on a real clip: score1/1, **zero utterances** (no finish fired) and
+one reset event in the session history.
+
+Skip added as a visible "SKIP THIS SIGN" button where the reel's controls used to sit,
+sharing one code path with the `n` and space keys; it counts an attempt, records the sign
+as missed and clears the buffer. `overlay_live` now returns its rect table like every
+other page, so pointer and paint cannot disagree — the same discipline that the invisible
+nav bar earlier showed is necessary.
+
+Home mosaic removed. Replaced with a drawn aurora: three soft colour fields drifting over
+a dark vertical wash, composited at 1/12 scale and upscaled, so there is no corpus
+imagery on the home screen at all and nothing to re-license if it is screenshotted.
+Cost5.77ms per frame after switching the upscale from cubic to linear, which is
+indistinguishable on a smooth field 12x up (9.93ms before).
+
+`run()` changed only by the `allow_finish` gate and the `minimal` pass-through;
+equivalence re-checked — the same six clips decode identically through pre- and
+post-change modules, 6/6, on every recorded prediction field. Tests:218 passing across14
+modules (21 new); `git diff --check` clean. A live camera run remains the only
+unexercised path.
+
+## 2026-09-22 — user-requested partial training update
+
+One requested status snapshot, not background polling: status=running; seed17421 frozen
+finished12epochs, selectedepoch9. Adapted arm latest savedepoch2/12; secondseed has no
+saved history yet. Frozen selected-checkpoint local phrase knownWER train9.19% versus
+validation60.89% (13/199exact); ASLLRPcontiguous validation62.50% (0/12exact).
+Citizen validation pooled Stage1top1 stays95.24% while CTC single exact84.92%.
+Frozen data mixture alone has not solved phrase recognition; adaptation comparison is
+incomplete. No causal claim against old unmatched recipes and no deployment change.
+Next: await completion notification, then review both seeds and selected-checkpoint
+train/validation retention. No further polling performed for this update.
+
+## 2026-09-22 — gallery switched to local recordings; scroll and home screen fixed
+
+User direction: prefer their own recordings in the gallery, fix a dead scroll wheel, and
+make the home screen less plain.
+
+Gallery source changed to the exact-variant local audit pool
+(`data/local/local_citizen100_quality_audit_q82_cap14_exact`), chosen over the wider
+`q82_cap7` pool (89 classes) because it is restricted to classes whose canonical label and
+pinned raw gloss agree — the safeguard against displaying the wrong articulation. Result
+is **77 local /23 ASL Citizen train**, still100/100 covered, rebuilt in8.2s. All four
+local audit pools were already free of scraped msasl/signasl/wlasl clips; those were
+excluded when the audits were made. No local pool reaches100: `I` is quarantined in every
+one of them because that folder visibly mixes fingerspelled I with ME. Citizen keeps its
+train-only guard, its hash and its landmark-diagnostic ranking; local clips are ranked by
+the audit's own quality score and rendered whole, since they have no hand-activity window.
+
+Scroll wheel was never broken by the backend — `_on_mouse` returned early on anything that
+was not `EVENT_LBUTTONUP`, so wheel and motion events were discarded before anything saw
+them. Now handled, but OpenCV's macOS Cocoa backend cannot be relied on to emit them at
+all, so scrolling also has clickable ▲▼ buttons on the scrollbar, arrow keys, w/s, k/j and
+[ ] for page jumps. The arrows are the guarantee; the wheel is a bonus.
+
+Home screen is now an animated poster mosaic: a wall larger than the window built once
+(67ms) from the100 gloss frames, with each frame taking a drifting crop of it, one tile
+cross-fading to a different sign every~2.2s, a staggered ease-in for title and buttons,
+and a hover halo. Costs7.28ms per frame, comfortably inside the browse loop's budget.
+PRACTICE was added to the home menu as well as the nav. A bug was caught in test: with no
+entry timestamp the ease-in left the whole page fully transparent; absent an entry time it
+now renders settled.
+
+Provenance was removed from the gloss detail page per user choice — the gallery mixes
+project recordings with corpus footage, and the audit states no trustworthy local signer
+IDs exist, so quoting one would have been invention. The page shows gloss, category and
+clip length only. The gallery footer no longer claims "ASL Citizen train split".
+
+`run()` was not touched this round; equivalence re-checked anyway — the same six clips
+decode identically through pre- and post-change modules, 6/6, on every recorded prediction
+field. Tests:197 passing across14 modules (19 new); `git diff --check` clean. A live
+camera run remains the only unexercised path.
+
+## 2026-09-22 — combined comparison MPS preflight passed; detached launch
+
+First preflight exited134 on Apple MPS matmul dtype assertion. Verified isolated/windowed
+caches are float16 and positive-core cachesfloat32. New runner had cast only CTC chunks;
+fixed make_records once to widen all cached inputs tofloat32, covering preflight/identity/
+evaluation paths without geometric normalization. Failed attempt JSON/log preserved.
+Second preflight passed all6421records,7367full-model windows per arm; largest32single
+records use41windows and4phrases21windows. Frozen base gradients absent; adapted base
+and both heads finite/nonzero. Zero optimizer steps. Four focused tests including dtype,
+ID collision, repeated CTC/OTHER and normalized weighting passed; independent final
+review clear, git diff --check clean. These preparation defects do not establish causes
+of earlier trained-model failures.
+
+Pinned recipe SHA b077e6939c6dc71c581cea2ee669348e2b4cc1d1cedef50eb7f8a9fd85c4ee64;
+runner3c1ea6c7cfb4e7698eace0839d9a70de897a329335819f4400b65b4fd7b7a9fb;
+preflight3ce024fca29bbb43ce3765270efeea7a11b520d432d0d055fc433850cae76999.
+Launched dedicated --train detached under caffeinate, PID98647,2026-09-21T17:45:51.436154UTC
+(2026-09-22PHT). Two seeds, two arms,12epochs each. Completion/failure notifications wired.
+No training polling or completion claim. Reports/models use combined_frozen_joint_v17_20260922.
+Current ground truth and all-five checklist updated; source datasets/live defaults and
+old generic gate unchanged. Next safe action: read status/results next session, compare
+selected-best training versus validation and single-sign retention before any deployment.
+
+## 2026-09-22 — bounded combined frozen/adapted comparison prepared
+
+User continued the authorized five-step recovery. New recipe and TRAINING_CONTRACT.md
+pin the actual Reel landmark proposal checkpoint, cleaned6421-record combined manifest,
+unchanged normalized32-frame inputs, unpooled temporal CTC, and single-sign identity replay.
+Two seeds17421/17422, frozen/adapted arms,12epochs, same initialization/sampling/dropout
+policy,4264single visits and536phrase visits per epoch. This is a cleaned-data comparison;
+prior experiments already used joint adaptation/unpooled tokens and this initialization.
+No blanket re-extraction, live replacement, protected-test access or acquisition.
+
+New files: scripts/train_combined_frozen_joint_v17.py,
+test/test_combined_frozen_joint_v17.py,
+active/v17/combined_frozen_joint_manifest_20260922.json and recovery TRAINING_CONTRACT.md.
+Recipe-specific training readiness requires matching preflight before launch; the old
+approved494manifest remains training_ready=false, verified SHA a821cae8d443e1bf3bc6649deb82dbea7a3e03d217b163360bffda6168390d1c.
+
+Pre-launch review caught/fixed target-length CTC normalization, OTHER-preserving exact
+scoring, per-arm RNG reset, selected-best metric provenance and repeated O5S5 signer IDs
+that would otherwise overwrite190examples. These were new-runner defects caught BEFORE
+any training, not evidence explaining historical model failures. Unique feature paths
+now key records. Added complete input/dependency pins, finite full-model/gradient checks,
+atomic saves, per-epoch component losses/coverage and selected-checkpoint full-train metrics.
+Four focused tests pass; pending actual MPS preflight and final review. All five recovery
+steps remain tracked in PLAN.md; successful preparation is not a continuous-model result.
+
+## 2026-09-22 — app startup fixed, practice drill added; three shipped bugs corrected
+
+User feedback after trying the app: starting the camera felt like launching a new
+process, and there was no back button. Both were real defects, not perception.
+
+Nothing ever spawned a process. The delay was measured at **10.96s of model construction
+inside `run()`**, paid on every entry into the live page, while the warm-up thread only
+pre-imported the module (1.12s) — it warmed the cheap half and left the expensive half in
+front of the camera. Fixed by factoring construction into `build_components(args)` in
+`scripts/live_reel_stage1_v17.py` and adding `run(..., prebuilt=None)`. The shell now
+builds models on a background thread behind an already-interactive home screen, then
+enters the recognition loop **once** and never leaves it: every page is a paused state
+inside that loop. Measured after: warm-up6.52s off the critical path, entering the
+loop→attach0.22s, →first frame0.42s; page switches are state changes only. `run()` is
+still not refactored.
+
+Second defect: the nav bar was never painted on the live page. `present()` showed the HUD
+frame unchanged while `top_inset` reserved an empty56px strip, and `clicked_nav` was still
+consulted on mouse-up — navigation was functional but invisible, which is worse than
+broken. `pages.overlay_live()` now paints it. A related off-by-one surfaced in test: PIL's
+`rounded_rectangle` includes its bottom edge, so the bar covered57 rows against a
+reserved56 and ate the first row of frame content; corrected, with a test asserting
+nothing below the strip moves. Third bug, also caught in test: advancing to the next sign
+cleared the verdict, so a celebration would have rendered a tick with no gloss; the
+verdict is now kept and expires on its own timer.
+
+Added per user direction: PRACTICE as a nav page running a scored drill (choose5/10/20,
+one sign at a time, result screen naming the misses), the reference clip as a corner
+overlay looping continuously with no pacing throttle, a full-frame celebration on a
+match, and a chime via `afplay` with silent fallback (`--no-practice-sound`). A tile's
+SIGN THIS NOW starts a one-sign round. Practice pages needing the camera report
+themselves unpaused; the rest still skip all detection and inference.
+
+Recognition output re-verified after this second round of changes to `run()`: the same six
+clips decode identically through pre- and post-change modules on every recorded prediction
+field — 6/6. A scripted practice round through the real models recognised EAT and scored
+1/1. Tests:178 passing across14 modules (18 new this round); `git diff --check` clean. A
+live camera run remains the only unexercised path.
+
+## 2026-09-22 — five-step recovery authorized and first diagnostics executed
+
+User approved starting all five recovery steps and useful parallel work, including
+evidence-based re-extraction/retraining. Persistent PLAN.md and measured REPORT.md are
+under artifacts/reports/continuous_recovery_v17_20260922. Steps1–2started;3–5remain
+dependent, not forgotten or declared complete. Two read-only routine workers reviewed
+paired audits/input contracts after fast_scan model proved unavailable.
+
+Fresh unchanged-loader verification passed6421records/7367windows,6158raw video hashes
+and7source-manifest pins in9.766s. General494manifest passes integrity, remains blocked
+for old recipes. Phrase train covers44known labels; single-sign replay100. No proven
+contract defect; no blanket extraction. Native1280px caches and prior failed ablation
+were checked before proposing reuse.
+
+Created lossless FFV1 oracle crops from4annotated sources (3train/1validation), with
+pixel-identical roundtrip and pinned source hashes.12unchanged live-CTC full/core probes
+all exited0with identical model provenance; logits/features/times saved. Train controls
+NOW READ/FAMILY IMPORTANT/FAMILY SIGN and six cores exact. Validation source selected
+before outputs: FRIEND MAYBE→FRIEND STOP; cores→FAMILY/STOP. One reused development
+example, not an accuracy score or unseen-exposure claim. No parameter tuning.
+
+Current Reel oracle probes on8cores use default20fps/640px observations, bypassing live
+activation/duration/commit gates. MAYBE proposal/verifier top labels correct, verifier
+rejects low score/margin. FRIEND proposal SAME, verifier COLD/rejected; other identity
+and rejection errors recorded. Different weights/frontends from legacy CTC: no head-only
+causal claim. Boundaries alone do not repair all errors; raw identity, acceptance and
+final emission need separate measurement. Runtime/source/model files unchanged by us.
+
+Added recovery plan/report, input/coverage/verification JSON, probe inputs/results/status,
+logs, lossless diagnostic cores, replay histories/videos and traces. Updated current
+state and this log; regenerate artifact index after outputs. Next: matched-current-Stage1
+input/objective recipe with combined roles, plus real hold/repeat/low-motion evidence
+before training/live promotion. No acquisition, training, protected test, split changes
+or old-gate bypass. Concurrent app-shell changes preserved.
+
+Handoff check detected a concurrent Reel script hash change after CTC verification.
+Repeated only8Reel oracle probes with before/after code pins:8/8proposal/verifier labels
+and acceptance decisions reproduced, code stable during recheck. Original evidence
+retained; reel_oracle_recheck.json is the reproducible reference. git diff --check passes;
+artifact index regenerated. No product code changes by the recovery task.
+
+## 2026-09-22 — demo app shell complete; recognition output proven unchanged
+
+All six planned phases of the user-directed demo app are done. `scripts/app_shell_v17.py`
+is a new entry point with home, a 100-sign gallery, session history and the live feed as
+pages of one window, plus "sign this now" practice. It does not fork or reimplement
+recognition: the reel script keeps its own loop and now calls `shell.present()` once per
+frame, so the shell only decides what that frame becomes. The whole change to
+`scripts/live_reel_stage1_v17.py` is 42 insertions/18 deletions in 2,139 lines: a
+`shell=None` parameter defaulting to `NullShell` (the old single-page behaviour), window
+and pointer ownership moved to `shell.attach`, the display tail replaced by
+`shell.present`, `top_inset=shell.top_inset`, and a paused branch that skips detection,
+inference and recording while another page shows but still services language and speech
+so a finish in flight completes. `run()` was deliberately not refactored.
+
+No accuracy claim changes and nothing is promoted. Proven, not asserted: six gallery
+clips decoded through the pre-change and post-change modules produced identical
+`hypothesis` and identical per-prediction `gloss`/`committed_gloss`/`model_score`/
+`accepted`/`margin`/`gate_score`/`end_seconds`/`frames` — 6/6 identical. HUD pixel hashes
+at three geometries are unchanged from the phase-1 baseline
+(`0481a012…`/`9d0fd6f8…`/`40580520…`); render cost1.270ms median versus1.258ms before.
+An integration test navigates to gallery and history mid-session and back, and the clip
+still decodes to DRINK.
+
+Gallery examples: `scripts/build_gloss_examples_v17.py` scores all1,476 ASL Citizen
+*train* clips from their v17 landmark diagnostics alone, decoding nothing, in0.8s, then
+renders only the100 winners (11.9s,27MB). Coverage is100/100 with2 edge-flagged
+(THINK, HUNGRY) and0 missing;18 distinct participants; every row carries participant and
+sha256. `rejections.csv` is honoured explicitly because the rejected SLEEP clip is still
+present in the train pool, while `quarantine/w_h_a_t/` already sits outside `raw/`.
+Validation and the sealed test split are never read, asserted by a test that greps the
+source. The selection total ranks candidates within one gloss only: hand_presence counts
+both hands, so one-handed signs floor near0.5 and totals are not comparable across
+glosses.
+
+Sessions write to `artifacts/app_sessions/` with an mtime-keyed index, deliberately not
+`artifacts/reports/`, so demo runs are never mistaken for experiment provenance. That
+directory and `artifacts/app_assets/` are gitignored; Citizen footage is not ours to
+redistribute. The live page keeps an EXPERIMENTAL badge and the history page states that
+scores are uncalibrated.
+
+Tests: 160 passing across14 modules (74 new). `git diff --check` clean. Added
+`scripts/app_shell_v17.py`, `scripts/app_pages_v17.py`, `scripts/app_sessions_v17.py`,
+`scripts/build_gloss_examples_v17.py` and their tests; changed
+`scripts/live_reel_stage1_v17.py`, `scripts/reel_hud_v17.py`, `.gitignore`. Next safe
+action is a manual camera run, the only path not exercised headlessly. Note: this file's
+"50 entries" header is stale (137 dated entries present); left untouched because other
+sessions are appending concurrently.
+
+## 2026-09-22 — product clarification and read-only streaming diagnosis
+
+User confirms locked100 recognition of individual/naturally connected signs, no required
+pauses/resets, stable visible output;0.5–1s delay acceptable, faster preferred. English
+rendering may use additional words but must not invent meaning. Reported Reel low-wrist-
+motion misses and continuous-Reel transition insertions; separate legacy Stage2 live
+trial also unsatisfactory. Discussion only; no model/runtime edits or training.
+
+Inspected current Reel/continuous wrapper and Stage2 input/output paths. Reel's candidate
+activation uses wrist-only motion, submit requires active=True, and motion trimming uses
+the same observation motion. This can prevent or distort low-wrist-motion evidence;
+individual reported misses are not yet timestamp-attributed. Ordinary Reel scores are
+normalized over known labels, and temporal stability alone is not transition rejection.
+Stage1 uses temporal attention/convolution before pooling. Clean phrase baseline used
+pooled-window frozen evidence, whereas legacy CoreML Stage2 retains unpooled temporal
+features; neither the blanket claim of no sequence modeling nor pooling as the sole
+failure cause is supported. Prior joint/contextual/4-state experiments already exist.
+
+Targeted JSON analysis of live_stage2_ctc_v17/20260922_005306_195364/history.json:
+117 predictions,75 accepted/non-stale,41 insufficient-hand-evidence rejections,24 resets.
+Epoch7 output at26.01/27.06/28.15s is HELLO / HELLO TAKE / KNOW HAVE TIRED.
+Configured window span1.0667s; accepted processing median169.50ms, excluding capture
+and window accumulation. No saved emission trace or timestamped human reference: no
+session WER, exact failure attribution, or evidence that all41 rejections lost signs.
+The UI displays the revisable context hypothesis, separately from stable speech logic.
+
+Research revisited original Squeezeformer (arxiv.org/abs/2206.00888), VAC
+(arxiv.org/abs/2104.02330), and EMNLP2024 online CSLR
+(aclanthology.org/2024.emnlp-main.619/). The latter already informed prior project work;
+its contextual-window/background approach must not be presented as an untried solution.
+Its benchmark results are not ASL/iPhone evidence; learned alignments are not certified
+physical transition labels. Combined6421manifest is still untrained mixed supervision,
+not6421independent phrases. Historical native-rate/no-blank and joint-CTC failures remain
+relevant; no claim that unfreezing, a new head, or threshold relaxation alone fixes this.
+
+Next safe action: discuss a controlled comparison separating complete-sign recognition,
+stream localization/emission and signer transfer, reusing existing diagnostics/recordings
+before any new recipe. Define stable-output latency from sign evidence through display,
+keep product evaluation distinct from exact boundary scoring and isolated retention,
+and preserve protected test sealing and explicit supervision roles. Files changed only:
+this log and PROJECT_GROUND_TRUTH.md (user requirements/current discussion scope).
+
+## 2026-09-22 — reel HUD promoted to the canonical app toolkit; no model change
+
+User-directed demo work: the live path gains a home/gloss-gallery/history shell, and
+`scripts/reel_hud_v17.py` is the single HUD every new file draws through. Phase 1 is
+additive only. The private primitives (`_panel`, `_chip`, `_text`, `_shadowed`, `_wrap`,
+`_dot`, `_scale`, `_text_width`, `_chip_size`) were renamed to public names with short
+aliases retained, so no existing call site changed. Added: `canvas`/`frame_canvas`/
+`to_frame` (one composite path whether or not a camera frame is behind the page), `hit`
+plus `row_rects`/`grid_rects`, and `NAV_PAGES`/`nav_rects`/`draw_nav`/`clicked_nav`.
+`ReelHud.draw` gained `top_inset: int = 0` so a shell can reserve the nav strip.
+
+Nothing here reads or changes model state; no checkpoint, feature contract, threshold or
+decoder path was touched, and no accuracy claim changes. Verified by pixel hash at three
+geometries (720x1280 `0481a012…`, 481x641 `9d0fd6f8…`, 400x700 `405805207…`), identical
+before and after. Render cost median1.258ms before versus1.255-1.315ms across five runs
+after: within run-to-run noise, no regression. `top_inset=0` is byte-identical to the
+previous render and an inset leaves the control row untouched, both asserted in tests.
+Tests: 16 HUD (12 new), 38 reel, 35 other live paths, all passing; `git diff --check`
+clean; the reel CLI still resolves.
+
+Next safe action is the phase-2 gloss-example generator, which reads
+`data/local/citizen100_v17/raw/train/` only and never val or the sealed test split.
+Deliberately deferred: `run()` in `scripts/live_reel_stage1_v17.py` stays unrefactored;
+the app will drive it through a per-frame shell hook rather than extracting an engine
+from its ~1,100-line closure body. Changed: `scripts/reel_hud_v17.py`,
+`test/test_reel_hud_v17.py`.
 
 ## 2026-09-21 — matched no-blank CTC ablation failed promotion
 
