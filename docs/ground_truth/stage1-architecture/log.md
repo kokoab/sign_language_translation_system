@@ -7,6 +7,25 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-25 — unfrozen-encoder phrase adaptation: controlled test, no promotion
+
+User asked to test unfreezing, with isolated accuracy kept at or above 90. Frozen-head vs
+unfrozen arms, same seed and data, from pre-phrase student_v1. Phrase data is approved-v2
+train only (276 clips / 2,892 segments). Selection uses local phrase val only; the 12 ASLLRP
+val videos are the held-out oracle. Floors vs shipped: Citizen≥95.53, local≥96.53,
+SemLex≥89.16 (already <90, zero tolerance).
+Oracle inputs frozen and reproduced exactly (live Core ML 12/16/16/12/11 at pads .00–.20).
+Unfrozen ep9: Cit 95.77, SemLex 89.16, local 96.69, local phrase val 76.7% (frozen 66.3%),
+oracle 13/18/19/11/10 vs frozen 12/16/18/12/12 vs shipped 12/16/16/12/11. Net +2/+1 of 24
+held-out events vs control: inside noise. Unfrozen eligible only at ep7/9; later epochs reach
+83% phrase val but break the Citizen floor while the oracle stays flat, so it memorizes
+templates (5 of 6 val templates are also in train).
+Found along the way: the shipped head's old 390-clip split contains 158 approved-v2
+validation clips, and the shipped phrase adaptation equals the base on the held-out oracle.
+Unfrozen MPS OOM at batch 256 (2.13 GiB cap); fixed with exact gradient accumulation.
+Next: a larger held-out continuous-interval set from unseen signers is needed before any
+ceiling claim. Report artifacts/reports/unfrozen_phrase_adapt_v17_20260925/REPORT.md.
+
 ## 2026-09-10 07:15 PHT — user-requested matched-variant phrase replay
 
 Investigated data/variant/learning question without further training or architecture
