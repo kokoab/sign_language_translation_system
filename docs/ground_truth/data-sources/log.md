@@ -7,6 +7,16 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-25 — repo moved to SSD; 30,486 symlinks retargeted
+
+User: "this ssd will be the new path for everything". The repo is now /Volumes/secret/SLT/SLT.
+30,486 absolute symlinks under data/local (local_deep_clean_v17, semlex audits, approved phrases,
+phrase_tail_recovery…) pointed at /Users/frnzlo/Documents/machine_learning/SLT. Each was
+retargeted to the SSD after a dry run confirmed every SSD target exists with matching size
+(0 problems). Reversible via artifacts/reports/ssd_path_migration_v17_20260925/symlink_retarget.jsonl.
+Legacy scripts/mobile_export/*.py and scripts/test_sample_videos.py still hardcode the old path
+(v16 legacy, untouched).
+
 ## 2026-09-22 — combined dataset manifest created and fully loaded
 
 User requested creation immediately. Created data/local/combined_dataset_v17_20260922/manifest.json
