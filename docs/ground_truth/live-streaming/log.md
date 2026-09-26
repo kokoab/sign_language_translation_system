@@ -1,5 +1,58 @@
 # live-streaming — log
 
+## 2026-09-27 late — streaming Apple Vision pipeline meets user targets on held-out (not promoted)
+
+Frozen config (artifacts/reports/segmental_decoder_v17_20260927/frozen_stream_config.json) run once
+on held-out 72/186 in frame-accurate streaming simulation: WER 13.44%, 173/186, S/D/I 4/9/12,
+P 91.5 R 93.0 (local60 9.26%, 158/162; asllrp12 41.67%, 15/24). Commit-after-sign-end median
+0.00 s, p90 0.35 s, <=0.40 s 97.2%; measured M4 compute median 39 ms / p90 56 ms per frame
+(recognizer on MPS, per-frame hand-crop cache; uncached crops were 100 ms/frame) -> ~97% of words
+within 0.5 s. Boundary = Apple Vision student (av_boundary_student_v17_l6_a, 300 ms lookahead,
+distilled from DGS L10; MediaPipe not used live). Recognizer A. Early identity commit (open
+segment stable 3 steps, q>=.9) was required: adjacent signs only resolve once the next sign is
+visible. Recognizer B (+ASLLRP spans, prefix crops) rejected on tuning. Caveats: local60 familiar
+signer/templates; unseen ASLLRP weak; not yet in the app shell or on a live camera.
+Report: artifacts/reports/segmental_decoder_v17_20260927/REPORT.md.
+
+## 2026-09-27 — user targets set; segmental decoder lab; lookahead and extractor measured (interim)
+
+User-set acceptance (this effort): held-out 72-video/186-sign set WER <=25% AND precision >=90%,
+recall >=80%; latency sign-end -> word shown < 0.5 s; vocabulary-only (OOV signing not gated).
+MediaPipe allowed live only if as fast/accurate as Apple Vision, else distil. YouTube-ASL raw
+acquisition authorized (new root data/local/youtube_asl_boundary_distill_v17, 300 channel voices,
+30 s segments).
+
+New lab scripts/segmental_lab_v17.py caches DGS all-window BIO (any lookahead from one pass) and
+memoised full Reel proposal/verifier logits + exact verifier inputs per span. Reproduces the
+frozen DGS+Reel chain exactly on held-out (39.78%, 127/186). PyTorch reel_v2 on captured inputs
+matches Core ML 292/292 argmax (max |dlogit| .0067), so any checkpoint rescoring is offline.
+
+DGS lookahead sweep on held-out, unchanged Reel gate: L10 39.78 / L8 40.32 / L6 47.85 / L4 54.84 /
+L2 53.76 / L0 60.22 %WER. Extractor per-frame under load: Apple Vision 10.7 ms, MediaPipe
+Holistic c1 73.1 ms -> MediaPipe fails the user's speed rule; boundary must be distilled to AV.
+Upstream BIO decode is argmax grouping: contiguous B/I never splits, and DGS at 20 Hz almost never
+argmaxes B, so un-paused adjacent signs merge (e.g. PLEASE HELP I -> one span -> HELP).
+Tuning pool (89 local, never test): semi-Markov decoder (sign/rest DP, unknown-label floor)
+L8 51.33 -> 43.81% WER; any-candidate-span top-1 ceiling only 159/226, so the recognizer is the
+binding limit. local_signer_01 clips are ~1 s for 3 signs; test is signer_02 (2.7-5.7 s clips);
+test-like tuning subset (signers 02/03, 59 clips) 37.16%. ASLLRP JONATHAN validation (222 videos,
+279 known / 1540 OTHER): oracle-span verifier 171/279. No promotion or default change.
+
+Recognizer A (artifacts/models/span_recognizer_v17_local_a, scripts/train_span_recognizer_v17.py):
+reel_v2 unfrozen on 6,254 decoder-matched spans from 282 local train clips (forced alignment of the
+known transcript over DGS candidate spans + jitter; test/tune clips excluded, verified 0 leak),
+isolated KD replay. Floors revised to the user's 09-25 rule: every domain >=90, SemLex keeps 89.16,
+no domain -1pt vs reel_v2 (Citizen 95.03, local 96.03). Selected ep4 on tuning WER: Citizen 95.24,
+SemLex 89.67, local-isolated 96.31. Most remaining insertions were same-gloss duplicates from
+reduplicated movement (HOW HOW, FRIEND FRIEND); collapsing identical adjacent glosses within 1 s
+(the old runtime's collapse_adjacent_glosses behaviour) fixes them. Configs frozen in
+artifacts/reports/segmental_decoder_v17_20260927/frozen_configs.json BEFORE test.
+Held-out 72/186, offline DGS boundary: L6 15.05% WER, 170/186, P 91.4 R 91.4 (local60 11.73%,
+asllrp12 15/24); L8 12.37%, 169/186, P 96.0 R 90.9 (local60 7.41%, asllrp12 13/24).
+Caveat: local60 is familiar signer_02 on the same six templates used in recognizer training;
+ASLLRP12 (unseen JONATHAN, no ASLLRP training yet) remains ~oracle level. Still offline and still
+MediaPipe-boundary; streaming latency and the Apple Vision student are pending.
+
 ## 2026-09-22 evening — six more negatives; coarticulation identified; selection was the flaw
 
 Commit-gate rescue FAILED its gate (49.33->48.67% WER but +3 insertions; unfiltered verifier
