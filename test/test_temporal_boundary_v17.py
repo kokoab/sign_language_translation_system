@@ -7,6 +7,25 @@ import torch
 
 
 class TemporalBoundaryTest(unittest.TestCase):
+    def test_streaming_last_row_exact_with_missing_shoulders_and_irregular_clock(self):
+        from active.v17.temporal_boundary_v17 import boundary_features
+        rng = np.random.default_rng(928)
+        for n in (1, 2, 8, 25, 64):
+            raw = rng.normal(0, .2, (n, 61, 5)).astype(np.float32)
+            raw[..., 3] = rng.random((n, 61)) > .2
+            raw[..., 4] = rng.random((n, 61))
+            # Include auxiliary cadence, shoulder-reference expiry and missing palms.
+            raw[:, 57:59, 3:] = 0
+            raw[::8, 57:59, 3:] = 1
+            raw[::8, 57, :2] = [-.2, .1]
+            raw[::8, 58, :2] = [.2, .1]
+            times = np.cumsum(rng.choice([.033, .05, .1, .27, .9], n))
+            for end in range(1, n + 1):
+                for geometry in (False, True):
+                    expected = boundary_features(raw[:end], times[:end], geometry)[-1:]
+                    actual = boundary_features(raw[:end], times[:end], geometry, last_only=True)
+                    np.testing.assert_array_equal(actual, expected)
+
     def module(self):
         name = 'active.v17.temporal_boundary_v17'
         self.assertIsNotNone(importlib.util.find_spec(name), 'native temporal boundary implementation missing')

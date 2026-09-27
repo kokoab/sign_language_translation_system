@@ -1,5 +1,243 @@
 # live-streaming — log
 
+## 2026-09-28 late — correctness work resumed, candidates not installed
+
+User rejected stopping after speed work; now also reports HOME->O, YESTERDAY->A,
+YOUR->B and continued HELLO->CB. Checked both saved histories at23:50PHT: desktop
+latest20260928_230119_650297 ends~560s, mtime23:10; phone only224024. New reports
+not yet attributable to a saved interval. Do not claim the current candidate installed.
+Working report/cache/probe: artifacts/reports/live_correctness_v17_20260929/ (directory
+name anticipated midnight; work began September28). No training/test-set access.
+
+22-clip probe: high-word-confidence rescue(.95, margin.05 over letter) recovers neither
+missing HE and adds false YES in ANGELO; rejected, not applied to runtime. Two HE
+validation clips instead produce FS_Z/FS_L despite full-span HE evidence. Unconditional
+spelling overlap removal erased GE when a false TAKE overlapped E in ANGELO; narrowed
+to competing hypotheses starting at the beginning of the provisional spelling run.
+Commit-before-timeout order updated in Python/Swift. This is still under replay checks.
+
+G/Q and U/R geometry diagnostic uses173 existing validation clips (G50,Q24,U50,R49):
+middle-half index direction separates sampled G/Q; relative index/middle crossing
+separates most U/R with conservative abstention. Added candidate pair-only geometry
+refinement to Python (preserves pair mass/other logits; min3 visible frames,80%agreement),
+14 focused tests pass.78 paired streaming checks running; broader retention required
+before deployment. Do not describe these session-separated samples as signer-independent.
+
+Mobile source permits portrait, adapts control/nav/rail/Practice constraints, pins mirrored
+preview while model remains unmirrored, and clears geometry/hand tracking on rotation.
+Swift spelling conflict filter mirrors Python. Build and rotation/layout checks pending.
+No new phone install. Preserve the earlier one-second Finish changes.
+
+## 2026-09-28 — exact-computation speed update and paired regression checks
+
+User authorized faster recognition with no regressions; added N/other letters, G/Q,
+HELLO/C and repeated ANGELO. Desktop snapshot has fs-QELO/ASGEO/ASQELO and no exact
+ANGELO, plus overlapping fs-CB/HELLO at64.74s. No name-specific correction applied.
+Report/scripts/baseline snapshots: artifacts/reports/live_speed_v17_20260928/.
+
+Changed active/v17/{temporal_boundary_v17,av_boundary_v17,segmental_runtime_v17}.py:
+compute only final boundary row while preserving full shoulder-reference scan, batch
+unchanged hand crops through unchanged encoder. Added exact-parity and missing-view
+coverage in test/test_{temporal_boundary,segmental_runtime}_v17.py. Mobile sibling
+ios/Runner/LiveReel/{LiveReelCore,LiveReelModels,LiveReelEngine,LiveReelViewController}.swift:
+same boundary optimization, contiguous MLMultiArray fast path with strided fallback,
+three distinct batch buffers, publish skeleton before recognition, disable implicit
+path animation and cache unchanged HUD chips. Concurrent Finish changes preserved.
+New native speed_checks.swift and physical-device RunnerTests encoder-parity test.
+
+78 paired clips/3652 frames: zero changed output records/timestamps/scores and zero
+embedding difference. Includes U/R/N/G/Q validation, Citizen val HE/HUNGRY/HELLO,
+four phrase tuning clips and two unannotated ANGELO excerpts. Mac recognition-only
+median45.77->39.27ms,p9090.68->83.51ms; excludes Vision/camera/UI. iPhone13 exact
+embedding parity for batches1/2/3; 12 alternating three-crop trials32.90->30.55ms.
+No sustained camera-FPS/thermal claim. Existing confusions and commit delays unchanged.
+26Python tests,3Flutter tests,54native deterministic comparisons and742-frame Swift
+fixture passed; signed Release build passed. Initial XCTest team/testability failures
+resolved with invocation overrides, no project defaults changed. Cubic SIMD experiment
+rejected for no gain. No weights, thresholds, precision,20Hz contract or training changes;
+protected Citizen test untouched. Signed production Release (testability off) installed
+and launched on connected iPhone13; data not erased. This binary includes concurrent
+Finish changes; live-camera gesture validation remains pending. Large-artifact index
+regenerated and affected tracked files pass git diff --check.
+
+Next safe action: sustained phone camera/overlay/Finish/Practice checks; separate
+word-letter arbitration and boundary diagnostics before speeding decision thresholds.
+Desktop restart required to load new Python modules. Portrait remains unresolved.
+
+## 2026-09-28 — one-second two-hand Finish added to both apps
+
+User requested two hands up for one second and explicitly selected both desktop and
+iPhone. Desktop `scripts/live_segmental_v17.py` now uses the existing upright open-palm
+geometry with a continuous one-second hold (no dropout grace), hold-progress feedback,
+release-to-rearm, Practice/disable gating, and reset on page changes/Reset. Control
+observations skip the word/letter decoder while preserving its pending tail for Finish.
+Finish avoids overwriting an in-flight naturalizer request. The shared default and CLI
+in `scripts/live_reel_stage1_v17.py` changed from 0.4 to 1.0 seconds; classic Reel retains
+its existing dropout-grace policy. `test/test_live_reel_stage1_v17.py` covers the default,
+threshold, latch, single-hand release and interrupted hold.
+
+iPhone source lives outside this repo at
+`/Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/`. Applied three checked
+Swift edits with filesystem approval: `LiveReelCore.swift` adds matching geometry and
+continuous hold/latch; `LiveReelEngine.swift` filters control frames and returns finish/
+progress signals; `LiveReelViewController.swift` enables it only in Live, displays hold
+progress/LOWER HANDS, resets on rotation/Reset, and calls the existing sentence/speech
+path with a `two_hand_gesture` history event. Replay engine calls remain opt-in.
+
+Validation: 85 focused Python tests passed (live Reel, app shell, segmental runtime),
+Python syntax check passed, native iOS sources passed arm64 iOS17 Swift type-checking
+against the installed SDK/Flutter framework. A Swift synthetic-landmark executable
+passed threshold/latch/release/interruption/closed-hand/missing-finger checks. Temporary
+Swift harness and original backups are in `/tmp/slt-finish-gesture/`. Initial Python
+syntax check hit the macOS bytecode-cache sandbox; approved retry passed. `git diff
+--check` passed. No dataset/model/checkpoint changes or accuracy experiments.
+
+Next safe action: rebuild/install the iPhone app and check both cameras for one-second
+Finish, held-pose non-repetition, release, interrupted holds, pending word/spelling flush,
+and Practice. No new phone binary installed or physical-camera validation claimed.
+
+## 2026-09-28 — U/R rate sensitivity, HE letter conflict, HUNGRY prefix diagnosis
+
+User requests continued discussion, proper testing, faster commits without accuracy
+loss; reports U->R, HE desktop failure (replacement forgotten), HUNGRY->PLEASE.
+Diagnostic only, no app/model/default change or training. New reproducible runner and
+REVIEW.md: artifacts/reports/mobile_recognition_diagnostic_v17_20260928/.
+Fresh Core ML + Vision replay, same 12 U + 12 R validation clips: exact 17/24 at10Hz,
+19/24 at20Hz,14/24 at30Hz. Two U->R failures appear only at10Hz versus20Hz;30Hz adds
+duplicate/extra letters. No claim of measured iPhone speed or globally optimal rate.
+Complete cached validation HE word top1 39/43, but letter head exceeds.5 on23/43,
+including21 correctly classified by word head. HUNGRY14/14 full word top1; one SemLex
+clip's50/65%prefix predictsPLEASE(.542/.589), fullHUNGRY(.806). Below.9early threshold,
+above.5ordinary identity threshold: inspect segment closure before speeding commits.
+These are isolated/full-or-prefix diagnostics, not reproduction of labelled user video.
+Alphabet signer identity remains unestablished; Citizen official test untouched.
+All9existing segmental unit tests pass;72replay membership/count checks pass. Initial
+diagnostic cached-word phase hit tuple/dictKeyError after saving72rate rows; corrected
+and resumed words-only without rerunning replays. Scope and limitations in REVIEW.md.
+Next discuss exact-computation/scheduling optimization preserving20Hz contracts,
+word/letter arbitration and targeted boundary diagnostics, then paired real-phone
+confirmation including rest, connected spelling, repeats, rotation and sustained load.
+
+## 2026-09-28 — iPhone user history review, discussion only
+
+User reports HELLO->CB, lagging landmarks, requests portrait support, one-second
+two-open-hand Finish, and faster spelling/lock on next sign; explicitly discuss first.
+Copied sole saved phone Live session 20260928_224024 (76.38 s) to
+artifacts/reports/mobile_live_review_v17_20260928/. Eleven outputs include fs-CB HOW YOU,
+fs-CB HOW TAKE and later HELLO; three resets, no sentence/finish event. Both CB runs
+flush with HOW already. Non-letter spans imply local processing rates 6.3–18.4 fps
+(mostly 6–11); not a whole-session benchmark. Overlay waits for full inference;
+body/face run every eight processed frames and cached points never expire. Controller
+is landscape-only. Letter NONE gating can suppress words, but no saved logits/video
+prove exact HELLO failure cause. Spelling buffer already flushes on next committed
+word, otherwise >2.5 s after last letter commit. No mobile finish gesture. History
+truncates outputs, merges reset attempts, saves only on exit, always marks complete.
+REVIEW.md records evidence, limitations and proposed next actions. No app/model/code
+change or deployment. Next: discuss priorities, then instrument/measure phone tracking,
+word/letter arbitration, rotation and history before claiming accuracy or speed gains.
+
+## 2026-09-28 late — mobile app shell laid out like the desktop shell
+
+User request: home page like the desktop app; HOME, GLOSSES, HISTORY in portrait; LIVE and PRACTICE in
+landscape; camera full screen (not squished or wrapped). Flutter pages (lib/shell/): nav HOME LIVE
+GLOSSES PRACTICE HISTORY, aurora home with START CAMERA / PRACTICE / THE 100 SIGNS / SESSION HISTORY
+(models warm at launch, ~20 s; START waits), 100-sign poster grid + detail with the looping clip and
+SIGN THIS NOW, history of Live sessions saved on the phone, practice setup/result (landscape).
+Native LiveReelViewController: LIVE and PRACTICE with the desktop nav, aspect-fill camera at 1280x720
+(desktop live capture size; was 640x480 letterboxed), practice banner / round chip / HOW IT LOOKS
+clip / YEHEY flash / SKIP. Old record-then-translate screen no longer reachable (code kept).
+A parallel session wrote a competing all-native shell into the same folder (AppShellViewController,
+ShellPages, ReelCamera, ReelHUDView, ShellStyle); by user decision those files stay on disk but are
+out of the Xcode target. Installed on the iPhone 13; home verified by device screenshot.
+
+## 2026-09-28 night — v3 Reel ported to the iPhone app (Swift, on device), installed on iPhone 13
+
+User decisions: live Reel with a Start button (nothing processed until Start), words + letters,
+T5 Stage 3 on the phone, landscape-only screen laid out like the desktop Reel HUD.
+Swift port: mobile_app/slt_mobile_app/ios/Runner/LiveReel/ (Core, Models, Decoder, Stage3, Engine,
+ViewController); Flutter "Live Reel" button -> native screen. Front camera 640x480 (the local
+recordings' size), upright + unmirrored to the model, 20 Hz deadline sampling. Packages: both FP16
+boundary students, SpanRecognizerV17LocalALettersB8FP16 (iOS 17, fixed batch 8), MobileCLIP FP32
+(exact desktop parity; FP16 kept bundled), Stage3 T5 encoder + decoder-step (FP32, greedy).
+Token table now covers all 100 labels (DIFFERENT was missing). Pods pinned to iOS 17 (Xcode 27).
+Parity (scripts/export_live_reel_fixture_v17.py + macOS harness ios/LiveReelHarness, same sources):
+on Python observations + hand evidence, BIO argmax identical on every frame (max |dlogp| .005),
+span landmarks exact, logits exact, committed words identical on 8 fixtures incl. a 64 s app
+session with letters and a stream reset; cv2-compatible crops pixel-exact (<=1 level), FP32
+embeddings cosine 1.0; Stage 3 renderings 44/44 identical.
+End to end (Swift decode + Vision + crops + models on the Mac): held-out 72/186 WER 10.22%,
+176/186, P 93.1 R 94.6, 95.4% < 0.5 s (Python 10.75%, 175, 93.6/94.1); local60 6.79%, asllrp12
+8/24 errors. 59/72 videos identical to Python (differences from video decoding, both directions).
+Tune 11.06% (P 94.2 R 92.9). On-device speed not yet measured (Mac harness ~58 ms/frame while
+two replays + Xcode ran). Reports: artifacts/reports/live_reel_mobile_v17_20260928/.
+
+## 2026-09-28 evening — v3 app default: letters (dual decoder), Stage 3 slots, Core ML backend
+
+Letters: 6,296 usable local A-Z clips (train 5,025 unknown sessions; val 1,271 = DWIGHT + numbered).
+Letter head (artifacts/models/letter_head_v17_a, frozen recognizer features, 26 + NONE): 86.6%
+26-way on held-out sessions; threshold .5 -> 86.2% recall, 0.9% of tuning spans / 6.6% of isolated
+sign clips called letters. Letter-trained boundary (av_boundary_student_v17_l6_letters) marks 100% of
+held-out letter clips as signing (was 75%) but alone costs words (tune insertions 3 -> 13).
+Final design = DualRuntime: word decoder (original boundary, letters compete, v2 guard) + letter
+decoder (letter boundary, letters only), shared span cache, letters dropped when overlapping
+anything committed (relative to the shorter span), SpellingBuffer (runs >= 2, same letter within
+0.5 s merged, run continues while letters <= 2 s apart). Held-out letters streaming: 77.2% exactly
+right, 88.8% contain it; worst J 8%, Z 17% (motion letters). Tune words 10.62% (v2 10.18%).
+Held-out 72/186 through the live code, Core ML: 10.75% WER, 175/186, P 93.6 R 94.1, 96.7% <0.5 s
+(max 0.60 s); 2 stray spelled words; 68/72 identical to v2. Core ML dual = PyTorch dual 89/89.
+Desktop dual Core ML 22.8/34.0 ms median/p90 (FP32 encoder), 14.7/29.6 (FP16 encoder on ANE);
+iPhone 13 estimate 59-76 ms vs 35-44 ms median (not measured). Stitched checks: C-A-T -> "Cat.";
+MY NAME + K-I-M -> "NAME fs-KIJM" (MY missed, I->J). Letters commit ~1.3 s after the hold
+(never early). Stage 3 slot model in the app (stage3_v17_asl_order_fs_v1). 116 tests pass.
+Config: artifacts/reports/segmental_decoder_v17_20260927/stream_config_v3_final.json (app default).
+
+## 2026-09-28 afternoon — Core ML, WE/I early-display guard, fingerspelling slots (interim)
+
+User decisions: Core ML files first, desktop benchmark + hypothetical iPhone 13; static letters A-Z
+as a supplemental track (vocabulary stays 100); letters kept exactly as recognized (no dictionary);
+automatic spelling detection, emitted only in runs >= 2; Stage 3 places spelled words.
+Core ML (artifacts/reports/coreml_segmental_v17_20260928/REPORT.md): boundary FP16 4.5 MB (0/1,944
+mismatch), recognizer FP16 23.6 MB (0/378), batched recognizer (iOS18, fixed batch 8 at run time;
+alternating enumerated shapes cost 283 ms/call). All-Core-ML held-out replay: 72/72 identical to
+PyTorch, 11.83% WER. FP16 hand encoder fails per-crop parity (min cosine .91) but tune replay 203 vs
+205 correct. Desktop per frame 24.2 ms median (FP32 encoder) / 14.0 ms (FP16 encoder on ANE);
+iPhone 13 ESTIMATE 66-81 ms vs 30-40 ms median (scaled, not measured).
+WE->I: user session replay confirmed early display of the WE prefix as I (I .91-.99 until the arc,
+then WE .85-.95). scripts/prefix_confusion_v17.py on isolated validation: WE prefix read as I 48%
+(top pair); 15 early-unsafe glosses (I, GOOD, MY, YOU, MOTHER, FATHER, ...). stream_config_v2.json
+disables early display for them: tune 11.06 -> 10.18% WER (P 95.8), test unchanged 11.83%,
+<0.5 s 98.1%; session 120-152 s now WE x7 vs x2. App default config now v2.
+Stage 3: tiny renderer corrupts unseen names (KOKOAB->okoab, MANILA->man; JOHN/MARY placeholders
+drop 20-100%). Fine-tuned stage3_v17_asl_order_fs_v1 on 7,481 derived slot rows (FS0/FS1, source
+splits kept): slot kept exactly once 99.7% of 980 test slot rows (old 0%), original test BLEU 92.60
+vs 92.73. App restores the spelling after generation; literal fallback if a slot is lost.
+Letters: 6,307 local A-Z clips; extraction via the live path, split by session (val = DWIGHT +
+numbered). Boundary student labels 25% of static letter clips as all-rest -> needs letter targets.
+
+## 2026-09-28 — segmental Reel is the app default with the full Reel UI (user request)
+
+User decisions: amber WORD? preview + top-3 chips; speak each committed word and the Finish
+sentence; finish by button/F/Space only (no gesture/auto); make it the app default. scripts/
+live_segmental_v17.py now drives ReelHud(provisional) with draw_reel_detection and
+persistent_auxiliary_detection (body/face run every 8th frame by contract, kept visible on screen
+only), speaker per word, Stage 3 naturalizer on Finish in a background thread, practice via
+shell.present glosses. app_shell_v17.py: segmental unless --classic-reel/--boundary-checkpoint/
+--renz-buffered/--familiar-ctc-checkpoint. Headless UI drive on two clips: TOMORROW GO and
+HELLO HOW YOU spoken per word, previews HELLO?/HOW?/YOU? shown before commit; Stage 3 rendered
+'TOMORROW GO' as "Tomorrow, they go to the year." (existing renderer quality, not changed).
+Tests: app shell/pages/sessions/integration + segmental runtime 111 pass (new integration test
+drives the default through LIVE->GLOSSES->HISTORY->LIVE). User live-camera check pending.
+
+## 2026-09-28 — segmental streaming Reel wired into the app shell (opt-in)
+
+`scripts/app_shell_v17.py --segmental` launches the Apple Vision boundary student + recognizer A +
+streaming segmental decoder (active/v17/segmental_runtime_v17.py, scripts/live_segmental_v17.py).
+Held-out replay through the live code, frozen config: 11.83% WER, 176/186, P 92.6 R 94.6
+(local60 8.64%, asllrp12 17/24); 98.9% of words within 0.5 s incl. compute (median -0.09 s,
+max 0.59 s); frame compute median 38 / p90 56 ms. Streaming boundary + masked flush equals clip
+boundary exactly (1,944 frames). New test/test_segmental_runtime_v17.py 4 pass; app shell and
+integration 57 pass. Default Reel unchanged; user live-camera check pending.
+
 ## 2026-09-27 late — streaming Apple Vision pipeline meets user targets on held-out (not promoted)
 
 Frozen config (artifacts/reports/segmental_decoder_v17_20260927/frozen_stream_config.json) run once

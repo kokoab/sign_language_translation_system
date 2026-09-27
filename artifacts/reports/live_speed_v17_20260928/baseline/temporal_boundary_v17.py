@@ -30,17 +30,14 @@ def sample_indices(times, fps=FPS):
     return np.asarray(indices, np.int64)
 
 
-def boundary_features(raw, times, hand_geometry=True, *, last_only=False):
+def boundary_features(raw, times, hand_geometry=True):
     times = validate_clock(times)
     raw = np.asarray(raw, np.float32)
     if raw.shape != (len(times), 61, 5) or not np.isfinite(raw).all():
         raise ValueError('expected finite raw Apple Vision [T,61,5]')
     present = (raw[..., 3] > .5) & (raw[..., 4] > 0)
     xy = raw[..., :2]
-    # Streaming consumes only the final row and its preceding velocity sample.
-    # Still scan the entire bounded history for the identical shoulder reference.
-    first = max(0, len(times) - 2) if last_only else 0
-    normal = np.zeros_like(xy[first:])
+    normal = np.zeros_like(xy)
     center, scale, last_body = np.zeros(2), .3, -np.inf
     for i, t in enumerate(times):
         if present[i, 57:59].all():
@@ -49,9 +46,7 @@ def boundary_features(raw, times, hand_geometry=True, *, last_only=False):
                 center, scale, last_body = xy[i, 57:59].mean(0), width, t
         if t - last_body > .8:
             center, scale = np.zeros(2), .3
-        if i >= first:
-            normal[i - first] = np.clip((xy[i] - center) / scale, -4, 4) * present[i, :, None]
-    raw, xy, present, times = raw[first:], xy[first:], present[first:], times[first:]
+        normal[i] = np.clip((xy[i] - center) / scale, -4, 4) * present[i, :, None]
     velocity = np.zeros_like(normal)
     if len(times) > 1:
         valid = present[1:] & present[:-1] & (np.diff(times)[:, None] <= .26)
@@ -66,8 +61,7 @@ def boundary_features(raw, times, hand_geometry=True, *, last_only=False):
             local = (xy[:, start:start + 21] - xy[:, start, None]) / np.maximum(palm[:, None, None], .005)
             hands.append(np.clip(local, -4, 4) * valid[..., None])
         values.extend(h.reshape(len(times), -1) for h in hands)
-    result = np.concatenate(values, axis=-1).astype(np.float32)
-    return result[-1:] if last_only else result
+    return np.concatenate(values, axis=-1).astype(np.float32)
 
 
 def boundary_targets(times, accepted, excluded, complete=False):

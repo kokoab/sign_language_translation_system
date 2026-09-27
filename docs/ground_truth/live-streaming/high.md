@@ -1,6 +1,16 @@
 # live-streaming — high
 
 
+## 2026-09-28 — one-second two-open-palm Finish on desktop and iPhone
+
+User explicitly requested both apps. Live Finish also accepts two separated upright open
+palms held for one continuous second; release rearms it. Practice disables the control.
+Control frames are withheld from word/letter decoding; the existing Finish path flushes
+the prior sign/spelling and renders/speaks the sentence. This supersedes the earlier
+button/F/Space-only decision. Source implemented and checked; phone deployment and camera
+validation remain pending. Details and checks in the matching log entry.
+
+
 ## 2026-09-22 — boundary adaptation must preserve and control the BIO readout
 
 OriginalBIO swaps recover most of the expanded recognition lost by START/END adaptation;
