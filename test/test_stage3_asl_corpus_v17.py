@@ -319,11 +319,11 @@ class NaturalizerEncodingTest(unittest.TestCase):
         )
         self.assertEqual(module.TinyStage3Naturalizer(args).encoding, "plain")
 
-    def test_default_checkpoint_is_the_asl_order_model(self) -> None:
+    def test_default_checkpoint_is_the_composition_model(self) -> None:
         import importlib
 
         module = importlib.import_module("scripts.live_isolated_v17")
-        self.assertEqual(module.DEFAULT_STAGE3_TINY.name, "stage3_v17_asl_order_v1")
+        self.assertEqual(module.DEFAULT_STAGE3_TINY.name, "stage3_composition_v17_20260929_v2")
         self.assertTrue(module.DEFAULT_STAGE3_TINY.exists())
         self.assertTrue(
             (module.DEFAULT_STAGE3_TINY / "stage3_input_contract.json").exists()

@@ -84,7 +84,7 @@ DEFAULT_NATURALIZER_MANIFEST = (
     REPO / "active/v17/stage3_mobile_naturalizer_manifest_v17.json"
 )
 DEFAULT_STAGE3_TINY = (
-    REPO / "artifacts/models/stage3_v17_asl_order_v1"
+    REPO / "artifacts/models/stage3_composition_v17_20260929_v2"
 )
 # The previous default, kept reachable for comparison and rollback. It renders ASL in
 # the order it receives and cannot drop a recognizer error.
@@ -278,6 +278,13 @@ class TinyStage3Naturalizer:
             tuple(row["glosses"]): str(row["english"])
             for row in self.manifest["reviewed_templates"]
         }
+        contract_path = Path(self.checkpoint) / "stage3_input_contract.json"
+        self.full_utterance = False
+        if contract_path.exists():
+            contract = json.loads(contract_path.read_text(encoding="utf-8"))
+            self.full_utterance = contract.get("utterance_segmentation") == "model"
+            if not contract.get("reviewed_templates_enabled", True):
+                self.templates = {}
         self.model = None
         self.tokenizer = None
         self.device = None
@@ -325,8 +332,10 @@ class TinyStage3Naturalizer:
         limit = 64 if self.encoding == "evidence" else 48
         encoded = self.tokenizer(
             self._model_input(glosses, confidences), return_tensors="pt",
-            truncation=True, max_length=limit,
+            truncation=not self.full_utterance, max_length=limit,
         ).to(self.device)
+        if self.full_utterance and encoded.input_ids.shape[1] > limit:
+            raise ValueError("Finished utterance exceeds model context; refuse to drop words")
         with torch.inference_mode():
             output = self.model.generate(
                 **encoded, max_new_tokens=limit, num_beams=1, do_sample=False

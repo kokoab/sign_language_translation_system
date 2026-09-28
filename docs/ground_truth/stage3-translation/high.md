@@ -3,9 +3,35 @@
 Dated evidence for constraints that still bind. The constraints themselves are
 stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
-2 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+4 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-09-29 — user decisions: multi-sentence, <1 s, flan-t5-base, incremental, DeepSeek data
+
+Requirements: a Finish may hold multiple sentences; translation must complete in under one second
+on the iPhone 13. No human reviewer: DeepSeek via OpenRouter generates data, references and judge.
+After the held-out multi-sentence evaluation (v2 6% fully right) and on-device timing, the user chose:
+**flan-t5-base** (248M) as the next Stage 3 model; **incremental translation** (finished sentences
+rendered while signing, Finish renders only the open tail); a new English-first DeepSeek training
+corpus of ~30–50K sessions with the 300-session evaluation set kept strictly out of it; and deletion of
+the random-weight latency packages (done). Evidence:
+`artifacts/reports/stage3_multisentence_eval_v17_20260929/REPORT.md`,
+`artifacts/reports/stage3_latency_bench_v17_20260929/REPORT.md`.
+
+## 2026-09-29 — user requires model-based translation repair, not phrase triggers
+
+After phone history confirmed correct HELLO MY FRIEND HOW YOU recognition but corrupted
+English, and the mobile model also dropped GOOD MORNING from the second requested phrase,
+the user explicitly authorized fixing the model and rejected triggers. The replacement
+must use learned generation for these compositions. Do not disguise a missing learned
+capability with exact-phrase overrides or semantic output rewriting. New checkpoint
+contracts disable reviewed-template lookup and let the model punctuate the full Finish
+buffer. Technical context-limit fallback and spelling-slot restoration preserve raw input;
+they do not insert guessed content. Existing recognition remains outside this repair.
+Generated examples are training-only; the fixed final epoch is not chosen from synthetic
+validation/test scores. No independent signer/general translation accuracy claim follows
+from text regression probes. Plan: artifacts/reports/stage3_composition_v17_20260929/PLAN.md.
 
 ## 2026-08-24 18:31 PST — locked-100 Stage 2 handoff is ready for Stage 3
 

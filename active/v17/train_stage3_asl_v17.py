@@ -268,6 +268,9 @@ def main() -> None:
         "--skip-control", action="store_true",
         help="skip scoring the deployed checkpoint on the test split",
     )
+    parser.add_argument("--init", type=Path, default=None,
+                        help="fine-tune from this local checkpoint instead of the base model")
+    parser.add_argument("--learning-rate", type=float, default=None)
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -296,12 +299,15 @@ def main() -> None:
     print(f"train {len(train)}  validation {len(validation)}  test {len(test)}")
     print(f"device {device}  seed {args.seed}")
 
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, revision=BASE_REVISION)
-    model = AutoModelForSeq2SeqLM.from_pretrained(
-        BASE_MODEL, revision=BASE_REVISION
-    ).to(device)
+    if args.init is not None:
+        tokenizer = AutoTokenizer.from_pretrained(args.init, local_files_only=True)
+        model = AutoModelForSeq2SeqLM.from_pretrained(args.init, local_files_only=True)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, revision=BASE_REVISION)
+        model = AutoModelForSeq2SeqLM.from_pretrained(BASE_MODEL, revision=BASE_REVISION)
+    model = model.to(device)
     optimizer = Adafactor(
-        model.parameters(), lr=1e-3, relative_step=False,
+        model.parameters(), lr=args.learning_rate or 1e-3, relative_step=False,
         scale_parameter=False, warmup_init=False,
     )
     loader = DataLoader(

@@ -3,9 +3,199 @@
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
 `rg` this file before re-running an experiment to see if it already failed.
 
-5 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+12 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-09-29 — multi-sentence tiny model + incremental translation installed on iPhone 13
+
+User approved incremental integration with run 2. Swift: counted-output parsing,
+`LiveIncrementalTranslator` (port of Python `incremental(verify=True)`), coalesced language-queue
+drains, tail-only Finish render with word-count fallback, warm-up after load, per-render and per-step
+autorelease pools (a native 323-session replay exhausted IOSurface memory without them), new
+`stage3_lock` history events. Bundled Stage 3 packages/token table replaced (hashes verified); exporter
+now writes `output` into the token table. Native macOS Swift replay: whole-buffer, incremental text and
+lock/tail counts 323/323 equal to Python. iPhone 13: 10/10 RunnerTests pass incl. new
+`testStage3MultiSentenceModel`; Release rebuilt, codesigned, installed; sessions intact. Python Stage 3
+suite 67/68 (pre-existing mobile-naturalizer hash failure). Desktop still v2. Not verified with live
+camera signing or live latency. Rollback copies:
+`artifacts/reports/stage3_multisentence_bakeoff_v17_20260929/app_backup_before/`.
+
+## 2026-09-29 — new corpus + retrained tiny T5 passes the multi-sentence bar; not deployed
+
+User asked for smallest-first (tiny, then flan-t5-small, then base only if needed), each run ≤1 h,
+bar ≥60% judged fully right, <10% wrong, NO never dropped. Corpus: 54,061 rows from 17,560 distinct
+DeepSeek sentences, held-out sentences/sessions removed. **Spend $2.37, over the $2 cap**: the rerun's
+guard counted only its own spend; now a persistent ledger. Trainer
+`scripts/train_stage3_multisentence_v17.py` (wall-clock budget, re-measured speed, LR decay).
+Tiny run 1 hit the wall-clock stop at 68% of plan; run 2 (pre-designated candidate) completed its
+schedule: 4,539 steps, 16.4 min. Held-out (300): run 2 whole buffer 60% right / 6% wrong / NO 0/42
+(v2: 6% / 31% / 21/42); incremental with verified locking 60% / 8% / 0/42; count-only locking
+58% / 8% / 1/42 (counts right in only 202/323). Run 1 64% / 7%, within noise. 4-sentence sessions
+44% / 8%. No larger model trained. Core ML export: 0/1,100 tokenization mismatches, 200/200 greedy
+parity. Estimated idle-phone Finish p90: 233 ms incremental, 284 ms whole buffer (max 437).
+Model drops a high-score gloss in noisy probes (MY NAME FS0 TAKE → "My name is FS0."). Nothing
+installed; app unchanged. Report: `artifacts/reports/stage3_multisentence_bakeoff_v17_20260929/REPORT.md`.
+Next: user decides on app integration (incremental locking in Swift, counted-output contract, warm-up).
+
+## 2026-09-29 — step 3 paused by user (corpus build stopped mid-run)
+
+User capped corpus spend at $2. `scripts/build_stage3_multisentence_corpus_v17.py` (sentence-level
+admission, eval sentences/sessions held out, "N: sentence" counted targets, 8% low-score spurious
+gloss rows, 5K previous-corpus rows) passed a 20-call trial, then the full run was stopped on user
+request before writing a corpus; completed API calls are cached in
+`data/local/stage3_multisentence_eval_v17/api_cache.jsonl`, so a rerun resumes at no cost. The
+`corpus.jsonl` present is the 663-row trial only. `scripts/train_stage3_flan_t5_base_v17.py` is written
+(3 length buckets, optional bf16 autocast); smoke tests on the trial corpus: 0.74 steps/s fp32 vs
+0.66 bf16 on MPS, so fp32 stays. No trained weights exist yet. Finding: real flan-t5-base encoder
+residual stream peaks at 332,589 (FFN out 120,950) on eval inputs, beyond FP16; HF hides this by
+clamping. Core ML FP16 export needs the exact 1/32 encoder residual rescale (RMSNorm is scale-
+invariant); re-measure after fine-tuning. Resume: rerun the corpus build with the same arguments,
+then train, score on the held-out set, then FP16/Core ML parity.
+
+## 2026-09-29 — multi-sentence held-out evaluation and iPhone 13 candidate latency
+
+User direction: Stage 3 must handle multiple sentences per Finish, answer in under one second,
+and be evaluated with DeepSeek via OpenRouter (no human reviewer). Steps 1–2 only; no training,
+no renderer/app behaviour change.
+
+Step 1: `scripts/eval_stage3_multisentence_v17.py` built 300 English-first sessions (2–4
+sentences, locked 100 + FS0), rule-checked both directions with the corpus lemma table,
+DeepSeek-vetted for grammar only, and removed any session in either composition training corpus
+(2,385 parsed → 610 rule → 582 vetted → 300 sampled; 237 have no sentence seen in training), plus
+23 phone Finish inputs. About $0.17 total. The v2 renderer on the whole buffer:
+31% faithful, drops ≥1 sign in 68%, DeepSeek judge 6% fully right / 31% wrong
+(mean 0.74 vs 0.77 for word-by-word literal; reference control 2.00). Four-sentence sessions:
+0% right / 47% wrong. Oracle sentence boundaries only reach 10% right, so composition fails
+inside sentences too. NO is dropped in 21/42 sessions. Phone slice looks good (83%) but half
+of it is training data. References and judge are both DeepSeek; not ASL accuracy.
+Report: `artifacts/reports/stage3_multisentence_eval_v17_20260929/REPORT.md`.
+
+Step 2: `scripts/bench_stage3_latency_export_v17.py` exported random-weight T5 (tiny, t5-small,
+flan-t5-small/base; no-cache and stateful KV; FP32/FP16/int8) and decoder-only LMs (SmolLM2
+135M/360M, Gemma-3-270M, Qwen2.5-0.5B; FP16/int4) with verified KV-cache equivalence;
+`RunnerTests.testStage3CandidateLatency` timed them on the physical iPhone 13. Idle p90-session
+(28 tokens) estimates: tiny KV 173 ms, deployed v2 241, flan-t5-small KV FP16 249, flan-t5-base
+KV FP16 391, Qwen int4 502, SmolLM2-360M 925, Gemma-3-270M ≥1210; Qwen FP16 killed the app on
+load; SmolLM2 fails Neural Engine compile. Int8 T5 is slower than FP16. Per-sentence (11 tokens):
+flan-t5-base 159, Qwen int4 232. Live v2 Finish logs are 1–3× idle, so incremental translation
+is needed for the larger models. Phone: bench models removed, Release rebuilt/codesigned/reinstalled,
+10 saved sessions intact. Report: `artifacts/reports/stage3_latency_bench_v17_20260929/REPORT.md`.
+Next: user chooses model/translation scheme before step 3 corpus generation and training.
+
+## 2026-09-29 — first composition weights fix both user phrases; request-role continuation
+
+Fixed five-epoch training completed in1326.80s; final loss.03108. Both excluded real user
+inputs now generate their intended English directly: HELLO MY FRIEND HOW YOU ->
+“Hello, my friend. How are you?”; HELLO GOOD MORNING HOW YOU FRIEND ->
+“Hello, good morning. How are you, friend?”. GOOD DAY and doctor/tomorrow/morning also
+improve.44direct-neural probes saved; no held-out accuracy claim. Historical noisy buffers
+still lose content or confuse roles. Diagnostic PLEASE GIVE MY CHILD WATER gives
+“Please give. My child is a water.” (old also failed), exposing missing recipient/object
+composition training. No deployment yet. A bounded fixed3epoch continuation adds4194
+recipient/time/message/address training rows plus4000balanced prior TRAIN replay, lr1e-4.
+Old reserved sequence overlap0; both user phrase training overlaps0. Generated rows remain
+training-only; no synthetic validation/test selection. This extends model training, not
+runtime rules. Original and first-candidate weights preserved. First-candidate CoreML
+export passes200/200greedy outputs and33,295tokenization rows with0mismatches; native
+Swift matches44/44direct neural probes, including whole-utterance delivery across long
+pauses and over-context preservation. Continuation detached worker79496 launched.
+Prepared one physical-device Stage3 test (greetings, requests, time, name, negation) and
+added checkpoint identification to future saved phone history. Mobile edits are scoped;
+concurrent user's UI changes retained. Next: completion probes,
+CoreML/Swift parity, then install only the reviewed replacement. Continuation artifacts:
+artifacts/reports/stage3_composition_v17_20260929/request_continuation/.
+Continuation completed96.12s training (112.22s with probes), final loss.01485. Both real
+user phrases still correct; PLEASE GIVE MY CHILD WATER now “Please give my child water.”
+HELLO FRIEND I HELP now preserves direct address. Simple previously correct phone cases
+retain their meanings. Remaining malformed/noisy inputs still fail: I HELLO... identifies
+“I am Hello”; USE FEEL... emits malformed English; MY NAME FS0 TAKE misassigns roles.
+Two-slot MY NAME FS0 FS1 still needs the existing slot-preserving literal fallback.
+No claim of general conversational accuracy. Final v2 CoreML export pending; no installation yet.
+First v2 export invocation failed before conversion: relative CLI checkpoint path was
+passed to relative_to(absolute ROOT). Exporter now resolves input/output paths at parse
+time; retry uses the same unchanged weights. Failure log preserved as export.log.
+Final v2 export:8194tokenization rows0mismatch,200/200CoreML/PyTorch greedy parity.
+Native Swift44/44parity, neural-only mode/full-utterance/context-preservation all pass.
+54Python tests pass after switching Torch/CoreML defaults and current segmental Stage3
+paths to v2; five actual desktop rendering smoke cases pass, including slot restoration.
+Prior mobile model files backed up and new package copies hash-verified. Signed Release
+build and codesign verification pass. Initial device test failed on disconnected iPhone;
+user reconnected/unlocked it, and the physical test is now running. No final installation
+claim yet at that point. Physical iPhone13 retry subsequently passed the Stage3 model test
+in7.162s: both user phrases, request/time/greeting/name/negation and direct neural mode.
+Final non-testable signed Release rebuild and codesign verification pass; devicectl
+installation and launch succeed on iPhone13 (bundle com.kokoab.sltMobileApp). Existing app data
+retained; original weights/resources preserved. Final report cross-checks all counts;
+scoped git diff --check passes. Artifact index refreshed. Next safe action: user live-camera
+check of both greetings and requests; use the recorded checkpoint ID in subsequent history
+reviews. Remaining noisy-input failures documented, no general translation-accuracy claim. Full result/limitations: artifacts/reports/stage3_composition_v17_20260929/REVIEW.md.
+
+## 2026-09-29 — model-only composition repair authorized and prepared
+
+User explicitly requests fixing the model without triggers. New text-only recipe retains
+16,070 existing training rows plus17,225 generated compositions; no new phrase overrides.
+Old non-train sequence overlap0; both user phrase training overlaps0. Four focused tests
+pass for exclusion, role/time targets, determinism and overlap rejection. Generated data
+is training-only; fixed five-epoch final checkpoint, no synthetic validation selection.
+Stage1/2 and visual phrase archives untouched; approved phrase verifier passes494archives
+and retains training_ready=false. Existing generic trainer would reopen the old test split,
+so a new bounded text-only trainer avoids that route. Outputs/versioned hashes and plan:
+artifacts/reports/stage3_composition_v17_20260929/. Changes:
+scripts/repair_stage3_composition_v17.py, test/test_stage3_composition_v17.py.
+Detached MPS worker71474 launched with completion notification; no progress polling.
+Prepared model-contract flag to disable existing templates in Python/Torch, CoreML and
+Swift. Export accepts explicit training-only numerical-parity rows and fails on token/output
+mismatch.14focused tests pass, including both backends invoking the model for formerly
+reviewed phrases. Existing checkpoints retain their behavior until replacement is admitted.
+Integration refinement: new contract also delegates sentence boundaries to the model by
+passing the full Finish buffer. Added context-capacity rejection into existing literal
+fallback; no phrase triggers or semantic output rewrites. Python and Swift paths honor
+this contract; legacy checkpoints retain pause splitting.16focused tests pass.
+Swift Core/Models/Decoder/Stage3 type-check and optimized native parity harness build pass.
+The harness requires direct neural mode, full-utterance delivery despite long pauses,
+PyTorch/CoreML exact output parity, and preservation of over-context literal input.
+Broader54test live-renderer/corpus/composition suite passes; artifact index refreshed.
+Results are infrastructure checks only while weights are still pending.
+Next: completion-driven direct-neural history/user probes, then CoreML parity before
+integration. Old models preserved; no deployment yet.
+
+## 2026-09-29 — complete saved mobile Live history; exact greeting fails after correct recognition
+
+Copied all12current iPhone Live session JSON files (September28–29 PHT):26translations,
+286word events/292saved glosses,1094previews,72resets;7incomplete autosaves. Inspected all
+saved sentence/Finish pairs; exact flattened-clause/input and saved-sentence consistency
+assertions pass. Report includes every translation, compact non-preview event transcript,
+source hashes and per-session counts. No recognition accuracy inferred without video.
+Latest115725second translation: HELLO MY FRIEND HOW YOU (scores.8686–.9833), oneclause,
+gaps.267–.367s -> “Hello, how are my friend?” in175.01ms. Short HELLO MY FRIEND is correct.
+User also requested HELLO GOOD MORNING HOW YOU FRIEND: macOS CoreML with current mobile
+source packages/manifest and hi-bucket scores returns “Hello, how are you a friend?”
+Six text-only probes completed; historical greeting error reproduced exactly. Short HELLO
+GOOD MORNING works; HOW YOU FRIEND drops FRIEND. Hashes/results in model_probes.json.
+These are development probes, not physical-iPhone/signing accuracy. Initial duplicate
+model-loading process terminated after restarting with optional heavy imports disabled.
+This isolates Stage3, not the pause splitter or missing recognized words. Other history
+adds HE/FRIEND, drops DAY, and turns MORNING into a destination; pause fragmentation and
+spelling errors also persist separately. Current Swift source still accepts nonempty
+<=300character generation; no semantic acceptance check. No app/model change or deployment.
+Changed reports:artifacts/reports/phone_all_history_review_20260929/; current-state summary
+updated. Next: use these as development regressions; validate meaning-preserving fallback
+and phrase-aware segmentation on additional reviewed compositions, not one greeting alone.
+
+## 2026-09-29 — latest iPhone history confirms translation hallucination and bad clause splits
+
+Reviewed phone session20260929_004215 twice; latest autosave448.57s, complete=false,
+6translations/7two-hand Finish events/26resets. HELLO HOW / MORNING / GOOD DAY becomes
+“Hello, how is he? In the morning, Friend. Good.” Unsupported HE/FRIEND and missing DAY
+are downstream translation errors. HUNGRY MY NAME fs-GELO becomes “hungry is Gelo.”
+HOW YOU splits at2.00s; HELP detaches at1.533s; HUNGRY MY stays joined at1.467s. Current
+Swift splitter uses an unconditional1.5s cutoff. LiveStage3 accepts any nonempty <=300char
+model output; slot validation protects occurrence, not the surrounding meaning. Spelling
+also varies(GEC/GELO/RGELCO); the log cannot recover physical ground truth without video.
+Report/data:artifacts/reports/phone_translation_review_20260929/. No source/model edits
+or new inference replay. Next: exact-history translation regression cases, output content
+validation/fallback, and phrase-aware segmentation; simply raising the gap is insufficient.
 
 ## 2026-09-22 — ASL-order renderer promoted to live default; two live-only defects fixed
 
