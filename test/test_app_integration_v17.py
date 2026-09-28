@@ -80,6 +80,67 @@ class LiveNavigationTest(unittest.TestCase):
             len(shell_module.store.refresh(self.tmp)["sessions"]), 1
         )
 
+    def test_segmental_default_browsing_pauses_and_records(self) -> None:
+        """The default live page (segmental Reel) through the real shell and its page switches."""
+        from scripts.live_segmental_v17 import SegmentalRecognizer, run
+
+        shell = AppShell(session_root=self.tmp)
+        script = (
+            [255] * 6 + [ord("3")] + [255] * 4 + [ord("5")] + [255] * 4
+            + [ord("2")] + [255] * 200
+        )
+        pages_seen, shown = [], []
+
+        def waitkey(_delay=1):
+            pages_seen.append(shell.page)
+            return script.pop(0) if script else 255
+
+        args = shell_module.parser().parse_args([
+            "--video", str(CLIP), "--no-speech", "--no-ollama",
+            "--output-root", str(self.tmp),
+        ])
+        self.assertTrue(shell_module.uses_segmental(args))
+        with mock.patch.object(shell_module.cv2, "namedWindow"), \
+             mock.patch.object(shell_module.cv2, "setMouseCallback"), \
+             mock.patch.object(shell_module.cv2, "destroyWindow"), \
+             mock.patch.object(
+                 shell_module.cv2, "imshow",
+                 side_effect=lambda window, frame: shown.append(shell.page)), \
+             mock.patch.object(shell_module.cv2, "waitKey", side_effect=waitkey):
+            shell.open()
+            shell.page = "LIVE"
+            result = run(args, shell=shell, model=SegmentalRecognizer(args))
+            shell.close()
+
+        order, last = [], None
+        for page in pages_seen:
+            if page != last:
+                order.append(page)
+                last = page
+        self.assertEqual(order, ["LIVE", "GLOSSES", "HISTORY", "LIVE"])
+        self.assertIn("GLOSSES", shown)
+        self.assertIn("HISTORY", shown)
+        self.assertIsInstance(result["hypothesis"], list)
+        self.assertEqual(len(shell_module.store.refresh(self.tmp)["sessions"]), 1)
+
+    def test_no_fingerspelling_runs_words_only(self) -> None:
+        """--no-fingerspelling: one word decoder over the 100 signs; nothing spelled is emitted."""
+        from active.v17.segmental_runtime_v17 import SegmentalRuntime
+        from scripts.live_segmental_v17 import SegmentalRecognizer, run
+
+        args = shell_module.parser().parse_args([
+            "--video", str(CLIP), "--no-speech", "--no-ollama", "--no-display",
+            "--output-root", str(self.tmp), "--no-fingerspelling",
+        ])
+        model = SegmentalRecognizer(args)
+        self.assertIsInstance(model.runtime, SegmentalRuntime)
+        self.assertEqual(model.runtime.mode, "words")
+        self.assertEqual(len(model.runtime.labels), 100)
+        self.assertFalse(model.provenance()["letters"])
+        result = run(args, model=model)
+        self.assertTrue(result["hypothesis"])
+        self.assertFalse([g for g in result["hypothesis"] if g.startswith(("fs-", "FS_"))])
+
 
 if __name__ == "__main__":
     unittest.main()

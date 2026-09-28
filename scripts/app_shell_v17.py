@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """The app shell: one window, four pages, and the reel pipeline behind the live one.
 
-The recognition loop is not restructured to fit this.  `scripts/live_reel_stage1_v17.py`
-keeps owning its own loop and calls `present()` once per frame; the shell decides what
-that frame becomes.  While a page other than LIVE is showing, the shell reports itself
+The live page runs the streaming segmental Reel (`scripts/live_segmental_v17.py`) by default;
+`--classic-reel` restores the previous cascade (`scripts/live_reel_stage1_v17.py`).  Either
+loop owns itself and calls `present()` once per frame; the shell decides what that frame
+becomes.  While a page other than LIVE is showing, the shell reports itself
 paused and the loop skips its vision and model work, so browsing costs nothing.
 
 Run it with the same flags as the reel script:
@@ -583,6 +584,12 @@ def pages_catalog(assets: Path) -> dict:
         return {}
 
 
+def uses_segmental(args: argparse.Namespace) -> bool:
+    """The streaming segmental Reel is the default live mode (user decision 2026-09-28)."""
+    return not any(getattr(args, name, None) for name in (
+        "classic_reel", "boundary_checkpoint", "renz_buffered", "familiar_ctc_checkpoint"))
+
+
 def warm(shell: AppShell, args: argparse.Namespace) -> None:
     """Build the models behind the home screen instead of in front of the camera.
 
@@ -593,7 +600,10 @@ def warm(shell: AppShell, args: argparse.Namespace) -> None:
     """
     try:
         shell.status = "loading models…"
-        if getattr(args, "boundary_checkpoint", None):
+        if uses_segmental(args):
+            from scripts.live_segmental_v17 import SegmentalRecognizer
+            shell.components = SegmentalRecognizer(args)
+        elif getattr(args, "boundary_checkpoint", None):
             from scripts.live_boundary_v17 import BoundaryRecognizer
             shell.components = BoundaryRecognizer(args)
         elif getattr(args, "renz_buffered", False):
@@ -623,9 +633,15 @@ def parser() -> argparse.ArgumentParser:
     value.description = __doc__
     value.set_defaults(output_root=store.SESSION_ROOT)
     candidates = value.add_mutually_exclusive_group()
+    candidates.add_argument("--segmental", action="store_true", help="streaming segmental Reel (the default; kept for explicit launches)")
+    candidates.add_argument("--classic-reel", action="store_true", help="the previous Reel cascade live pipeline")
     candidates.add_argument("--boundary-checkpoint", type=Path, help="opt-in ASL temporal boundary candidate with Reel recognition")
     candidates.add_argument("--renz-buffered", action="store_true", help="experimental 4-second buffered Renz boundaries with Reel classification")
     candidates.add_argument("--familiar-ctc-checkpoint", type=Path, help="opt-in reviewed familiar continuous CTC candidate")
+    value.add_argument("--no-fingerspelling", action="store_true",
+                       help="segmental Reel: recognise the 100 signs only (no letter head, letter boundary or spelled words)")
+    value.add_argument("--stage3-torch", action="store_true",
+                       help="render sentences with the PyTorch T5 instead of its Core ML export")
     value.add_argument("--gallery-columns", type=int, default=5)
     value.add_argument("--no-practice-sound", action="store_true")
     value.add_argument("--assets", type=Path, default=ASSETS)
@@ -634,6 +650,10 @@ def parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = parser().parse_args()
+    if uses_segmental(args):
+        # Core ML pipeline: skip coremltools' TensorFlow (and, unless asked, transformers) probes.
+        from active.v17.coreml_runtime_v17 import lightweight_imports
+        lightweight_imports(allow_transformers=args.stage3_torch or args.naturalizer != "tiny")
     shell = AppShell(
         assets=args.assets, session_root=args.output_root,
         columns=args.gallery_columns, sound=not args.no_practice_sound,
@@ -643,6 +663,10 @@ def main() -> None:
     try:
         # Home is interactive from the first frame; the models arrive behind it.
         if shell.browse() == "quit":
+            return
+        if uses_segmental(args):
+            from scripts.live_segmental_v17 import run as segmental_run
+            segmental_run(args, shell, shell.components)
             return
         if args.boundary_checkpoint:
             from scripts.live_boundary_v17 import run as boundary_run

@@ -1,5 +1,172 @@
 # live-streaming — log
 
+## 2026-09-29 afternoon — fist letters (A E M N S T): hand-geometry refinement, on by default
+
+Letter head on validation fist letters 230/299 (77%). Hand-geometry logistic regression on span landmarks
+(active/v17/fist_geometry_v17.py; scripts/train_fist_geometry_v17.py; train split only, corrections
+applied; 54 features: canonical joints without the constant middle MCP + thumb-tip distances): 93.0%
+on validation signers. Combined as head^0.25 x geometry within the group (mass preserved, only when the
+head's top letter is a fist letter): validation 1101 -> 1153 of 1271 letters, fist 230 -> 282, no letter
+outside the group changed (weights 1/.75/.5/.25/0 -> 1144/1146/1148/1153/1142, chosen on validation).
+First model had two constant features (scale 3e-9) that amplified rounding noise (Swift/Python 1/299
+disagreement); fixed. Swift port parity 598/598 (prob diff 9e-7). Words: held-out WER 10.75% 175/186
+unchanged (1 video: stray fs-BE -> stray HEAR), tune identical. 93-clip set 75 -> 76 (N fixes 2,
+N->T 1). User GELO sessions: E 26 -> 27/33, O 20 -> 19/33, exact 5/33 unchanged. Config
+stream.fist_geometry true, fist_head_weight .25. 19 Python tests pass. Installed on iPhone 13 (cable);
+device tests pass except testStageProfile, killed by the iOS watchdog when the app was backgrounded during
+GPU inference (phone locked mid-test; crash log 8BADF00D, not the fist change). Letters-switch test
+rewritten for the ATLAS redesign's top-bar Letters button. Report: fist_letters_v17_20260929/.
+
+## 2026-09-29 afternoon — letter label audit (all 26 letters)
+
+Model-independent audit (reports/letter_label_audit_v17_20260929/audit.py): per-clip hand-shape
+descriptor (joints relative to wrist / palm, orientation kept, mirror-invariant), 10 nearest neighbours
+over 6,273 train+validation clips; 209 flagged (>= 7/10 neighbours share another label). Contact sheets
+checked by eye. Confirmed mislabels: 3 more G-in-Q clips from the same signer (26 total;
+label_corrections.json v2). Not mislabels: J<->I and X<->Z/Z->G (motion letters, one frame), R->U (real
+crossed R, incl. the same signer's R), Q<->P, G->H, D/C->O, I->A (genuine look-alikes), K->V (these
+signers' K is close to V; reference K looks the same), fist letters A/E/M/N/S/T (thumb placement below
+landmark resolution; no clear errors). Production head unchanged (head a + full geometry).
+
+## 2026-09-29 afternoon — G/Q: training-label error found; full geometry rule restored
+
+User: G points sideways, Q down. Audit of index direction (MCP->tip) per letter: train Q 13% sideways,
+all others consistent. Every sideways "Q" (23) is one close-up signer (red cabinets) signing G in the Q
+folder, checked frame by frame; they are exactly the 20 "regressions" that led to removing Q->G this
+morning. The rule was right; the labels were wrong. data/local/fingerspelling_letters_v17/label_corrections.json
+(23 train Q -> G; videos untouched), applied by scripts/train_letter_head_v17.py. Sideways K clips checked:
+real tilted K. Full geometry (G<->Q, R<->U) restored as default (stream.geometry_q_to_g true) in Python and
+Swift, tests updated. Retrained head letter_head_v17_b (corrected labels): validation 1100/1129 raw/geometry
+vs head a 1099/1129; tune false-letter .94% vs .88%. User sessions (5, replayed): head a + full geometry
+exact 5/33, G 25/33 (was 4/30, G 20/30 before today); head b exact 7/32, G 24/32, E 23/32 vs 26/33 = wash.
+Production keeps head a + full geometry; head b and its Core ML export
+(SpanRecognizerV17LocalALettersV2B8FP16) kept, not deployed. Report: letter_labels_v17_20260929/.
+
+## 2026-09-29 midday — desktop Core ML only; phone 20 Hz settings; letters toggle; letter data
+
+Desktop (backend coreml): no PyTorch checkpoints loaded (labels artifacts/coreml/live_reel_labels.json,
+lookahead from config), Stage 3 on the Core ML T5 (active/v17/stage3_coreml_v17.py; config
+stage3_coreml; --stage3-torch restores PyTorch), recognizer = phone B8 package (bit-identical to the
+Batched one). coremltools imported TensorFlow (~9 s): blocked in the app (active/v17/coreml_runtime_v17.py
+lightweight_imports); compiled models cached in ~/Library/Caches/slt_v17_coreml (large compiled weights
+fail to plan from the exFAT drive, error -5). Build 17.8 s -> 1.7-3.1 s, peak RSS 1.21 -> 0.70 GB.
+Held-out 72/186: WER 10.75% 175/186 P 94.1 R 94.1; 71/72 identical to v3 (one stray fs-BB gone).
+Phone speed (on-device profile, RunnerTests.testStageProfile, 226 frames 1280x720): recognizer on
+GPU 51 ms and FP32 crop encoder 49 ms were the cost. FP16 encoder + recognizer .all: median 25 ms
+(p90 34), 29 ms with the display tracker (was 127 ms; phone logs showed 8.6-10.6 Hz). Swift held-out
+replay with those settings (Mac ANE): WER 9.68% 176/186 P 94.1 (same-code baseline 10.22%); 70/72
+identical, both differences fixes. Adopted in LiveReelApp (engine defaults unchanged for parity).
+Phone Live: side-by-side LETTERS ON|OFF switch above the stats panel (persisted; Practice keeps
+letters); engine words-only runtime = desktop --no-fingerspelling. 9 device tests, 18 Python, Flutter pass.
+Letter data: ASL Citizen 0 letter signs, SemLex ~10/91k, ASL-LEX none; ASL DATASETS alphabets are
+copies of the used 6.3k local clips. User letters harvested from 5 desktop sessions (28 GELO attempts,
+100 spans; scripts/harvest_user_letters_v17.py). Head retrained with 4 sessions (held-out 20260929_071956):
+3/13 exact, E 8/13 vs 3/15, E 10/15 -> not adopted (earlier sessions contain no E->S failures).
+Letter arbitration (higher-probability letter replaces first commit): 0 changes on 93 clips; 1 change
+on user sessions and wrong (GELOR->QELOR) -> off (stream.letter_arbitration). Opt-in
+stream.geometry_q_to_g: user G 20/30 -> 25/33, exact GELO 4/30 -> 5/33; off by default (other signers'
+sideways Q). Reports: desktop_coreml_v17_20260929, phone_speed_v17_20260929, user_letters_v17_20260929,
+letter_arbitration_v17_20260929.
+
+## 2026-09-29 morning — review of the overnight fixes; Q->G removed; --no-fingerspelling; GELO
+
+Review (independent session). Correct as written: spelling tick (active hands / last sign end),
+lexical-word replacement of same-onset provisional letters, latest-frame gate (lock covers all
+state; disable mid-job cannot stall), independent display Vision (model keeps every-8th aux).
+Swift<->Python parity re-run on current code: 4 fixtures incl. 64 s letter session identical
+(BIO argmax 0 diffs, logits exact, same words). 17 Python + 3 Flutter tests pass.
+Found: refine_letter_geometry thresholds were read off the validation split it was scored on
+(in-sample). Independent letter TRAIN split (G/Q/R/U, 780 clips): 0 fixes, 23 regressions —
+Q->G broke 20/195 correct Q (8-12% of Q point sideways as G does; no threshold separates).
+Q->G removed (Python + Swift + both tests); G->Q and U/R kept. After: train Q 195/195, R 192/195;
+validation 1099->1128 (+29/0). Device geometry test passes; release rebuilt, installed, launched.
+Phone recognition rate from phone session logs: 8.6-10.6 Hz (all sessions, incl. pre-change),
+~80-90 ms/frame, not 20 Hz; phone accuracy at that rate is unvalidated.
+--no-fingerspelling (app shell, replay; build_runtime(fingerspelling=False)): word decoder alone,
+word boundary, no letter head/boundary; no retraining. Tune 10.18% (206/226) = v2; held-out
+11.83% 176/186 P 92.6 R 94.6 (= v2; letters on 10.75%). Reports: no_fingerspelling_v17_20260929/.
+GELO (desktop session 20260929_071956): 2/15 exact. E read as S/X/Z or dropped 6/15 (S at p .99,
+E .001: confident, not a close call); final O read as C/E; G/Q decoder disagreement (first commit
+wins); two splits from >2 s pauses. Validation E->S only 2/50 for other signers. Diagnosis:
+reports/gelo_diagnosis_v17_20260929/.
+
+## 2026-09-29 — final retained-change replay and handoff checks complete
+
+93 paired clips /4528frames complete with the exact retained Python changes and active-hand
+spelling tick.91explicit targets:70→75exact sequences,5fixes/0previously-correct regressions
+(oneG/Q, fourR/U). Two ANGELO excerpts are qualitative: one retains the same output, one
+QILO→GILO; neither establishes correct ANGELO. HOME→OM disappears through absent-hand
+spelling timing, but HOME is not recovered. Summary:live_correctness_v17_20260929/
+final_replay_summary.json.3Flutter tests pass. Native buildInterface/viewDidLayoutSubviews
+match the pre-change landscape baseline byte for byte. Scoped git diff/edited-file whitespace
+checks pass. Large-artifact index regenerated. Corrected signed Release already installed
+and launched on iPhone13. Report/current state updated; landscape requirement promoted to
+high.md. Next: visually verify moving/rotating live-camera alignment and sustained device
+behavior, then continue remaining word/letter/N errors without promoting rejected rescues.
+
+## 2026-09-29 — corrected landscape Release installed and launched
+
+Final ENABLE_TESTABILITY=NO signed Release build succeeds. Installed on iPhone13
+00008110-00111D1A0130A01E and launched com.kokoab.sltMobileApp; devicectl confirms both.
+Includes separate hand tracking, latest-frame scheduling and rotation-epoch rejection,
+original landscape Live/Practice layout, conservative pair geometry and spelling changes.
+Final93clip comparison continues; current state report updated with measured limits.
+No sustained20FPS, exact visual attachment, or universal recognition-fix claim follows.
+
+## 2026-09-29 — independent tracker physical-iPhone checks pass
+
+Physical iPhone13 landscape controls, latest-frame lifecycle and spelling/geometry tests
+pass(3tests). Recorded1280×720input concurrent test passes:120displayframes versus48
+recognitionframes in nominal6seconds, display median12.30ms/p9529.61ms. Printed21.61Hz
+excludes the first cold detection; do not use it as sustained20FPS evidence. This verifies
+independent progress under model load, not live preview alignment, thermals or sustained
+camera recognition. Release build passed; a final rebuild includes rotation-epoch rejection
+for frames captured before reset. Native extracted-gate check passes. Final install and
+93clip retained-change replay still pending.31Python focused tests passed;15runtime tests
+pass again after removing rejected experiment APIs. Report:live_correctness_v17_20260929/REVIEW.md.
+
+## 2026-09-29 — isolate hand display from recognition; landscape restoration validation
+
+Latest user reports hand landmarks lag again. Replaced the controller's shared camera/model
+queue with an independent capture/Vision display queue and a locked single pending-frame
+slot for model work. Newest camera frame replaces pending work; rescheduling model jobs
+allows Stop/Reset/Finish to interleave. Separate display scaler/Vision instances preserve
+model features/cadence; display hands target20Hz, display body/face refresh every4frames.
+Landscape-only layout remains restored. Stop/reset/rotation invalidate pending display
+results; explicit mirrored aspect-fill mapping remains. Removed unused body-only worker.
+Native harness compiles.31 focused Python runtime/integration/boundary tests pass.
+Physical iPhone queue/lifecycle/landscape tests and recorded-input concurrent tracker
+measurement are running; no sustained camera FPS claim or final release install yet.
+
+37clip opt-in whole-word rescue did not recover HE/HOME; removed rejected experimental
+APIs/flags from production Python runtime, preserved exact experimental source as
+live_correctness_v17_20260929/rejected_runtime_experiments.py. Pair-only letter geometry,
+provisional-overlap handling and active-hand spelling timer remain; no model training.
+
+## 2026-09-29 — user clarified: keep Live/Practice landscape; track the person
+
+User rejected the portrait page/layout change. Restored the original landscape-only
+orientation mask, landscape-right presentation, geometry request, complete native
+buildInterface/viewDidLayoutSubviews and seven-word rail. Keep camera upright rotation
+handling separate from page orientation. Updated the native orientation test accordingly.
+Do not re-enable portrait layouts under the earlier request to track a portrait-held phone.
+
+Fresh body/face detections each processed frame preserve model raw features exactly
+in16physical-iPhone comparisons, but synchronous Vision median5.62->17.83ms adds12.2ms.
+Rejected that synchronous production path. Controller now schedules a separate body/face
+display worker with one request in flight, drops stale results, and keeps recognition's
+original auxiliary cadence. Camera/overlay and sustained device performance still need
+verification. Landscape restoration release build is running; installation not yet claimed.
+
+Completed geometry validation1271fullletterclips:1099->1129correct,30fixes/0regressions.
+78streaming comparisons fixed G->Q(1) and R->U(4); word tests unchanged by geometry.
+Broader93probe: letter-segment cost and deferred-letter-word-decoder candidates recover
+HOME/YESTERDAY examples but break ANGELO; neither is enabled by default. Motion guard
+only removes a wrong HOME letter sequence; not promoted. Whole-word recovery callback
+is opt-in experimental and not wired into either app. Models/checkpoints unchanged.
+New phone history autosaves preview/commit events every5s atomically; desktop records
+preview changes, so future wrong on-screen guesses are diagnosable even without commits.
+
 ## 2026-09-28 late — correctness work resumed, candidates not installed
 
 User rejected stopping after speed work; now also reports HOME->O, YESTERDAY->A,

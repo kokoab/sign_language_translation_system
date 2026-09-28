@@ -1,0 +1,66 @@
+{
+ "frozen_at": "2026-09-28: v2 words + letters (dual decoder: word boundary w/ letters competing + letter boundary letters-only, containment dedupe, same-letter gap 6, runs>=2) + Stage 3 slot model; Core ML backend",
+ "selection": "tuning pool (89 local) streaming sweeps + ASLLRP JONATHAN validation (vocab-only) for recognizer choice; held-out test never used for any choice",
+ "boundary": "artifacts/models/av_boundary_student_v17_l6_a/model.pth",
+ "recognizer": "artifacts/models/span_recognizer_v17_local_a/best_model.pth",
+ "decoder": {
+  "lookahead": 6,
+  "span_mode": "both",
+  "alpha": 1.0,
+  "w_r": 2,
+  "w_a": 0.25,
+  "w_b": 0.5,
+  "c": -1.5,
+  "theta": 0.5,
+  "duplicate_gap": 20
+ },
+ "stream": {
+  "lag": 1,
+  "early_k": 3,
+  "early_q": 0.9,
+  "soft_extra": 2,
+  "context_frames": 2,
+  "early_unsafe": [
+   "ASK",
+   "DIFFERENT",
+   "EAT",
+   "FATHER",
+   "GO",
+   "GOOD",
+   "HAVE",
+   "HEAR",
+   "I",
+   "IMPORTANT",
+   "MAKE",
+   "MOTHER",
+   "MY",
+   "WHERE",
+   "YOU"
+  ],
+  "letter_duplicate_gap": 6,
+  "moving_merge": false,
+  "letter_arbitration": false,
+  "geometry_q_to_g": true,
+  "fist_geometry": true,
+  "fist_head_weight": 0.25
+ },
+ "tune_streaming": {
+  "all": "WER 12.39% C=206/226 P 93.6 R 91.2 lat<.5s 96.5%",
+  "long": "WER 10.81% C=140/148 P 90.9 R 94.6 lat<.5s 97.4%"
+ },
+ "rejected": {
+  "recognizer_b": "tune 15.93%/long 12.84% (c=-1.5); asllrp_val 106/279 vs A 100/279, more insertions"
+ },
+ "boundary_note": "Apple Vision input, 6-frame / 300 ms lookahead, distilled from DGS L10",
+ "version": 3,
+ "letter_head": "artifacts/models/letter_head_v17_a/model.pth",
+ "letter_threshold": 0.5,
+ "stage3_checkpoint": "artifacts/models/stage3_v17_asl_order_fs_v1",
+ "letter_boundary": "artifacts/models/av_boundary_student_v17_l6_letters/model.pth",
+ "coreml_letter_boundary": "artifacts/coreml/AVBoundaryStudentV17L6LettersFP16.mlpackage",
+ "coreml_recognizer": "artifacts/coreml/SpanRecognizerV17LocalALettersB8FP16.mlpackage",
+ "word_decoder_letters": true,
+ "backend": "coreml",
+ "compute_units": "CPU_AND_GPU",
+ "stage3_coreml": "artifacts/coreml/stage3_t5_fs_v1"
+}

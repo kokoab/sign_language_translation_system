@@ -1,5 +1,15 @@
 # live-streaming — high
 
+## 2026-09-29 — preserve landscape pages; separate landmark tracking from recognition
+
+User explicitly rejected changing Live/Practice to portrait. Keep their original landscape
+orientation and layout; a request for tracking when the phone is held differently is not
+permission to redesign page orientation. Camera/overlay transforms must handle capture
+geometry independently. Hand display must not wait for word recognition. The installed
+native implementation uses independent display Vision and one newest pending model frame;
+keep model feature cadence unchanged and invalidate old frames on stop/reset/rotation.
+Short device replay is evidence of independent progress, not sustained20FPS camera proof.
+Report:artifacts/reports/live_correctness_v17_20260929/REVIEW.md.
 
 ## 2026-09-28 — one-second two-open-palm Finish on desktop and iPhone
 

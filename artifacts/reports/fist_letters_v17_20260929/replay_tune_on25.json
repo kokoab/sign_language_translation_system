@@ -1,0 +1,5033 @@
+{
+ "set": "tune",
+ "backend": null,
+ "fingerspelling": true,
+ "compute_units": null,
+ "overall": {
+  "videos": 89,
+  "wer": 0.10619469026548672,
+  "precision": 0.9579439252336449,
+  "recall": 0.9070796460176991,
+  "hypotheses": 214,
+  "substitutions": 6,
+  "deletions": 15,
+  "insertions": 3,
+  "correct": 205,
+  "references": 226,
+  "latency_median": 0.37095150033333485,
+  "latency_p90": 0.5422080413332728,
+  "latency_max": 1.269753250000008,
+  "latency_under_05": 0.8136645962732919,
+  "timed_words": 161,
+  "eof_words": 53
+ },
+ "subsets": {
+  "local_tune": {
+   "videos": 89,
+   "wer": 0.10619469026548672,
+   "precision": 0.9579439252336449,
+   "recall": 0.9070796460176991,
+   "hypotheses": 214,
+   "substitutions": 6,
+   "deletions": 15,
+   "insertions": 3,
+   "correct": 205,
+   "references": 226,
+   "latency_median": 0.37095150033333485,
+   "latency_p90": 0.5422080413332728,
+   "latency_max": 1.269753250000008,
+   "latency_under_05": 0.8136645962732919,
+   "timed_words": 161,
+   "eof_words": 53
+  }
+ },
+ "long": null,
+ "compute_ms": {
+  "median": 118.45416699998168,
+  "p90": 219.16383299998188,
+  "p99": 376.7059672000177,
+  "max": 932.2892920000072
+ },
+ "config": {
+  "frozen_at": "2026-09-28: v2 words + letters (dual decoder: word boundary w/ letters competing + letter boundary letters-only, containment dedupe, same-letter gap 6, runs>=2) + Stage 3 slot model; Core ML backend",
+  "selection": "tuning pool (89 local) streaming sweeps + ASLLRP JONATHAN validation (vocab-only) for recognizer choice; held-out test never used for any choice",
+  "boundary": "artifacts/models/av_boundary_student_v17_l6_a/model.pth",
+  "recognizer": "artifacts/models/span_recognizer_v17_local_a/best_model.pth",
+  "decoder": {
+   "lookahead": 6,
+   "span_mode": "both",
+   "alpha": 1.0,
+   "w_r": 2,
+   "w_a": 0.25,
+   "w_b": 0.5,
+   "c": -1.5,
+   "theta": 0.5,
+   "duplicate_gap": 20
+  },
+  "stream": {
+   "lag": 1,
+   "early_k": 3,
+   "early_q": 0.9,
+   "soft_extra": 2,
+   "context_frames": 2,
+   "early_unsafe": [
+    "ASK",
+    "DIFFERENT",
+    "EAT",
+    "FATHER",
+    "GO",
+    "GOOD",
+    "HAVE",
+    "HEAR",
+    "I",
+    "IMPORTANT",
+    "MAKE",
+    "MOTHER",
+    "MY",
+    "WHERE",
+    "YOU"
+   ],
+   "letter_duplicate_gap": 6,
+   "moving_merge": false,
+   "letter_arbitration": false,
+   "geometry_q_to_g": true,
+   "fist_geometry": true,
+   "fist_head_weight": 0.25
+  },
+  "tune_streaming": {
+   "all": "WER 12.39% C=206/226 P 93.6 R 91.2 lat<.5s 96.5%",
+   "long": "WER 10.81% C=140/148 P 90.9 R 94.6 lat<.5s 97.4%"
+  },
+  "rejected": {
+   "recognizer_b": "tune 15.93%/long 12.84% (c=-1.5); asllrp_val 106/279 vs A 100/279, more insertions"
+  },
+  "boundary_note": "Apple Vision input, 6-frame / 300 ms lookahead, distilled from DGS L10",
+  "version": 3,
+  "letter_head": "artifacts/models/letter_head_v17_a/model.pth",
+  "letter_threshold": 0.5,
+  "stage3_checkpoint": "artifacts/models/stage3_v17_asl_order_fs_v1",
+  "letter_boundary": "artifacts/models/av_boundary_student_v17_l6_letters/model.pth",
+  "coreml_letter_boundary": "artifacts/coreml/AVBoundaryStudentV17L6LettersFP16.mlpackage",
+  "coreml_recognizer": "artifacts/coreml/SpanRecognizerV17LocalALettersB8FP16.mlpackage",
+  "word_decoder_letters": true,
+  "backend": "coreml",
+  "compute_units": "CPU_AND_GPU",
+  "stage3_coreml": "artifacts/coreml/stage3_t5_fs_v1",
+  "fingerspelling": true
+ },
+ "records": [
+  {
+   "id": "local:HELLO_HOW_YOU:64f34df5",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 4,
+     "end_frame": 8,
+     "commit_frame": 15,
+     "start_seconds": 0.2,
+     "end_seconds": 0.4,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.8418286735772126,
+     "early": false,
+     "compute_seconds": 0.03791891599999886,
+     "eof": false
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 9,
+     "end_frame": 11,
+     "commit_frame": 15,
+     "start_seconds": 0.4666666666666667,
+     "end_seconds": 0.5666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9282668067679215,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 13,
+     "end_frame": 15,
+     "commit_frame": 15,
+     "start_seconds": 0.6666666666666666,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9939838551119251,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:f0b6ec18",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 14,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.9910665334689512,
+     "early": false,
+     "compute_seconds": 0.0908211250000015,
+     "eof": false
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 10,
+     "end_frame": 13,
+     "commit_frame": 18,
+     "start_seconds": 0.5,
+     "end_seconds": 0.6666666666666666,
+     "commit_seconds": 0.9,
+     "score": 0.9940654428310167,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 15,
+     "end_frame": 18,
+     "commit_frame": 18,
+     "start_seconds": 0.7666666666666667,
+     "end_seconds": 0.9,
+     "commit_seconds": 0.9,
+     "score": 0.9880668859070508,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:f6a616f4",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 4,
+     "end_frame": 8,
+     "commit_frame": 14,
+     "start_seconds": 0.2,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.9537185551995512,
+     "early": true,
+     "compute_seconds": 0.08498979099999815,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 8,
+     "end_frame": 12,
+     "commit_frame": 18,
+     "start_seconds": 0.4,
+     "end_seconds": 0.6,
+     "commit_seconds": 0.9,
+     "score": 0.9949749171845658,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 15,
+     "end_frame": 18,
+     "commit_frame": 18,
+     "start_seconds": 0.7666666666666667,
+     "end_seconds": 0.9,
+     "commit_seconds": 0.9,
+     "score": 0.9714011173696252,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:069536d5",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 14,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.9666621615850681,
+     "early": false,
+     "compute_seconds": 0.07539925000000025,
+     "eof": false
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 8,
+     "end_frame": 12,
+     "commit_frame": 16,
+     "start_seconds": 0.4,
+     "end_seconds": 0.6,
+     "commit_seconds": 0.8,
+     "score": 0.9544925693225248,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 14,
+     "end_frame": 16,
+     "commit_frame": 16,
+     "start_seconds": 0.7,
+     "end_seconds": 0.8,
+     "commit_seconds": 0.8,
+     "score": 0.996861186948007,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:MY_NAME:8920fc64",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "NAME",
+     "start_frame": 7,
+     "end_frame": 11,
+     "commit_frame": 11,
+     "start_seconds": 0.36666666666666664,
+     "end_seconds": 0.5666666666666667,
+     "commit_seconds": 0.5666666666666667,
+     "score": 0.9602782445137501,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 1,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:01dceafc",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "NAME",
+     "start_frame": 8,
+     "end_frame": 11,
+     "commit_frame": 11,
+     "start_seconds": 0.4,
+     "end_seconds": 0.5666666666666667,
+     "commit_seconds": 0.5666666666666667,
+     "score": 0.9286261489423553,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 1,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:9a9826b6",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 13,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.6666666666666666,
+     "score": 0.8940497816038651,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 10,
+     "end_frame": 13,
+     "commit_frame": 13,
+     "start_seconds": 0.5,
+     "end_seconds": 0.6666666666666666,
+     "commit_seconds": 0.6666666666666666,
+     "score": 0.9385362358506083,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:6d50f8ef",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 14,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.9472231186371788,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 9,
+     "end_frame": 14,
+     "commit_frame": 14,
+     "start_seconds": 0.4666666666666667,
+     "end_seconds": 0.7,
+     "commit_seconds": 0.7,
+     "score": 0.9501114360487702,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:90177dae",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "HELP"
+   ],
+   "words": [
+    {
+     "gloss": "HELP",
+     "start_frame": 4,
+     "end_frame": 16,
+     "commit_frame": 16,
+     "start_seconds": 0.2,
+     "end_seconds": 0.8,
+     "commit_seconds": 0.8,
+     "score": 0.9608169017499493,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 2,
+    "insertions": 0,
+    "correct": 1,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:c7b70755",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 4,
+     "end_frame": 17,
+     "commit_frame": 16,
+     "start_seconds": 0.2,
+     "end_seconds": 0.8666666666666667,
+     "commit_seconds": 0.8,
+     "score": 0.9027509557194333,
+     "early": true,
+     "compute_seconds": 0.09559079099999934,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 2,
+    "insertions": 0,
+    "correct": 1,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:db8c4d1a",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "HELP"
+   ],
+   "words": [
+    {
+     "gloss": "HELP",
+     "start_frame": 5,
+     "end_frame": 15,
+     "commit_frame": 15,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9380594575104034,
+     "early": true,
+     "compute_seconds": 0.08116625000000255,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 2,
+    "insertions": 0,
+    "correct": 1,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:b570c07d",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "HELP",
+     "start_frame": 4,
+     "end_frame": 12,
+     "commit_frame": 16,
+     "start_seconds": 0.2,
+     "end_seconds": 0.6,
+     "commit_seconds": 0.8,
+     "score": 0.9645317712348274,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 14,
+     "end_frame": 16,
+     "commit_frame": 16,
+     "start_seconds": 0.7,
+     "end_seconds": 0.8,
+     "commit_seconds": 0.8,
+     "score": 0.9981956171773714,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:ce955f98",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 14,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.9669147609422428,
+     "early": false,
+     "compute_seconds": 0.037618167000001534,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 10,
+     "end_frame": 15,
+     "commit_frame": 15,
+     "start_seconds": 0.5,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9880007751401256,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:8717c82c",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 14,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.9805092353790236,
+     "early": false,
+     "compute_seconds": 0.04097004099999779,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 10,
+     "end_frame": 15,
+     "commit_frame": 15,
+     "start_seconds": 0.5,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9888223458943977,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:e69fe417",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 14,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.9930038661227228,
+     "early": false,
+     "compute_seconds": 0.016010874999999203,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 12,
+     "end_frame": 15,
+     "commit_frame": 15,
+     "start_seconds": 0.6,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9895430259661387,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:9bf09818",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 6,
+     "end_frame": 8,
+     "commit_frame": 15,
+     "start_seconds": 0.3,
+     "end_seconds": 0.4,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.8774764416023849,
+     "early": false,
+     "compute_seconds": 0.041755916999996145,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 11,
+     "end_frame": 16,
+     "commit_frame": 16,
+     "start_seconds": 0.5666666666666667,
+     "end_seconds": 0.8,
+     "commit_seconds": 0.8,
+     "score": 0.977583740111984,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:66d20687",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 5,
+     "end_frame": 10,
+     "commit_frame": 16,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.4,
+     "commit_seconds": 0.8,
+     "score": 0.9104716203028602,
+     "early": true,
+     "compute_seconds": 0.1247793750000028,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 9,
+     "end_frame": 13,
+     "commit_frame": 22,
+     "start_seconds": 0.4666666666666667,
+     "end_seconds": 0.6666666666666666,
+     "commit_seconds": 1.1,
+     "score": 0.9699653626825208,
+     "early": false,
+     "compute_seconds": 0.07594504100000421,
+     "eof": false
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 17,
+     "end_frame": 21,
+     "commit_frame": 22,
+     "start_seconds": 0.8666666666666667,
+     "end_seconds": 1.0666666666666667,
+     "commit_seconds": 1.1,
+     "score": 0.995828643625861,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:9f56f398",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 14,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.9914322949740297,
+     "early": false,
+     "compute_seconds": 0.1267195000000001,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 11,
+     "end_frame": 19,
+     "commit_frame": 19,
+     "start_seconds": 0.5666666666666667,
+     "end_seconds": 0.9666666666666667,
+     "commit_seconds": 0.9666666666666667,
+     "score": 0.9481039238158356,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:bb5037a6",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 4,
+     "end_frame": 8,
+     "commit_frame": 14,
+     "start_seconds": 0.2,
+     "end_seconds": 0.4,
+     "commit_seconds": 0.7,
+     "score": 0.9932052931015154,
+     "early": true,
+     "compute_seconds": 0.11554724999999877,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 9,
+     "end_frame": 12,
+     "commit_frame": 19,
+     "start_seconds": 0.4666666666666667,
+     "end_seconds": 0.6,
+     "commit_seconds": 0.9666666666666667,
+     "score": 0.9737381680205843,
+     "early": false,
+     "compute_seconds": 0.12553524999999865,
+     "eof": false
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 16,
+     "end_frame": 20,
+     "commit_frame": 20,
+     "start_seconds": 0.8,
+     "end_seconds": 1.0,
+     "commit_seconds": 1.0,
+     "score": 0.9958328850168945,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:c43e8388",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 7,
+     "end_frame": 10,
+     "commit_frame": 17,
+     "start_seconds": 0.36666666666666664,
+     "end_seconds": 0.5,
+     "commit_seconds": 0.8666666666666667,
+     "score": 0.9913491548818711,
+     "early": false,
+     "compute_seconds": 0.10347062499999993,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 14,
+     "end_frame": 18,
+     "commit_frame": 23,
+     "start_seconds": 0.7,
+     "end_seconds": 0.9,
+     "commit_seconds": 1.1666666666666667,
+     "score": 0.9788320085131894,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 20,
+     "end_frame": 23,
+     "commit_frame": 23,
+     "start_seconds": 1.0,
+     "end_seconds": 1.1666666666666667,
+     "commit_seconds": 1.1666666666666667,
+     "score": 0.9890025935166081,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:GOOD_MORNING:7d793c90",
+   "subset": "local_tune",
+   "reference": [
+    "GOOD",
+    "MORNING"
+   ],
+   "hypothesis": [
+    "GOOD",
+    "MORNING"
+   ],
+   "words": [
+    {
+     "gloss": "GOOD",
+     "start_frame": 18,
+     "end_frame": 51,
+     "commit_frame": 38,
+     "start_seconds": 0.9,
+     "end_seconds": 1.5666666666666667,
+     "commit_seconds": 1.9,
+     "score": 0.9724990800848222,
+     "early": false,
+     "compute_seconds": 0.1573785830000034,
+     "eof": false
+    },
+    {
+     "gloss": "MORNING",
+     "start_frame": 52,
+     "end_frame": 79,
+     "commit_frame": 64,
+     "start_seconds": 2.6,
+     "end_seconds": 3.966666666666667,
+     "commit_seconds": 3.2,
+     "score": 0.9767563375945768,
+     "early": true,
+     "compute_seconds": 0.20686333399999768,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:GOOD_MORNING:a152a8b4",
+   "subset": "local_tune",
+   "reference": [
+    "GOOD",
+    "MORNING"
+   ],
+   "hypothesis": [
+    "GOOD",
+    "MORNING"
+   ],
+   "words": [
+    {
+     "gloss": "GOOD",
+     "start_frame": 19,
+     "end_frame": 47,
+     "commit_frame": 47,
+     "start_seconds": 0.9666666666666667,
+     "end_seconds": 2.0,
+     "commit_seconds": 2.3666666666666667,
+     "score": 0.9829917184671523,
+     "early": false,
+     "compute_seconds": 0.24881504199999682,
+     "eof": false
+    },
+    {
+     "gloss": "MORNING",
+     "start_frame": 53,
+     "end_frame": 79,
+     "commit_frame": 63,
+     "start_seconds": 2.6666666666666665,
+     "end_seconds": 3.966666666666667,
+     "commit_seconds": 3.1666666666666665,
+     "score": 0.98289758271123,
+     "early": true,
+     "compute_seconds": 0.15521204099999864,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:GOOD_MORNING:27a2b873",
+   "subset": "local_tune",
+   "reference": [
+    "GOOD",
+    "MORNING"
+   ],
+   "hypothesis": [
+    "GOOD",
+    "MORNING"
+   ],
+   "words": [
+    {
+     "gloss": "GOOD",
+     "start_frame": 29,
+     "end_frame": 55,
+     "commit_frame": 49,
+     "start_seconds": 1.4666666666666666,
+     "end_seconds": 2.1,
+     "commit_seconds": 2.466666666666667,
+     "score": 0.9707500365748436,
+     "early": false,
+     "compute_seconds": 0.1323363750000084,
+     "eof": false
+    },
+    {
+     "gloss": "MORNING",
+     "start_frame": 58,
+     "end_frame": 75,
+     "commit_frame": 68,
+     "start_seconds": 2.9,
+     "end_seconds": 3.7666666666666666,
+     "commit_seconds": 3.4,
+     "score": 0.9717945721604251,
+     "early": true,
+     "compute_seconds": 0.14150541699999053,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:GOOD_MORNING:bd792fb3",
+   "subset": "local_tune",
+   "reference": [
+    "GOOD",
+    "MORNING"
+   ],
+   "hypothesis": [
+    "GOOD",
+    "MORNING"
+   ],
+   "words": [
+    {
+     "gloss": "GOOD",
+     "start_frame": 13,
+     "end_frame": 37,
+     "commit_frame": 23,
+     "start_seconds": 0.6666666666666666,
+     "end_seconds": 0.8,
+     "commit_seconds": 1.1666666666666667,
+     "score": 0.6558487583591823,
+     "early": false,
+     "compute_seconds": 0.15802912499999877,
+     "eof": false
+    },
+    {
+     "gloss": "MORNING",
+     "start_frame": 45,
+     "end_frame": 55,
+     "commit_frame": 55,
+     "start_seconds": 2.2666666666666666,
+     "end_seconds": 2.7666666666666666,
+     "commit_seconds": 2.7666666666666666,
+     "score": 0.9752608555251921,
+     "early": true,
+     "compute_seconds": 0.1522878330000026,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:6446e671",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 15,
+     "end_frame": 38,
+     "commit_frame": 27,
+     "start_seconds": 0.7666666666666667,
+     "end_seconds": 1.9,
+     "commit_seconds": 1.3666666666666667,
+     "score": 0.9618230677046576,
+     "early": true,
+     "compute_seconds": 0.1418888330000101,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 44,
+     "end_frame": 67,
+     "commit_frame": 54,
+     "start_seconds": 2.2,
+     "end_seconds": 3.3666666666666667,
+     "commit_seconds": 2.7,
+     "score": 0.9694684882228369,
+     "early": true,
+     "compute_seconds": 0.18053145799999015,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 75,
+     "end_frame": 100,
+     "commit_frame": 93,
+     "start_seconds": 3.7666666666666666,
+     "end_seconds": 4.3,
+     "commit_seconds": 4.666666666666667,
+     "score": 0.9913438006806278,
+     "early": false,
+     "compute_seconds": 0.18334295799999722,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:0ea209d5",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 16,
+     "end_frame": 18,
+     "commit_frame": 25,
+     "start_seconds": 0.8,
+     "end_seconds": 0.9,
+     "commit_seconds": 1.2666666666666666,
+     "score": 0.9980673221250992,
+     "early": false,
+     "compute_seconds": 0.09798795800000448,
+     "eof": false
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 30,
+     "end_frame": 47,
+     "commit_frame": 40,
+     "start_seconds": 1.5,
+     "end_seconds": 2.3666666666666667,
+     "commit_seconds": 2.0,
+     "score": 0.9749191409384567,
+     "early": true,
+     "compute_seconds": 0.16231854100000476,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 50,
+     "end_frame": 68,
+     "commit_frame": 68,
+     "start_seconds": 2.5,
+     "end_seconds": 3.4,
+     "commit_seconds": 3.4,
+     "score": 0.9939056000105708,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:00424e11",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 17,
+     "end_frame": 36,
+     "commit_frame": 27,
+     "start_seconds": 0.8666666666666667,
+     "end_seconds": 1.8,
+     "commit_seconds": 1.3666666666666667,
+     "score": 0.98164821873425,
+     "early": true,
+     "compute_seconds": 0.10532595799999456,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 41,
+     "end_frame": 60,
+     "commit_frame": 51,
+     "start_seconds": 2.066666666666667,
+     "end_seconds": 3.0,
+     "commit_seconds": 2.566666666666667,
+     "score": 0.9481853777217458,
+     "early": true,
+     "compute_seconds": 0.12151295799999673,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 63,
+     "end_frame": 82,
+     "commit_frame": 89,
+     "start_seconds": 3.1666666666666665,
+     "end_seconds": 4.1,
+     "commit_seconds": 4.466666666666667,
+     "score": 0.9836627054791601,
+     "early": false,
+     "compute_seconds": 0.21468216699999232,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:dcec9c83",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 15,
+     "end_frame": 24,
+     "commit_frame": 25,
+     "start_seconds": 0.7666666666666667,
+     "end_seconds": 1.2,
+     "commit_seconds": 1.2666666666666666,
+     "score": 0.9981618379566704,
+     "early": true,
+     "compute_seconds": 0.13184095799999795,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 29,
+     "end_frame": 37,
+     "commit_frame": 39,
+     "start_seconds": 1.4666666666666666,
+     "end_seconds": 1.8666666666666667,
+     "commit_seconds": 1.9666666666666666,
+     "score": 0.9973389802662223,
+     "early": true,
+     "compute_seconds": 0.0971026249999909,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 40,
+     "end_frame": 57,
+     "commit_frame": 57,
+     "start_seconds": 2.0,
+     "end_seconds": 2.8666666666666667,
+     "commit_seconds": 2.8666666666666667,
+     "score": 0.9674949808653358,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:MY_NAME:16fab086",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 14,
+     "end_frame": 20,
+     "commit_frame": 36,
+     "start_seconds": 0.7,
+     "end_seconds": 1.0,
+     "commit_seconds": 1.8,
+     "score": 0.8995917103559845,
+     "early": false,
+     "compute_seconds": 0.24110174999998435,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 21,
+     "end_frame": 42,
+     "commit_frame": 39,
+     "start_seconds": 1.0666666666666667,
+     "end_seconds": 2.1,
+     "commit_seconds": 1.9666666666666666,
+     "score": 0.9767032545534058,
+     "early": true,
+     "compute_seconds": 0.18499912499999027,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:4e86d1d3",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 15,
+     "end_frame": 22,
+     "commit_frame": 29,
+     "start_seconds": 0.7666666666666667,
+     "end_seconds": 1.1,
+     "commit_seconds": 1.4666666666666666,
+     "score": 0.9919578928507292,
+     "early": false,
+     "compute_seconds": 0.14202762499999722,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 28,
+     "end_frame": 61,
+     "commit_frame": 42,
+     "start_seconds": 1.4,
+     "end_seconds": 3.066666666666667,
+     "commit_seconds": 2.1,
+     "score": 0.93158251873737,
+     "early": true,
+     "compute_seconds": 0.13405112500001337,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:d7eaa7cf",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 26,
+     "end_frame": 34,
+     "commit_frame": 41,
+     "start_seconds": 1.3,
+     "end_seconds": 1.7,
+     "commit_seconds": 2.066666666666667,
+     "score": 0.9889374802520422,
+     "early": false,
+     "compute_seconds": 0.06637862499999869,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 39,
+     "end_frame": 68,
+     "commit_frame": 49,
+     "start_seconds": 1.9666666666666666,
+     "end_seconds": 3.4,
+     "commit_seconds": 2.466666666666667,
+     "score": 0.9632524943562449,
+     "early": true,
+     "compute_seconds": 0.16815299999998956,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:a9192f18",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 18,
+     "end_frame": 24,
+     "commit_frame": 31,
+     "start_seconds": 0.9,
+     "end_seconds": 1.2,
+     "commit_seconds": 1.5666666666666667,
+     "score": 0.9870068598438855,
+     "early": false,
+     "compute_seconds": 0.11869275000000812,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 29,
+     "end_frame": 56,
+     "commit_frame": 39,
+     "start_seconds": 1.4666666666666666,
+     "end_seconds": 2.8,
+     "commit_seconds": 1.9666666666666666,
+     "score": 0.9799663280980223,
+     "early": true,
+     "compute_seconds": 0.21397799999999734,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:4bb27653",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 19,
+     "end_frame": 35,
+     "commit_frame": 33,
+     "start_seconds": 0.9666666666666667,
+     "end_seconds": 1.7666666666666666,
+     "commit_seconds": 1.6666666666666667,
+     "score": 0.9420304693292217,
+     "early": true,
+     "compute_seconds": 0.19388083300000858,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 38,
+     "end_frame": 60,
+     "commit_frame": 53,
+     "start_seconds": 1.9,
+     "end_seconds": 3.0,
+     "commit_seconds": 2.6666666666666665,
+     "score": 0.9127632703473886,
+     "early": true,
+     "compute_seconds": 0.2035615000000064,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 65,
+     "end_frame": 87,
+     "commit_frame": 86,
+     "start_seconds": 3.2666666666666666,
+     "end_seconds": 3.966666666666667,
+     "commit_seconds": 4.3,
+     "score": 0.9986661487611502,
+     "early": false,
+     "compute_seconds": 0.2568672920000097,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:06fe3b1b",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 26,
+     "end_frame": 46,
+     "commit_frame": 40,
+     "start_seconds": 1.3,
+     "end_seconds": 2.3,
+     "commit_seconds": 2.0,
+     "score": 0.9520630859762048,
+     "early": true,
+     "compute_seconds": 0.18654050000000666,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 52,
+     "end_frame": 67,
+     "commit_frame": 62,
+     "start_seconds": 2.6,
+     "end_seconds": 3.3666666666666667,
+     "commit_seconds": 3.1,
+     "score": 0.9396646512578866,
+     "early": true,
+     "compute_seconds": 0.1943335410000202,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 75,
+     "end_frame": 78,
+     "commit_frame": 85,
+     "start_seconds": 3.7666666666666666,
+     "end_seconds": 3.9,
+     "commit_seconds": 4.266666666666667,
+     "score": 0.9992331007107196,
+     "early": false,
+     "compute_seconds": 0.10754266600000051,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:3607b1a6",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 14,
+     "end_frame": 30,
+     "commit_frame": 25,
+     "start_seconds": 0.7,
+     "end_seconds": 1.5,
+     "commit_seconds": 1.2666666666666666,
+     "score": 0.9547032150521904,
+     "early": true,
+     "compute_seconds": 0.13020266699999183,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 36,
+     "end_frame": 50,
+     "commit_frame": 46,
+     "start_seconds": 1.8,
+     "end_seconds": 2.5,
+     "commit_seconds": 2.3,
+     "score": 0.936487803860474,
+     "early": true,
+     "compute_seconds": 0.16788112500000807,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 56,
+     "end_frame": 66,
+     "commit_frame": 73,
+     "start_seconds": 2.8,
+     "end_seconds": 3.3,
+     "commit_seconds": 3.6666666666666665,
+     "score": 0.998687881433107,
+     "early": false,
+     "compute_seconds": 0.10690283299999237,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:97e1e6fc",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 18,
+     "end_frame": 31,
+     "commit_frame": 33,
+     "start_seconds": 0.9,
+     "end_seconds": 1.5666666666666667,
+     "commit_seconds": 1.6666666666666667,
+     "score": 0.9114250862130975,
+     "early": true,
+     "compute_seconds": 0.11442349999998669,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 32,
+     "end_frame": 52,
+     "commit_frame": 45,
+     "start_seconds": 1.6,
+     "end_seconds": 2.6,
+     "commit_seconds": 2.2666666666666666,
+     "score": 0.9755175448137844,
+     "early": true,
+     "compute_seconds": 0.22238970800000857,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 57,
+     "end_frame": 69,
+     "commit_frame": 76,
+     "start_seconds": 2.8666666666666667,
+     "end_seconds": 3.466666666666667,
+     "commit_seconds": 3.8,
+     "score": 0.9992847022219469,
+     "early": false,
+     "compute_seconds": 0.12102112499999862,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:5c5efab1",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 25,
+     "end_frame": 35,
+     "commit_frame": 35,
+     "start_seconds": 1.2666666666666666,
+     "end_seconds": 1.7666666666666666,
+     "commit_seconds": 1.7666666666666666,
+     "score": 0.9448546935058404,
+     "early": true,
+     "compute_seconds": 0.1156221659999801,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 40,
+     "end_frame": 64,
+     "commit_frame": 50,
+     "start_seconds": 2.0,
+     "end_seconds": 3.2,
+     "commit_seconds": 2.5,
+     "score": 0.9869618075778875,
+     "early": true,
+     "compute_seconds": 0.13300858400000948,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:fa5f33d6",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 10,
+     "end_frame": 20,
+     "commit_frame": 23,
+     "start_seconds": 0.5,
+     "end_seconds": 1.0,
+     "commit_seconds": 1.1666666666666667,
+     "score": 0.9106620262262644,
+     "early": true,
+     "compute_seconds": 0.15620470799998998,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 25,
+     "end_frame": 60,
+     "commit_frame": 49,
+     "start_seconds": 1.2666666666666666,
+     "end_seconds": 2.1666666666666665,
+     "commit_seconds": 2.466666666666667,
+     "score": 0.9071770535729173,
+     "early": true,
+     "compute_seconds": 0.2244692499999985,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:c2d77f74",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 15,
+     "end_frame": 24,
+     "commit_frame": 30,
+     "start_seconds": 0.7666666666666667,
+     "end_seconds": 1.2,
+     "commit_seconds": 1.5,
+     "score": 0.908972141298252,
+     "early": true,
+     "compute_seconds": 0.1566542080000204,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 29,
+     "end_frame": 65,
+     "commit_frame": 39,
+     "start_seconds": 1.4666666666666666,
+     "end_seconds": 3.2666666666666666,
+     "commit_seconds": 1.9666666666666666,
+     "score": 0.9494447406576988,
+     "early": true,
+     "compute_seconds": 0.11095570799997745,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:56621abe",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 18,
+     "end_frame": 31,
+     "commit_frame": 34,
+     "start_seconds": 0.9,
+     "end_seconds": 1.5666666666666667,
+     "commit_seconds": 1.7,
+     "score": 0.9158511357964467,
+     "early": true,
+     "compute_seconds": 0.09995991700000673,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 37,
+     "end_frame": 74,
+     "commit_frame": 47,
+     "start_seconds": 1.8666666666666667,
+     "end_seconds": 3.7,
+     "commit_seconds": 2.3666666666666667,
+     "score": 0.9260409540015948,
+     "early": true,
+     "compute_seconds": 0.14362741599998685,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:c2541b7d",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 19,
+     "end_frame": 30,
+     "commit_frame": 29,
+     "start_seconds": 0.9666666666666667,
+     "end_seconds": 1.1,
+     "commit_seconds": 1.4666666666666666,
+     "score": 0.9867875369557898,
+     "early": false,
+     "compute_seconds": 0.12503275000000258,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 35,
+     "end_frame": 47,
+     "commit_frame": 46,
+     "start_seconds": 1.7666666666666666,
+     "end_seconds": 2.3666666666666667,
+     "commit_seconds": 2.3,
+     "score": 0.9738453049313703,
+     "early": true,
+     "compute_seconds": 0.12751904200001718,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 53,
+     "end_frame": 75,
+     "commit_frame": 65,
+     "start_seconds": 2.6666666666666665,
+     "end_seconds": 2.7666666666666666,
+     "commit_seconds": 3.2666666666666666,
+     "score": 0.9633257095020356,
+     "early": false,
+     "compute_seconds": 0.1430115830000318,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:0efa7e67",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 7,
+     "end_frame": 11,
+     "commit_frame": 18,
+     "start_seconds": 0.36666666666666664,
+     "end_seconds": 0.5666666666666667,
+     "commit_seconds": 0.9,
+     "score": 0.9711586110006812,
+     "early": false,
+     "compute_seconds": 0.09010783299999048,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 20,
+     "end_frame": 32,
+     "commit_frame": 30,
+     "start_seconds": 1.0,
+     "end_seconds": 1.6,
+     "commit_seconds": 1.5,
+     "score": 0.9031890952832261,
+     "early": true,
+     "compute_seconds": 0.1794782499999883,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 35,
+     "end_frame": 54,
+     "commit_frame": 60,
+     "start_seconds": 1.7666666666666666,
+     "end_seconds": 2.7,
+     "commit_seconds": 3.0,
+     "score": 0.984658947913354,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:a4e2770a",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 7,
+     "end_frame": 12,
+     "commit_frame": 19,
+     "start_seconds": 0.36666666666666664,
+     "end_seconds": 0.6,
+     "commit_seconds": 0.9666666666666667,
+     "score": 0.9364713887669689,
+     "early": false,
+     "compute_seconds": 0.08106699999996181,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 25,
+     "end_frame": 45,
+     "commit_frame": 52,
+     "start_seconds": 1.2666666666666666,
+     "end_seconds": 2.2666666666666666,
+     "commit_seconds": 2.6,
+     "score": 0.7418185662383672,
+     "early": false,
+     "compute_seconds": 0.40346070800001144,
+     "eof": false
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 48,
+     "end_frame": 68,
+     "commit_frame": 60,
+     "start_seconds": 2.4,
+     "end_seconds": 2.5,
+     "commit_seconds": 3.0,
+     "score": 0.9590050720202995,
+     "early": false,
+     "compute_seconds": 0.7697532500000079,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:36e8a1ee",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 14,
+     "end_frame": 16,
+     "commit_frame": 23,
+     "start_seconds": 0.7,
+     "end_seconds": 0.8,
+     "commit_seconds": 1.1666666666666667,
+     "score": 0.9898743437759485,
+     "early": false,
+     "compute_seconds": 0.12154254199998604,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 26,
+     "end_frame": 38,
+     "commit_frame": 50,
+     "start_seconds": 1.3,
+     "end_seconds": 1.9,
+     "commit_seconds": 2.5,
+     "score": 0.8294067993046212,
+     "early": false,
+     "compute_seconds": 0.1983250000000112,
+     "eof": false
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 39,
+     "end_frame": 59,
+     "commit_frame": 66,
+     "start_seconds": 1.9666666666666666,
+     "end_seconds": 2.966666666666667,
+     "commit_seconds": 3.3,
+     "score": 0.9912985302934979,
+     "early": false,
+     "compute_seconds": 0.1362019580000151,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:HELLO_HOW_YOU_6",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HOW",
+     "start_frame": 32,
+     "end_frame": 48,
+     "commit_frame": 46,
+     "start_seconds": 1.6,
+     "end_seconds": 2.4,
+     "commit_seconds": 2.3,
+     "score": 0.9689166298946786,
+     "early": true,
+     "compute_seconds": 0.15977745800000775,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 53,
+     "end_frame": 63,
+     "commit_frame": 70,
+     "start_seconds": 2.6666666666666665,
+     "end_seconds": 3.1666666666666665,
+     "commit_seconds": 3.5,
+     "score": 0.9946398101861934,
+     "early": false,
+     "compute_seconds": 0.1331437499999879,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:HELLO_HOW_YOU_5",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 36,
+     "end_frame": 38,
+     "commit_frame": 45,
+     "start_seconds": 1.8,
+     "end_seconds": 1.9,
+     "commit_seconds": 2.2666666666666666,
+     "score": 0.9870542687383412,
+     "early": false,
+     "compute_seconds": 0.11611870799998769,
+     "eof": false
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 42,
+     "end_frame": 61,
+     "commit_frame": 55,
+     "start_seconds": 2.1,
+     "end_seconds": 3.066666666666667,
+     "commit_seconds": 2.7666666666666666,
+     "score": 0.929362680919664,
+     "early": true,
+     "compute_seconds": 0.1108569579999994,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 67,
+     "end_frame": 85,
+     "commit_frame": 92,
+     "start_seconds": 3.3666666666666667,
+     "end_seconds": 4.266666666666667,
+     "commit_seconds": 4.6,
+     "score": 0.9954701340801411,
+     "early": false,
+     "compute_seconds": 0.0634912919999806,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 2,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:HELLO_HOW_YOU_11",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 18,
+     "end_frame": 34,
+     "commit_frame": 39,
+     "start_seconds": 0.9,
+     "end_seconds": 1.7,
+     "commit_seconds": 1.9666666666666666,
+     "score": 0.9545218653244075,
+     "early": true,
+     "compute_seconds": 0.15650041700001793,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 43,
+     "end_frame": 61,
+     "commit_frame": 55,
+     "start_seconds": 2.1666666666666665,
+     "end_seconds": 3.066666666666667,
+     "commit_seconds": 2.7666666666666666,
+     "score": 0.9325836817446419,
+     "early": true,
+     "compute_seconds": 0.13854637500003264,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 66,
+     "end_frame": 76,
+     "commit_frame": 82,
+     "start_seconds": 3.3,
+     "end_seconds": 3.8,
+     "commit_seconds": 4.1,
+     "score": 0.9882391661126442,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:HELLO_HOW_YOU_14",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 6,
+     "end_frame": 26,
+     "commit_frame": 19,
+     "start_seconds": 0.3,
+     "end_seconds": 1.3,
+     "commit_seconds": 0.9666666666666667,
+     "score": 0.9346360016250242,
+     "early": true,
+     "compute_seconds": 0.11081933299999491,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 34,
+     "end_frame": 55,
+     "commit_frame": 44,
+     "start_seconds": 1.7,
+     "end_seconds": 2.7666666666666666,
+     "commit_seconds": 2.2,
+     "score": 0.9908225006002882,
+     "early": true,
+     "compute_seconds": 0.14764295800000582,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:MY_NAME:MY_NAME_18",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 16,
+     "end_frame": 26,
+     "commit_frame": 33,
+     "start_seconds": 0.8,
+     "end_seconds": 1.3,
+     "commit_seconds": 1.6666666666666667,
+     "score": 0.995032608557322,
+     "early": false,
+     "compute_seconds": 0.17427429100001746,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 32,
+     "end_frame": 53,
+     "commit_frame": 43,
+     "start_seconds": 1.6,
+     "end_seconds": 2.6666666666666665,
+     "commit_seconds": 2.1666666666666665,
+     "score": 0.909796792056408,
+     "early": true,
+     "compute_seconds": 0.15111970800001018,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:MY_NAME_4",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 18,
+     "end_frame": 28,
+     "commit_frame": 35,
+     "start_seconds": 0.9,
+     "end_seconds": 1.4,
+     "commit_seconds": 1.7666666666666666,
+     "score": 0.9927023002372972,
+     "early": false,
+     "compute_seconds": 0.1654818330000012,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 33,
+     "end_frame": 60,
+     "commit_frame": 43,
+     "start_seconds": 1.6666666666666667,
+     "end_seconds": 3.0,
+     "commit_seconds": 2.1666666666666665,
+     "score": 0.963282698115741,
+     "early": true,
+     "compute_seconds": 0.18418216699996037,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:MY_NAME_15",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 13,
+     "end_frame": 22,
+     "commit_frame": 29,
+     "start_seconds": 0.6666666666666666,
+     "end_seconds": 1.1,
+     "commit_seconds": 1.4666666666666666,
+     "score": 0.9916692966604291,
+     "early": false,
+     "compute_seconds": 0.20098254200001975,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 28,
+     "end_frame": 47,
+     "commit_frame": 38,
+     "start_seconds": 1.4,
+     "end_seconds": 2.3666666666666667,
+     "commit_seconds": 1.9,
+     "score": 0.9746219461309436,
+     "early": true,
+     "compute_seconds": 0.15533058300002267,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:MY_NAME_1",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 16,
+     "end_frame": 29,
+     "commit_frame": 36,
+     "start_seconds": 0.8,
+     "end_seconds": 1.4666666666666666,
+     "commit_seconds": 1.8,
+     "score": 0.989283959209326,
+     "early": false,
+     "compute_seconds": 0.15044612499997356,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 36,
+     "end_frame": 57,
+     "commit_frame": 46,
+     "start_seconds": 1.8,
+     "end_seconds": 2.8666666666666667,
+     "commit_seconds": 2.3,
+     "score": 0.9555983649264794,
+     "early": true,
+     "compute_seconds": 0.16654208299996753,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:PLEASE_HELP_ME_1",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "MY",
+    "HELP",
+    "SCHOOL",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 7,
+     "end_frame": 25,
+     "commit_frame": 30,
+     "start_seconds": 0.36666666666666664,
+     "end_seconds": 1.2666666666666666,
+     "commit_seconds": 1.5,
+     "score": 0.9272185778474549,
+     "early": true,
+     "compute_seconds": 0.12467545899994548,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "MY",
+     "start_frame": 26,
+     "end_frame": 38,
+     "commit_frame": 45,
+     "start_seconds": 1.3,
+     "end_seconds": 1.9,
+     "commit_seconds": 2.2666666666666666,
+     "score": 0.9934797273109315,
+     "early": false,
+     "compute_seconds": 0.12519583300002068,
+     "eof": false
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 43,
+     "end_frame": 55,
+     "commit_frame": 65,
+     "start_seconds": 2.1666666666666665,
+     "end_seconds": 2.7666666666666666,
+     "commit_seconds": 3.2666666666666666,
+     "score": 0.7417405298497924,
+     "early": false,
+     "compute_seconds": 0.22074737499997354,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 56,
+     "end_frame": 70,
+     "commit_frame": 70,
+     "start_seconds": 2.8,
+     "end_seconds": 3.5,
+     "commit_seconds": 3.5,
+     "score": 0.912099288685283,
+     "early": true,
+     "compute_seconds": 0.24032858300000726,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 73,
+     "end_frame": 87,
+     "commit_frame": 95,
+     "start_seconds": 3.6666666666666665,
+     "end_seconds": 4.366666666666666,
+     "commit_seconds": 4.766666666666667,
+     "score": 0.9975573689787903,
+     "early": false,
+     "compute_seconds": 0.10450091600000633,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 2,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:PLEASE_HELP_ME_2",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 19,
+     "end_frame": 36,
+     "commit_frame": 33,
+     "start_seconds": 0.9666666666666667,
+     "end_seconds": 1.8,
+     "commit_seconds": 1.6666666666666667,
+     "score": 0.9383267029003851,
+     "early": true,
+     "compute_seconds": 0.16772750000001224,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 65,
+     "end_frame": 80,
+     "commit_frame": 86,
+     "start_seconds": 3.2666666666666666,
+     "end_seconds": 4.0,
+     "commit_seconds": 4.3,
+     "score": 0.9892036218975422,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:PLEASE_HELP_ME_16",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "MY",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 18,
+     "end_frame": 40,
+     "commit_frame": 35,
+     "start_seconds": 0.9,
+     "end_seconds": 1.3,
+     "commit_seconds": 1.7666666666666666,
+     "score": 0.9603130820544746,
+     "early": false,
+     "compute_seconds": 0.21655462499995792,
+     "eof": false
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 45,
+     "end_frame": 81,
+     "commit_frame": 66,
+     "start_seconds": 2.2666666666666666,
+     "end_seconds": 4.066666666666666,
+     "commit_seconds": 3.3,
+     "score": 0.9183756564861917,
+     "early": true,
+     "compute_seconds": 0.2298774999999864,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 84,
+     "end_frame": 98,
+     "commit_frame": 104,
+     "start_seconds": 4.2,
+     "end_seconds": 4.9,
+     "commit_seconds": 5.2,
+     "score": 0.9954788264421631,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 1,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:PLEASE_HELP_ME_17",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 16,
+     "end_frame": 38,
+     "commit_frame": 38,
+     "start_seconds": 0.8,
+     "end_seconds": 1.9,
+     "commit_seconds": 1.9,
+     "score": 0.9250973212943399,
+     "early": true,
+     "compute_seconds": 0.19669704099999308,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 44,
+     "end_frame": 73,
+     "commit_frame": 57,
+     "start_seconds": 2.2,
+     "end_seconds": 2.466666666666667,
+     "commit_seconds": 2.8666666666666667,
+     "score": 0.9407776802128497,
+     "early": true,
+     "compute_seconds": 0.13318987500002777,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 81,
+     "end_frame": 91,
+     "commit_frame": 96,
+     "start_seconds": 4.066666666666666,
+     "end_seconds": 4.566666666666666,
+     "commit_seconds": 4.8,
+     "score": 0.996087438156081,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:THANKYOU_FRIEND_5",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 8,
+     "end_frame": 20,
+     "commit_frame": 26,
+     "start_seconds": 0.4,
+     "end_seconds": 1.0,
+     "commit_seconds": 1.3,
+     "score": 0.9213798789307166,
+     "early": true,
+     "compute_seconds": 0.20621791700000358,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 27,
+     "end_frame": 52,
+     "commit_frame": 37,
+     "start_seconds": 1.3666666666666667,
+     "end_seconds": 2.6,
+     "commit_seconds": 1.8666666666666667,
+     "score": 0.9467196290617105,
+     "early": true,
+     "compute_seconds": 0.13376449999998385,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:THANKYOU_FRIEND_6",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "EAT",
+    "GOOD",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "EAT",
+     "start_frame": 20,
+     "end_frame": 24,
+     "commit_frame": 33,
+     "start_seconds": 1.0,
+     "end_seconds": 1.2,
+     "commit_seconds": 1.6666666666666667,
+     "score": 0.7993660306537834,
+     "early": false,
+     "compute_seconds": 0.2249682499999608,
+     "eof": false
+    },
+    {
+     "gloss": "GOOD",
+     "start_frame": 29,
+     "end_frame": 39,
+     "commit_frame": 46,
+     "start_seconds": 1.4666666666666666,
+     "end_seconds": 1.9666666666666666,
+     "commit_seconds": 2.3,
+     "score": 0.6914451260431126,
+     "early": false,
+     "compute_seconds": 0.15213429099998166,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 44,
+     "end_frame": 79,
+     "commit_frame": 65,
+     "start_seconds": 2.2,
+     "end_seconds": 3.966666666666667,
+     "commit_seconds": 3.2666666666666666,
+     "score": 0.8526716805539308,
+     "early": false,
+     "compute_seconds": 0.2750044160000016,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 1,
+    "deletions": 0,
+    "insertions": 1,
+    "correct": 1,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:THANKYOU_FRIEND_2",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 11,
+     "end_frame": 25,
+     "commit_frame": 34,
+     "start_seconds": 0.5666666666666667,
+     "end_seconds": 1.2666666666666666,
+     "commit_seconds": 1.7,
+     "score": 0.8556620895635507,
+     "early": false,
+     "compute_seconds": 0.20031237500000998,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 33,
+     "end_frame": 64,
+     "commit_frame": 52,
+     "start_seconds": 1.6666666666666667,
+     "end_seconds": 3.2,
+     "commit_seconds": 2.6,
+     "score": 0.8873721219524858,
+     "early": false,
+     "compute_seconds": 0.21673170799999752,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:d6253547",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 4,
+     "end_frame": 8,
+     "commit_frame": 14,
+     "start_seconds": 0.2,
+     "end_seconds": 0.4,
+     "commit_seconds": 0.7,
+     "score": 0.9957738792047207,
+     "early": true,
+     "compute_seconds": 0.09765183299998625,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 12,
+     "end_frame": 14,
+     "commit_frame": 18,
+     "start_seconds": 0.6,
+     "end_seconds": 0.7,
+     "commit_seconds": 0.9,
+     "score": 0.9843379430267896,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 16,
+     "end_frame": 18,
+     "commit_frame": 18,
+     "start_seconds": 0.8,
+     "end_seconds": 0.9,
+     "commit_seconds": 0.9,
+     "score": 0.9867929123540821,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:748544af",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 5,
+     "end_frame": 8,
+     "commit_frame": 15,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.4,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9910448273145961,
+     "early": false,
+     "compute_seconds": 0.12230512499996848,
+     "eof": false
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 11,
+     "end_frame": 13,
+     "commit_frame": 19,
+     "start_seconds": 0.5666666666666667,
+     "end_seconds": 0.6666666666666666,
+     "commit_seconds": 0.9666666666666667,
+     "score": 0.9984406981261201,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 15,
+     "end_frame": 19,
+     "commit_frame": 19,
+     "start_seconds": 0.7666666666666667,
+     "end_seconds": 0.9666666666666667,
+     "commit_seconds": 0.9666666666666667,
+     "score": 0.9883337897776878,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:MY_NAME:2ccc5e0e",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 4,
+     "end_frame": 6,
+     "commit_frame": 11,
+     "start_seconds": 0.2,
+     "end_seconds": 0.3,
+     "commit_seconds": 0.5666666666666667,
+     "score": 0.9179490628888124,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 8,
+     "end_frame": 11,
+     "commit_frame": 11,
+     "start_seconds": 0.4,
+     "end_seconds": 0.5666666666666667,
+     "commit_seconds": 0.5666666666666667,
+     "score": 0.9610111953270194,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:c1735057",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 5,
+     "end_frame": 11,
+     "commit_frame": 15,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.5666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.8923478596005722,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 13,
+     "end_frame": 15,
+     "commit_frame": 15,
+     "start_seconds": 0.6666666666666666,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9724734559715001,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:b473e809",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "HELP",
+     "start_frame": 4,
+     "end_frame": 12,
+     "commit_frame": 16,
+     "start_seconds": 0.2,
+     "end_seconds": 0.6,
+     "commit_seconds": 0.8,
+     "score": 0.9388666987722284,
+     "early": true,
+     "compute_seconds": 0.13272870800000192,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 13,
+     "end_frame": 17,
+     "commit_frame": 17,
+     "start_seconds": 0.6666666666666666,
+     "end_seconds": 0.8666666666666667,
+     "commit_seconds": 0.8666666666666667,
+     "score": 0.9969769576548708,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:75f694e0",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "HELP"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 15,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.8207346679715578,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 9,
+     "end_frame": 15,
+     "commit_frame": 15,
+     "start_seconds": 0.4666666666666667,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.8676467433955184,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:3d1346bd",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 5,
+     "end_frame": 7,
+     "commit_frame": 14,
+     "start_seconds": 0.26666666666666666,
+     "end_seconds": 0.36666666666666664,
+     "commit_seconds": 0.7,
+     "score": 0.8840027137837289,
+     "early": false,
+     "compute_seconds": 0.04948912500003644,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 9,
+     "end_frame": 15,
+     "commit_frame": 15,
+     "start_seconds": 0.4666666666666667,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 0.7666666666666667,
+     "score": 0.9885341440103212,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:5aa45d71",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 4,
+     "end_frame": 6,
+     "commit_frame": 13,
+     "start_seconds": 0.2,
+     "end_seconds": 0.3,
+     "commit_seconds": 0.6666666666666666,
+     "score": 0.97080034152642,
+     "early": false,
+     "compute_seconds": 0.0716385840000271,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 9,
+     "end_frame": 14,
+     "commit_frame": 14,
+     "start_seconds": 0.4666666666666667,
+     "end_seconds": 0.7,
+     "commit_seconds": 0.7,
+     "score": 0.9902581610666307,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:d1d851a2",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 6,
+     "end_frame": 10,
+     "commit_frame": 16,
+     "start_seconds": 0.3,
+     "end_seconds": 0.5,
+     "commit_seconds": 0.8,
+     "score": 0.9137418672460883,
+     "early": true,
+     "compute_seconds": 0.19163133299997526,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 11,
+     "end_frame": 17,
+     "commit_frame": 21,
+     "start_seconds": 0.5666666666666667,
+     "end_seconds": 0.8666666666666667,
+     "commit_seconds": 1.0666666666666667,
+     "score": 0.9898523981707519,
+     "early": true,
+     "compute_seconds": 0.11301183400001946,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 19,
+     "end_frame": 21,
+     "commit_frame": 22,
+     "start_seconds": 0.9666666666666667,
+     "end_seconds": 1.0666666666666667,
+     "commit_seconds": 1.1,
+     "score": 0.9916080190831928,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:62383084",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 6,
+     "end_frame": 9,
+     "commit_frame": 16,
+     "start_seconds": 0.3,
+     "end_seconds": 0.4666666666666667,
+     "commit_seconds": 0.8,
+     "score": 0.9799342484279328,
+     "early": false,
+     "compute_seconds": 0.1052463749999788,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 12,
+     "end_frame": 15,
+     "commit_frame": 21,
+     "start_seconds": 0.6,
+     "end_seconds": 0.7666666666666667,
+     "commit_seconds": 1.0666666666666667,
+     "score": 0.996097669562091,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 18,
+     "end_frame": 21,
+     "commit_frame": 21,
+     "start_seconds": 0.9,
+     "end_seconds": 1.0666666666666667,
+     "commit_seconds": 1.0666666666666667,
+     "score": 0.8534853200243517,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:GOOD_MORNING:a0c4d962",
+   "subset": "local_tune",
+   "reference": [
+    "GOOD",
+    "MORNING"
+   ],
+   "hypothesis": [
+    "GOOD",
+    "MORNING"
+   ],
+   "words": [
+    {
+     "gloss": "GOOD",
+     "start_frame": 22,
+     "end_frame": 39,
+     "commit_frame": 37,
+     "start_seconds": 1.1,
+     "end_seconds": 1.5,
+     "commit_seconds": 1.8666666666666667,
+     "score": 0.9654656306668186,
+     "early": false,
+     "compute_seconds": 0.1247546669999906,
+     "eof": false
+    },
+    {
+     "gloss": "MORNING",
+     "start_frame": 48,
+     "end_frame": 78,
+     "commit_frame": 62,
+     "start_seconds": 2.4,
+     "end_seconds": 3.2666666666666666,
+     "commit_seconds": 3.1,
+     "score": 0.9355554944851482,
+     "early": true,
+     "compute_seconds": 0.20753500000000713,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:GOOD_MORNING:aef75995",
+   "subset": "local_tune",
+   "reference": [
+    "GOOD",
+    "MORNING"
+   ],
+   "hypothesis": [
+    "GOOD",
+    "MORNING"
+   ],
+   "words": [
+    {
+     "gloss": "GOOD",
+     "start_frame": 25,
+     "end_frame": 36,
+     "commit_frame": 43,
+     "start_seconds": 1.2666666666666666,
+     "end_seconds": 1.8,
+     "commit_seconds": 2.1666666666666665,
+     "score": 0.9783310946391606,
+     "early": false,
+     "compute_seconds": 0.12194691700000249,
+     "eof": false
+    },
+    {
+     "gloss": "MORNING",
+     "start_frame": 44,
+     "end_frame": 67,
+     "commit_frame": 54,
+     "start_seconds": 2.2,
+     "end_seconds": 3.3666666666666667,
+     "commit_seconds": 2.7,
+     "score": 0.971124524097548,
+     "early": true,
+     "compute_seconds": 0.14762445799999568,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:833e2480",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 7,
+     "end_frame": 16,
+     "commit_frame": 23,
+     "start_seconds": 0.36666666666666664,
+     "end_seconds": 0.8,
+     "commit_seconds": 1.1666666666666667,
+     "score": 0.7932660075102248,
+     "early": false,
+     "compute_seconds": 0.1287281659999735,
+     "eof": false
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 38,
+     "end_frame": 70,
+     "commit_frame": 54,
+     "start_seconds": 1.9,
+     "end_seconds": 3.5,
+     "commit_seconds": 2.7,
+     "score": 0.931721508944868,
+     "early": true,
+     "compute_seconds": 0.17917254099995716,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 75,
+     "end_frame": 101,
+     "commit_frame": 97,
+     "start_seconds": 3.7666666666666666,
+     "end_seconds": 4.5,
+     "commit_seconds": 4.866666666666666,
+     "score": 0.988571962950476,
+     "early": false,
+     "compute_seconds": 0.16700975000003382,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 2,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:a0f35cb3",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 15,
+     "end_frame": 26,
+     "commit_frame": 28,
+     "start_seconds": 0.7666666666666667,
+     "end_seconds": 1.3,
+     "commit_seconds": 1.4,
+     "score": 0.9116557573944772,
+     "early": false,
+     "compute_seconds": 0.12082008300001235,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 42,
+     "end_frame": 67,
+     "commit_frame": 52,
+     "start_seconds": 2.1,
+     "end_seconds": 3.3666666666666667,
+     "commit_seconds": 2.6,
+     "score": 0.9794084944941769,
+     "early": true,
+     "compute_seconds": 0.16473341699997945,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 71,
+     "end_frame": 94,
+     "commit_frame": 94,
+     "start_seconds": 3.566666666666667,
+     "end_seconds": 4.7,
+     "commit_seconds": 4.7,
+     "score": 0.956674733228966,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:MY_NAME:bab3adfa",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 14,
+     "end_frame": 20,
+     "commit_frame": 27,
+     "start_seconds": 0.7,
+     "end_seconds": 1.0,
+     "commit_seconds": 1.3666666666666667,
+     "score": 0.9812398760445896,
+     "early": false,
+     "compute_seconds": 0.1100391249999575,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 22,
+     "end_frame": 50,
+     "commit_frame": 32,
+     "start_seconds": 1.1,
+     "end_seconds": 2.5,
+     "commit_seconds": 1.6,
+     "score": 0.9583096510136834,
+     "early": true,
+     "compute_seconds": 0.2570100000000366,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:294773d1",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 12,
+     "end_frame": 16,
+     "commit_frame": 23,
+     "start_seconds": 0.6,
+     "end_seconds": 0.8,
+     "commit_seconds": 1.1666666666666667,
+     "score": 0.9893989579460595,
+     "early": false,
+     "compute_seconds": 0.09401949999994486,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 20,
+     "end_frame": 45,
+     "commit_frame": 30,
+     "start_seconds": 1.0,
+     "end_seconds": 2.2666666666666666,
+     "commit_seconds": 1.5,
+     "score": 0.9621771405287239,
+     "early": true,
+     "compute_seconds": 0.19578837500000645,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:bf26e942",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 11,
+     "end_frame": 25,
+     "commit_frame": 28,
+     "start_seconds": 0.5666666666666667,
+     "end_seconds": 1.2666666666666666,
+     "commit_seconds": 1.4,
+     "score": 0.9862474332203901,
+     "early": true,
+     "compute_seconds": 0.1244362079999064,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 29,
+     "end_frame": 40,
+     "commit_frame": 39,
+     "start_seconds": 1.4666666666666666,
+     "end_seconds": 2.0,
+     "commit_seconds": 1.9666666666666666,
+     "score": 0.9616635337306843,
+     "early": true,
+     "compute_seconds": 0.1484090000000151,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 45,
+     "end_frame": 60,
+     "commit_frame": 64,
+     "start_seconds": 2.2666666666666666,
+     "end_seconds": 3.0,
+     "commit_seconds": 3.2,
+     "score": 0.9794097458995027,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:41b5e8c9",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "PLEASE",
+     "start_frame": 14,
+     "end_frame": 32,
+     "commit_frame": 26,
+     "start_seconds": 0.7,
+     "end_seconds": 1.6,
+     "commit_seconds": 1.3,
+     "score": 0.9137027562941161,
+     "early": true,
+     "compute_seconds": 0.08806141699994896,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 38,
+     "end_frame": 52,
+     "commit_frame": 48,
+     "start_seconds": 1.9,
+     "end_seconds": 2.6,
+     "commit_seconds": 2.4,
+     "score": 0.9766193870370046,
+     "early": true,
+     "compute_seconds": 0.22149941599991507,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 60,
+     "end_frame": 70,
+     "commit_frame": 77,
+     "start_seconds": 3.0,
+     "end_seconds": 3.5,
+     "commit_seconds": 3.8666666666666667,
+     "score": 0.9930678263908979,
+     "early": false,
+     "compute_seconds": 0.18045104100008302,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:2e2e334d",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 22,
+     "end_frame": 28,
+     "commit_frame": 32,
+     "start_seconds": 1.1,
+     "end_seconds": 1.4,
+     "commit_seconds": 1.6,
+     "score": 0.9871293302840717,
+     "early": true,
+     "compute_seconds": 0.1388581249999561,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 31,
+     "end_frame": 59,
+     "commit_frame": 46,
+     "start_seconds": 1.5666666666666667,
+     "end_seconds": 2.966666666666667,
+     "commit_seconds": 2.3,
+     "score": 0.8139967466892284,
+     "early": false,
+     "compute_seconds": 0.11839070799999263,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:4a83aaf0",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "THANKYOU",
+     "start_frame": 11,
+     "end_frame": 25,
+     "commit_frame": 25,
+     "start_seconds": 0.5666666666666667,
+     "end_seconds": 1.2666666666666666,
+     "commit_seconds": 1.2666666666666666,
+     "score": 0.9182634592756719,
+     "early": true,
+     "compute_seconds": 0.15662170899997818,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 31,
+     "end_frame": 81,
+     "commit_frame": 41,
+     "start_seconds": 1.5666666666666667,
+     "end_seconds": 4.066666666666666,
+     "commit_seconds": 2.066666666666667,
+     "score": 0.9455438064863625,
+     "early": true,
+     "compute_seconds": 0.12599729199996546,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:58f34251",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 20,
+     "end_frame": 29,
+     "commit_frame": 30,
+     "start_seconds": 1.0,
+     "end_seconds": 1.1,
+     "commit_seconds": 1.5,
+     "score": 0.9859345121757684,
+     "early": false,
+     "compute_seconds": 0.10481187499999578,
+     "eof": false
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 35,
+     "end_frame": 42,
+     "commit_frame": 49,
+     "start_seconds": 1.7666666666666666,
+     "end_seconds": 2.1,
+     "commit_seconds": 2.466666666666667,
+     "score": 0.8933084155337528,
+     "early": false,
+     "compute_seconds": 0.08006020800007718,
+     "eof": false
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 47,
+     "end_frame": 58,
+     "commit_frame": 65,
+     "start_seconds": 2.3666666666666667,
+     "end_seconds": 2.9,
+     "commit_seconds": 3.2666666666666666,
+     "score": 0.9921293708069421,
+     "early": false,
+     "compute_seconds": 0.11012787499998922,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:TOMORROW_SCHOOL_GO:e38ab6ff",
+   "subset": "local_tune",
+   "reference": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "hypothesis": [
+    "TOMORROW",
+    "SCHOOL",
+    "GO"
+   ],
+   "words": [
+    {
+     "gloss": "TOMORROW",
+     "start_frame": 22,
+     "end_frame": 30,
+     "commit_frame": 32,
+     "start_seconds": 1.1,
+     "end_seconds": 1.5,
+     "commit_seconds": 1.6,
+     "score": 0.9888511100826215,
+     "early": true,
+     "compute_seconds": 0.13038716599999134,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "SCHOOL",
+     "start_frame": 34,
+     "end_frame": 42,
+     "commit_frame": 44,
+     "start_seconds": 1.7,
+     "end_seconds": 2.1,
+     "commit_seconds": 2.2,
+     "score": 0.9740925825563924,
+     "early": true,
+     "compute_seconds": 0.14464199999997618,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "GO",
+     "start_frame": 46,
+     "end_frame": 66,
+     "commit_frame": 73,
+     "start_seconds": 2.3,
+     "end_seconds": 3.3,
+     "commit_seconds": 3.6666666666666665,
+     "score": 0.9939407219238025,
+     "early": false,
+     "compute_seconds": 0.09556108300000687,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:HELLO_HOW_YOU_16",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 10,
+     "end_frame": 34,
+     "commit_frame": 26,
+     "start_seconds": 0.5,
+     "end_seconds": 1.7,
+     "commit_seconds": 1.3,
+     "score": 0.9757798075573472,
+     "early": true,
+     "compute_seconds": 0.13018945799990433,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 45,
+     "end_frame": 65,
+     "commit_frame": 55,
+     "start_seconds": 2.2666666666666666,
+     "end_seconds": 3.2666666666666666,
+     "commit_seconds": 2.7666666666666666,
+     "score": 0.9712811478477207,
+     "early": true,
+     "compute_seconds": 0.14803795800003172,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 70,
+     "end_frame": 81,
+     "commit_frame": 88,
+     "start_seconds": 3.5,
+     "end_seconds": 4.066666666666666,
+     "commit_seconds": 4.4,
+     "score": 0.986346197151769,
+     "early": false,
+     "compute_seconds": 0.16120533299999806,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:HELLO_HOW_YOU:HELLO_HOW_YOU_18",
+   "subset": "local_tune",
+   "reference": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "hypothesis": [
+    "HELLO",
+    "HOW",
+    "YOU"
+   ],
+   "words": [
+    {
+     "gloss": "HELLO",
+     "start_frame": 7,
+     "end_frame": 31,
+     "commit_frame": 21,
+     "start_seconds": 0.36666666666666664,
+     "end_seconds": 1.5666666666666667,
+     "commit_seconds": 1.0666666666666667,
+     "score": 0.9325840291488549,
+     "early": true,
+     "compute_seconds": 0.15786162500000955,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "HOW",
+     "start_frame": 36,
+     "end_frame": 57,
+     "commit_frame": 46,
+     "start_seconds": 1.8,
+     "end_seconds": 2.8666666666666667,
+     "commit_seconds": 2.3,
+     "score": 0.9895008896378832,
+     "early": true,
+     "compute_seconds": 0.12181874999998854,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "YOU",
+     "start_frame": 63,
+     "end_frame": 74,
+     "commit_frame": 80,
+     "start_seconds": 3.1666666666666665,
+     "end_seconds": 3.7,
+     "commit_seconds": 4.0,
+     "score": 0.9595430586824182,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 3,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:MY_NAME:MY_NAME_12",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 18,
+     "end_frame": 28,
+     "commit_frame": 35,
+     "start_seconds": 0.9,
+     "end_seconds": 1.4,
+     "commit_seconds": 1.7666666666666666,
+     "score": 0.987530012021008,
+     "early": false,
+     "compute_seconds": 0.14580354100007753,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 33,
+     "end_frame": 49,
+     "commit_frame": 43,
+     "start_seconds": 1.6666666666666667,
+     "end_seconds": 2.466666666666667,
+     "commit_seconds": 2.1666666666666665,
+     "score": 0.9710905846256433,
+     "early": true,
+     "compute_seconds": 0.11176383299994086,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:MY_NAME:MY_NAME_3",
+   "subset": "local_tune",
+   "reference": [
+    "MY",
+    "NAME"
+   ],
+   "hypothesis": [
+    "MY",
+    "NAME"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 11,
+     "end_frame": 27,
+     "commit_frame": 34,
+     "start_seconds": 0.5666666666666667,
+     "end_seconds": 1.3666666666666667,
+     "commit_seconds": 1.7,
+     "score": 0.9933158106668297,
+     "early": false,
+     "compute_seconds": 0.14769429199998285,
+     "eof": false
+    },
+    {
+     "gloss": "NAME",
+     "start_frame": 32,
+     "end_frame": 56,
+     "commit_frame": 42,
+     "start_seconds": 1.6,
+     "end_seconds": 2.8,
+     "commit_seconds": 2.1,
+     "score": 0.9692690058551164,
+     "early": true,
+     "compute_seconds": 0.1243586249998998,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:PLEASE_HELP_ME_10",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "MY",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 33,
+     "end_frame": 39,
+     "commit_frame": 46,
+     "start_seconds": 1.6666666666666667,
+     "end_seconds": 1.9666666666666666,
+     "commit_seconds": 2.3,
+     "score": 0.9945968808311484,
+     "early": false,
+     "compute_seconds": 0.13847595799995815,
+     "eof": false
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 44,
+     "end_frame": 72,
+     "commit_frame": 60,
+     "start_seconds": 2.2,
+     "end_seconds": 3.6,
+     "commit_seconds": 3.0,
+     "score": 0.9311750689124562,
+     "early": true,
+     "compute_seconds": 0.14588970800002699,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 76,
+     "end_frame": 96,
+     "commit_frame": 96,
+     "start_seconds": 3.8,
+     "end_seconds": 4.8,
+     "commit_seconds": 4.8,
+     "score": 0.9929086586868145,
+     "early": false,
+     "compute_seconds": 0.0,
+     "eof": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 1,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:PLEASE_HELP_ME:PLEASE_HELP_ME_12",
+   "subset": "local_tune",
+   "reference": [
+    "PLEASE",
+    "HELP",
+    "I"
+   ],
+   "hypothesis": [
+    "MY",
+    "HELP",
+    "I"
+   ],
+   "words": [
+    {
+     "gloss": "MY",
+     "start_frame": 20,
+     "end_frame": 41,
+     "commit_frame": 48,
+     "start_seconds": 1.0,
+     "end_seconds": 2.066666666666667,
+     "commit_seconds": 2.4,
+     "score": 0.9880290018434975,
+     "early": false,
+     "compute_seconds": 0.306693457999927,
+     "eof": false
+    },
+    {
+     "gloss": "HELP",
+     "start_frame": 45,
+     "end_frame": 74,
+     "commit_frame": 58,
+     "start_seconds": 2.2666666666666666,
+     "end_seconds": 3.566666666666667,
+     "commit_seconds": 2.9,
+     "score": 0.9007837943970395,
+     "early": true,
+     "compute_seconds": 0.13244154199992408,
+     "eof": false,
+     "closed": true
+    },
+    {
+     "gloss": "I",
+     "start_frame": 77,
+     "end_frame": 91,
+     "commit_frame": 98,
+     "start_seconds": 3.8666666666666667,
+     "end_seconds": 4.566666666666666,
+     "commit_seconds": 4.9,
+     "score": 0.9945156861188307,
+     "early": false,
+     "compute_seconds": 0.06092166599989923,
+     "eof": false
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 1,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 2,
+    "references": 3
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:THANKYOU_FRIEND_3",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "GOOD",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "GOOD",
+     "start_frame": 13,
+     "end_frame": 27,
+     "commit_frame": 34,
+     "start_seconds": 0.6666666666666666,
+     "end_seconds": 1.3666666666666667,
+     "commit_seconds": 1.7,
+     "score": 0.7700492468026383,
+     "early": false,
+     "compute_seconds": 0.16637254199997642,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 34,
+     "end_frame": 59,
+     "commit_frame": 46,
+     "start_seconds": 1.7,
+     "end_seconds": 2.1666666666666665,
+     "commit_seconds": 2.3,
+     "score": 0.9242006345198849,
+     "early": true,
+     "compute_seconds": 0.13788504199999352,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 0,
+   "metrics": {
+    "substitutions": 1,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 1,
+    "references": 2
+   }
+  },
+  {
+   "id": "local:THANKYOU_FRIEND:THANKYOU_FRIEND_4",
+   "subset": "local_tune",
+   "reference": [
+    "THANKYOU",
+    "FRIEND"
+   ],
+   "hypothesis": [
+    "GOOD",
+    "FRIEND"
+   ],
+   "words": [
+    {
+     "gloss": "GOOD",
+     "start_frame": 13,
+     "end_frame": 29,
+     "commit_frame": 36,
+     "start_seconds": 0.6666666666666666,
+     "end_seconds": 1.4666666666666666,
+     "commit_seconds": 1.8,
+     "score": 0.7594097834070845,
+     "early": false,
+     "compute_seconds": 0.20887470799993935,
+     "eof": false
+    },
+    {
+     "gloss": "FRIEND",
+     "start_frame": 36,
+     "end_frame": 58,
+     "commit_frame": 46,
+     "start_seconds": 1.8,
+     "end_seconds": 2.9,
+     "commit_seconds": 2.3,
+     "score": 0.9400203389197653,
+     "early": true,
+     "compute_seconds": 0.11075520899998992,
+     "eof": false,
+     "closed": true
+    }
+   ],
+   "letters_dropped": 1,
+   "metrics": {
+    "substitutions": 1,
+    "deletions": 0,
+    "insertions": 0,
+    "correct": 1,
+    "references": 2
+   }
+  }
+ ]
+}
