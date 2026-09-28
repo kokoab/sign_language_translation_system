@@ -7,6 +7,75 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-29 — user-selected logo applied to Figma branding and screens
+
+User rejected the generated concepts, then selected Desktop/ATLAS artwork.
+Initially applied `Vector Smart Object.jpg`, then superseded it with the user's
+`/Users/frnzlo/Desktop/ATLAS/logo transparent.png` (668x686 RGBA, alpha 0–255).
+Uploaded the original PNG without editing; image hash
+`864b803b6b8e59be4b7e074fccaed4386044c7e5` fills shared component `4:5` with FIT.
+Old vector child `4:6` is hidden. Brand lockup/app-icon and Splash/Home instances
+inherit the selected artwork; rejected concept boards are labeled not selected.
+Updated notes to identify raster artwork accurately; restored pale Splash background
+with transparency. The app-icon tile remains white. JPEG brand/screens were visually
+checked before the PNG replacement; PNG transparency and Splash/Home hashes verified.
+Figma file: https://www.figma.com/design/Fg692rO8j8IjzW0FPQ2HdU?node-id=7-14
+No app code, models, or source artwork changed. Next: review the selected logo in
+Figma; wordmark font remains provisional. Runtime ground truth unchanged.
+
+## 2026-09-29 — ATLAS logo revision studies created in Figma
+
+User rejected the earlier swoosh/person symbol and supplied a two-hand, minimal,
+geometric brief. Initial Figma retry hit the Starter limit; after the user upgraded,
+access succeeded. Created three custom two-contour SVG studies (Exchange, Lift,
+Counterform) directly on the existing Brand page, with full-color, monochrome,
+reversed, and 16/24/32/48px comparisons. Study board: node `12:14`.
+Recommended Counterform for its compact opposing-hand geometry; added an editable
+two-path master, provisional Inter wordmark lockup, and three app-icon applications
+on node `13:14` (master `13:17`, paths `13:18` and `13:19`).
+https://www.figma.com/design/Fg692rO8j8IjzW0FPQ2HdU?node-id=13-14
+
+Both boards were screenshot-inspected. A screenshot request initially used an
+incorrect node ID and was corrected to the returned `13:14`; final render passed
+visual inspection. These are abstract gestures, not a claimed ASL sign; recognition
+by sign-language users is untested. Existing screen branding has not been replaced
+while the new directions are reviewed. App/runtime state and ground truth unchanged.
+Local construction assets: `artifacts/design/atlas_logo_v2_20260929/`; temporary
+screenshots and construction script: `/tmp/atlas-figma/`. Repository changes are
+these design assets and this log only. Next safe action: user reviews the recommended
+mark and alternatives in Figma; refine the chosen direction before propagating it.
+
+## 2026-09-29 — ATLAS Figma rebranding concept created (design only)
+
+User approved all ten reference screens plus branding in a new Figma file, custom
+editable vector logo, Inter interface typography, provisional ATLAS wordmark, and
+existing app imagery mixed with camera placeholders. File:
+https://www.figma.com/design/Fg692rO8j8IjzW0FPQ2HdU
+
+Reviewed the current Flutter shell under
+`/Volumes/secret/SLT/mobile_app/slt_mobile_app/lib/shell/` and native
+`ios/Runner/LiveReel/LiveReelViewController.swift`. Retained four Home actions,
+5/10/20-sign practice sets, 100-sign vocabulary, landscape camera views, and Finish.
+The IDE pasted-text attachment path was unavailable; the visible rebranding board
+and current app source supplied the design context.
+
+Created Brand, Mobile Screens, and Components pages; seven portrait frames
+(390x844), three landscape frames (844x390), a custom SVG-derived vector symbol,
+app icon, 15 reusable component masters, 41 variables in two collections, eight
+Inter text styles, and a shadow style. Uploaded ten existing gloss JPGs from app
+assets. Session data, confidence values, and camera illustrations are mock content.
+Brand and screen screenshots were inspected; fixed component shrinkage, logo
+instance scaling, and clipped gloss labels. Portrait and camera creation calls
+confirmed Inter as their only text font family. No app code, models, or data changed.
+
+Figma Starter MCP call limit rejected the final navigation/audit call before it
+executed; no clickable prototype connections were created. The ten requested
+editable designs exist. Local state and review screenshots: `/tmp/atlas-figma/`
+(temporary, not canonical). Only this repository log changed for this task;
+PROJECT_GROUND_TRUTH.md stays unchanged because runtime state is unchanged.
+Next safe action: user reviews the Figma designs and replaces the provisional
+wordmark font; prototype navigation can be added after Figma access resets.
+
 ## 2026-09-07 07:16 PST — all v8 frames checked; remaining source orientation noise isolated
 
 V8render84702 completed. Inspected all44YOU/43NEED frames; false face-directed lifts
