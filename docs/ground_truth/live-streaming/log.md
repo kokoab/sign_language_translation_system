@@ -1,5 +1,132 @@
 # live-streaming — log
 
+## 2026-09-30 — phone log review: HELLO GOOD MORNING HOW YOU
+
+Copied phone sessions 20260930_104414 and 20260930_133420 (angelo, Stage 3
+stage3_multisentence_tiny_v17_20260929) to a scratch folder; read-only. Twelve user attempts
+(split at ↺/two-hand finish): 5/12 exact HELLO GOOD MORNING HOW YOU; HELLO committed 12/12.
+GOOD is the weak link: dropped 2x (previews STOP/SCHOOL or nothing), read as WAIT 2x, and
+committed out of place once; when committed it is often low (0.59–0.71) and 0.1–0.5 s before
+MORNING (coarticulated compound). One YOU->WHO (0.88 preview). One attempt reset before
+HOW/YOU committed. Every correct word string rendered "Hello, good morning, how are you?".
+No video_start events and no live_reel_videos folder: phone still runs the pre-recording
+build. Development observation only; no WER claim, no model/threshold change.
+
+## 2026-09-30 — iPhone spell mode: FINGERSPELL toggles letters; word mode keeps a hidden letter sink
+
+Installed on angelo (release build). Default Live mode is now words; the ASL sign FINGERSPELL switches
+spelling on (letter decoder only) and FINGERSPELL again switches it off; 3 s with no hands also ends it.
+NAME (once its segment closes) opens words + letters for ~4 s, replaying the frames since NAME. The top-bar
+"Letters" button is now the manual override (on = words + letters always, the old behaviour; new key
+SLTLiveLettersAlwaysV17, default off); Practice keeps letters always. Status shows "Spelling…" /
+"Name? Letters on"; session events log spell_mode changes.
+
+Detector: active/v17/fingerspell_trigger_v17.py (features, JSON trees, streaming rules: 3-window mean,
+fire once, re-arm only after the score drops and 1.5 s passes); exported to
+artifacts/models/fingerspell_trigger_v17/model.json (238 trees; identical to sklearn). Swift port
+LiveFingerspellTrigger (LiveReelDecoder.swift) matches Python on 63 clips / 2,248 windows: prob diff
+1e-17, identical firings (harness `trigger` mode; artifacts/reports/fingerspell_trigger_ios_v17_20260930).
+Streaming Python: 7/8 held-out Citizen FINGERSPELL fire exactly once; 0 fires in 21.7 min user sessions.
+
+Switch hygiene found on stitched videos (data/local/spell_mode_test_v17: Citizen val sign + FINGERSPELL +
+ASLLRP fingerspelled word + FINGERSPELL + sign, NAME variants, controls): an early NAME re-read as a second
+NAME (now waits for closure); the FINGERSPELL tail after switching off read as words (output is suppressed
+while the trigger stays above threshold); leaving NAME mid-sign duplicated a word (leave only when the last
+word is closed; the decoder's 1 s same-word rule is carried across decoder restarts). Final stitched run:
+7/8 on/off pairs correct (the miss is the held-out clip the detector misses), NAME arm/disarm correct,
+no duplicates. ASLLRP natural-speed fingerspelled words (e.g. CAREER in 0.93 s) produce no letters at all;
+that is the letter model, not the switch.
+
+Held-out 72 videos / 186 refs (videos_test.json, FP16 encoder, .all), Swift harness:
+letters always (before)       WER 9.68%  P 94.1% R 94.6%  S/D/I 3/7/8
+trigger, words-only word mode  WER 12.37% P 91.7% R 94.6%  S/D/I 3/7/13
+trigger, letter-sink word mode WER 9.14%  P 94.6% R 94.6%  S/D/I 3/7/7   (shipped)
+Words-only turns between-sign movement into extra words (HELLO FATHER HOW YOU); keeping the letter classes
+in the word decoder and hiding letters absorbs it at no extra cost (one decoder). 0 FINGERSPELL triggers on
+the held-out set; NAME armed 8 times (7 MY_NAME, 1 false NAME in THANKYOU_FRIEND already present before).
+Tests: 3 Python (test/test_fingerspell_trigger_v17.py), 3 simulator RunnerTests incl. the new
+testFingerspellTriggerBundledAndQuiet. Not yet tried by the user on the phone.
+
+## 2026-09-30 — learned FINGERSPELL-sign detector: clean on negatives, citation form only
+
+artifacts/reports/fingerspell_detector_v17_20260930 (extract_raw.py, train_detector.py, score_video.py,
+report.json, model_boosted.pkl). Apple Vision raw [T,61,5] at 20 Hz (live contract) for 35 Citizen
+FINGERSPELL clips, 2 ASLLRP clips and 6 Citizen train clips per sign (600). 1 s windows, step 0.1 s,
+22 hand-geometry features (presence, finger extension, per-finger length velocity / reversals /
+asynchrony = wiggle, wrist travel and straightness, spread, finger direction, height and side vs
+shoulders, plus 4 other-hand features); clip score = max of 3-window mean. Trained on Citizen train
+FINGERSPELL (27) vs 600 train signs + 5,025 train letter spans. Threshold 0.981 = 99.5% of
+cross-validated train-sign scores.
+
+Boosted trees (sklearn HGB, 300 iters, 15 leaves), nothing below used for fitting or threshold:
+Citizen val FINGERSPELL 7/8; Citizen val signs 0/378 false; validation letter spans 0/1,271 false;
+user desktop sessions 0 triggers in 21.8 min. Logistic regression was much worse (0/10 recall at its
+matched threshold; 22 session triggers) and is rejected. Margins are thin: top val negatives HOT 0.978,
+TAKE 0.867; two held positives 0.985/0.988. Cross-validated train recall only 11/27.
+
+In-sentence ASLLRP FINGERSPELL is not detected (both utterances score 0.00 throughout; tracking was
+fine, 21/21 points on both hands). Natural FINGERSPELL lasts 0.3-0.45 s inside two-handed signing,
+versus ~1-2 s citation form in Citizen. So this detector is a deliberate command gesture, not a
+recogniser of casual FINGERSPELL. Not wired into any runtime. Next evidence needed: the user's own
+deliberate FINGERSPELL signs (10-20) plus ordinary signing, before a spell-mode integration.
+
+## 2026-09-30 — FINGERSPELL sign examples acquired by targeted download
+
+Nothing local. ASL Citizen: scripts/fetch_citizen_members_v17.py reads the official 45.9 GB zip by HTTP
+range requests (ZIP64 central directory ~10 MB, 83,406 entries) and extracts only chosen members;
+the official test split is refused. 35 FINGERSPELL/FINGERSPELLING clips (train 27, val 8; ~13 MB) in
+data/local/fingerspell_trigger_v17/citizen (manifest.json); visually checked (open 5 hand near the
+shoulder, fingers wiggling, sideways slide; palm forward or down). ASLLRP Sign Bank (dai.cs.rutgers.edu
+ss3front): 2 in-sentence FINGERSPELL clips; the 2 DSP isolated clips are not in the listed DSP batch zips
+(3 zips, 400 MB, kept on disk). SemLex (14 clips, 13 signers) is behind a terms form and ships as one
+23.7 GB gzip tar, so no targeted extraction. ASLLRP sentence metadata also lists ~1,270 in-sentence
+fingerspelled words (other signers), usable later to test spell mode.
+
+## 2026-09-30 — proposed spelling trigger: the ASL sign FINGERSPELL (+ NAME), rule-based detector rejected
+
+Proposal: enter spell mode with the native ASL sign FINGERSPELL (ASL-LEX fingerspell B_01_048, rated
+frequency 5.3/7; one dominant 5-hand, palm down, slides sideways once with fingers wiggling), and
+automatically for a few seconds after NAME; exit on a hands-down/1.5 s pause; Letters button as fallback.
+Locally there are no FINGERSPELL videos (ASL Citizen lists 60, SemLex 14; SemLex train is one 23.7 GB
+gzip tar). A hand-written detector (open 5, finger wiggle, sideways slide, other hand not open) fires
+by accident on 7/378 Citizen validation clips (THANKYOU, MAN, GIVE, OUR x2, WRITE, HELP) and 9 times in
+21.8 min of the user's sessions (one session, around MY/HELLO and a J-heavy spelling run): not usable.
+A learned detector needs positive examples (user recordings and/or SemLex/Citizen FINGERSPELL clips).
+Report: spelling_trigger_v17_20260930/fingerspell_sign_detector.*.
+
+## 2026-09-30 — letter theft measured; fingerspelling trigger research
+
+Theft (reports/letter_theft_v17_20260930): 378 ASL Citizen validation clips (all 100 signs; official
+test untouched), same observations, production Core ML runtime with letters on vs off. Sign found
+84.9% off -> 80.7% on (16 lost, 0 gained); exact 284 -> 273. 13 of the 16 lost words vanish silently
+(the letter head lowers the word's probability below theta and the single letter is then dropped),
+3 become spelled output. Spelled output in 16 clips (4.2%); FIND 3 of 4 clips -> fs-JF/QF/PF (words-only
+also missed FIND in those 3). User sessions: words-only emits ~45% more words, mostly fake words during
+the user's fingerspelling (TAKE/NEED/YOU for G-E-L-O), so letters off is not safe while spelling either.
+Trigger feasibility on the user's sessions (reports/spelling_trigger_v17_20260930): posture separates
+spelling from words weakly (AUC height .57, lateral .68, wrist speed .71 inverted) -> no automatic
+posture trigger alone. NAME context: 8/48 spelled runs followed NAME within 4 s; 8/16 NAMEs followed by
+spelling (practice sessions). Literature: fingerspelling in front of the dominant shoulder, palm out,
+no contact, ~4-5 letters/s, 12-35% of ASL; in-the-wild fingerspelling detection AP@0.5 .34-.45
+(Shi et al. CVPR 2021); Deaf users rated signed input above tap input (SUS 71.6 vs 61.4, CHI 2024).
+
+## 2026-09-30 — iPhone signer lock (one person when several are in frame), installed
+
+User asked for a lightweight lock with automatic pick, automatic re-pick and no regressions.
+`LiveReelCore.swift`: signer = largest face, followed by position, re-picked after 2 s unseen. Lock mode
+only while another person's face is seen (beside the signer, not covering a hand) and 2 s after:
+signer's face, signer's body (nose/neck at the face), hands kept only if nearest the signer (body
+joints or face/torso estimates). One person in view: previous selection exactly. Hand request 2 -> 4.
+`LiveVision.signerLockEnabled` restores the old path. Earlier attempts that also corrected single-person
+false faces and edge bodies were withdrawn: they changed recognizer input and added `fs-FZ` to one
+Citizen DAY clip. Final checks: detection level 27,065 single-person frames, 1 differing frame (mirror
+face while the user stands up); full Swift engine replay on 238 clips gives identical words on all 238
+(exact 129/237 both), one end time +0.4 s. Two-person composites (48 placements, 2,474 frames):
+wrong-person hands 50% -> 5%, faces 25 -> 0, bodies 249 -> 3. iPhone 13: single-person detection
+12.41 -> 12.24 ms, two people 16.32 -> 17.36 ms; all 11 RunnerTests pass; Release installed. Not tested
+with two real people live; desktop Python unchanged.
+Report: `artifacts/reports/signer_lock_v17_20260929/REPORT.md`.
+
 ## 2026-09-29 afternoon — fist letters (A E M N S T): hand-geometry refinement, on by default
 
 Letter head on validation fist letters 230/299 (77%). Hand-geometry logistic regression on span landmarks
