@@ -7,6 +7,31 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-09-30 — LIVE takes saved as local MP4s (Start → Finish)
+
+User request: save iPhone LIVE recordings locally, no extra compression pass. Changed
+`/Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelApp.swift`
+(`LiveVideoRecorder`, `LiveReelSessions.stamp`) and `LiveReelViewController.swift`.
+Pre-edit copies: `artifacts/reports/live_video_recording_v17_20260930/app_backup_before/`
+(mobile_app is not a git repo). Behaviour, as the user chose: Start begins a take; ↺ Reset
+discards it and starts a fresh one; the big Finish button now ends the run (the former
+Stop path: flush, render/speak the sentence) and saves the take; Back saves a take still
+recording. Finish is enabled whenever running (was: only once something was recognized).
+The two-hand finish gesture does not split takes. PRACTICE is not recorded. Frames are the
+unmirrored, upright 1280x720 capture buffers the model sees, H.264 ~10 Mbps via
+AVAssetWriter, written in tmp and moved to `Documents/live_reel_videos/<visit stamp>_<NN>.mp4`
+only after `finishWriting` completes (no moov-less files). Session JSON gets a
+`video_start` event naming the file. Late frames dropped by the capture output are also
+absent from the video. Verified: unsigned generic-iOS Debug build succeeded with no warnings
+in the changed files; Mac run of the recorder on 90 synthetic frames gave h264 1280x720,
+90/90 frames, 3.0 s, moov present; discarded/empty takes left no file.
+Phone check (same day): signed Release installed/launched on angelo 13:44. Session
+20260930_134459: takes _01–_03 discarded by ↺ as designed; `_04.mp4` saved (15.3 MB, h264
+1280x720, 379 frames, 12.7 s, ~30 fps, 10.1 Mbps), upright and unmirrored, and holds the
+exact HELLO GOOD MORNING HOW YOU attempt.
+
+---
+
 ## 2026-09-29 — user-selected logo applied to Figma branding and screens
 
 User rejected the generated concepts, then selected Desktop/ATLAS artwork.
