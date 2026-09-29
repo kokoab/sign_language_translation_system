@@ -1,0 +1,801 @@
+{
+  "model": "saved general live CTC selector",
+  "models": {
+    "image_encoder": "artifacts/coreml/MobileCLIP2S0ImageEncoderV17FP32.mlpackage",
+    "stage2_encoder": "artifacts/coreml/Stage2FrozenEncoderV17FP32.mlpackage",
+    "stage2_primary": "artifacts/coreml/Stage2SelectorPrimaryV17FP32.mlpackage",
+    "stage2_specialist": "artifacts/coreml/Stage2SelectorSpecialistV17FP32.mlpackage",
+    "stage2_selector": "artifacts/models/stage2_v17_general_ctc_selector_v1/model.pth",
+    "selector_report": "artifacts/reports/stage2_v17_general_ctc_selector_v1/validation.json",
+    "vocabulary": "active/v17/citizen100_manifest.json"
+  },
+  "sha256": {
+    "image_encoder": "cd4e935db966766ca772b9a35d06b88c9a04e6df87599d457bd8839dcb9cd579",
+    "stage2_encoder": "f6535a12dde8a1971cd63c9d433a07adcaeb0379ee6e6b6da1367832e052d666",
+    "stage2_primary": "132028d59ff557bf099fc687d45ac957fb0c90ed7ec2462fc5f3499bef46093e",
+    "stage2_specialist": "445c5ef7d75a76b6f87507e8286763765950100e28506a17324bbf8b82671915",
+    "stage2_selector": "0782d052f0500164a2433ebfee86dcce7413c6bcffca03fae379871ece86dc3d",
+    "selector_report": "4194dccb3723273bb4a76c0134de9b43968df292d41ee53b38d4c14b95efb8f7",
+    "vocabulary": "3a665bda8d2b916c504406be815e601eeb55badfe62afcec42c7869885eab7cf"
+  },
+  "processing_fps": 30.0,
+  "window_seconds": 1.0666666666666667,
+  "selector_config": {
+    "blend_weight": 0.1,
+    "blank_bias": 0.3,
+    "score_margin": 0.0,
+    "minimum_tokens": 2,
+    "same_length_required": true,
+    "phrase_identity_used": false,
+    "rule": "specialist owns a different same-length multi-token row only when its own exact CTC path probability is no lower"
+  },
+  "swift_reference_sha256": "fa76fe80b97b3460d4a829c012cb32f11a5ce639e3ae2e5133260b315dc0bbc2",
+  "native_pipeline_comparison": true,
+  "scope": "same recorded videos and transcripts; CPU/Core ML Mac replay; not phone timing",
+  "checkpoint_selection": "fixed live-script defaults before inference",
+  "protected_citizen_test_accessed": false,
+  "input_videos": [
+    {
+      "source_item_id": "asllrp:30336.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/WATER_COLD/30336_span00.mp4",
+      "video_sha256": "8101ded721fd7a88cbc55b512b98e33356efe67272c5ec2fb79245fd4d6b3ae3",
+      "target_sequence": [
+        "WATER",
+        "COLD"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:31657946.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/LIKE_READ/31657946_span00.mp4",
+      "video_sha256": "3bdf50b1351478d28d90fe2f69e22002abdd2d1c29d8d6f530ed147b2f105edf",
+      "target_sequence": [
+        "LIKE",
+        "READ"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:841314.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_NOW/841314_span00.mp4",
+      "video_sha256": "6f28062fcd96874882343f5a063426c682dfe10f0973ceb67171041378dc5c6c",
+      "target_sequence": [
+        "FRIEND",
+        "NOW"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:841516.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_NOW/841516_span00.mp4",
+      "video_sha256": "eba26880ea90f9bda02b3269a17102acedd4e6d3ff55b8e8651b926743705e1a",
+      "target_sequence": [
+        "FRIEND",
+        "NOW"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:842935.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/WORK_WHERE/842935_span00.mp4",
+      "video_sha256": "ec25c976979288310dde0fbc65c7a07c6fc03c1b44ba144fb81757540c87d329",
+      "target_sequence": [
+        "WORK",
+        "WHERE"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:841111.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_NOW/841111_span00.mp4",
+      "video_sha256": "701548b4352ddfb428e19ef27736317d000f779eb682cd067c3052b4cf39a898",
+      "target_sequence": [
+        "FRIEND",
+        "NOW"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:4236779.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/TIME_FRIEND/4236779_span00.mp4",
+      "video_sha256": "d3c09609b42eab4511403b89605fda5b85f4b2b2438aad8602163d1ad6d7b87d",
+      "target_sequence": [
+        "TIME",
+        "FRIEND"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:15718738.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/NIGHT_TIME/15718738_span00.mp4",
+      "video_sha256": "b2964285b22f939c6a5da91de74f01c062027beb195b28541f035d0003678171",
+      "target_sequence": [
+        "NIGHT",
+        "TIME"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:841415.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_NOW/841415_span00.mp4",
+      "video_sha256": "5310106c18347531bd6f323744b6957efb5aa1ddc34c75195eac0241ca7e54ce",
+      "target_sequence": [
+        "FRIEND",
+        "NOW"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:31659623.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_NOW/31659623_span00.mp4",
+      "video_sha256": "b1ef7c45e316e2afbc63e9b661f0f46fda324ea2584e2e5b2530ea4d3eba8964",
+      "target_sequence": [
+        "FRIEND",
+        "NOW"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:7345233.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/FRIEND_MAYBE/7345233_span00.mp4",
+      "video_sha256": "36bb1206987426db774206cb8e97b38e77f026fcb5ed52318dfd5fffa1e18871",
+      "target_sequence": [
+        "FRIEND",
+        "MAYBE"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "asllrp:31660216.mp4:span00",
+      "video_path": "data/local/asllrp_contiguous_phrases_v17/spans/train_candidate/asllrp/NOW_BAD/31660216_span00.mp4",
+      "video_sha256": "fc92f8032492958b589c7b2222bac7dbc9c0058f2d735c69ae203cfdc7716f38",
+      "target_sequence": [
+        "NOW",
+        "BAD"
+      ],
+      "subset": "asllrp12"
+    },
+    {
+      "source_item_id": "local:TOMORROW_SCHOOL_GO:163d7e62",
+      "video_path": "data/raw_videos/PHRASES FIXED/TOMORROW_SCHOOL_GO/163d7e62.mp4",
+      "video_sha256": "9cb03fc425ce66f0a0e7c02c1250ce9559873b799d241b0965e242033523d9af",
+      "target_sequence": [
+        "TOMORROW",
+        "SCHOOL",
+        "GO"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:09d3e2c0",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/09d3e2c0.mp4",
+      "video_sha256": "5e49e07161ab5b8584def42d7149513ff2497146114df626ff1ba4a5c4d210f4",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:c43fb063",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/c43fb063.mp4",
+      "video_sha256": "6b4bfbc0a4a3c30483e18c0391510e7f33f2acf7ea23713320dec604ac1915a7",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:ff187c3f",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/ff187c3f.mp4",
+      "video_sha256": "4c2894141e8e15ccfb4a2c2b079a910e22bc4898f144f2c8b0afc95aa3fef286",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:0f3336e6",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/0f3336e6.mp4",
+      "video_sha256": "e7cafb540b5c0d9d6bac3ec17e0da1bd8440723e11b7648b87595a91db6c05ec",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:THANKYOU_FRIEND:6fedc7ea",
+      "video_path": "data/raw_videos/PHRASES FIXED/THANKYOU_FRIEND/6fedc7ea.mp4",
+      "video_sha256": "ea8a8dc37943c3078072c4404a9db7f6404febf2e24faf572e5aec6b7f91723a",
+      "target_sequence": [
+        "THANKYOU",
+        "FRIEND"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:GOOD_MORNING:36cd5fdd",
+      "video_path": "data/raw_videos/PHRASES FIXED/GOOD_MORNING/36cd5fdd.mp4",
+      "video_sha256": "ebe834a96e3969600214ba9c63149831ed316f3ca3573a8c476a7ca0fb3b7be5",
+      "target_sequence": [
+        "GOOD",
+        "MORNING"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:TOMORROW_SCHOOL_GO:2752620e",
+      "video_path": "data/raw_videos/PHRASES FIXED/TOMORROW_SCHOOL_GO/2752620e.mp4",
+      "video_sha256": "6446a1b4777e194913d889b1f61983c1218527f1c9072979942b8b42ee816b24",
+      "target_sequence": [
+        "TOMORROW",
+        "SCHOOL",
+        "GO"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:ed612978",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/ed612978.mp4",
+      "video_sha256": "281fe6ce0582fbb5e9b1068809d3ed6ba6a81d955b8c6a92347244cf39df5065",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:cdc3af08",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/cdc3af08.mp4",
+      "video_sha256": "963f15f4393b84a8af0b9765712e8137f3a6bf4c776d084c40ff6c3cf10a1a01",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:GOOD_MORNING:2b17a1ac",
+      "video_path": "data/raw_videos/PHRASES FIXED/GOOD_MORNING/2b17a1ac.mp4",
+      "video_sha256": "fe0ed0b6651266eb73a5e310f921b97c6b157ebb672b39470bf76d5c1f45742f",
+      "target_sequence": [
+        "GOOD",
+        "MORNING"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:MY_NAME:0910dd4d",
+      "video_path": "data/raw_videos/PHRASES FIXED/MY_NAME/0910dd4d.mp4",
+      "video_sha256": "316d12311316015008bbd17bead8a3416e9c5e718f6a4f53c2c1296663043a9a",
+      "target_sequence": [
+        "MY",
+        "NAME"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:THANKYOU_FRIEND:12a04c17",
+      "video_path": "data/raw_videos/PHRASES FIXED/THANKYOU_FRIEND/12a04c17.mp4",
+      "video_sha256": "888b84293151ea0924db941d9c33620eeedaa8d3373aaab2a291b21185755bdf",
+      "target_sequence": [
+        "THANKYOU",
+        "FRIEND"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:MY_NAME:883e1d6d",
+      "video_path": "data/raw_videos/PHRASES FIXED/MY_NAME/883e1d6d.mp4",
+      "video_sha256": "01cfde35b816e348c8b2e9728738264d8f44ecf60432de9d244383defd5fe68e",
+      "target_sequence": [
+        "MY",
+        "NAME"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:5fddbfcc",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/5fddbfcc.mp4",
+      "video_sha256": "080b2544dd4da1c00cc5d5318d69e30929d85224e7fa9c247a303d02e3854c9e",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:a12235e8",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/a12235e8.mp4",
+      "video_sha256": "92a8d12514c88470a393ea3a6c2a7f7bb8b9968a570cee539ffaede896a1e985",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:THANKYOU_FRIEND:767d8aef",
+      "video_path": "data/raw_videos/PHRASES FIXED/THANKYOU_FRIEND/767d8aef.mp4",
+      "video_sha256": "42d8da6844fc56fb2e783b6baf9b22b2aabd5a531095607c17997ebbd3a591ec",
+      "target_sequence": [
+        "THANKYOU",
+        "FRIEND"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:4b4367b4",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/4b4367b4.mp4",
+      "video_sha256": "63ef740acc99bcb4e862325ddedd05541f72508c792014bf8c9a78760672fcf9",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:2a03cd09",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/2a03cd09.mp4",
+      "video_sha256": "d50313e3f6ddbab14a4f02a2b010ff8f598bafb43c2782f909c396c99f4711ea",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:ec4acdde",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/ec4acdde.mp4",
+      "video_sha256": "7776074c9c3b594f6e71dd52398da040582105ff84cde9bdcdf66ec57df11b83",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:77470b0f",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/77470b0f.mp4",
+      "video_sha256": "2fe18c54c1b19f3860be74e44788951ac917ee53f7c76678143161271867a3ef",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:GOOD_MORNING:c7beec64",
+      "video_path": "data/raw_videos/PHRASES FIXED/GOOD_MORNING/c7beec64.mp4",
+      "video_sha256": "2d3f5afc3f4ee3c4a13c0130ad47383a83068e6ae2888bdfb69b1271a7386e2f",
+      "target_sequence": [
+        "GOOD",
+        "MORNING"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:46b80a1f",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/46b80a1f.mp4",
+      "video_sha256": "e00de683887b574967dfc560a92884226bc8667a5b0c2022fc24eeada792a72f",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:5d302925",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/5d302925.mp4",
+      "video_sha256": "c6a564f2c776798e2447f39f6fef71f51370365c3de1b5bb0c087c50995a85ea",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:095872b4",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/095872b4.mp4",
+      "video_sha256": "3d6b2cc50cbdc18855effe6f01365939888ac14e8fe0252d10f5923c14edc469",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:24b07989",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/24b07989.mp4",
+      "video_sha256": "56072b93cf441b20ae7226b39eabb8195e5d90083a5ada42fd429f0081f8f824",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:THANKYOU_FRIEND:81822714",
+      "video_path": "data/raw_videos/PHRASES FIXED/THANKYOU_FRIEND/81822714.mp4",
+      "video_sha256": "ac5803be43fcff706ccbde75a0204b91da3b34ac25c9bad16f2ad75367791dd6",
+      "target_sequence": [
+        "THANKYOU",
+        "FRIEND"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:d62b2c78",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/d62b2c78.mp4",
+      "video_sha256": "281d9f8442a481fc7af8d69db2f044b554592eac2608cabf4a54b8c0203c1a79",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:GOOD_MORNING:c84d2b6d",
+      "video_path": "data/raw_videos/PHRASES FIXED/GOOD_MORNING/c84d2b6d.mp4",
+      "video_sha256": "51e9d07170666e22b645213a11c96f086d91f52c32274215e66af4a63032f996",
+      "target_sequence": [
+        "GOOD",
+        "MORNING"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:050e1bc9",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/050e1bc9.mp4",
+      "video_sha256": "99160f730de804844198e80be0849331472b53d92ec70946ebd95dc1f1291c84",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:TOMORROW_SCHOOL_GO:d9d0ef17",
+      "video_path": "data/raw_videos/PHRASES FIXED/TOMORROW_SCHOOL_GO/d9d0ef17.mp4",
+      "video_sha256": "746b3c5811eb3806b823bb89211f614c97fe9faf81668e8c5ec0d666293aed5c",
+      "target_sequence": [
+        "TOMORROW",
+        "SCHOOL",
+        "GO"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:GOOD_MORNING:5e49d51b",
+      "video_path": "data/raw_videos/PHRASES FIXED/GOOD_MORNING/5e49d51b.mp4",
+      "video_sha256": "f0c94ac840e30bb63220836e1c72a3a488e589400863be91f2284e2e9e1ffe47",
+      "target_sequence": [
+        "GOOD",
+        "MORNING"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:22a426c5",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/22a426c5.mp4",
+      "video_sha256": "1ba99966a1a4e2f6bc65339a0bc2e464f5a5570b3429bd04e30efd6519846814",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:3d44cf58",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/3d44cf58.mp4",
+      "video_sha256": "ba1faff5051500c711d010c4f42c47d8cfbe1857dfc7342a57ad38811947f0fa",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:5dedcfd3",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/5dedcfd3.mp4",
+      "video_sha256": "9334f87c16aa77b062128fa9ff0eec4e3df07ce60bc07d03333a066670356f34",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:TOMORROW_SCHOOL_GO:973e8bb0",
+      "video_path": "data/raw_videos/PHRASES FIXED/TOMORROW_SCHOOL_GO/973e8bb0.mp4",
+      "video_sha256": "ebbfbf67949bda3f6526c682e7725ca6cf63631ea1c13583358de9888ea9069a",
+      "target_sequence": [
+        "TOMORROW",
+        "SCHOOL",
+        "GO"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:1a970edd",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/1a970edd.mp4",
+      "video_sha256": "6f4bf0d6c8d12554db02df3a33bbecc7992c933af73c4a174f37c46378d3b218",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:ecedfdd1",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/ecedfdd1.mp4",
+      "video_sha256": "0a6a8bd1120ea7afc259db727699eee4f3a8ef341a29ab1f69fd008fd66fb591",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:MY_NAME:f08f5f5c",
+      "video_path": "data/raw_videos/PHRASES FIXED/MY_NAME/f08f5f5c.mp4",
+      "video_sha256": "a299bbe0a5d3bde9d645a889d1fb316e608d7a47c6f9e9f891d7e0ff0aa9b8c8",
+      "target_sequence": [
+        "MY",
+        "NAME"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:86d47d5b",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/86d47d5b.mp4",
+      "video_sha256": "b95ad9259188967dbb0e007993532c5cb555be35013b080f17e93245232a60a5",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:ed3bdbc3",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/ed3bdbc3.mp4",
+      "video_sha256": "d0e09ea4f6e3609165a07f6eba6c1a09b9d6e645d5baf6b8ac9ade93f79c4a86",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:MY_NAME:78376b6a",
+      "video_path": "data/raw_videos/PHRASES FIXED/MY_NAME/78376b6a.mp4",
+      "video_sha256": "285501b3d963b45b523cb627b8d33c00cfbcab10932b17d6d2b4393cf646d5ca",
+      "target_sequence": [
+        "MY",
+        "NAME"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:THANKYOU_FRIEND:2242943a",
+      "video_path": "data/raw_videos/PHRASES FIXED/THANKYOU_FRIEND/2242943a.mp4",
+      "video_sha256": "39e164551784d5d4f8a206b44d3b65ff886eb365d0153a5d414288612d2f28d8",
+      "target_sequence": [
+        "THANKYOU",
+        "FRIEND"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:THANKYOU_FRIEND:92b45a54",
+      "video_path": "data/raw_videos/PHRASES FIXED/THANKYOU_FRIEND/92b45a54.mp4",
+      "video_sha256": "3527c8702a6dbc316eba414e7727b34923d3088cdb6f4010e64802f9b696a6e7",
+      "target_sequence": [
+        "THANKYOU",
+        "FRIEND"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:TOMORROW_SCHOOL_GO:35a42510",
+      "video_path": "data/raw_videos/PHRASES FIXED/TOMORROW_SCHOOL_GO/35a42510.mp4",
+      "video_sha256": "385a6f83f85948218dc4833fbdf5c2cb42f9d959db5552176b1009906c0241ee",
+      "target_sequence": [
+        "TOMORROW",
+        "SCHOOL",
+        "GO"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:32ac4086",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/32ac4086.mp4",
+      "video_sha256": "000007a06e683804e62f3ce11381ae1c60562f184a0892e3a1d8af06c878a333",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:9d7051b8",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/9d7051b8.mp4",
+      "video_sha256": "e25edf14e1251f3543d6835c390acf46350990c73acc7a4265041f2ba1d55871",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:88954a9f",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/88954a9f.mp4",
+      "video_sha256": "6e261063f051b2ad473921c42ae9d155be603a7f43271abd6dfb1215a98a7dc6",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:a0cd3d45",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/a0cd3d45.mp4",
+      "video_sha256": "c4048afbdffed4167781235f6f972c54c91c4141fe0453e9dd46aacdf4c55785",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:a79de008",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/a79de008.mp4",
+      "video_sha256": "0f1fc109b3ad1c233275f93260d8bf50e772306a80a74c8973f26daa6f1eaaef",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:TOMORROW_SCHOOL_GO:d9a9f272",
+      "video_path": "data/raw_videos/PHRASES FIXED/TOMORROW_SCHOOL_GO/d9a9f272.mp4",
+      "video_sha256": "1ad980ac374b9f8c34b6b5e06f4857eb2d2fe550b647754c1f6a74dd8162276f",
+      "target_sequence": [
+        "TOMORROW",
+        "SCHOOL",
+        "GO"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:7e094136",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/7e094136.mp4",
+      "video_sha256": "460a79c0b1ed6affd007e13eb77e42cf69e178990057009717103fe0f8dadf20",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:938d18c7",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/938d18c7.mp4",
+      "video_sha256": "fa19b1bfafb923e0565a3dfa6254507d2a88f0b5a1b6718f0a842ca120d9d534",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:57a9e08c",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/57a9e08c.mp4",
+      "video_sha256": "df5c251e7233cf7759c1b1de04894de4b76cf53c4aa47d8457c3d7ef6ca15443",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:MY_NAME:66c23995",
+      "video_path": "data/raw_videos/PHRASES FIXED/MY_NAME/66c23995.mp4",
+      "video_sha256": "4cab79423502a9d771dfce08a82dd5db17d3b719b074335a82b1da21d127db86",
+      "target_sequence": [
+        "MY",
+        "NAME"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:12a886c6",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/12a886c6.mp4",
+      "video_sha256": "ae74a53a2c08130e06b416e93664cd657201bb612f6e2fd5528db967c2419eb0",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:HELLO_HOW_YOU:1d23401f",
+      "video_path": "data/raw_videos/PHRASES FIXED/HELLO_HOW_YOU/1d23401f.mp4",
+      "video_sha256": "947b0ec8f0c993bf92a69b2bc29af832618ccfb3ed163ac1ee40f436ef2f5fa5",
+      "target_sequence": [
+        "HELLO",
+        "HOW",
+        "YOU"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:GOOD_MORNING:eac767b8",
+      "video_path": "data/raw_videos/PHRASES FIXED/GOOD_MORNING/eac767b8.mp4",
+      "video_sha256": "970a657880a844811ac970cae526258f789446f8b33d22ec1e2c5dff4c682ff1",
+      "target_sequence": [
+        "GOOD",
+        "MORNING"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:PLEASE_HELP_ME:5855d311",
+      "video_path": "data/raw_videos/PHRASES FIXED/PLEASE_HELP_ME/5855d311.mp4",
+      "video_sha256": "1b6f67b6929fc64dc1756776623b6bb91d924a9fd09c1aedab6c111507e80453",
+      "target_sequence": [
+        "PLEASE",
+        "HELP",
+        "I"
+      ],
+      "subset": "local60"
+    },
+    {
+      "source_item_id": "local:MY_NAME:88cf1bc7",
+      "video_path": "data/raw_videos/PHRASES FIXED/MY_NAME/88cf1bc7.mp4",
+      "video_sha256": "bd6c6eb363d4fc2e8492b6c8cd66c22cc6368ce3754cd2d67ab3dbb4a2754c62",
+      "target_sequence": [
+        "MY",
+        "NAME"
+      ],
+      "subset": "local60"
+    }
+  ]
+}
