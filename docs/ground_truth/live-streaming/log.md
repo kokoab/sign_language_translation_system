@@ -1,5 +1,43 @@
 # live-streaming — log
 
+## 2026-10-01 — FSboard pilot: 100 clips through the live Apple Vision contract
+
+User approved a ~1.2 GB pilot (no larger download without asking). Kaggle googleai/fsboard is publicly
+downloadable without credentials (URL-encode the path). Released content: daun_v3 (addresses/URLs/numbers;
+train 70,699 clips / 94 signers, validation 12,022 / 15, test 12,529 / 15) and dmk_v3 (MacKenzie English
+sentences, train only, 55,504 / 72 signers, 0 signer overlap with validation/test). No names-only
+collection. Metadata in data/local/fsboard_v17/metadata. Pilot: 100 non-sensitive daun train clips,
+1 per signer (94) + 6 with >=8 letters, seed 0 (data/local/fsboard_v17/pilot/manifest.json); all MD5 OK,
+0.87 GB in 295 s (3.0 MB/s). Clips are 3264x1836 h264 with a rotation tag: OpenCV needs
+CAP_PROP_ORIENTATION_AUTO=1 (first attempt ran sideways; fixed). Visual check: one clip's signing matches its
+phrase. scripts/extract_fsboard_v17.py (live 20 Hz sampling, observe_stage2_frame, frame_hand) ->
+per-clip npz (raw [T,61,5], hand embeddings/valid/boxes, times, phrase, annotation) ~0.32 MB/clip.
+Results: hands present in annotated span median 94% (p10 83%, 5/100 below 80%); crops valid median 95%;
+3.2 chars/s median (daun; dmk ~4.5) = 6.3 frames/char at 20 Hz (min 2.7). Dominant hand: 79 Vision-right
+on image left, 18 Vision-left on image right, 2 other -> unmirrored like the live contract (the minority looks
+like left-handers). Cost 61 ms/frame on the Mac (decode 16, Vision 28, hand crops 18) = 9.0 s per clip,
+1.23x real time: extraction, not Wi-Fi, is the bottleneck. No training yet.
+
+## 2026-10-01 — FINGERSPELL trigger never fired on the phone; local continuous fingerspelling found
+
+User report: the trigger does not fire. All 7 phone sessions from 2026-09-30 (copied read-only) contain
+0 spell_mode events. The 08:47 session, before the spell-mode build, has 14 fs- previews. Offline detector
+scores on the two recorded phone videos (sentence practice, no trigger attempts): max 0.02 versus threshold
+0.981. Likely causes: 27 citation-form positives from other signers, cross-validated train recall 11/27,
+held-out positives only 0.004-0.007 above threshold, and webcam 640x480 hand-at-face framing versus close
+landscape iPhone framing with hands at chest height (shoulder-relative features shift). The gate in the
+2026-09-30 detector entry (the user's own FINGERSPELL signs) was skipped before deployment.
+User direction: no mode trigger (NAME must not trigger either); natural-speed spelling; no user recordings.
+Spelled content is mostly names, but not only names.
+Local data previously unlogged: data/local/asllrp_fingerspelled_v17 (scripts/fetch_asllrp_fingerspelled_v17.py,
+844 MB): 872 in-sentence fingerspelled-word clips (335 unique words, word-level labels, no letter timing)
+plus 595 full utterances at 29.97 fps, 1280x720. Mostly 5 signers (Ben 294, RIT 226, Rachel 128,
+Jonathan 108, Cory 98). Median 0.5 s per word, ~8.9 letters/s (SPORTS 23 frames).
+Candidate new data: FSboard (Kaggle googleai/fsboard, CC BY 4.0, 147 Deaf signers, Pixel 4A selfie,
+RGB videos, 1.45 TB total; the MediaPipe landmarks it ships are barred by the Apple Vision lock).
+ChicagoFSWild (14 GB, 7,304 sequences, 160 signers) / FSWild+ (82 GB, 55,232, 260 signers): no explicit
+license. Kaggle CLI has no credentials here. SSD free: 168 GiB. No code, model or app change.
+
 ## 2026-09-30 — phone log review: HELLO GOOD MORNING HOW YOU
 
 Copied phone sessions 20260930_104414 and 20260930_133420 (angelo, Stage 3
