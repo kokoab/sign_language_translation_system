@@ -1,5 +1,84 @@
 # live-streaming — log
 
+## 2026-10-02 — continuous fingerspelling reader (letter_ctc_v17): generalizes for deliberate spelling only
+
+User: "make it generalizable, run it". active/v17/letter_ctc_v17.py, scripts/train_letter_ctc_v17.py,
+scripts/evaluate_letter_ctc_v17.py; report artifacts/reports/letter_ctc_v17_20261002/REPORT.md.
+CTC over A-Z + '#' on live 20 Hz Apple Vision inputs, camera-invariant landmarks, 0.9 s look-ahead.
+FSboard 3,000 train clips / 117 signers; validation 750 / 15 other signers.
+FSboard val CER: landmarks+embeddings 10.9 / 11.2% (2 seeds), no speed aug 11.6%, 25% data 17.5%,
+50% 12.9%; landmarks only 8.6 / 8.8% (no speed aug 9.6%). ASLLRP in-sentence test (774 words, other
+signers): 87-94% CER for every model, exact words <= 0.7%; current phone decoder 99.97% (emits almost
+nothing). False letters during ordinary signing: 18-37/min (current decoder 0.75). User's GELO desktop
+sessions: exact GELO/ANGELO runs 5 (old) -> 16 (F) / 10 (G seed 1). Hand-size control (FSboard val
+re-extracted with shrunk frames): 6.8% (117 px palm) -> 7.5% (57 px, like the user's phone) -> 10.7%
+(37 px, like ASLLRP); Vision at 1280 px on ASLLRP dev barely helps. Conclusion: natural, fast,
+coarticulated spelling is the gap (needs natural-spelling data, e.g. ChicagoFSWild); always-on use needs
+a spelling-vs-signing detector. Dev rule (ASLLRP dev CER) could not discriminate (85-91% for all).
+Not deployed; no app or phone change.
+
+## 2026-10-02 — ASLLRP fingerspelling test set: RIT word times were 2x; fixed by frame matching
+
+data/local/asllrp_fingerspelled_v17/utterances_manifest.json word times are doubled for every RIT
+collection (215/872 words; e.g. ADOBE annotated 8.41 s, actually at 4.48 s); all other collections are
+correct. scripts/align_asllrp_fingerspelled_v17.py slides each word's own sign clip over its utterance
+(grayscale 64x48 MSE): 872/872 located, 869 with MSE < 10% of the clip's median (3 short HE/OH still
+~10x below). Matched times are written to live_features/manifest.json (originals kept as annotated_*).
+Corrected in-sentence speed: median 10 letters/s. The live_features manifest is marked FINAL TEST ONLY;
+dev = signer Cory (choices that need natural speed), test = all other signers. Lexicon for evaluation:
+data/local/name_lists_v17/lexicon_v1.txt (macOS words + propernames + FSboard train name tokens, 235,659);
+SSA/Census downloads were refused (403); inflection expansion rejected on dev (0 extra dev words covered).
+
+## 2026-10-02 — FSboard extraction: ffmpeg pre-scaled decode validated; batch1 selected
+
+scripts/extract_fsboard_v17.py --decoder ffmpeg: one ffmpeg pass decodes, autorotates and scales to the
+live 1280 long side (flags=area, -fps_mode passthrough), then the unchanged observe_stage2_frame /
+frame_hand path. Paired against the OpenCV full-resolution decode on all 100 pilot clips
+(scripts/compare_fsboard_decoders_v17.py; data/local/fsboard_v17/pilot/decoder_comparison.json):
+identical frame times; hand presence agreement 99.89%; landmark shift median 0.0019 / p99 0.031 palm
+lengths versus within-clip frame-to-frame motion median 0.061; hand-embedding cosine median 0.9991,
+p1 0.984; live letter decoder (spell mode) CER 81.3% -> 81.8%, paired diff +0.5 pt, bootstrap 95% CI
+[-0.7, +1.6]; 50/100 identical strings (the static-letter decoder fails on continuous FSboard either way,
+so this downstream check is weak; no high-resolution set exists on which the current model works: the
+local A-Z clips are 640x480 and are never downscaled). Cost 10.9 -> 6.2 s per clip (decode 20.4 -> 6.1,
+Vision 32.9 -> 13.0, hand crops 19.8 -> 21.0 ms/frame). Defect found and fixed during the check: without
+passthrough, ffmpeg duplicated frames to a clip's declared 120 fps (1,320 frames instead of 331).
+scripts/fetch_fsboard_v17.py batch1 (seed 0): 25 clips per train signer alternating person names /
+addresses-URLs (daun_v3) / English sentences (dmk_v3): 918 / 992 / 994 from 117 signers; validation
+50 per daun_v3 validation signer (375 names + 375 addresses-URLs, 15 signers); letters >= 70% of
+characters, non-sensitive, pilot excluded; FSboard test never selected. 3,654 clips, 29.1 GB, streamed
+(download, MD5, extract, delete). User authorized this download.
+Run 1 stopped at 08:13 after 263 clips (~595 clips/h) with no Python traceback; the repo's guard hook
+could not find its own file at the same time, i.e. the SSD was briefly unavailable (cause not confirmed
+in the system log). All 263 npz load cleanly. The ffmpeg "non monotonically increasing dts" warnings are
+cosmetic: on all 100 pilot clips (6 warn) ffmpeg, container nb_frames and OpenCV frame counts are equal.
+Each npz now stores decoded_frames/container_frames and mismatches are logged. Leftover MD5-valid videos
+are reused. Restarted 12:18 under a watchdog loop that waits for the SSD and resumes.
+Completed 16:29 (run 2: 3,391 clips in 4.18 h, ~855 clips/h at the end; one connection reset retried):
+3,654/3,654 extracted, 0 failed, 0 unreadable, 0 frame-count mismatches (263 run-1 files predate the
+audit), features 1.0 GB, no videos left. Train 2,904 (117 signers): names 918 / addresses-URLs 992 /
+sentences 994; validation 750 (15 signers). Hands in the annotated span median 0.90-0.94 (names lowest:
+99/918 train and 73/375 validation clips below 80%). Median letters/s: addresses 2.4-2.6, names 3.1-3.4,
+sentences 3.9. 3 train clips have annotation spans shorter than CTC needs (e.g. a 19-letter sentence in
+0.27 s) and must be excluded. No training yet; waiting for the user's choice of name list.
+
+## 2026-10-02 — iPhone Practice gets the Live "Letters" switch (source only; not installed)
+
+User request: the same Letters on/off toggle as Live, in Practice. Changed (mobile_app, not git;
+pre-edit copies in artifacts/reports/practice_letters_toggle_v17_20261002/app_backup_before/):
+LiveReelViewController.swift — Practice top bar is now back · status · round banner · Letters · Score · gear,
+the same blue chip and the same engine switch as Live (on = words + letters always; off = words with the
+hidden letter sink, FINGERSPELL/NAME switching). Practice no longer forces letters on; it keeps its own
+remembered key SLTPracticeLettersAlwaysV17, default ON, so Practice judges exactly as before until the user
+taps it (Live key/default unchanged). Toggling mid-round restarts the current attempt only. Practice status
+now shows "Spelling…" if spelling switches on. The round banner stays centred but yields to the chips
+(no overlap at 844x390 or 667x375). RunnerTests.testLiveLettersControlPresent now requires the button
+in both modes plus no banner/score overlap; app_shell.dart settings note mentions Practice.
+Verified: simulator build-for-testing succeeded; testLiveLettersControlPresent and
+testLiveAndPracticeKeepLandscapeLayout pass on the iPhone 17 simulator; flutter test 5/5; screenshots
+in the report folder. Not installed on the phone (user will ask); no model/decoder change, no accuracy claim.
+Pre-existing, unchanged: on a 375-pt-tall screen (SE) the Practice Reference clip touches the Skip button.
+
 ## 2026-10-01 — FSboard pilot: 100 clips through the live Apple Vision contract
 
 User approved a ~1.2 GB pilot (no larger download without asking). Kaggle googleai/fsboard is publicly
