@@ -1,5 +1,64 @@
 # live-streaming — log
 
+## 2026-10-03 — Hoyeol Sohn recipe (Kaggle ISLR 1st / fingerspelling 2nd) adapted: mixed, run I kept
+
+User asked to study Hoyeol Sohn and make it work. ConvFormerCTC in letter_ctc_v17 (Sohn's expand + causal
+depthwise conv k=17, 3 conv + 1 attention x3, d=192, 2.35M params; attention window 64 back / 6 ahead so
+look-ahead stays 18 frames; drop path .2, head dropout .3; lag-1+2 motion; mirror, shear, finger dropout,
+short time masks; 150 epochs). Unit checks: mirror involution, streaming look-ahead, padding invariance.
+First runs died of MPS out-of-memory (~25 GB of cached per-length attention graphs); fixed by bucketing
+batch lengths to multiples of 32 + periodic empty_cache + watermark 0.8/0.6 (memory flat at 5-9 GB).
+Results (S1 seeds 0/1 vs run I; I150 = run I config for 150 epochs as a length control):
+FSWild dev 36.6/37.2% (I 35.3, I150 35.5) - FSWild test 37.8/38.2% (I 42.2, J 41.0, I150 41.9),
+exact 30.8/27.7% - FSboard val 8.3/8.5% (I 10.0, I150 9.1) - ASLLRP test 80.4/81.0% (I 73.2, I150 75.3)
+- false letters/min ungated 27/24 (I 62, I150 77) - user GELO exact 14/17 (I 20, I150 18).
+The pre-registered rule (FSWild dev) keeps run I; Sohn's model is better on deliberate and in-the-wild
+spelling but worse on fast in-sentence spelling (ASLLRP) and the user's sessions. Training longer alone
+does not help the small conv model. Not deployed.
+
+## 2026-10-03 — web review: how to improve the fingerspelling reader and gate (no experiments)
+
+User asked for improvement ideas (phone testing deferred). Sources checked: Kaggle Google ASL Fingerspelling
+1st place (Henkel/Hanley; landmarks, deeper Squeezeformer encoder + 2-layer transformer decoder; CutMix,
+FingerDropout, face/pose dropout, TimeStretch, decoder-input masking ~+0.003-0.005 each; arm landmarks
++0.003; lip landmarks believed helpful; 5th place: deeper beat wider, 24x256 > 9x384; 3rd place: extra data
+>10 points for CTC); Shi et al. ICCV 2019 (ChicagoFSWild+: 50,402 train sequences / 216 signers, MTurk,
+2 unproofread annotations in train; adding it raised FSWild test letter accuracy 42-45 -> 57-61%; native
+signer 86.1%); Shi et al. CVPR 2021 (detection helped by multi-task training with recognition); FSS-Net
+ACL 2022; SHuBERT (86M, 984 h YouTube-ASL SSL, weights public, too large for the phone, teacher only);
+Google 'Fingerspelling within SLT' 2024 (character-level ByT5 vs T5: FSboard CER 45.9 -> 11.3%; our Stage 3
+slot copy already avoids subword spelling); ASL STEM Wiki (315 h, 37 interpreters, research license, only
+507 sentences with time-aligned fingerspelling). Our run I (FSWild test 42.2% CER ~ 58% letter accuracy)
+is already level with the published FSWild+-trained image models. Ranked plan in the chat reply.
+
+## 2026-10-03 — spelling-vs-signing gate: fake spelled words 10 -> 5 /min (ASLLRP), 8 -> 1.8 (O5S5 LG)
+
+User: build it, report only with results. spell_gate_v17 (per-frame spelling probability, landmarks only,
+0.9 s look-ahead) trained on FSboard + FSWild spelling vs ASL Citizen train signs, FSboard margins and O5S5
+signs (5 signers; 'FS' glosses = spelling; alignment verified 2.8-6.3x letter activity at zero shift). New
+extractions: O5S5 6 videos (RD decoded 14,965/14,972 frames) and ASL Citizen train 1,476 / val 378 clips
+(scripts/extract_gate_data_v17.py; official Citizen test untouched). Gate seed 0: FSWild dev 96.0% spelling
+kept, Citizen val 98.9% signs rejected, O5S5 LG 86.0% / 90.2%. With reader I: Citizen isolated signs
+12.3 -> 0.6-0.8 letters/min; LG continuous signing 39.6 -> 9-15 letters/min; ASLLRP test 48.7 -> 21-28;
+spelling cost +2.5 pt ASLLRP CER, +0.6-1.0 pt FSWild. Per-letter gating clips first letters (user GELO
+20 -> 9; G gate mean 0.64); per-run gating (1 s gaps, mean >= 0.4) keeps 20/20 with fake spelled words
+(>= 2 letters) 5.0/min ASLLRP test, 1.8/min LG (ungated 10.0 / 8.1). The dev rule alone would pick
+per-letter 0.5; per-run 0.4 is recommended using the user sessions (disclosed). Not deployed.
+
+## 2026-10-03 — letter reader + ChicagoFSWild: natural spelling 62 -> 42% CER; always-on still blocked
+
+User approved downloading ChicagoFSWild (14.3 GB, dl.ttic.edu caps a connection at ~0.45 MB/s;
+scripts/fetch_parallel_v17.py, 4 ranges, ~5 h; archive and 7,304 frame folders verified). Extracted with
+scripts/extract_fswild_v17.py (0 failures; median palm ~50 px). Official partitions kept; test is final-test
+only. Trainer --fswild adds 5,429 train clips and selects on FSWild dev. NaN loss from one clip with a zero
+body scale fixed in letter_ctc_v17 (min scale, non-finite -> 0). Selected run I (landmarks only, speed aug):
+FSWild dev 35.3%, FSWild test 42.2% CER / 26.5% exact (F: 62.4 / 10.1), ASLLRP test 73.2% (lexicon 72.0%,
+3.1% exact words; F 88.5%), FSboard val 10.0% (F 8.6%), user GELO 20 exact runs (F 16, old 5). Seed 1:
+41.0% FSWild test. No speed aug and hand-crop embeddings both worse. False letters during signing 62/min
+(F 36); confidence cutoff 0.5 is free (-25%), stricter cutoffs cost accuracy and stay >= 9/min. Next: a
+spelling-vs-signing gate before any no-trigger deployment. Report: letter_ctc_v17_20261002/REPORT.md.
+Disk: data/local/chicago_fswild holds both archives (14.3 + 14.3 GB) besides the unpacked frames.
+
 ## 2026-10-02 — continuous fingerspelling reader (letter_ctc_v17): generalizes for deliberate spelling only
 
 User: "make it generalizable, run it". active/v17/letter_ctc_v17.py, scripts/train_letter_ctc_v17.py,
