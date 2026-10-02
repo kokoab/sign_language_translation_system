@@ -7,6 +7,40 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-03 — Android MediaPipe family: full extractor built, pilot passed, extraction running
+
+Plan locked (see high.md). New code, nothing existing modified: `active/v17/mediapipe_full_v17.py`
+(MediaPipe-only detector with the AppleVisionDetector interface, schema `slt_mediapipe_full_landmarks_v17`,
+fingerprint `d17b7cd2ecc5614f`), `scripts/extract_mediapipe_full_v17.py` (isolated landmarks + crops,
+embeddings), `scripts/extract_mediapipe_phrases_v17.py` (543 Stage-2 phrase windows),
+`scripts/capture_mediapipe_segmental_v17.py` (20 Hz av_raw + span inputs for 1,675 videos, 97,928
+DGS-teacher span keys), `test/test_v17_mediapipe_full.py` (4 pass; existing MediaPipe tests 3 pass).
+Pinned task models in `artifacts/model_assets/mediapipe/` (hand reused; pose lite/full, face added).
+
+Calibration on Citizen train frames: MediaPipe handedness = Apple chirality on unmirrored frames
+(272/277), so no flip; pose 11-14 = Apple shoulders/elbows (10-25 px vs 230-370 px swapped); face
+mesh map (468,473,63,46,293,276,344,40,291,0,17,264,152,34,168), 1-6 px median. Hand VIDEO-mode
+tracking is timestamp-independent (626/626 identical across 33/50/200 ms steps; IMAGE mode differs on
+41%); pose smoothing is not, so pose/face run in IMAGE mode at the v17 8-frame cadence. No world depth.
+Orientation reuses each Apple archive's recorded decision (all container-auto; no coarse rotations).
+Crop boxes replay the dense landmark-pass detections of the same frames (Apple Vision is stateless so
+its two passes agreed); 595/596 test clips replayed all 16 crop frames.
+
+Pilot, 378 Citizen validation clips, 0 failures (input quality, not accuracy), Apple vs MediaPipe
+lite: hand presence .569/.579, two-hand .304/.310, face .795/.802, body .393/.567, shoulder
+normalization 81%/100%, hand jitter .107/.062. Pose lite chosen by the predeclared rule (full needed
++5 pp body presence; it had .547 < lite .567).
+
+Runtime defects found and handled: MediaPipe GPU needs SRGBA input; multiprocessing pools deadlock
+the GPU (independent shard processes instead); MediaPipe 0.10.14's macOS GPU path leaks a pixel
+buffer per hand call and aborts (`kCVReturnAllocationFailed`) after ~6,000 calls, so shards recycle
+every ~4,000 calls; per-clip tracking reset makes recycled output identical. Throughput ~1.2-2.5
+clips/s with 2 shards (GPU-bound; VS Code helpers and the SSD's FSKit service compete for CPU).
+Full isolated extraction (20,497 clips) launched to `data/local/mediapipe_full_v17_20261003/`; log
+`artifacts/generated/mediapipe_full_isolated_20261003.log`. Pilot roots
+`data/local/mediapipe_full_v17_20261003_pilot_{lite,full}` retained. No training, no test access.
+Next: continuous captures and phrase windows after the isolated run, then embeddings, then audit.
+
 ## 2026-09-30 — LIVE takes saved as local MP4s (Start → Finish)
 
 User request: save iPhone LIVE recordings locally, no extra compression pass. Changed

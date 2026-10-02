@@ -7,6 +7,42 @@ stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
 ---
 
+## 2026-10-03 — Android MediaPipe/TFLite family: plan locked by the user
+
+Decision (user): option B. iOS keeps the Apple Vision → Core ML family unchanged. Android gets a
+separate MediaPipe Tasks → TFLite family trained by the same code on MediaPipe-only archives.
+Apple models may be used as teachers (distillation), never as inputs. Locked decision #4 amended.
+
+Scope and order: exact rebuild of the words-only live chain first — part-wise landmark Stage 1,
+MobileCLIP2 hand-temporal branch, unified fusion (same 3-seed selection), reel_v2 phrase/activity
+adaptation, span_recognizer_v17_local_a (no letter head), word boundary student distilled from the
+cached DGS teacher outputs, stream_config_v2 decoder settings re-tuned on the tuning pool only.
+Letters, the letter boundary student, spelling buffer and fist geometry are deferred. Simplification
+challengers (Apple-teacher distillation, merged reel_v2+span fine-tune, single seed) only after the
+exact rebuild passes, scored against it.
+
+Gate: each MediaPipe stage within 5 points of its Apple counterpart on identical validation sets.
+References: landmark Stage 1 Citizen 95.77; unified 96.30/89.06/97.10 (Citizen/SemLex/local);
+reel_v2 96.03/89.16/97.03, phrase 66.41, activity 69.79; span recognizer isolated 95.24/89.67/96.31;
+end-to-end held-out 72 videos/186 signs live replay WER 11.83% (MediaPipe must be <= 16.83%).
+A stage that misses its gate stops the chain for user review. Held-out 72 is a fixed comparison,
+never a selection set. No sealed test split is opened.
+
+Constraints: models must run on a 4 GB Android phone; hand crops vs landmark-only on Android is
+decided by measured on-device speed (phone available later). Training on local MPS (Kaggle upload
+of the ~10 GB per-frame caches is slower than MPS training). Never delete or overwrite existing
+models, archives or caches: MediaPipe outputs use new dated paths and new scripts refuse to write
+into existing outputs.
+
+Extraction measurements (M4, Citizen validation clips, hands every frame + pose/face every 8th at
+20 Hz): CPU 21 ms/frame (hands 17), 0.85 clips/s single process, 2.6 clips/s with 8 processes.
+The MediaPipe GPU (Metal) delegate initially aborted with `unsupported ImageFrame format: 1`;
+it requires SRGBA input. With SRGBA and landmarkers created once per process (a blank frame
+between clips resets tracking: 1,295/1,295 frames bit-identical to fresh landmarkers), GPU runs
+5.8 ms/frame (hands 4.2), 3.0 clips/s single process, 3.4 clips/s with 2 processes (saturated);
+mixing CPU workers lowers throughput. CPU vs GPU hand landmarks differ (median 1.06 px, p95 11 px,
+19/499 detections disagree), so the backend is pinned and fingerprinted like the model files.
+
 ## 2026-09-01 02:30 PST — validated two-head Stage-2 selector promoted to the iPhone app
 
 The ASLLRP sentence metadata was re-audited against the downloaded parent utterances
