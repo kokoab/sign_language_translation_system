@@ -198,6 +198,39 @@ def load_hand_model(path: Path) -> tuple[HandMobileCLIP2Stage1V17, dict[str, obj
     return model.eval(), checkpoint
 
 
+# Android family (2026-10-04): with --extractor mediapipe_full every Apple record is swapped to its
+# MediaPipe mirror (same clip list; MediaPipe no-hands clips are dropped and counted).
+_EXTRACTOR = "apple"
+
+
+def expected_schemas() -> tuple[str, str]:
+    landmark = schema_fingerprint(V17Config())
+    hand = hand_schema_fingerprint(HandMobileCLIP2V17Config())
+    if _EXTRACTOR == "mediapipe_full":
+        from active.v17.mediapipe_full_v17 import MediaPipeFullV17Config, derived_fingerprint
+        from active.v17.mediapipe_full_v17 import schema_fingerprint as mediapipe_fingerprint
+        config = MediaPipeFullV17Config()
+        return mediapipe_fingerprint(config), derived_fingerprint(hand, config)
+    return landmark, hand
+
+
+def mediapipe_records(records: list[PairRecord], root: Path) -> tuple[list[PairRecord], list[str]]:
+    from dataclasses import replace
+    output, missing = [], []
+    for row in records:
+        relative = Path(row.landmark_path).relative_to("data/local")
+        landmark = root / "landmarks" / relative
+        hand = root / "hand_mobileclip2_s0" / relative.parent / (
+            relative.name.removesuffix(".v17.npz") + ".hand_mobileclip2_v17.npz")
+        if not landmark.is_file():
+            missing.append(row.item_id)
+            continue
+        if not hand.is_file():
+            raise FileNotFoundError(hand)
+        output.append(replace(row, landmark_path=landmark, hand_path=hand))
+    return output, missing
+
+
 @torch.inference_mode()
 def encode_records(
     records: list[PairRecord],
@@ -212,8 +245,7 @@ def encode_records(
     hand_features = []
     landmark_logits = []
     hand_logits = []
-    expected_landmark = schema_fingerprint(V17Config())
-    expected_hand = hand_schema_fingerprint(HandMobileCLIP2V17Config())
+    expected_landmark, expected_hand = expected_schemas()
     for start in range(0, len(records), batch_size):
         rows = records[start : start + batch_size]
         landmarks = []
@@ -332,6 +364,12 @@ def build_caches(args: argparse.Namespace, device: torch.device) -> dict[str, Pa
     actual = {name: len(value) for name, value in records.items()}
     if actual != expected_counts:
         raise ValueError(f"unified record counts changed: {actual}")
+    omitted: dict[str, list[str]] = {}
+    if _EXTRACTOR == "mediapipe_full":
+        for name in list(records):
+            records[name], omitted[name] = mediapipe_records(records[name], args.mediapipe_root)
+        LOG.info("mediapipe records %s omitted_no_hands %s",
+                 {k: len(v) for k, v in records.items()}, {k: len(v) for k, v in omitted.items()})
     landmark_model, _ = load_landmark_model(args.landmark_checkpoint)
     hand_model, _ = load_hand_model(args.hand_checkpoint)
     paths = {}
@@ -342,7 +380,13 @@ def build_caches(args: argparse.Namespace, device: torch.device) -> dict[str, Pa
             continue
         started = time.monotonic()
         arrays = encode_records(rows, landmark_model, hand_model, device, args.encode_batch_size)
-        if name == "citizen_train":
+        if name == "citizen_train" and _EXTRACTOR == "mediapipe_full":
+            # The fixed Apple four-stream teacher is a per-clip soft target: reuse its cached
+            # scores by item id rather than feeding MediaPipe features to Apple models.
+            with np.load(args.teacher_scores_cache, allow_pickle=False) as apple:
+                by_id = dict(zip(apple["item_ids"].tolist(), apple["teacher_scores"]))
+            arrays["teacher_scores"] = np.stack([by_id[item] for item in arrays["item_ids"].tolist()]).astype(np.float32)
+        elif name == "citizen_train":
             teacher_landmark, _ = load_landmark_model(args.teacher_landmark_checkpoint)
             teacher_landmark_logits = landmark_logits_for_records(
                 rows, teacher_landmark, device, args.encode_batch_size
@@ -373,6 +417,10 @@ def build_caches(args: argparse.Namespace, device: torch.device) -> dict[str, Pa
             "landmark_checkpoint_sha256": sha256_file(args.landmark_checkpoint),
             "hand_checkpoint_sha256": sha256_file(args.hand_checkpoint),
             "teacher_available": name == "citizen_train",
+            "extractor": _EXTRACTOR,
+            "omitted_no_hands": omitted.get(name, []),
+            "teacher_source": (str(args.teacher_scores_cache) if _EXTRACTOR == "mediapipe_full"
+                               else "computed_four_stream"),
             "local_mouth_policy": "four_lip_points_zero" if name.startswith("local_") else "full_face",
             "citizen_test_accessed": False,
             "semlex_test_accessed": False,
@@ -486,7 +534,7 @@ def train_seed(
         nonlocal best_key, stale
         domain = {name: evaluate_head(head, val_caches[name]) for name in source_order}
         key = selection_key(domain)
-        eligible = int(domain["citizen"]["top1_correct"]) >= 361
+        eligible = int(domain["citizen"]["top1_correct"]) >= args.citizen_floor_correct
         row = {"epoch": epoch, "eligible": eligible, "selection_key": list(key), "domains": domain}
         history.append(row)
         if eligible and (best_key is None or key > best_key):
@@ -500,7 +548,7 @@ def train_seed(
                 "head_state_dict": {key: value.detach().cpu().clone() for key, value in head.state_dict().items()},
                 "domain_metrics": domain,
                 "selection_key": list(key),
-                "citizen_floor_correct": 361,
+                "citizen_floor_correct": args.citizen_floor_correct,
                 "test_evaluated": False,
             }, output / "best_head.pth")
             return True
@@ -633,6 +681,22 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         if not 0 < args.mps_memory_fraction <= 0.25:
             raise ValueError("MPS memory fraction must be in (0, 0.25]")
         torch.mps.set_per_process_memory_fraction(args.mps_memory_fraction)
+    global _EXTRACTOR
+    _EXTRACTOR = args.extractor
+    if _EXTRACTOR == "mediapipe_full" and (
+        args.cache_dir == Path("artifacts/generated/unified_multimodal_student_v17")
+        or args.output == Path("artifacts/models/stage1_v17_unified_multimodal_student_v1")
+        or args.mediapipe_root is None or args.teacher_scores_cache is None
+    ):
+        raise ValueError("mediapipe_full needs --mediapipe-root, --teacher-scores-cache and new cache/output paths")
+    if _EXTRACTOR == "mediapipe_full":
+        if args.output.exists():
+            raise FileExistsError(f"refusing to overwrite {args.output}")
+        landmark_fp, hand_fp = expected_schemas()
+        for path, expected in ((args.landmark_checkpoint, landmark_fp), (args.hand_checkpoint, hand_fp)):
+            found = torch.load(path, map_location="cpu", weights_only=False).get("schema_fingerprint")
+            if found != expected:
+                raise ValueError(f"{path} was trained on schema {found}, expected MediaPipe {expected}")
     cache_paths = build_caches(args, device)
     train_caches = {name: load_cache(cache_paths[f"{name}_train"]) for name in ("citizen", "semlex", "local")}
     val_caches = {name: load_cache(cache_paths[f"{name}_val"]) for name in ("citizen", "semlex", "local")}
@@ -663,6 +727,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cache-dir", type=Path, default=Path("artifacts/generated/unified_multimodal_student_v17"))
     parser.add_argument("--output", type=Path, default=Path("artifacts/models/stage1_v17_unified_multimodal_student_v1"))
     parser.add_argument("--rebuild-cache", action="store_true")
+    parser.add_argument("--extractor", choices=("apple", "mediapipe_full"), default="apple")
+    parser.add_argument("--citizen-floor-correct", type=int, default=361,
+                        help="landmark-branch Citizen correct the fusion must keep (Apple 361)")
+    parser.add_argument("--mediapipe-root", type=Path, default=None)
+    parser.add_argument("--teacher-scores-cache", type=Path, default=None,
+                        help="Apple citizen_train cache whose four-stream teacher scores are reused by item id")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--mps-memory-fraction", type=float, default=0.12)
     parser.add_argument("--encode-batch-size", type=int, default=64)

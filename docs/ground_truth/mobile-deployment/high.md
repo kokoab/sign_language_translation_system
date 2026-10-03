@@ -3,9 +3,17 @@
 Dated evidence for constraints that still bind. The constraints themselves are
 stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
-7 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+9 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-10-04 — MediaPipe (Android) words-only chain established
+
+The MediaPipe family exists and passes every predeclared stage gate; it is the Android model set to
+convert next. Canonical config: `artifacts/reports/mediapipe_rebuild_v17_20261004/stream_config_mediapipe_v2.json`
+(boundary `mp_av_boundary_student_v17_l6_a_20261004`, recognizer `mp_span_recognizer_v17_local_a_20261004`).
+Held-out 72/186: 8.60% WER vs Apple 11.83%, but unseen-signer ASLLRP12 54.17% vs 33.33%: do not claim
+MediaPipe is more accurate for new signers. Evidence: `artifacts/reports/mediapipe_rebuild_v17_20261004/REPORT.md`.
 
 ## 2026-10-03 — Android MediaPipe/TFLite family: plan locked by the user
 

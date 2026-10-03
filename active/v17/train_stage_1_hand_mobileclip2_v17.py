@@ -42,6 +42,18 @@ else:
     from .train_stage_1_mobileclip2_v17 import select_device
     from .extract_hand_rgb_supplement_v17 import selection_items
 
+# Android family (2026-10-04): MediaPipe-box embeddings carry a derived fingerprint and must never
+# load as Apple archives. Set from --extractor before any dataset is built.
+_HAND_EXTRACTOR = "apple"
+
+
+def expected_hand_schema() -> str:
+    if _HAND_EXTRACTOR == "mediapipe_full":
+        from active.v17.mediapipe_full_v17 import MediaPipeFullV17Config, derived_fingerprint
+        return derived_fingerprint(schema_fingerprint(HandMobileCLIP2V17Config()), MediaPipeFullV17Config())
+    return schema_fingerprint(HandMobileCLIP2V17Config())
+
+
 
 LOG = logging.getLogger("stage1_hand_mobileclip2_v17")
 
@@ -93,7 +105,7 @@ class HandMobileCLIP2Dataset(Dataset):
         self.label_to_index = {str(item["canonical_label"]): int(item["class_index"]) for item in classes}
         self.index_to_label = {value: key for key, value in self.label_to_index.items()}
         self.num_classes = len(classes)
-        self.expected_schema = schema_fingerprint(HandMobileCLIP2V17Config())
+        self.expected_schema = expected_hand_schema()
         rejected = load_rejections(Path(rejection_path) if rejection_path else None)
         self.files = []
         targets = []
@@ -155,7 +167,7 @@ class HandMobileCLIP2SupplementDataset(HandMobileCLIP2Dataset):
         self.label_to_index = dict(label_to_index)
         self.index_to_label = {value: key for key, value in self.label_to_index.items()}
         self.num_classes = len(self.label_to_index)
-        self.expected_schema = schema_fingerprint(HandMobileCLIP2V17Config())
+        self.expected_schema = expected_hand_schema()
         items, _ = selection_items(Path(selection_manifest), source)
         self.files = []
         targets = []
@@ -183,7 +195,7 @@ class HandMobileCLIP2LocalValidationDataset(HandMobileCLIP2Dataset):
         self.label_to_index = dict(label_to_index)
         self.index_to_label = {value: key for key, value in self.label_to_index.items()}
         self.num_classes = len(self.label_to_index)
-        self.expected_schema = schema_fingerprint(HandMobileCLIP2V17Config())
+        self.expected_schema = expected_hand_schema()
         items, _ = selection_items(
             Path(selection_manifest), "local_deep_clean_val"
         )
@@ -205,10 +217,16 @@ class HandMobileCLIP2LocalValidationDataset(HandMobileCLIP2Dataset):
         values = HandMobileCLIP2Dataset._load(self, path)
         with np.load(path, allow_pickle=False) as payload:
             metadata = json.loads(str(payload["metadata_json"]))
+        apple_ok = (
+            metadata.get("source") == "local_deep_clean_val"
+            and metadata.get("split") == "validation_nonsigner_disjoint_user_approved"
+        )
+        mediapipe_ok = (  # Android family archives label the same split as local_val/val
+            _HAND_EXTRACTOR == "mediapipe_full"
+            and metadata.get("source") == "local_val" and metadata.get("split") == "val"
+        )
         if (
-            metadata.get("source") != "local_deep_clean_val"
-            or metadata.get("split")
-            != "validation_nonsigner_disjoint_user_approved"
+            not (apple_ok or mediapipe_ok)
             or metadata.get("training_eligible") is not False
             or metadata.get("test_accessed") is not False
         ):
@@ -303,6 +321,8 @@ def evaluate(model, loader, device):
 
 
 def train(args):
+    global _HAND_EXTRACTOR
+    _HAND_EXTRACTOR = getattr(args, "extractor", "apple")
     random.seed(args.seed); np.random.seed(args.seed); torch.manual_seed(args.seed)
     device=select_device(args.device)
     if device.type == "mps":
@@ -474,6 +494,7 @@ def build_parser():
     parser.add_argument("--semlex-data-root",type=Path);parser.add_argument("--semlex-manifest",type=Path);parser.add_argument("--local-data-root",type=Path);parser.add_argument("--local-manifest",type=Path);parser.add_argument("--local-source",choices=("local_tier_a","local_deep_clean"),default="local_tier_a");parser.add_argument("--citizen-margin",type=float,default=.45);parser.add_argument("--semlex-margin",type=float,default=.45);parser.add_argument("--local-margin",type=float,default=.10)
     parser.add_argument("--local-validation-data-root",type=Path)
     parser.add_argument("--local-validation-manifest",type=Path)
+    parser.add_argument("--extractor",choices=("apple","mediapipe_full"),default="apple")
     return parser
 
 

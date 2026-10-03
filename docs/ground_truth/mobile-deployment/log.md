@@ -7,6 +7,143 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-04 — Android app builds (Kotlin native layer in the Flutter app); iPhone landmark-only candidates pass floors
+
+Android: words-only Live Reel ported to Kotlin in `mobile_app/slt_mobile_app/android/app/src/main/kotlin/
+com/example/slt_mobile_app/live/` (types, features/crops, segmental decoder, LiteRT 2.2.0 models, MediaPipe
+Tasks 0.10.14 vision + finish gesture, Stage 3 T5 + incremental translator, engine, CameraX activity) and
+`MainActivity` channel (openLiveReel/openPractice/liveReelStatus/listSessions + Android-only
+get/setHandImageMode; inferVideo/shareReport return "iPhone only"). Hand-images mode: AUTO uses a one-time
+MobileCLIP crop timing (<= 12 ms/crop -> on), Flutter settings sheet override (Automatic / Hand images /
+Landmarks). Assets: FP32 TFLite + pinned .task files (268 MB, noCompress); debug APK 512 MB, ARM only.
+Backup before edits: `mobile_app/backup_before_android_live_20261004/`. Build gotchas: exFAT `._*` files in
+`res/` break AGP (dot_clean -m android/app/src); an interrupted NDK install leaves a stub without
+source.properties (delete it). Parity fixtures (89 tune videos, 5,161 frames; reproduce the landmark-only
+replay 89/89): `artifacts/generated/android_parity_fixtures_tune_20261004/` via
+`scripts/dump_android_parity_fixtures_v17.py`; debug-only `live.LiveParityActivity` replays them on the
+phone; `scripts/android_stage3_reference_v17.py` checks T5 sentences. Not yet installed: phone dropped off USB.
+iPhone landmark-only (1-point floors kept): share 0.3 no eligible epoch; encoder-lr 5e-6 epoch 1
+94.71/88.24/95.65, tune proxy 33.6%; frozen encoders epoch 2 94.71/88.04/96.27, proxy 38.1% (Android
+landmark-only proxy 26.1% -> replay 17.70%). Both get Apple-Vision words-only tune replays; held-out once
+for the chosen one. Floor-2 candidate not used.
+
+## 2026-10-04 — Android landmark-only recognizer trained: held-out 9.14% WER, ~70 ms/frame on the phone
+
+Same span recipe as the hand-image recognizer but from the MediaPipe landmark branch with no hand images
+(`--landmark-only` in train_span_recognizer; runtime `recognizer_kind: landmark_only`). Selected epoch 4.
+Isolated 93.92/85.69/95.79 vs Apple 95.24/89.67/96.31 (pass). Live replay: tune 17.70% (hand-image 13.27,
+Apple 10.18); held-out 9.14% (hand-image 8.60, Apple 11.83; gate pass) — local60 4.32%, unseen ASLLRP12 41.7%
+(hand-image 54.2, Apple 33.3). Mac 24 ms/frame. TFLite FP32 27.8 MB, 0/4,232 changes; phone 108.8 ms/B8 on
+4 big cores, 75 MB. Report `artifacts/reports/mediapipe_rebuild_v17_20261004/LANDMARK_ONLY.md`.
+Next: Kotlin app with both modes (auto default by first-launch crop-encode timing + settings override).
+
+## 2026-10-04 — Hand-images-off shortcut fails on continuous signing; landmark-only model needed
+
+User decisions: Android keeps two recognition modes — landmark-only (default on low-end phones) and
+landmarks + hand images (on capable phones; option 2 GPU work later); automatic first-launch default plus
+a manual settings override; hand-image models bundled in the app. Shortcut test (no retraining): the
+MediaPipe span recognizer with every hand view masked keeps isolated accuracy close (Citizen 92.33 /
+SemLex 85.79 / local 95.75 vs 94.44 / 87.73 / 97.20 with images; missing clips counted as errors) but the
+tuning-pool live replay degrades from 13.3% to 24.8% WER (177 vs 207 correct, deletions 38 vs 15).
+Not acceptable; a recognizer trained without hand images is required. New runtime config key
+`hand_images` (default true) skips crop encoding and masks hand views; config
+`stream_config_mediapipe_v2_no_hand_images.json`. Phone cost of the landmark branch alone at batch 8:
+108 ms on 4 big cores (GPU 404 ms) vs 150 ms for the full recognizer. Held-out not used.
+
+## 2026-10-04 — Measured on the 4 GB target phone (Huawei nova Y70): full chain ~8x over budget
+
+Device MGA-LX9: Android 10, Kirin 710 (4xA73 2.0 GHz + 4xA53), Mali-G51 (OpenCL), 3.6 GB. LiteRT
+benchmark_model, pinned cores: hand landmarks GPU 19.6 ms (4 big 36.0); palm detector GPU 26.2; pose/face
+every 8th frame ~8 ms/frame amortised; boundary 9.2 ms (4 big); span recognizer B8 150.6 ms (int8 113.8);
+MobileCLIP2-S0 192.9 ms per crop (GPU delegate only 198/498 ops, 540 ms); T5 encoder 12.9 ms, decoder
+42.6 ms/token (~0.9 s per 20-token sentence; int8 ~0.5 s). Our transformer exports run poorly on the Mali
+delegate; MediaPipe's models are fully GPU-delegated. Sustained 3 min (hand GPU + span CPU): hand stable
+~23 ms, span +20%, battery 35->38 C. Per frame: full chain ~390 ms (~2.5 fps) vs 50 ms budget, ~310 ms of it
+the hand-crop encoder; without crops ~80 ms (~12 fps). Decision needed: landmark-only Android recognizer
+(retrain without hand crops) vs other options. Report: `artifacts/reports/android_device_bench_20261004/REPORT.md`.
+Tools: `artifacts/generated/android_tools/` (adb, benchmark_model), `scripts/bench_android_tflite_v17.py`.
+
+## 2026-10-04 — Android chain converted to LiteRT/TFLite: lossless; speed bound by the hand encoder
+
+`scripts/export_tflite_mediapipe_v17.py` (isolated env `artifacts/generated/litert_env`, litert-torch,
+torch 2.13) exported FP32 + dynamic-int8 candidates to `artifacts/tflite/mediapipe_v17_20261004/`.
+FP32 parity vs PyTorch: boundary 0/5,161 frame changes; span recognizer (B8) 0/4,232 top-1 changes;
+MobileCLIP2-S0 cosine >= 0.9999998 on 600 crops; Stage 3 T5 200/200 identical greedy outputs. int8:
+13 frame changes, 6/4,232, broken encoder (min cosine .007), 192/200 — not adopted. End-to-end TFLite
+replay (new `--backend tflite` in segmental runtime/replay) is word-identical to PyTorch: tune 89/89
+(13.27%), held-out 72/72 (8.60%). Speed, M4 CPU LiteRT 2.2 (4t): boundary 1.2 ms, span batch 16.3 ms,
+MobileCLIP 39.7 ms/crop (78 ms 1t), T5 112 ms/sentence; per frame ~85-90 ms vs 50 ms budget, ~64 ms
+of it the hand encoder (1.6 crops/frame); landmark-only would be ~20-25 ms. TF 2.16's interpreter is
+5-8x slower (~300 ms/frame) and is not the Android runtime. Size: FP32 ~251 MB incl. MediaPipe tasks;
+RAM ~378 MB for the TFLite models on CPU. Conclusion: on a 4 GB phone the hand encoder needs the GPU
+delegate or the landmark-only fallback (requires a crop-free recognizer). No phone measured.
+Environment note: `venv/bin/pip` still targets the deprecated laptop venv; use `venv/bin/python -m pip`.
+A stray install there and a broken ai-edge-litert py3.9 wheel in venv were both removed again.
+Report: `artifacts/tflite/mediapipe_v17_20261004/REPORT.md`.
+
+## 2026-10-04 — MediaPipe family retrained: all stage gates pass; held-out 8.60% WER
+
+Exact rebuild of the words-only live chain on MediaPipe inputs (current `active/v17` code, Apple
+recipes, MPS). Every stage passes the user's 5-point gate (MediaPipe vs Apple, validation top-1, missing
+clips counted as errors): landmark base Citizen 91.80 vs 95.77; landmark branch 93.65/95.99 vs 95.50/
+96.34 (Citizen/local); hand branch 79.63/58.08 vs 80.69/58.15; unified 94.44/87.73/97.62 vs 96.30/89.06/
+97.10 (Citizen/SemLex/local); reel_v2 94.44/87.73/97.51 vs 96.03/89.16/97.03 with phrase 77.61 vs 66.41
+and activity 79.05 vs 69.79; span recognizer 94.44/87.73/97.20 vs 95.24/89.67/96.31 (both epoch 4);
+boundary student KL .2687 vs .2698 on Apple's exact 43 val videos. End to end (words only, torch,
+stream_config_v2 values, MediaPipe early_unsafe): tune 13.27% vs 10.18% WER; held-out 72/186 8.60% vs
+11.83% (gate <=16.83: pass) — local60 1.85% vs 8.64%, but unseen ASLLRP12 54.17% vs 33.33% (11/24 vs
+17/24), consistent with the continuous hand-detection gap. Held-out replayed once after freezing.
+Deviations: MPS not T4; span tuning alpha 1.0 (no proposal twin); Apple four-stream teacher scores reused
+by clip ID; Apple-number floors re-derived by rule (354, 346, 93.44/88.09/97.06); boundary and span
+training sets matched to Apple's at-the-time sets (538 keys; 6,254 non-prefix spans).
+Report: `artifacts/reports/mediapipe_rebuild_v17_20261004/REPORT.md` (gates.json, config, replays).
+Code: additive `--extractor mediapipe_full` options in train_stage_1, hand, unified, phrase-adapt,
+unfrozen isolated_raw, span, boundary (`--av-raw-dir`, `--keys-file`), replay (`--detector`),
+prefix_confusion (`--raw-cache`); Apple defaults unchanged; 98 focused tests pass. Next: TFLite parity.
+
+## 2026-10-04 — MediaPipe extraction stage complete; continuous hand detection gap measured
+
+All inputs for the exact words-only rebuild now exist under `data/local/mediapipe_full_v17_20261003/`:
+20,376 isolated landmark+crop+embedding archives (121 no-hands markers); 543/543 Stage-2 phrase
+window archives + embeddings (0 window-count and 0 target mismatches vs Apple); 1,675/1,675 20 Hz
+continuous captures (`continuous/av_raw`, frame counts identical to Apple for every video) and 665
+span-input memos for local_train/tune/test/asllrp_val (97,928 DGS-teacher span keys). 0 failures.
+
+Defect fixed: the first phrase-embedding run grew to a 31 GB footprint (swap 26.6/27.6 GB, laggy
+machine) because it lacked the Apple encoder's MPS cap and per-archive `empty_cache`; it was stopped
+at 405/543 (atomic writes, no partials) and resumed with batch 32 and a 0.25 MPS cap (~4 GB).
+Both embedding commands now bound MPS memory.
+
+Measured input gap (binding context for gates): on continuous 20 Hz video MediaPipe detects a hand in
+fewer hand-slot frames than Apple — ASLLRP val .798 vs .931, local train .486 vs .574, YouTube .746 vs
+.819 — while detected hands carry all 21 joints (not an edge-joint artifact). Not recoverable by
+threshold (12 ASLLRP videos: .81/.83/.82 at .5/.3/.2 vs Apple .96) or by stateless IMAGE-mode hands
+(ASLLRP .82 vs VIDEO .80; local .46 vs .48). Isolated archives stay near parity after the v17 3-frame
+gap interpolation. Consistent with the 2026-08-09 bakeoff (pre-trim hand detection 38.5% vs 42.7%).
+Phrase hand-crop validity .598 vs .662; landmark-valid windows .951 vs .967. Candidate mitigation only
+if a gate fails: a second hand pass on a body-centred crop (smaller hands, ASLLRP 1280x720). No
+training, no test access. Next: Phase 4 retraining (needs MediaPipe-aware loaders/fingerprints).
+
+## 2026-10-04 — MediaPipe isolated extraction complete and audited
+
+`data/local/mediapipe_full_v17_20261003/` (fingerprint d17b7cd2ecc5614f, pose lite, GPU): 20,497 isolated
+jobs = 20,376 landmark+crop archives and 121 no-hands markers (`*.outcome.json`); 0 failures, 0 GPU
+aborts, no partial files; 2.39 clips/s overall with 2 shards. Per source (Apple / MediaPipe means):
+
+| source | clips | no hands | hand | two-hand | face | body | jitter |
+|---|---:|---:|---|---|---|---|---|
+| citizen_train | 1476 | 2 | .569/.571 | .310/.312 | .788/.778 | .533/.604 | .089/.067 |
+| citizen_val | 378 | 0 | .569/.579 | .304/.310 | .795/.802 | .393/.567 | .107/.062 |
+| semlex_train | 1388 | 2 | .583/.578 | .322/.309 | .785/.752 | .424/.513 | .100/.061 |
+| semlex_val | 978 | 4 | .581/.578 | .323/.313 | .770/.747 | .416/.503 | .103/.059 |
+| local_train | 13381 | 97 | .655/.656 | .375/.384 | .774/.782 | .524/.635 | .069/.054 |
+| local_val | 2896 | 16 | .660/.659 | .383/.390 | .766/.773 | .518/.628 | .068/.054 |
+
+Binding for evaluation: MediaPipe validation must be scored on the full Apple validation lists with
+no-hands clips counted as errors (20 validation clips), never on the smaller extracted subset.
+Input-quality comparison only; no accuracy claim. Phrase windows, continuous captures and
+embeddings run next (sequential, background).
+
 ## 2026-10-03 — Android MediaPipe family: full extractor built, pilot passed, extraction running
 
 Plan locked (see high.md). New code, nothing existing modified: `active/v17/mediapipe_full_v17.py`

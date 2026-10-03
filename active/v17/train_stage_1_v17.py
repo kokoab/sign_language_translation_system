@@ -67,7 +67,7 @@ else:
 LOG = logging.getLogger("stage1_v17")
 SPLITS = ("train", "val", "test")
 EXPECTED_SHAPE = (CLIP_LENGTH, NUM_NODES, NUM_CHANNELS)
-EXTRACTORS = ("apple", "mediapipe_t50")
+EXTRACTORS = ("apple", "mediapipe_t50", "mediapipe_full")
 
 
 def mask_mouth_nodes_v17(features: torch.Tensor) -> torch.Tensor:
@@ -384,6 +384,10 @@ def extractor_schema_fingerprint(extractor: str) -> str:
             minimum_hand_tracking_confidence=0.50,
         )
         return mediapipe_schema_fingerprint(config)
+    if extractor == "mediapipe_full":
+        # Android family: MediaPipe hands, pose and face (never mixed with Apple archives).
+        from active.v17.mediapipe_full_v17 import MediaPipeFullV17Config, schema_fingerprint as full_fp
+        return full_fp(MediaPipeFullV17Config())
     raise ValueError(f"extractor must be one of {EXTRACTORS}")
 
 

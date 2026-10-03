@@ -34,6 +34,8 @@ from active.v17.train_unified_multimodal_student_v17 import load_cache, metrics
 
 DEFAULT_BASE = Path("artifacts/models/stage1_v17_unified_multimodal_student_v1/best_model.pth")
 DEFAULT_CACHE = Path("artifacts/generated/unified_multimodal_student_v17")
+# Phrase archives must come from one extractor family (set by --extractor; Apple by default).
+REQUIRED_LANDMARK_SCHEMA = "slt_apple_vision_landmarks_v17"
 
 
 def sha256(path: Path) -> str:
@@ -76,6 +78,9 @@ def phrase_cache(
     for rgb_path in sorted(rgb_root.glob("*.npz")):
         with np.load(rgb_path, allow_pickle=False) as payload:
             metadata = json.loads(str(payload["metadata_json"].item()))
+            landmark_schema = metadata.get("landmark_schema", "slt_apple_vision_landmarks_v17")
+            if landmark_schema != REQUIRED_LANDMARK_SCHEMA:
+                raise ValueError(f"{rgb_path}: {landmark_schema} != required {REQUIRED_LANDMARK_SCHEMA}")
             landmark = np.concatenate(
                 payload["landmarks"].astype(np.float32, copy=False), axis=0
             )
@@ -222,9 +227,14 @@ def main() -> None:
     parser.add_argument("--boundary-jitter", type=float, default=0.10)
     parser.add_argument("--device", choices=("auto", "cpu", "mps"), default="auto")
     parser.add_argument("--seed", type=int, default=27117)
+    parser.add_argument("--extractor", choices=("apple", "mediapipe_full"), default="apple")
     args = parser.parse_args()
     if args.output_dir.exists():
         raise FileExistsError(f"refusing to overwrite existing output: {args.output_dir}")
+    global REQUIRED_LANDMARK_SCHEMA
+    if args.extractor == "mediapipe_full":
+        from active.v17.mediapipe_full_v17 import SCHEMA_NAME
+        REQUIRED_LANDMARK_SCHEMA = SCHEMA_NAME
     if any("test" in {part.lower() for part in path.parts} for path in (
         args.phrase_rgb, args.phrase_hand,
     )):
