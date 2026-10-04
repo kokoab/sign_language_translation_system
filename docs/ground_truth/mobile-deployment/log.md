@@ -7,6 +7,255 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-05 — offline Android hotspot is a supported network candidate
+
+User has no router, may consider a team phone hotspot but prefers none, and requires
+participant setup at the venue rather than beforehand. Android officially supports
+LocalOnlyHotspot: nearby devices communicate on a network with no internet access.
+This establishes an offline transport candidate, not a working SLT deployment. A team
+Android phone could create the network while the Mac supplies assets; client-to-client
+reachability on the exact hardware still needs verification. Participant phones need
+no hotspot utility. GitHub local-only hotspot projects exist, but none was installed,
+audited or selected. Ordinary iPhone Personal Hotspot must not be assumed equivalent.
+
+Mac Internet Sharing documentation describes sharing an upstream connection; an
+upstream-free Mac Wi-Fi hotspot has not been verified. Browser camera/service worker
+still require a trustworthy origin, and the native Apple Vision/Core ML pipeline still
+needs a validated browser alternative before claiming complete-app parity. Offline
+hotspot solves transport only. Next safe action: identify the available team phone and
+whether one brief offline-hotspot connection is acceptable. No implementation selected;
+no app, account or network settings changed. Changed only this log.
+
+Sources: https://developer.android.com/develop/connectivity/wifi/localonlyhotspot ;
+https://support.apple.com/en-qa/guide/mac-help/mchlp1540/mac ;
+https://github.com/parthbhinde/react-native-local-only-hotspot .
+
+---
+
+## 2026-10-05 — venue has no Wi-Fi; distinguish offline networking from internet
+
+User clarified there is no Wi-Fi at the testing venue and prefers all loading from
+Mac storage. Explained Ethernet was a requirement of Apple's proposed tethered internet
+sharing, not of model inference or offline operation. That method is not an established
+fit for this venue; no wired internet or adapter availability is assumed.
+
+AirDrop uses peer-to-peer Wi-Fi without an access point/internet (Apple security guide),
+so it can transfer files at the venue, but file transfer alone does not install a native
+app or establish a service-worker PWA. ServiceWorker registration requires an HTTP(S)
+URL and trustworthy origin; an AirDropped file:// HTML bundle cannot supply the normal
+offline-PWA registration path. Local Mac hosting over a private network is a candidate
+only if participant connection to an offline local network is acceptable; trusted HTTPS
+and offline restart persistence still need verification. Do not equate a local Wi-Fi
+network with internet access, or claim ordinary USB trust gives Safari a Mac web-server
+connection. No solution satisfying all constraints is yet verified.
+
+Sources: https://support.apple.com/en-gb/guide/security/sec2261183f4/1/web/1 ;
+https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register .
+Changed only this log. Next safe action: clarify whether an isolated local network
+created by the team is prohibited, or only reliance on venue Wi-Fi/internet. No app,
+network settings, files on phones or models changed.
+
+---
+
+## 2026-10-05 — allowed onboarding fixed; USB-loaded offline web app remains a candidate
+
+User permits USB, unlock/trust-Mac, AirDrop, browser opening, Home Screen addition,
+installation/Open confirmation and camera permission. Participant Apple Account login,
+Developer Mode and joining Wi-Fi are prohibited; developer-identity trust is only
+"maybe". Requires zero budget, complete app, iOS 17+, no mandatory OS update, local
+phone inference and offline reopening after app/phone restart and on another day.
+Browser-compatible pipeline is acceptable only without regression. One participant
+at a time; loading should preferably be supplied locally by Mac/AirDrop.
+
+Native Personal Team/iloader route no longer fits. AirDrop of HTML/IPA alone is not
+established as an installable, camera-capable offline PWA. Promising infrastructure
+finding: Apple's documented tethered caching shares a Mac's internet connection to
+iPhones over USB, with Ethernet internet on the Mac as a requirement. This could
+bootstrap a trusted-HTTPS browser app without participant Wi-Fi/account/Developer Mode,
+then cache shell/models for disconnected use. This is feasibility only: no iPhone USB
+browser connectivity, service worker/camera, full model port or restart persistence test
+has run. Apple Content Caching caches supported Apple/iCloud assets, not arbitrary model
+files; do not claim it automatically caches our browser models. Strictly local model
+serving over USB needs separate endpoint/network/TLS verification.
+
+Apple DTS also documents an iPhone USB-Ethernet adapter reaching a Mac web server on an
+isolated Ethernet network; this needs existing/borrowed hardware, not assumed purchases.
+Safari cached storage is best effort; offline reopen can be implemented and tested but
+unconditional persistence under storage pressure is not guaranteed. No implementation
+selected. Questions still needed: existing Mac Ethernet access and whether one-time
+HTTPS loading through Mac-provided USB internet is acceptable.
+
+Sources: https://support.apple.com/en-ph/guide/deployment/dep38ff24bed/web ;
+https://support.apple.com/guide/deployment/intro-to-content-caching-depde72e125f/web ;
+https://developer.apple.com/forums/thread/821159 ;
+https://webkit.org/blog/14403/updates-to-storage-policy/ . Changed only this log;
+no account/network settings, installs, builds, models or tests changed. Next safe action:
+resolve infrastructure constraints, then discuss a small connectivity/offline-shell pilot
+before any full browser port or non-regression claim.
+
+---
+
+## 2026-10-05 — low-burden browser/PWA and App Clip deployment feasibility
+
+User now prioritizes no manual downloads/installation or Developer Mode for participants;
+asked about local models in a PWA and other alternatives. This preference supersedes
+iloader as the leading proposal despite earlier acceptance of participant account login.
+Questions sent about Safari QR + camera permission, automatic model downloads on provided
+Wi-Fi, and whether a distinct browser pipeline or Mac-side inference is acceptable.
+Answers pending; discussion only, no implementation authorized or selected.
+
+Primary-source research confirms local browser inference is possible: ONNX Runtime Web
+supports Wasm and model caching; LiteRT.js runs .tflite models via Wasm/WebGPU. Safari 26
+ships WebGPU on iOS; older ONNX support tables still mark Safari WebGPU unsupported, so
+use the WebKit release evidence plus exact-runtime device verification rather than either
+table alone. No claim that our models already work or meet latency/accuracy on Safari.
+MediaPipe Tasks has web/Safari support. The current Swift Apple Vision/Core ML pipeline
+cannot simply execute as browser JavaScript; a browser candidate needs its own extractor/
+runtime contracts. Existing MediaPipe Android landmark-only recognizer is 27.8 MB FP32
+TFLite (recognizer only, not full web payload); using it on iPhone is a distinct proposed
+deployment family requiring authorization and validation, not replacement of Apple inputs.
+No feeding MediaPipe landmarks into Apple-trained models is proposed.
+
+Model cache/Service Worker assets can enable offline operation after initial load, but
+Safari storage is best effort and can be evicted. Camera capture requires permission and
+a secure context; any browser-to-Mac option must use trusted HTTPS without asking users
+to install a self-signed certificate. Mac-side raw-video inference could retain Apple's
+model family but is network-dependent and not evidence of phone-local inference/speed.
+
+App Clip is a native low-install-burden candidate: QR/link invocation, no full app install,
+native frameworks, automatic asset loading; still requires Developer Program distribution/
+App Store review. Local test App Clip experiences require per-device setup and do not
+solve this onboarding requirement. Six current source packages in
+`mobile_app/slt_mobile_app/ios/Runner/LiveReel/Models` total 153.43 decimal MB (two
+boundary models, hand encoder, recognizer, T5 encoder/decoder). Not an App Clip variant,
+compressed download, browser-model size or RAM measurement. Apple's App Clip size limits
+and allowed additional asset downloads mean packaging/loading must be evaluated separately.
+
+Sources: https://webkit.org/blog/17333/webkit-features-in-safari-26-0/ ;
+https://developers.google.com/edge/litert/web ;
+https://onnxruntime.ai/docs/tutorials/web/large-models.html ;
+https://developers.google.com/edge/mediapipe/solutions/setup_web ;
+https://webkit.org/blog/14403/updates-to-storage-policy/ ;
+https://www.w3.org/TR/mediacapture-streams/ ;
+https://developer.apple.com/documentation/appclip/choosing-the-right-functionality-for-your-app-clip ;
+https://developer.apple.com/documentation/appclip/creating-an-app-clip-with-xcode .
+GitHub Safari resource issues are evidence of possible implementation risk, not failure
+rates for our pipeline. No app, installer, model, account or test changes; only this log.
+Next safe action: resolve the browser interaction/network/pipeline preferences, then
+discuss a narrowly bounded Safari feasibility pilot before building a complete product.
+
+---
+
+## 2026-10-05 — immediate-use deployment: 50 iPhones/day on one Mac
+
+User clarified testing is immediate after installation and never longer than seven
+days per participant; expected throughput is ~50 phones/day with one Mac. Preferred
+onboarding is phone passcode + trust/authorization only, or phone-to-phone AirDrop.
+User explicitly keeps this discussion focused on deployment, not evaluation design.
+
+Verified distinction: USB trust unlocks communication but does not supply the Apple
+certificate/provisioning profile required to execute the app. Free central signing
+remains limited to three registered devices; deleting an app does not create a new
+device slot. Per-participant free signing (iloader/Sideloadly) remains technically
+possible, but adds each person's Apple Account authentication/2FA and Developer Mode/
+trust setup. Participant subsequently accepted using their own Apple Account login.
+No measured per-phone installation time or 50/day throughput claim is established.
+AirDrop transports an IPA/link; it does not bypass signing or act as a stock iOS IPA
+installer. Configurator similarly installs appropriately provisioned builds; it does
+not create a free unlimited signing entitlement. Paid ad hoc is capped at 100 iPhones
+per membership year, whereas TestFlight supports the requested hundreds.
+
+Sources: https://support.apple.com/en-gb/guide/security/sec7c917bf14/web ;
+https://developer.apple.com/help/account/basics/about-your-developer-account ;
+https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices ;
+https://developer.apple.com/help/account/devices/devices-overview/ ;
+https://github.com/nab138/iloader . No builds, installs or account changes. Changed
+only this log. Recommended discussion route is a prebuilt Release IPA + iloader,
+signed separately with each participant's account. Official iloader README supports
+importing arbitrary IPAs. Source inspection of `src-tauri/src/account.rs` confirms
+optional credential persistence (`save_credentials`), stored-account deletion and
+in-memory account invalidation. Prefer no credential persistence and clear the active
+session between participants; UI behaviour must be verified in the pilot. No installer
+has been installed and our IPA has not been signed using it. Next safe action: discuss
+the exact installation workflow, then pilot compatibility/account switching and measure
+per-phone time before committing to 50/day. AirDrop can share the package, not replace
+each recipient's provisioning/install step.
+
+---
+
+## 2026-10-05 — distribution constraint clarified: one Mac setup visit is acceptable
+
+User allows connecting each phone to the Mac once, but cannot log their own Apple
+Account into other people's phones. Several hundred phones remains the intended scale.
+This supersedes the no-cable constraint in the preceding research entry below.
+
+Discussion only; no implementation selected. Signing in Xcode/installer is separate
+from the phone's iCloud account. The user's free signing account still cannot provision
+hundreds of devices. Each participant can instead self-sign with their own free Apple
+Account (the SideStore guide explicitly says it need not be the phone's iCloud account).
+For one short session, computer-side signing/installation gives up to seven days without
+SideStore. For ongoing use, SideStore is now a candidate: initial Mac/USB setup, then
+install the shared app IPA in SideStore and refresh both apps on the phone before their
+seven-day profiles expire. The documented workflow requires Wi-Fi and LocalDevVPN for
+refresh; recognition itself remains offline. No model changes are implied. This has not
+been tested with our Runner IPA or across participant phones.
+
+"One Mac visit" is a normal-path goal, not a guarantee: SideStore expiry or invalid
+pairing can require another computer setup. Official FAQ/prerequisites/common-issues
+and project issue reports were checked; reports are evidence of possible support burden,
+not measured failure rates. Each participant must handle their own credentials/2FA;
+no request to share the user's account or collect participant passwords is proposed.
+References: https://docs.sidestore.io/docs/installation/install ;
+https://docs.sidestore.io/docs/installation/prerequisites ;
+https://docs.sidestore.io/docs/faq ; https://github.com/SideStore/SideStore/issues/906 .
+
+Changed only this log. Next safe action: discuss short-session installs versus ongoing
+SideStore use, then authorize a small pilot before planning hundreds of installations.
+
+---
+
+## 2026-10-05 — iPhone distribution research; hundreds of phones, no cable onboarding
+
+Discussion only. User clarified several hundred participants, in-person testing but
+installation by a shareable link without connecting each iPhone to the Mac; the school
+cannot provide an institutional developer account. No distribution implementation chosen.
+
+Read current ground truth, targeted mobile-deployment history/current diff, and the
+external Flutter app at `/Volumes/secret/SLT/mobile_app/slt_mobile_app`. iOS uses native
+Swift Apple Vision/Core ML, bundled models, and local session/video storage. Xcode pins
+one development team and `com.kokoab.sltMobileApp`; Podfile/project/framework minimum
+is iOS 17. Current local Runner.app embedded profile admits one device and lasts exactly
+seven days (2026-09-28 14:09:11 UTC to 2026-10-05 14:09:11 UTC). This is build-artifact
+evidence, not a fresh inspection of the installed phone. Signing is independent of model
+training; a browser version would require a different runtime and new validation.
+
+Verified Apple Personal Team limits: three test devices per platform, three installed
+free-provisioned apps per device, seven-day profiles. AltStore/Sideloadly automate
+refresh with a computer; SideStore permits later phone-side refresh but documented
+initial setup still uses USB/computer, an Apple Account, trust/Developer Mode and a
+local VPN. These do not meet the requested hundreds-of-phones link-only workflow.
+TestFlight supports 10,000 external testers, 90-day builds, and first-build beta review;
+developer membership is required, testers do not pay. An authorized sponsoring publisher
+with an existing membership could remove this team's direct fee. Eligible nonprofit/
+educational organizations can request a fee waiver; individuals cannot claim it merely
+for student/research status. ResearchKit supplies research-app features, not signing.
+University of Minnesota's work-zone research report documents TestFlight distribution;
+Reddit anecdotes corroborate provisioning/refresh friction but are not policy evidence.
+
+Primary references checked: https://developer.apple.com/support/compare-memberships/ ;
+https://developer.apple.com/help/account/basics/about-your-developer-account ;
+https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/ ;
+https://developer.apple.com/help/account/membership/fee-waivers/ ;
+https://docs.sidestore.io/docs/installation/install ; https://github.com/SideStore/SideStore ;
+https://github.com/altstoreio/AltStore ; https://sideloadly.io/faq.html ;
+https://cts-d10resmod-prd.oit.umn.edu/pdf/mndot-2023-04.pdf .
+
+Changed only this research log. No builds, installations, account changes, model changes,
+or test-data access. Next safe action: discuss whether an authorized external publisher/
+sponsor is available, or which constraint may change (budget, onboarding, native runtime).
+
+---
+
 ## 2026-10-04 — Android app builds (Kotlin native layer in the Flutter app); iPhone landmark-only candidates pass floors
 
 Android: words-only Live Reel ported to Kotlin in `mobile_app/slt_mobile_app/android/app/src/main/kotlin/
