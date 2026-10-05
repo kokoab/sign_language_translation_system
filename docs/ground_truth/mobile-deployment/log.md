@@ -7,6 +7,249 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-06 — Android live-camera empty-scene smoke passes
+
+Parent opened Flutter home/models ready, LANDMARKS default, native Live and Start.
+Frame counter advanced to265 without crash; snapshot10.3FPS/latest85ms, zero hands.
+This establishes camera/MediaPipe execution on an empty scene only, not signer
+accuracy or complete signed-input latency. Finish/Back stopped it; any empty smoke
+sessions remain in history(no deletions). Report and snapshot:
+artifacts/reports/android_runtime_pool_isolation_20261006/REPORT.md.
+Restored temporary log.tag.SLTParity property to initial empty state. Build success
+and paired debug diagnostics verified; production model/runtime unchanged. Next:
+native profiling under matched conditions and signer/sustained complete-pipeline
+acceptance. No real-time readiness claim; exact token savings remain unavailable.
+
+## 2026-10-06 — parent-led Android runtime experiments complete; no safe speed workaround established
+
+Completed three parent-authored paired microbenchmarks via Luna completion watcher. Boundary-pool
+isolation: isolated medians241.8/324.3ms vs combined281.9/291.0ms, no consistent gain. External
+run-as affinity denied; debug in-app taskset own inference thread succeeds(ff→f0), but pinned
+medians340.5/352.1ms vs default190.3/185.4ms. No production affinity change. Direct-buffer
+comparison: wrapper196.1/298.6ms; direct no-write265.8/185.2ms; direct write+run250.5/185.0ms.
+Input copies/wrapper bypass do not explain native execution variability. All4threads,-4priority,
+30samples/component/run,ABBA. Process CPU/run captures all app threads, not host load percentage.
+
+Only app change is debug LiveParityActivity:isolated/direct/big_cores flags, bounded in-app affinity
+command, process CPU timing and Log.println(INFO) completion logging (Huawei Log.i suppressed).
+Parent authored/reviewed exact runners and interpreted results; Luna executed/waited, without
+new independent fixes. Build caps and cleanup retained; no unrestricted retry. APK installed,
+latest date10:30:27, after parent confirmed Huawei's already-authorized install prompt. Separate
+push14-15s proves transfer not bottleneck. Successful constrained debug rebuilds14-22s. No
+production inference/model/config changes. Saved recognition89/89,frame5161/5161 andStage3
+sentence89/89 parity remain; no new protected evaluation. Root observed Flutter home launch;
+complete camera/signer/stress acceptance remains open.
+
+Report artifacts/reports/android_runtime_pool_isolation_20261006/REPORT.md; source JSONs
+paired_results_v3,affinity_results_v1,direct_results_v1. Updated Android current state. Exact
+token savings cannot be measured; supported mailbox completion wake-up worked and parent did
+not repeatedly poll runs. Next safe diagnostic:native operator/thread/frequency tracing under
+matched conditions. Do not claim real-time readiness or apply pinning/pool removal as a fix.
+
+## 2026-10-06 — parent-reviewed contained build succeeds; phone installer waits behind proximity guard
+
+Parent reviewed worker's debug isolated benchmark branch and exact build command. Standard JDK
+version/class/module diagnostics pass; no proven persistent JDK corruption. After stale-daemon
+cleanup, contained gradlew help passes and assembleDebug exits0 (1m29s,141tasks). Controls:
+--no-daemon --max-workers=2, JAVA_TOOL_OPTIONS ActiveProcessorCount2/Xmx2g, overridden Gradle
+JVM args ActiveProcessorCount2/Xmx2G/MaxMetaspaceSize1G, instrumentation disabled, external
+180s timeout and task-owned process cleanup. These restrict concurrency, not a measured hard
+CPU-percentage ceiling. APK511,928,351bytes; parent ZIP CRC check passes all827members and
+finds the debug benchmark-mode string in dex. No production runtime behavior changed.
+
+Streaming adb installs timed out. Parent-authored separate transfer/install runner pushes APK
+successfully14.44s/34.1MB/s, but pm install exceeds120s. Package remains at2026-10-05 install.
+One-shot device diagnosis finds InstallStaging behind keyguard with focus Emui:ProximityWnd;
+phone sensor/lock state must be resolved. Asked user asynchronously to uncover/wake/unlock.
+No blanket settings/security change made. Parent authored paired benchmark runner with ABBA
+order,4threads,display priority,30samples/run,run-as big-core affinity f0 and blocking logcat
+BENCH done/FAILED events; not yet executed while install is unresolved.
+
+User clarified lower-cost agent should watch, parent should own technical decisions. Parent
+now reviews changes, authors exact runners, and limits Luna to executing/waiting/completion
+messages. Blocking mailbox waits replace parent polling; actual token counters unavailable,
+so net token savings remain unmeasured. No desktop notifications. Next: resolve device-side
+installer, then run paired experiment and validate any evidence-backed runtime change.
+
+## 2026-10-06 — isolated Android benchmark blocked by Gradle daemon CPU spin
+
+Added a debug-only `isolated` option in `LiveParityActivity.kt` to benchmark the landmark span recognizer without first constructing or warming the boundary model. Combined mode remains the default; production runtime code is unchanged.
+
+Flutter debug build failed with `Incompatible magic value 1784772193` in Java class loading and Gradle lock cleanup reported `Device not configured`. The completed Gradle 8.14 daemon then remained at 919.2% CPU (PID 34615, PPID 1); `jcmd` could not attach. A retry configured for two Gradle workers and disabled instrumentation still drove the retry daemon to 309% CPU, so its task-owned wrapper and daemon were terminated (Flutter exit 143). No APK was produced, installed, or benchmarked; there are no isolated/combined timing results.
+
+Report: `artifacts/reports/android_runtime_pool_isolation_20261006/REPORT.md`. Next safe action: diagnose the class-format failure, then retry only with `--no-daemon`, at most two workers, JVM `-XX:ActiveProcessorCount=2`, and a hard external timeout; verify the CPU bound before device execution.
+
+## 2026-10-06 — user forbids desktop notifications; automatic re-entry unavailable
+
+User clarified completion must notify the agent, never the user. Removed both osascript
+desktop notifications from the diagnostic runner. Its completed run is not being relaunched.
+Same-session CLI resume already failed due to an active writer; no exposed background
+completion hook can wake this assistant after ending a turn. Do not promise automatic
+re-entry or use desktop notifications as a substitute. Results remain preserved. No
+production app changes. Continue only with supported execution/completion handling.
+
+## 2026-10-06 — completed Android diagnostics; Stage3 parity passes, self-resume failed
+
+After user follow-up, read completed one-shot results once (no periodic status checks).
+Stage3 comparison passes89/89 sentences against Python. Two30-sample app batch8 runs:
+4threads display median333.5/279.6ms;2threads349.2/402.8ms;1thread667.6/732.5ms;
+4threads urgent-display254.6/245.7ms. Standalone big-core averages1/2/4threads383.957/
+198.418/108.799ms. Priority/affinity are not matched; sequential runs may have state
+confounds. App single-thread slowdown this session means parallel scaling alone is
+not established as the cause. No production runtime changes made or improvement claimed.
+
+The command-exit callback attempted same-session Codex exec resume, but the active desktop
+writer caused thread-store conflict. Automatic return did not work; do not reuse it as a
+verified callback. Result report: artifacts/reports/android_runtime_takeover_20261006/REPORT.md.
+Updated PROJECT_GROUND_TRUTH.md to mark Stage3 sentence parity complete. Next safe action:
+isolated recognizer versus boundary-pool debug comparison with matched execution conditions,
+then saved-fixture and live-camera validation. Existing data/test gates remain intact.
+
+## 2026-10-06 — Android takeover authorized; event-driven diagnostics launched
+
+User authorized continuing the Android MediaPipe/TFLite performance/parity work, explicitly forbidding
+polling and requesting a completion-triggered return to this session. Created syntax-checked one-shot
+runner `artifacts/generated/android_runtime_takeover_20261006.py`. It compares the installed app's
+landmark batch8 with1/2/4 threads and display/urgent-display priority (two runs of30 samples), then
+standalone pinned-core benchmark_model; independent Stage3 Python reference comparison uses the
+already-saved89 phone sentence results. Device is connected (Huawei MGA-LX9; battery59%,31.0C).
+No new model selection/test access. No production app changes yet.
+
+Runner blocks on streamed BENCH done/FAILED logcat events, subprocess exit and bounded timeout;
+it does not repeatedly check status. Outputs: `artifacts/reports/android_runtime_takeover_20261006/`.
+On completion/failure it emits a macOS notification and invokes installed Codex CLI `exec resume`
+for this exact session01a10ec8-5739-7302-b607-2365bf04c192, with the authorized follow-up task and
+result paths. Resume output is preserved in resume.log and FINAL_RESULTS.md. This is a same-session
+continuation, not an independent delegated task; desktop UI delivery of the resumed answer is not
+verified. Next action after completion notification: review results, diagnose the scaling cause,
+validate selected changes without polling and report evidence/limitations. Preserve existing changes.
+
+## 2026-10-06 — Android integration status reconciled with completed phone parity
+
+Read-only implementation review requested by user, including pasted 2026-10-05 runtime tuning
+note. Confirmed saved `artifacts/generated/android_parity_results_tune_20261005.json` summary:
+Huawei MGA-LX9, 89/89 video matches, zero frame commitment mismatches across 5,161 observations.
+Debug LiveParityActivity injects Python-extracted observations into Kotlin landmark-only boundary/
+segmental runtime; this establishes fixture parity, not live camera/MediaPipe extraction parity.
+Observe mean247.29/median210.77/p90524.31ms excludes camera/MediaPipe and Stage3. Stage3 fields
+exist for89 fixtures, all t5_efficient_tiny, mean605.59ms/sentence; no saved Python sentence
+comparison found in the targeted generated-output search. Do not count rendering as sentence parity.
+
+Current app LiveModels.kt uses LiteRT CompiledModel + CPU CpuOptions (up to4 threads). Its dated
+comment documents the Interpreter XNNPACK path staying single-threaded (~380ms batch8 across
+requested thread counts). Pasted tuning note reports one-thread stable~364ms, four-thread
+min155/median274.8/p90432.3ms versus standalone benchmark~113ms batch8. Multiple model thread
+pools are a hypothesis from that note, not a confirmed cause. Correctness passed; in-app scaling
+and real-time performance remain unresolved. CameraX KEEP_ONLY_LATEST, native MediaPipe,
+Live/Practice activities, finish handling, session storage, T5 and Flutter mode controls exist;
+no live-camera acceptance result found in reviewed evidence.
+
+Changed only this log and the Android current-state paragraph in PROJECT_GROUND_TRUTH.md to
+replace stale install/parity-pending wording. No app/model changes, builds, training or device
+runs performed. Next safe action: diagnose app latency, then verify Stage3 sentence parity,
+camera/frontend behavior and sustained complete-pipeline performance; preserve test gates.
+
+## 2026-10-06 — expanded distribution review; offline link-local USB peer reachable
+
+User requested broader investigation after the managed USB bridge failure. Reviewed
+Apple docs, original GitHub sources, first-hand Reddit/StackOverflow reports and the
+USENIX2026 sideloading study. New candidates: direct link-local USB; Mac loopback-source
+offline Wi-Fi; small App Store localhost host plus locally supplied assets; opposite
+direction Personal Hotspot USB. Public enterprise certificates were considered, not
+downloaded/used: Apple requires initial internet verification and periodic revalidation,
+with Allow & Restart on18+; no dependable7day external-research route established.
+JS Shell PH App Store listing is free/6.6MB/iOS17+ and claims localhost, persistent
+files/camera support; not an installed/tested SLT host. HTML Serve is iPad-only. Do
+not describe any web/interpreter host as preserving the complete native pipeline.
+
+Read local AssetCacheTetheratorUtil manual (root needed to change state); no sudo
+authentication available and no third-party scripts executed. Inspected ordinary
+Internet Sharing separately: selected inactive Thunderbolt source and USB targets,
+briefly enabled; no managed bridge established. Restored Wi-Fi source, all targets
+off, sharing off. No Wi-Fi AP broadcast or loopback service created.
+
+Crucial follow-up: en7 remained active with Mac169.254.167.131 and USB peer169.254.92.174,
+same peer MAC as prior bridge. With Content Caching/tetherator/ordinary sharing off,
+turned Mac Wi-Fi off: 2/2 ping replies at2,8,16seconds (6/6) and no upstream default
+route. Restored Wi-Fi in finally. This is warm already-paired/developer-enabled device
+network reachability, not Safari fetch, cold pairing, replug, reboot or general iOS17+
+proof. Interface may depend on earlier tethered/developer-tool activation; origin
+not established. Previous report's bridge failure is valid but does not rule out USB.
+
+Evidence: artifacts/reports/iphone_usb_delivery_20261006/linklocal_probe.json and
+RECONSIDERED_OPTIONS.md. Added follow-up to REPORT.md/current ground truth. No models,
+app, training gates, participant accounts, profiles or certificate trust changed.
+Link-local evidence assertions passed after correcting the check to read tetherator
+status from stderr (initial assertion wrongly checked stdout only). Sharing restoration
+verified in UI; targeted diff --check passed. Regenerated LARGE_FILES.md.
+Next: prioritize fresh-initialization and trustworthy-origin Safari tests on this
+direct USB path; keep Mac-only AP and one-small-host-install as distinct compromises.
+
+---
+
+## 2026-10-06 — USB phone page delivery passed; upstream-free configuration failed
+
+User confirmed the connected phone displayed the probe and authorized autonomous
+completion/reporting. Server recorded a 200 GET from USB peer 192.168.234.2. Native
+SLT app, models and datasets unchanged. Two bounded Mac Wi-Fi-off probes restored
+Wi-Fi in finally blocks. First: bridge100 disappeared, 0/5 ping replies, local page
+unreachable, no default route. Repeat: initial bridge/ping passed, but bridge absent
+and ping failed at 5 and 12 seconds; devicectl still reported connected/paired/wired.
+After restoring Mac Wi-Fi, USB bridge and ping recovered after a delay. Cache status
+remained Active=true/TetheratorStatus=1 even during failure; those flags are insufficient.
+This tests no active Wi-Fi/Ethernet on the Mac, not an associated network without WAN
+or every offline USB method. Do not claim all USB methods require internet.
+
+Mac Safari plain-HTTP USB-origin diagnostic: secureContext=false, serviceWorkerAvailable
+and cameraAPIAvailable=false. Not an iPhone diagnostic. Phone remote inspection showed
+Enable Web Inspector on device; no phone inspection utility/security setting changed.
+No automated phone reload, reboot, Home Screen installation, camera or full inference
+test performed. No new app/model port and no training/test gates consumed.
+
+Reports/evidence: artifacts/reports/iphone_usb_delivery_20261006/REPORT.md and
+APP_FEASIBILITY.md, with bounded network JSON evidence and disposable HTML probes.
+Evidence assertions passed (offline failure, wired connection, browser diagnostic and
+cleanup); targeted git diff --check passed. Regenerated artifacts/LARGE_FILES.md as
+required after report creation; preserved unrelated worktree changes.
+Restored Mac Wi-Fi on, Content Caching off, USB connection sharing off, All Content
+original selector, Safari developer menu off. Stopped server; no port8765 listener,
+USB bridge absent. System-managed393KB caching remains; no purge. Phone radios remain
+as user left them. Current state paragraph added to PROJECT_GROUND_TRUTH.md.
+
+Decision: tested tethered-sharing setup is not venue-ready; HTML USB success is not
+complete offline SLT deployment. Next safe action: discuss the measured transport
+failure and separate trusted-HTTPS/full-browser-pipeline feasibility. Offline Android
+hotspot remains a conditional candidate, not a selected/verified complete solution.
+
+---
+
+## 2026-10-06 — connected iPhone USB browser transport probe prepared
+
+User authorized trying USB delivery on their currently connected phone. Read-only
+inspection found paired iPhone 13, wired transport, iOS 26.7.1 and Developer Mode
+already enabled; this is not representative proof for iOS 17 or a new participant.
+Initially en6 (iPhone USB) was inactive and Content Caching/USB sharing were off.
+Through System Settings temporarily enabled Content Caching with Internet Connection
+sharing. Cache selector was observed as All Content at activation (attempted Only
+Shared Content did not persist); cache remained zero at the inspected snapshot.
+Mac Wi-Fi upstream remains on. No hotspot or SLT app/model installation performed.
+
+Activation created bridge100 at 192.168.234.1 with USB member en7 and an iPhone peer
+192.168.234.2. TetheratorStatus=1. Python stdlib HTTP server serves one disposable HTML
+page on the USB bridge address only, port 8765, from
+/var/folders/p3/wq7yl8sj2m96kncm59f0190h0000gn/T/slt-usb-probe-titn_6og .
+Exec server session 9285; no repository files are exposed. Initial 3-second curl
+timed out during startup, then server logged a 200 response; repeated local curl
+verified the page. Phone Safari fetch is pending user interaction; no phone success
+or offline-startup support is claimed. HTTP probe cannot verify camera/service worker.
+
+Next: user opens http://192.168.234.1:8765/ in iPhone Safari with phone Wi-Fi/cellular
+off to isolate USB. If successful, test Mac upstream removal separately, then restore
+Content Caching/Internet Connection off and original All Content selector; stop server.
+Phone radios need restoring after the test. Only this log changed in repository.
+
+---
+
 ## 2026-10-05 — offline Android hotspot is a supported network candidate
 
 User has no router, may consider a team phone hotspot but prefers none, and requires
