@@ -77,6 +77,12 @@ def percentile(values: list[float], fraction: float) -> float:
     return ordered[min(len(ordered) - 1, round((len(ordered) - 1) * fraction))]
 
 
+MIXED_FP32_OPS = {
+    "layer_norm", "batch_norm", "instance_norm", "reduce_mean", "reduce_sum", "reduce_l2_norm",
+    "reduce_sum_square", "softmax", "rsqrt", "sqrt", "real_div", "pow", "exp", "l2_norm",
+}
+
+
 def run(args: argparse.Namespace) -> dict[str, object]:
     forbidden = (args.crop_root, args.embedding_root)
     if any("test" in {part.lower() for part in path.parts} for path in forbidden):
@@ -110,7 +116,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         outputs=[ct.TensorType(name="embedding", dtype=np.float32)],
         convert_to="mlprogram",
         compute_precision=(
-            ct.precision.FLOAT16 if args.precision == "float16" else ct.precision.FLOAT32
+            ct.precision.FLOAT16 if args.precision == "float16"
+            # Mixed: FP16 everywhere except numerically sensitive reductions/normalisations.
+            else ct.transform.FP16ComputePrecision(op_selector=lambda op: op.op_type not in MIXED_FP32_OPS)
+            if args.precision == "mixed" else ct.precision.FLOAT32
         ),
         minimum_deployment_target=ct.target.iOS15,
     )
@@ -227,7 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--report", type=Path,
         default=Path("artifacts/reports/mobile_100gloss_v17/mobileclip2_image_fp32.json"),
     )
-    parser.add_argument("--precision", choices=("float16", "float32"), default="float32")
+    parser.add_argument("--precision", choices=("float16", "mixed", "float32"), default="float32")
     parser.add_argument("--maximum-parity-samples", type=int, default=0)
     parser.add_argument("--reparameterized-gate", type=float, default=1e-4)
     parser.add_argument("--max-abs-gate", type=float, default=2e-4)

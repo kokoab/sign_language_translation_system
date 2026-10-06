@@ -3,9 +3,79 @@
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
 `rg` this file before re-running an experiment to see if it already failed.
 
-11 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
+21 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-10-07 — Transformer/Squeezeformer base-classifier phone gate complete
+
+Separate Release app, physical iPhone13, CoreML ALL, identical prepared validation
+landmarks, batch1/32frames, 30warm-ups/config, four counterbalanced passes. XCTest
+passed43.698s; all recorded thermal nominal/low-power off. Median of pass medians:
+TransformerFP32 7.279875ms, FP16 0.948969ms; SqueezeformerFP32 8.975344ms,
+FP16 0.991104ms. Top1Transformer95.5026%,Squeezeformer96.2963%;Top5both98.9418%.
+Both precisions/families preserved every original Top1 prediction on Mac and phone;
+phone predictions/top5 stable across passes. FP16 difference small relative to run
+variation. FP32Transformer19% faster than FP32Squeezeformer, still much slower than
+FP16Squeezeformer. No accuracy loss from FP16 in these base classifiers; do not
+transfer the deployed multimodal checkpoint's conversion loss to them.
+Export wrapper manual attention/torch.where mask passed original-model parity and
+empty-input checks. Original boolean-OR conversion failure preserved. Initial phone
+launch waited for user unlock, then completed. Production app/source unchanged; no
+training, protected tests, manuscript edits or replacement. Toolchain/evidence/hashes,
+full run records and summary: `artifacts/reports/transformer_phone_feasibility_v17_20261007/REPORT.md`.
+Validation: summary assertions passed for all sixteen runs; artifact size index refreshed;
+`git diff --check` passed.
+Next safe action: discuss matched fusion/interval-adapted experiment; these timings
+exclude extraction, hand encoder, boundary/decoder/English/UI and cannot replace28ms.
+
+## 2026-10-07 — Bounded base-classifier phone comparison started
+
+User authorized staged Transformer comparison. First gate exports existing matched
+family checkpoints to FP32/FP16, verifies reference predictions, then measures identical
+validation inputs on physical iPhone13 in a separate benchmark app. No training,
+protected test access, production app modifications or manuscript changes. Plan and
+scripts: `artifacts/reports/transformer_phone_feasibility_v17_20261007/`.
+Initial Transformer conversion rejected boolean tensor `__or__`; export wrapper now
+uses equivalent `torch.where`, with all-input and empty-input parity assertions before
+conversion. Failure log preserved. Next: complete conversion checks and phone timing.
+
+## 2026-10-07 — Matched iPhone precision test passes; FP32 costs measured
+
+Physical iPhone13 Release XCTest testMatchedPrecisionProfile passed193.502s after
+initial untrusted-certificate launch failure and user continuation. Five configs,
+226same recorded example frames each,2runs forward/reverse,20warm-upframes; all
+nominal thermal, low-power off. Median of run medians(ms/frame):selectedFP16ALL
+24.05;recognizerFP32only57.43;encoderFP32only87.29;allvisualFP32112.64;
+selectedFP16recognizerCPU/GPU57.47. Thus28ms cannot be assumed for FP32 replacement;
+execution-resource choice also matters. Includes preparation/recognition, excludes
+camera/UI/English; not sustained live-camera or full response timing. Historical28ms
+remains separate:current source/warm-up protocol differs from old stage-profile test.
+Full378validation FP32recognizer check:360correct95.2381%,Top598.9418%,100%original
+prediction agreement versus saved FP16359correct94.9735%. No training/protected tests.
+New boundaryFP32parity35tuning windows zero mismatches. Original3source/project
+files restored with SHA256verification; production-source Release rebuild and
+phone reinstall succeeded. Default models unchanged. Additive exports, complete
+raw samples and report:artifacts/reports/phone_precision_v17_20261007/REPORT.md.
+Next:discuss trade-off with author; no manuscript edits or model
+switch inferred from benchmark authorization.
+
+## 2026-10-07 — User-authorized matched phone precision benchmark started
+
+User requested testing whether an FP32 replacement preserves the selected28ms
+device timing and separating precision from processor selection. iPhone13 paired
+and available. New FP32fixed-batch recognizer and word-boundary exports from the
+same checkpoints; no training or protected test access. Exporter parity passes
+(recognizer full batches only; separate378-example validation check launched;
+boundary35tuning windows zero changed states). Initial recognizer export command
+used nonexistent best_model.pth for letter head; corrected to model.pth, no output
+overwritten from prior work. Temporary benchmark hooks/defaults preserved in native
+engine and XCTest; original3files backed up with hashes. New test runs5configurations
+twice in reverse order on same bundled example frames, records timings/thermal state.
+Configurations:selectedFP16,recognizerFP32only,encoderFP32only,allvisualFP32,
+selectedFP16withrecognizerCPU/GPU. Build/test launched; no results yet. Report path:
+artifacts/reports/phone_precision_v17_20261007/. Restore original source/project
+and original production app after benchmark; keep report/exports. No manuscript edits.
 
 ## 2026-10-06 — Android live-camera empty-scene smoke passes
 
