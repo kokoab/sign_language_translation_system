@@ -13,6 +13,9 @@ Prepare a new version with reviewed recipe/input contracts before enabling train
 The verifier protects file membership and hashes; future checkpoints record the manifest
 hash. All source datasets are preserved. Full details:
 `artifacts/reports/approved_phrase_manifest_v17_20260921/REPORT.md`.
+Recipe-scoped exception (2026-10-07, user review pending): `active/v17/phrase_segment_recipe_manifest_20261007.json`
+covers only frozen-encoder phrase-segment head adaptation and the span recognizer (`--recipe-manifest`);
+it keeps the segmental lab's held-out test untouched. It does not make the canonical manifest training-ready.
 
 
 ## Authorized clean phrase baseline (2026-09-21)

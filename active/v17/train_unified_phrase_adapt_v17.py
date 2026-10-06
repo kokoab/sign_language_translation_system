@@ -227,6 +227,7 @@ def main() -> None:
     parser.add_argument("--boundary-jitter", type=float, default=0.10)
     parser.add_argument("--device", choices=("auto", "cpu", "mps"), default="auto")
     parser.add_argument("--seed", type=int, default=27117)
+    parser.add_argument("--selection-key", choices=("pair_first", "reel_v2"), default="pair_first")
     parser.add_argument("--extractor", choices=("apple", "mediapipe_full"), default="apple")
     args = parser.parse_args()
     if args.output_dir.exists():
@@ -405,6 +406,8 @@ def main() -> None:
             float(domain["phrase"]["top1"]),
             sum(float(domain[name]["top1"]) for name in ("citizen", "semlex", "local")),
         )
+        if args.selection_key == "reel_v2":  # the shipped reel_v2 ranking, without the pair metric
+            key = key[1:]
         if eligible and (best is None or key > tuple(best["selection_key"])):
             best = {
                 **row, "selection_key": list(key),

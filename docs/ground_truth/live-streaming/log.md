@@ -1,5 +1,47 @@
 # live-streaming — log
 
+## 2026-10-07 — Phone session: HUNGRY read as MY — data gap, not the new chain
+
+Pulled iPhone session logs (data/local/phone_session_pull_v17_20261007/; 23:43 session has no
+video). Gloss tail: I FEEL MY MY MY HUNGRY MY MY MY MY HUNGRY; previews flip HUNGRY→MY within
+0.3 s on the same span. Phone runs the August SpanRecognizerV17LocalALettersB8FP16 (local_a),
+not the 96.83 chain. Cause: HUNGRY has 0 local isolated clips (also FIND, HAVE, LISTEN, SICK,
+TALK) and 0 phrase spans, while MY has 150 local clips and 308 recognizer spans (224 in the new
+chain); both are chest-location signs. Isolated Citizen/SemLex HUNGRY is fine (local_a 4/4,
+10/10, never →MY), so the gap is our own capture domain/continuous context. The 96.83 chain has
+the same data gap. Fix requires local HUNGRY (and the other 5) recordings — not authorized/done.
+
+## 2026-10-07 — Recognizers rebuilt on approved split (both chains); phone timing
+
+Recipe-scoped split (see LEAK entry below) used for phrase-segment adaptation and recognizer A
+recipe with new parents. 96.83 chain recognizer e4: Citizen 97.09, SemLex 88.34, local 97.76,
+tune WER 31.42% (epoch0 37.61). August parents on same split: e6 95.77/89.06/96.55, tune WER
+30.09%. 3,370 spans from 179 approved-train videos (vs 6,254/282 leaking). Lab held-out test not
+evaluated for either. iPhone 13 FP16 recognizer-swap timing 23.69 vs 24.25 ms (equivalent).
+Report: artifacts/reports/canonical_recognition_comparison_v17_20261007/downstream_recipe/REPORT.md.
+Production app/models unchanged.
+
+## 2026-10-07 — LEAK: reel_v2 phrase stage trained on held-out streaming test clips
+
+While rebuilding the downstream chain from 96.83, membership was checked by video_sha256.
+The shipped phrase-activity-adapted model (stage1_v17_unified_phrase_activity_adapt_reel_v2,
+parent of span_recognizer_v17_local_a) trained on data/local/stage2_v17_multimodal
+train/local_phrases (390 files): 51 of the 72 segmental-lab held-out test clips and 73 of the
+89 tune-pool clips are among them; 158 of its training files are approved-manifest validation
+clips and 46 are not admitted at all. Its 97 validation files include 62 lab-train clips.
+span_recognizer_v17_local_a trained on lab local_train (282 = 179 approved-train + 103
+approved-validation). So held-out streaming WER figures for this chain (e.g. 12.37/15.05%,
+10.22% Swift) are not fully held out: the recognizer's parent head saw segments of 51/72 test
+videos. Isolated Citizen/SemLex/local validation results are unaffected by this overlap.
+Reproduction pinned: train_unified_phrase_adapt_v17 --selection-key reel_v2
+--pair-loss-weight 0 --pair-sampling-multiplier 1 (defaults otherwise) reproduces reel_v2
+epoch26 363/872/2810/172/723 exactly. New recipe-scoped split (scripts/
+build_phrase_segment_recipe_v17.py → active/v17/phrase_segment_recipe_manifest_20261007.json,
+view data/local/phrase_segment_recipe_v17_20261007): train = approved train ∩ lab train (179),
+validation = approved validation − lab test (139 local), lab tune = recognizer selection,
+lab test untouched. span trainer gained opt-in --recipe-manifest train filter. Canonical
+training_ready flag unchanged. Both chains being rerun on this split (canonical comparison dir).
+
 ## 2026-10-03 — Hoyeol Sohn recipe (Kaggle ISLR 1st / fingerspelling 2nd) adapted: mixed, run I kept
 
 User asked to study Hoyeol Sohn and make it work. ConvFormerCTC in letter_ctc_v17 (Sohn's expand + causal
