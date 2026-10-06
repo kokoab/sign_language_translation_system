@@ -260,7 +260,9 @@ def initialize_exact_stage1_finetune(
         raise ValueError("fine-tune checkpoint extractor schema mismatch")
     if checkpoint.get("label_to_index") != label_to_index:
         raise ValueError("fine-tune checkpoint label mapping mismatch")
-    if checkpoint.get("model_config") != model.config.to_dict():
+    source_config = Stage1V17Config(**checkpoint["model_config"])
+    source_config.validate()
+    if source_config.to_dict() != model.config.to_dict():
         raise ValueError("fine-tune checkpoint model config mismatch")
     provenance = checkpoint.get("training_data_provenance", {})
     if (
@@ -1743,6 +1745,7 @@ def train(args: argparse.Namespace) -> dict[str, object]:
         else None
     )
     stale_epochs = 0
+    best_trained_top1 = -1.0
     if initial_metrics is not None and best_state is not None:
         (output / "initialization_metrics.json").write_text(
             json.dumps(initial_metrics, indent=2) + "\n", encoding="utf-8"
@@ -1945,6 +1948,30 @@ def train(args: argparse.Namespace) -> dict[str, object]:
             temporary.replace(output / "best_model.pth")
         else:
             stale_epochs += 1
+        if getattr(args, "save_diagnostic_checkpoints", False):
+            # Diagnostic only: best_model.pth selection above is unchanged.
+            diagnostic_names = ["final_model.pth"]
+            if metrics["top1"] > best_trained_top1:
+                best_trained_top1 = metrics["top1"]
+                diagnostic_names.append("best_trained_model.pth")
+            diagnostic = make_stage1_checkpoint(
+                model,
+                {key: value.detach().cpu().clone() for key, value in ema.shadow.items()},
+                epoch=epoch,
+                validation_metrics=metrics,
+                label_to_index=train_dataset.label_to_index,
+                manifest_sha256=sha256_file(Path(args.manifest)),
+                schema_fingerprint=train_dataset.expected_schema,
+            )
+            diagnostic["training_data_provenance"] = training_data_provenance
+            for name in diagnostic_names:
+                diagnostic["diagnostic_selection"] = (
+                    "last_trained_epoch" if name == "final_model.pth"
+                    else "best_trained_epoch_top1_excluding_initialization"
+                )
+                temporary = output / (name + ".tmp")
+                torch.save(diagnostic, temporary)
+                temporary.replace(output / name)
         citizen_correct = int(round(metrics["top1"] * metrics["samples"] / 100.0))
         gate_improved = (
             args.citizen_top1_floor_correct
@@ -2169,6 +2196,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--initialize-from", type=Path,
         help="Strict flat checkpoint warm start for flat_graph_residual",
+    )
+    parser.add_argument(
+        "--save-diagnostic-checkpoints", action="store_true",
+        help=(
+            "Also write final_model.pth and best_trained_model.pth (best "
+            "trained epoch, excluding initialization) for diagnostics only; "
+            "best_model.pth selection is unchanged"
+        ),
     )
     parser.add_argument(
         "--fine-tune-from", type=Path,

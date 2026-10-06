@@ -7,6 +7,246 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-07 — Independent paper-claim verification and proposed interpretation
+
+Fresh MPS inference reproduces all15 domain counts across the five new phases and
+three counts for the clean August recognizer. verify_paper_claims.py asserts source
+membership/hashes (636 RGB/hand files), canonical hash/unchanged gate, train/validation/
+tune/test identity separation, phase arithmetic, phone sample medians and strict
+checkpoint results. Separate Mac CoreML FP32/FP16 rerun reproduces367correct and378/378
+PyTorch top1 agreement. WER selected history arithmetic recomputed31.4159 vs clean
+August30.0885. No training/protected test inference. No manuscript changes.
+PAPER_CLAIM_REVIEW.md records required corrections: epoch0fixedfusion is not learned
+fusion-distillation gain; segment labels use equal-width transcript partitioning;
+SemLex is not lower at isolated phase; phone FP32 changes recognizer only (othersFP16),
+new59.15/23.69≈2.50; similar timings do not prove equivalence; use clean August comparator.
+Scoped manifest membership passes, but claimed span-label/input hashes are missing from
+recipe.json (isolated cache hashes are present); keep provenance limitation explicit.
+Historical reproduction reused contaminated split, so “test never touched” must be
+scoped to newly trained downstream stages. Artifacts under canonical_recognition_
+comparison_v17_20261007: verify_paper_claims.py, paper_claim_verification.json,
+paper_export_verification.json, PAPER_CLAIM_REVIEW.md. Next: author reviews table/prose
+proposal; retain candidate/default distinction and do not promote from this audit.
+
+## 2026-10-07 — 96.83 chain completed through recognizer on approved split; iPhone timed
+
+User authorized overnight completion of phrase adaptation, interval recognizer, export and phone.
+Both August downstream recipes reproduced exactly first (reproductions/README.md). Recipe-scoped
+manifest active/v17/phrase_segment_recipe_manifest_20261007.json (train179 = approved train ∩
+lab train; val139 = approved val − lab test; lab tune selection only; lab test untouched; no
+blank/rest/OTHER/NCSLGR/OOV). Results (Citizen/SemLex/local, mean of 3, pooled 4,252):
+96.83 chain — isolated 96.83/87.22/64.12 (82.72, 72.34); local 97.35/87.32/98.17 (94.28,
+95.60); fusion 97.62/88.04/98.20 (94.62, 95.81); phrase e22 97.62/88.04/98.03 (94.56, 95.70),
+phrase seg 75.20%, activity 74.47%; recognizer e4 97.09/88.34/97.76 (94.40, 95.53), tune WER
+37.61→31.42%. August chain same split: phrase 95.77/89.06/96.96; recognizer e6
+95.77/89.06/96.55 (93.79, 94.76), tune WER 38.94→30.09%. Original leaking local_a
+95.24/89.67/96.31, tune 27.43% (not comparable). Letter head A recipe retrained (recall 83.71
+vs 86.15%). Core ML 378 Citizen val: FP32 and FP16 both 367/378 = PyTorch, 378/378 agreement;
+50.28/25.51 MB (same as August). iPhone 13, 226 frames ×2 passes, nominal thermal: FP16
+August 24.25 vs 96.83 chain 23.69 ms (equivalent, within pass spread 22.92–25.58); FP32 56.07
+vs 59.15 ms. App sources restored byte-exactly, production rebuilt/reinstalled (attempt1 build
+failed: missing ENABLE_TESTABILITY). Report downstream_recipe/REPORT.md. No promotion,
+manuscript or default change; no protected test access; lab held-out test not run.
+
+## 2026-10-07 — Corrected 96.83 chain (mild roll): local 97.35/98.17, fusion 97.62
+
+Variant C (CHAIN_PLAN.md; full roll 0, floor361, patience80, user-approved post hoc)
+complete; audit_chain.py passes. 80 epochs; selected epoch55 (both candidates):
+Citizen368/378 97.35% (epochs45–58 at367), SemLex854/978 87.32%, local masked98.17%,
+landmark-roll worst7/378; all gates pass, incl. predeclared365 floor. Raw-pixel roll +
+Vision auto-orient: 96/97/86/96/96/95/96/96, mean94.75% (96.83 92.75, a7490409 same
+code92.25). Fusion (fresh hash-verified cache, unchanged hand/teacher/seeds/rule): all
+seeds select epoch0 = fixed75/25 z-score landmark/hand fusion, 369/378 97.62%,
+SemLex861 88.04%, local2844/2896 98.20%; trained distillation epochs peak368/861/2843.
+Versus August chain (branch361/860/96.34, fusion364/871/2812): higher Citizen and local,
+SemLex −6/−10 clips. Validation-selected development evidence; no test access. Phrase/
+interval still blocked (training_ready=false). Report chain_9683_floor361_mildroll/REPORT.md.
+
+## 2026-10-07 — ERROR: 96.83 local replay used mismatched full-roll augmentation
+
+User challenged why 96.83 underperformed downstream. Provenance diff of parents: identical
+data/splits/SemLex/sampling/objective/architecture/seed; ONLY difference is augmentation —
+96.83 (Kaggle 2026-08-11) predates full-circle roll; a7490409 is the same recipe plus
+full roll .35. My local replays copied August's full roll .35, a large input shift for
+96.83 only. Local-replay provenance vs August otherwise identical (splits/hashes/sampler).
+Evidence: paired fine-tune full-roll arm Citizen 356–362 vs mild arm 363–366; local
+replay with roll 356–363; Variant B (floor361, patience80, roll .35) epochs1–9 94.71–95.50,
+stopped deliberately (STOPPED.md). 96.83 is not worse as a parent: Citizen366 vs362,
+SemLex853 vs839, initial local64.12 vs60.95. The chain_9683 local/fusion results are
+confounded and must not be used as the 96.83 chain. Corrected Variant C launched
+(CHAIN_PLAN.md): full roll 0 (mild ±12°), floor361, patience80, else unchanged,
+PID45792 → chain_9683_floor361_mildroll/. Rule: fine-tune augmentation must match the
+parent's training augmentation unless the treatment is the augmentation itself.
+
+## 2026-10-07 — 96.83 chain: auto-orient robust; local replay fails gates; fusion 96.83
+
+User chose 96.83 (5c40b133) as paper isolated result and asked to retrain downstream.
+Gates predeclared in CHAIN_PLAN.md (Citizen>=365=parent-1, SemLex>=853, local>parent,
+worst landmark angle>=2). audit_chain.py passes. Raw-pixel roll + Vision auto-orient,
+same100 val clips: 96.83 96/94/80/96/96/88/96/96 (mean92.75%); a7490409 same code
+93/96/85/94/93/91/93/93 (92.25%) vs August record 91.50% — evaluator is deterministic
+(96.83 re-run 800/800 rows identical), so difference is evaluator code drift since Aug;
+compare only same-code rows. Local replay from 96.83 (exact August recipe, preflight on
+a7490409 reproduced 362/1765/13381/sampler weights): Citizen fell to356–363 every epoch,
+never >=365; local masked64.12→94.79 at e20, still rising; patience stop at e20 because
+Citizen never beat epoch0. Both saved checkpoints = epoch0 original; local gate fails;
+no eligible branch. Fusion (unchanged hand/teacher/seeds/rule, fresh hash-verified
+caches) on unadapted 96.83, labelled not gate-eligible: seed3407 e4 Citizen366 (96.83),
+SemLex862 (88.14), local2447/2896 (84.50); seed5101 had367 Citizen but lower key.
+August fusion rerun with fresh cache reproduces 364/871/2812 exactly. Phrase/interval
+stages not run (training_ready=false). Files: CHAIN_PLAN.md, run_chain.py,
+run_raw_orientation.py, audit_chain.py, chain_9683/, raw_orientation/. Open decision:
+report local stage as non-transferring, or a user-approved post-hoc variant (absolute
+361 floor / longer patience). No promotion, manuscript or test access.
+
+## 2026-10-07 — No-full-roll Transformer completed; earlier Transformer rotation-robust
+
+User requested waiting; OS process-exit notification received, status complete checked.
+New explicit mild-roll Transformer selected epoch47, stopped epoch77 after30 staleepochs.
+Fresh CPU strict restore reproduces94.708995%Top1/99.470899%Top5. Current source and
+manifest hashes match launch recipe; contiguous history/first-best/earlystop assertions
+pass. Existing95.502646%Transformer also independently restored. Identical eight-angle
+landmark diagnostics: new mild upright94.71/mean-nonzero32.65/worst1.59; earlier
+Transformer upright95.50/mean93.58/worst92.06. Thus earlier Transformer DOES demonstrate
+software-landmark rotation robustness; prior uncertainty is resolved. It is comparable
+to existinga7490409 Squeezeformer95.77/93.73/92.06 under the same evaluator protocol.
+Do not infer precise historical augmentation or a causal training effect from unpinned
+historical code. Single-seed development only, no new phone/raw-camera claims, no
+protected test. Source/result/rotation logits, hashes and REPORT.md under
+artifacts/reports/transformer_mild_roll_v17_20261007; new verify.py passes allassertions.
+No active run from this experiment; no promotion/manuscript changes. Next: discuss
+verified comparison and any bounded retention experiment from robustSqueezeformer;
+no additional training launched.
+
+## 2026-10-07 — Explicit no-full-roll Transformer baseline launched
+
+User requested Transformer under the flat Squeezeformer baseline recipe and explicitly
+excluded new full-roll training. Reused existing family train_family through a small
+isolated wrapper with full_roll_probability=0, mild12degrees, seed1701, 160epoch
+ceiling/patience30, batch64, AdamW3e-4/wd.03, warmup8/cosine, EMA.999 and existing
+approved balanced Citizen/SemLex loaders. Historical flat Squeezeformer provenance
+records generic augmentation rather than an immutable implementation; this is an
+explicit current mild-roll baseline, not a claim of exact historical reproduction.
+Current family trainer otherwise inherits full-roll .35; wrapper explicitly overrides it.
+Wrapper config preflight passed; detached caffeinate PID36352, startup state running
+verified once. No polling; desktop completion/failure notification. Read status before
+assuming success. Output artifacts/reports/transformer_mild_roll_v17_20261007/.
+Existing finetune audit rechecked successfully; diagnostic rerun already in current state
+shows no better robust candidate. No new Squeezeformer training, manuscript or deployment
+changes; protected test remains sealed. Next: verify completed Transformer checkpoint
+and measure its rotations under identical evaluation, then discuss retention experiments
+from a7490409 without assuming 96% is achievable.
+
+## 2026-10-07 — Diagnostic rerun: 20-epoch full-roll warm start dominated by a7490409
+
+finetune_diagnostic/ complete; audit_finetune_diagnostic.py passes (histories bit-identical
+to first run, max|ΔTop1|0.00; selected best_model.pth still epoch0=original; diagnostic
+epochs/upright match logits; identical378 IDs). Landmark-roll Top1 upright/mean-rotated/
+worst: original96.83/35.71/0.53; mild final(e20)96.03/36.02/0.26, best-trained(e1)
+96.56/35.41/0.26; fullroll final(e20)94.71/72.07/52.38, best-trained(e2)95.77/43.31/3.97;
+from-scratch orientation-robust a7490409 95.77/93.73/92.06 (same evaluator, matches
+Aug record). Warm-start full roll trades ~2.1pp upright for partial robustness and is
+worse than a7490409 on both axes; mild control gains nothing. No candidate replaces96.83
+(upright) or a7490409 (orientation). Single seed, 20-epoch bounded screen; landmark
+rotation is not raw-camera/phone evidence. Files: run_finetune_diagnostic.py,
+audit_finetune_diagnostic.py, finetune_diagnostic/{REPORT.md,audit.json}. No promotion,
+manuscript or production change; no test access. Next: user chooses which pinned
+landmark checkpoint parents the matched local/fusion/interval chain.
+
+## 2026-10-07 — Paired fine-tune complete: both arms retained epoch 0 (original weights)
+
+finetune/status.json complete. audit_finetune.py ran: logits-recomputed Top1 matches
+saved metrics; identical378 evaluation IDs; both selected best_model.pth are epoch0 and
+tensor-identical to5c40b133 (file SHA differs only from re-saved metadata). Audit fixed:
+weight-identity check now also requires identical key sets; adds best/final trained-epoch
+columns. Upright selected96.83 for original/mild/fullroll; eight-angle landmark scores
+identical (0°96.83,17°96.03,37°91.80,73°39.95,90°10.58,123°1.06,180°0.53,270°10.05;
+mean rotated35.71). Trained epochs never strictly beat96.83: mildcontrol best96.56
+(epoch1), final96.03; fullroll best95.77 (epoch2), final94.71. No orientation improvement
+claimed; trained full-roll weights were not saved, so their rotation effect was unmeasured.
+Trainer now has opt-in --save-diagnostic-checkpoints (final_model.pth,
+best_trained_model.pth; best_model.pth selection unchanged); parser test added,
+focused tests pass. Identical-recipe diagnostic rerun launched detached PID30307 into
+finetune_diagnostic/ with a7490409 from-scratch orientation reference evaluated by the
+same evaluator. No promotion, manuscript or production change; no test access.
+
+## 2026-10-07 — Legacy exact-initialization config fixed; training relaunched
+
+Initialstartupguard rejected96.83checkpoint because oldconfigomits newer disabled
+fields. initialize_exact_stage1_finetune now validates/compares resolvedStage1V17Config
+values; schema,manifest,labels,sealedtestsandstrictstate-dictguards unchanged.
+Newtest proves missingdefaultsaccepted withbit-identicalweights, changedcanonicalization
+rejected. Newandexistingexact-init tests2/2pass; actualhistoricalcheckpoint strictinit
+passes. Existingrotationtests3/3passedearlier. Changedactive/v17/train_stage_1_v17.py,
+newtest/test_v17_finetune_legacy_config.py. Failedrunpreserved; pairedexperiment
+relaunched detached PID26292, initialstatusrunning/mild_control verified once.
+No trainingprogresspolling. Checkstatus/notificationbeforeassumingcompletion.
+
+## 2026-10-07 — Isolated retiming complete; paired fine-tuning launched detached
+
+Current comparison verified_results.json excludes export-overlapped initialtimings;
+three isolatedCPU passes preserve exactpredictions for allsevencheckpoints.
+Phone36runs pass parity/nominalthermal assertions. REPORT.md generated. Strict-init,
+missing-safeinvertiblerotation andfullcircleaugmentation tests3/3passed; bothtraining
+commands andorientationevaluator parse withprotectedtestdisabled. Boundedpaired20epoch
+initial launch PID25914 failed before training: legacy config omitted newly added
+default fields. Failure preserved underfinetune_initial_config_rejected. No progresspolling. Desktopcompletion/failurenotification configured;
+checkfinetune/status.json nextsessionbeforeassumingcompletion. Filesplan,launcher,
+results,hashes undercanonical_recognition_comparison_v17_20261007. No manuscript,
+productionmodel changes. Laterchaintraining remainspending.
+
+## 2026-10-07 — Current fixes authorized from the preserved 96.83% checkpoint
+
+User asks to apply orientation-robust/current training fixes. Fresh Mac and iPhone
+checks reproduce96.8254%, includingFP16; do not describe it as lost. Existing current
+Stage1 trainer strict warm-start and rotation tests3/3 pass; CLIpreflight verifies
+both paired20epoch commands and eight-angle evaluator, protectedtestdisabled.
+Plan/launcher under canonical_recognition_comparison_v17_20261007: mildcontrol versus
+fullroll.35 from exact5c40b133checkpoint, sameapproveddata/seed/budget,lr5e-5.
+Original remainsfallback; no blind combination of rejectedarchitecture treatments or
+local-specific masking into base training. Launch only after isolatedtiming completes,
+detached with completionnotification; no trainingpolling. Full downstreamcomparisons
+and paperupdates remainpending after these measured gates.
+Phonebenchmark nowcomplete36measurements across6configs/6rotatingorders, allnominal,
+nochangedpredictions; TransformerFP32/FP16 7.1987/.9540ms, flatSqueeze7.1639/.8866ms,
+partwiseSqueeze8.8792/.9917ms. Initialinstallationhitfreeprofilelimit; reusedownprevious
+benchmarkbundle, thenfreshderiveddataresolvedstalebundle launch; productionunchanged.
+
+## 2026-10-07 — Selected-checkpoint comparison and phone exports underway
+
+User authorized fast revalidation including flatSqueezeformer versus flatTransformer,
+partwise/global improvement and downstream recognition stages; manuscript remains
+chat-first. New isolated report root canonical_recognition_comparison_v17_20261007.
+Fresh prepared-input checks reproduce flatTransformer95.50, flatSqueezeformer95.77,
+partwise96.83, local-adaptedlandmark95.50, unified96.30, phrase-adapted96.03.
+Exports additive only, original weights pinned by hash; no training/protected test.
+Initialization metadata links local branch to orientation-robust checkpointa7490409,
+not directly the96.83checkpoint. Do not invent direct weight inheritance.
+Initial CPU timing overlaps later export preparation; preserve it as exploratory,
+exclude from final timings and repeat after exports finish without concurrent work.
+Phone uses separate benchmark app; no production model selection changes.
+
+## 2026-10-07 — Historical Transformer runs independently revalidated
+
+User authorized fast Transformer improvements and matched downstream stages, then
+requested verification of earlier runs first. No new training started. Read-only
+CPU restore reproduces Top1/Top5/macroF1 for flat95.50, partwise93.92, conv94.18,
+anatomical93.12, compact94.71, Squeezeformer96.30. All histories consistent with
+seed1701, recorded data/sampling, 160epoch cosine schedule, first-best EMA selection
+and30stale-epoch stopping. Citizen train/val signer and raw-hash separation verified;
+SemLex train raw hashes do not overlap Citizen validation. Old SemLex false eligibility
+flag triggered initial assertion; September22 explicit admission resolves it and all
+1388training feature paths/hashes match admitted manifest. No flags changed.
+Checkpoint metadata lacks historical full source/data/optimizer/RNG provenance; current
+input hashes archived, not retroactive proof. Shared recipe isn't per-architecture tuning
+or identical augmentation realizations. Whole designs and only one seed; part-wise
+negative is valid for this run but earlier causal/rejection wording overstates evidence.
+Paired correctness: Transformer-only9, Squeezeformer-only12. No protected test loaded.
+Report/scripts: `artifacts/reports/transformer_run_audit_v17_20261007/REPORT.md`.
+Next: bounded, pinned matched fine-tuning controls plus residual part-wise candidate;
+fine-tuning seed repeats must not be presented as independent from-scratch replication.
+Full downstream comparison remains authorized and unstarted, not completed by this audit.
+
 ## 2026-09-25 — unfrozen-encoder phrase adaptation: controlled test, no promotion
 
 User asked to test unfreezing, with isolated accuracy kept at or above 90. Frozen-head vs

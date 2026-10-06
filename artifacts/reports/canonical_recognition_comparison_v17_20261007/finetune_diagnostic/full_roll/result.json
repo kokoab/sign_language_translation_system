@@ -1,0 +1,106 @@
+{
+  "best_validation_top1": 96.82539682539682,
+  "epochs_completed": 20,
+  "parameters": 6791717,
+  "device": "mps",
+  "extractor": "apple",
+  "schema_fingerprint": "b0b57e8d6921b756",
+  "training_data_provenance": {
+    "citizen_manifest": "active/v17/citizen100_manifest.json",
+    "citizen_manifest_sha256": "3a665bda8d2b916c504406be815e601eeb55badfe62afcec42c7869885eab7cf",
+    "citizen_train_samples": 1475,
+    "citizen_validation_samples": 378,
+    "citizen_test_accessed": false,
+    "online_augmentation": {
+      "name": "augment_v17_random_per_batch",
+      "camera_roll": "continuous_isotropic_xy_rotation",
+      "full_roll_probability": 0.35,
+      "maximum_roll_degrees": 180.0,
+      "mild_roll_degrees": 12.0,
+      "aspect_ratio_policy": "extractor_isotropic_coordinates; no anisotropic feature distortion"
+    },
+    "architecture": {
+      "spatial_encoder": "flat",
+      "temporal_encoder": "partwise_global",
+      "part_depth": 1,
+      "bone_features": false,
+      "hand_angle_features": false,
+      "keypoint_temporal_gate": false,
+      "articulated_pose_embedding": false,
+      "articulated_pose_initialization": null,
+      "static_hand_token": "none",
+      "masked_pose_initialization": false,
+      "attention_score_mixing": false,
+      "canonicalize_camera_roll": false,
+      "input_modality": "all"
+    },
+    "objective": {
+      "classification": "cross_entropy",
+      "label_smoothing": 0.1,
+      "supervised_contrastive_weight": 0.0,
+      "supervised_contrastive_temperature": 0.1,
+      "supervised_contrastive_decay_epochs": 0,
+      "phonology_weight": 0.0,
+      "part_auxiliary_weight": 0.0,
+      "part_auxiliary_heads": [],
+      "part_auxiliary_missing_policy": null,
+      "partmix": {
+        "probability": 0.0,
+        "parts": [
+          "left_hand_21",
+          "right_hand_21"
+        ],
+        "selection": "uniform_one_hand_non_self_cyclic_donor",
+        "label_weights": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    "semlex_manifest": "data/local/semlex_citizen100_train_audit/full_clean_train_candidates.json",
+    "semlex_manifest_sha256": "09f22aeff491ac16a498cbf5be02eb9867ddb0b16c139b1e302571d2bd51883a",
+    "semlex_train_samples": 1388,
+    "semlex_train_only_approved": true,
+    "semlex_test_accessed": false,
+    "sampling": {
+      "mode": "class_source_balanced_replacement",
+      "expected_class_probability": 0.01,
+      "expected_source_probabilities": {
+        "citizen": 0.5,
+        "semlex": 0.5
+      },
+      "minimum_sample_weight": 0.00020618556701030926,
+      "maximum_sample_weight": 0.002577319587628866
+    },
+    "initialization": {
+      "mode": "exact_selected_checkpoint_replay_finetune",
+      "path": "/Volumes/secret/SLT/SLT/artifacts/generated/kaggle_stage1_partwise_kokoab_pull_v1/stage1_v17_partwise_v2/best_model.pth",
+      "sha256": "5c40b13336b4692d5f7e1e70a9ba430aa2b35ef4e12946952e15fe1f9e54924b",
+      "source_epoch": 100,
+      "source_validation_metrics": {
+        "loss": 0.2628425723976559,
+        "top1": 96.82539682539682,
+        "top5": 99.2063492063492,
+        "macro_f1": 96.60620490620491,
+        "samples": 378.0
+      },
+      "strict_state_dict": true,
+      "citizen_test_accessed": false,
+      "semlex_test_accessed": false,
+      "initial_validation_metrics": {
+        "loss": 0.2628317587274723,
+        "top1": 96.82539682539682,
+        "top5": 99.2063492063492,
+        "macro_f1": 96.60620490620491,
+        "samples": 378.0
+      },
+      "initial_local_validation_metrics": null
+    },
+    "optimization": {
+      "mode": "balanced_replay_domain_adaptation",
+      "checkpoint_selection": "citizen_official_validation_top1_primary; local_validation_top1_only_breaks_exact_citizen_ties",
+      "local_validation_used_for_selection": "exact_ties_only"
+    }
+  },
+  "test_evaluated": false
+}
