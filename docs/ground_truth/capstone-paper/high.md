@@ -1,5 +1,25 @@
 # Capstone paper — binding authoring decisions
 
+## 2026-10-07 — Platform-neutral manuscript and matched comparisons
+
+Author approved the platform-neutral changes after reviewing the checklist and phone
+benchmark. Current Google Doc tab is t.pzqwjycim1ix, now titled (Oct 6) Revision.
+Use mobile application/device camera/landmark extractor/on-device inference in general
+prose. Keep framework introductions/citations and named measured comparisons; Swift,
+Kotlin, OS and runtime requirements belong in the requirements sections. No Huawei.
+Keep current FP16 deployment. Compare all visual/recognition FP16 versus FP32 on the
+same iPhone13 workload; English stays FP32 outside timing. New24.1vs112.6ms/frame
+is separate from the historical28ms measurement, not proof of a new optimization or
+an arithmetic-precision-only speedup. Recognizer conversion accuracy is separately
+measured with fixed prepared inputs, not full-pipeline/on-phone accuracy.
+Three-stage recognition/common-Mac speed uses the same validation set, with no dataset
+name or validation-set size in comparison passages. Do not mix per-clip Mac timing
+with per-frame phone timing. No technical-notes section or untrained-language timing
+screening in the submitted paper. Preserve detailed repository evidence. Keep signer-
+disjoint definition/citation for isolated evaluation, without the rejected streaming
+subgroup breakdown or blanket signer-disjoint claim. Slides remain deferred.
+Writing guide and README_PLATFORM_NEUTRAL_REVIEW.md contain the applied decisions.
+
 ## 2026-09-30 — Chapter 4 revision scope
 
 Author approved preparation/model-development and results/discussion sections, all

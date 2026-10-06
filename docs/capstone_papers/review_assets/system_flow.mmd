@@ -1,0 +1,18 @@
+flowchart TD
+    camera["Start Live camera"]
+    vision["Landmark extractor: locate signing landmarks"]
+    features["Landmark motion and MobileCLIP2 hand-image features"]
+    recognition["Streaming Sign Recognition"]
+    buffer["Recognized glosses"]
+    english["T5-efficient-tiny: incremental English generation"]
+    finish["Finish button or held-open-palms gesture"]
+    finalize["Finalize English text"]
+    output["English text and local speech output"]
+    camera --> vision
+    vision --> features
+    features --> recognition
+    recognition --> buffer
+    buffer --> english
+    english --> finish
+    finish --> finalize
+    finalize --> output

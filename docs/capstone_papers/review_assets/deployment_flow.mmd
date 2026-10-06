@@ -1,0 +1,27 @@
+flowchart TD
+    trained["Trained boundary, recognition, visual and English models"]
+    export["Model export and application loading"]
+    camera["Device camera frames"]
+    vision["Landmark extractor: movement features"]
+    hands["MobileCLIP2 hand-image features"]
+    boundary["Boundary model: estimate candidate sign intervals"]
+    recognition["Squeezeformer recognizer: score candidate signs"]
+    decoder["Segmental decoder: select and commit stable glosses"]
+    gloss["Gloss Management: ordered sequence"]
+    english["T5-efficient-tiny: incremental English"]
+    finish["Finish button or held open palms"]
+    final["Finalize English text"]
+    output["English text and local speech"]
+    trained --> export
+    export --> camera
+    camera --> vision
+    camera --> hands
+    vision --> boundary
+    boundary -->|"Candidate landmark intervals"| recognition
+    hands -->|"Appearance features"| recognition
+    recognition -->|"Sign scores"| decoder
+    decoder -->|"Accepted glosses"| gloss
+    gloss --> english
+    english --> finish
+    finish --> final
+    final --> output

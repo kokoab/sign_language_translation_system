@@ -7,6 +7,241 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-07 — Live paper sweep: one final result, proposal only
+
+Read canonical GoogleDoc tabt.pzqwjycim1ix ((Oct6)Revision) via connector; examined
+1039text paragraphs and native current Figures11/13/14/15. Saved targeted text/revision
+snapshot to canonical_recognition_comparison_v17_20261007/paper_sweep_snapshot.json.
+96.31 does NOT occur in current tab. OldrecognizerTable18 is95.24FP32/94.97FP16.
+User prefers one final result and no August-to-current comparison. Recommend95.53%
+pooled isolated validation, accurately labeled; optional94.40equal-domain average for
+balance, not choose a smaller number to simulate liveaccuracy. No blanket signer-disjoint
+claim for pooledvalidation: scopeSection4.3.1 andTable10 toprimaryofficialsplit.
+Propose replace4.4.1 oldpipeline scores/Table11/Figure11 with finalrecognizerreport;
+Table12 learnedcombination96.30 is stale and fixedfusionnowepoch0. Tables13/14 concern
+base-modelselection, cannot substituteoverall95.53 into component rows. Preserve only
+needed architecturejustification with its ownscope. Table15/4.4.3 9.68WER oldcontaminated
+configuration mustnotbeclaimednewheldout; use31.42tuningWER labeleddevelopment only.
+Figure15 mustuse newepoch4history, not old27.43minimum. Figure14/96.83epoch100 remains
+valid base-traininghistory, not finalpooledaccuracy. Section4.4.6/Table18 conversion now
+97.09bothprecisions onprimaryvalidation ONLY; fullpooledFP16parity remainsunmeasured.
+Recognizerpackage50.28/25.51MB different definitionfromold49.62savedweights; keepboundary
+size definitionsseparate. Figure13/paragraph24.1vs112.6 areoldfullprecisionbenchmark;
+new23.69vs59.15 changesrecognizeronly, cannotrelabelexistingallFP32comparison.
+For singlefinalentry retain23.69ms/frame andremoveoldcomparisonchart; explain scope.
+Section2.2 deployment saysMac-baseddespitedevicetests; qualify measurediPhoneprototype,
+notproductionreadiness. HELLOtimelineFig2 fromoldrecordneedsnewtracebeforeattribution.
+EnglishTable16/Fig16 andboundaryresults have no replacement fromrecognizertraining;
+retainwithseparatescope. Participantplans/schedule/literature untouched. No manuscript,
+reviewREADME, or chart asset edits. Next: discuss proposal and any missingmatchedchecks.
+
+## 2026-10-07 — Author requests all-comparison checkpoint audit before edits
+
+Explicit user override: CHAT FIRST; no further manuscript/asset writes. Read current
+working tab and source scripts/results. Tables11/Figure11 use orientation-robust base
+95.77 then unified96.30/span95.24; Table12 uses unified's source landmark branch95.50
+and hand80.69, not the same95.77checkpoint. Unified checkpoint pins landmark
+stage1_v17_local_deep_clean_mouth_masked_replay_ft_v1/best_promotion_gate_model.pth
+(hash12a74a18...) and handstage1_v17_hand_mobileclip2_local_deep_clean_replay_ft_v1
+(hash7e920d09...). Table13/Figure14 use historicalpartwise96.83 epoch100; Table14 uses
+matchedfamilySqueezeformer96.30 (distinct from unified96.30) andTransformer95.50
+(distinct from Table12landmark95.50). Figure11 builder hardcodes accuracy separately
+from timingcheckpoint paths; should derive both from pinned result records.
+Table18FP32/FP16 source checkpoint matches115286872e1e026b5352f00e53eb0365008c55dab28188437a59e26b277be450
+in both conversion reports. Figure15 uses same spanmodel history but tuning WER, not
+Table15streaming metric. EnglishTable16/Figure16 source same tiny run2 study; full
+cross-runtime hashverification remains needed before declaring entire bundle pinned.
+Table15score_test_C has no direct checkpoint metadata; resolve native replay bundle/
+config hash linkage before canonical adoption. Figure13 latestprecision protocol must
+remain separatefromhistorical28ms. Requirements/schedule/literaturetables anddiagrams
+aren't model checkpoint comparisons. No new evaluation/training or paper updates in
+this audit. Next discuss canonical per-stage checkpoint registry and whether to retain
+historicalscreening; single coherent newtraininglineage needs downstreamretraining,
+not arbitrary numerical replacement or revalidation ofdifferentweights.
+
+## 2026-10-07 — Clarify historical architecture versus matched family tables
+
+User queried Table13 96.83%/6.50ms versus Table14 96.30%/6.15ms, and confirmed
+intended finding is higher Squeezeformer accuracy with similar FP16 phone classifier
+speed. Source README explicitly distinguishes earlier design-selection checkpoint
+from matched Mac family rerun. Working Google Doc tab t.pzqwjycim1ix captions and
+list entries renamed Earlier Landmark Architecture Screening and Matched Recognition
+Family Comparison. Intro now explains different trained models before tables.
+Matched discussion retains Mac2.88vs6.15ms and adds phoneFP16Transformer0.95vs
+Squeezeformer0.99ms, preserved validationpredictions95.50vs96.30%, four-run variability,
+classifier-only scope separatefrom28ms. Accuracy gap computed fromunroundedmetrics0.79pp.
+No numerical rows substituted, no new plots or training. First revision-guardedwrite
+rejectedstale revision; freshtextverified exacttargets and secondwritepassed. Connector
+readbackverified sixreplacements. Text-onlyedit; renderedpaginationnotrechecked.
+
+## 2026-10-07 — Redundant charts removed before Transformer follow-up
+
+User requested chart cleanup first and immediate return before Transformer testing.
+Removed old Figures12–16 (input, architecture, family, streaming, English comparisons),
+retaining all tables and result explanations. Old17–21renumbered12–16. Updated body
+references, list entries and rendered page references. Latest Google Doc target remains
+t.pzqwjycim1ix. Readback confirms16figure captions, no17–21references, EnglishTable16
+retained. Inspected affected exported pages90,92,95; no clipped content. Targeted
+visual review only. Updated local review checklist. No model/benchmark/training work.
+Next: discuss and scope proper matched Transformer deployment evaluation with author.
+
+## 2026-10-07 — Transformer alternative and chart necessity audited
+
+Discussion only; no manuscript, visual, model or deployment changes. Rechecked saved
+family result and benchmark implementation: flat Transformer95.50%Top1/2.882ms,
+part-wise+global Squeezeformer96.30%/6.146ms; matched training protocol, one seed,
+FP32 prepared-landmark CPU inference. Difference0.80points, about2.13x classifier
+time. Supports an accuracy-first tradeoff, not proven mobile superiority or statistical
+robustness. Compared model families also differ in regional input organization.
+These base-model results are not directly comparable with interval-adapted recognizer
+FP32/FP16conversion95.24/94.97. No saved matched complete Transformer mobile deployment
+comparison was identified in the relevant records. Avoid assuming it removes FP16 need:
+existing phone encoder-only FP32 substitution87.29ms versus current24.05ms demonstrates
+other major precision-sensitive work; do not add/subtract component substitution effects.
+The primary Squeezeformer paper concerns speech/Conformer efficiency, not proof of
+faster execution than this flat landmark Transformer.
+Recommendation for discussion: retain one model-choice table, remove duplicated charts,
+keep concise English quality evidence because translation is in scope but omit its
+redundant bar chart. English60%fully-correct/6vs8%wrong scores are automatic judgments
+on generated gloss/reference sessions, not human or full camera-to-English evaluation.
+Next: discuss reduced result structure and, if pursued, plan a matched Transformer
+fusion/interval/mobile comparison; no training/test gate or deployment change implied.
+
+## 2026-10-07 — Approved manuscript and visuals complete
+
+Applied author-approved revisions in Google Doc1sC2JZ23mSpnLWeEEFDm5ce2x_As0XTS7ayMGvk5uuD4,
+tab t.pzqwjycim1ix. Final read reports title (Oct 6) Revision; task did not rename it.
+Slides and other tabs untouched by task. Updated review checklist, writing guide,
+binding decisions and current-state record. Current deployed FP16 configuration retained.
+Verified21figure captions and20inline images including both new comparison charts;
+old language-screening image absent. Text checks found no validation-set count,
+forbidden device addition, old timing estimates or unwanted OS-specific narrative.
+Resolved74navigation entries from exported page numbers and corrected the ambiguous
+Design heading lookup (activity-table cell versus actual Design section).
+PDF inspection of revised figures/tables/front matter corrected table cell spacing,
+one joined paragraph, and changed-paragraph font consistency. Targeted page review,
+not full549-page all-tabs visual certification. No remaining requested work deferred.
+Final report:artifacts/generated/paper_revision_20261007/IMPLEMENTATION_REPORT.md.
+Source assets/builders underdocs/capstone_papers/review_assets; Python compile and
+ git diff --check passed. Next safe action:author reviews revised manuscript; no
+training, model replacement or presentation changes implied by this revision.
+
+## 2026-10-07 — Matched Mac processing completed; comparison visuals applied
+
+Both families completed all378identical validation clips with0failures. Apple M4
+stage-sum medians (base/fusion/span)356.127/668.637/668.701ms; MediaPipe546.680/
+809.295/808.632ms. MediaPipe retry used existing detector renewal between clips;
+failed partial run excluded. Report records the exact workload, timing exclusions,
+checkpoint paths and source hashes. No protected-test access or training.
+Updated Figure11 with separate accuracy/timing panels and added concise method/results
+paragraph. Figure18 now compares current FP16visual/recognition24.1ms/frame versus
+FP32visual/recognition112.6ms/frame on iPhone13. English staysFP32outside timing.
+Seven diagrams updated. Removed old English screening table/image and related prose;
+renumbered export/storage captions. Requirements table spacing corrected after PDF
+inspection. Updated writing guide and checklist with approved overrides and results.
+Validation: figure source images inspected, preliminary affected PDF pages inspected,
+Python compile and git diff --check passed. Navigation/final export verification next.
+
+## 2026-10-07 — Common-Mac timing retry after known MediaPipe GPU leak
+
+Initial MediaPipe timing stopped with MPS out-of-memory after a partial run; Apple
+completed. The existing extractor and mobile-deployment log document a macOS MediaPipe
+GPU pixel-buffer leak and detector recycling. Preserved initial partial JSON/log,
+added detector.renew() between clips at1000calls (outside timed work), and restarted
+MediaPipe from the beginning. Do not use the partial run in the paper. No high-watermark
+bypass, runtime-source edits, training or protected-test access. Final report will
+state timing scope and exclude model loading/recycling from steady-state stage costs.
+
+## 2026-10-07 — Approved platform-neutral revision in progress
+
+Author approved implementation in latest Google Doc tab t.pzqwjycim1ix, retaining
+FP16 deployment and comparing current FP16 visual/recognition against FP32 only.
+No validation-set size in manuscript. Slides and other tabs excluded. Applied core
+platform-neutral prose, joint extractor introduction, simplified deployment/results,
+requirements including Kotlin, three-stage accuracy table, conversion accuracy/storage,
+and separate iPhone13 precision timing. Removed untrained-language timing table/figure
+and detailed runtime discussion. Replaced seven diagrams with platform-neutral assets.
+Image replaceImage sidecar failed before mutation; supported delete/insertInlineImage
+replacement succeeded at the same positions/sizes. Phone figure added separately.
+Matched Mac timing launched sequentially on the same validation recordings for both
+pipelines; Apple completed, MediaPipe in progress. No protected test/training access.
+Evidence/scripts: artifacts/reports/capstone_mac_comparison_v17_20261007/ and
+artifacts/reports/phone_precision_v17_20261007/. Next: finish Mac timing, update
+chart/narrative, reconcile navigation, read back and inspect export, then mark review done.
+
+## 2026-10-07 — Second checklist feedback read; conversion concern investigated
+
+Author checked10of12remaining items;P-04/P-06remain open. Overrides: omit Huawei
+novaY70 entirely from manuscript additions; use "same validation set" in comparison
+wording instead of naming ASLCitizen there. No manuscript/checklist changes applied.
+Read current mobile source:LiveReelApp selects FP16hand encoder;LiveReelModels
+defaults to fixed-batch FP16recognizer;LiveReelEngine loads FP16word boundary.
+This verifies source configuration, not the currently installed phone binary/hash.
+Sep30conversion report shows360/378correct FP32 vs359/378FP16 (one changed
+prediction),Top5unchanged;recognizer+boundary storage saving28.682622MB. This
+is reduced precision of the trained model, not replacement by a smaller architecture;
+full-pipeline speed gain cannot be attributed solely to FP16. No deployment or
+model change authorized by this discussion. Next:discuss accuracy/runtime priority
+and establish whether author requests an FP32 comparison before changing deployment.
+
+## 2026-10-07 — Remaining-proposals checklist refreshed after author review
+
+Replaced README_PLATFORM_NEUTRAL_REVIEW.md with12unchecked remaining/new proposals;
+removed all checked item blocks and all slide items as requested. Prior approvals
+persist (not yet applied):G-01,G-02,C1-01..05,C2-01..07,C3-01..04,R-01..07,R-09,
+M-01..04,C4-01,C4-03..12. Author comments and subsequent discussion supersede
+the separate framework introduction and detailed processor/thread wording.
+New review covers joint framework introduction, simpler Chapter4 without a submitted
+technical-notes section, accuracy/storage conversion results, removal of graph-timing
+screening, all3recognition stages, common-Mac recognition plus processing speed,
+separate iPhone13 evaluation, and clearer existing signer-separation definition.
+Author requests excluding additional MediaPipe dataset for fairness. Checklist
+records shared ASLCitizen evaluation proposal and asks which dataset if training
+additions are meant:Oct4report states matched training lists, so no MediaPipe-only
+addition was assumed. Existing accuracy values are source results, not recomputed
+after exclusions; matched speed values remain pending evidence. No experiments,
+training, deletions, manuscript/GoogleDoc/presentation changes. Existing evidence
+files remain. Next:author checks revised proposals, identifies any intended dataset
+exclusion; verify live manuscript and metric provenance before implementation.
+
+## 2026-10-07 — Author checklist feedback and signer-separation citation reviewed
+
+Read author-edited platform-neutral checklist:41checked items;R-08 andC4-02 open;
+all13slide items untouched. Author notes request joint AppleVision/MediaPipe
+introduction, newer extractor results, and discussion of device/language charts.
+Latest instruction requests simpler Chapter4 discussion without thread/processor
+detail; supersedes those details in otherwise checked proposals. No approved
+manuscript replacements applied in this discussion pass; checklist preserved.
+Refreshed GoogleDoc tab t.pzqwjycim1ix: signer separation is explained/cited in
+2.1.8 and4.3.1, reinforced in4.3.2 table. Verified Desai2023 support through the
+primary ASLCitizen paper/dataset description; source assigns each participant to
+one split. Study-specific split counts/provenance still need clear result linkage;
+do not extend isolated-sign signer-disjoint claims to mixed streaming recordings.
+Oct4 MediaPipe rebuild report/log gives paired Citizen validation:landmark base
+Apple95.77/MP91.80;fusion96.30/94.44;interval-adapted95.24/94.44. These are distinct
+stages, not drop-in replacements for old extraction-time comparison. Device timing
+conditions remain unmatched for an OS speed comparison; language screening uses
+untrained graph timing and differs from installed configuration. Recommend retaining
+accuracy/storage/device28ms results, moving low-level timing conditions with their
+component timing tables to technical notes. Next:discuss chart scope and simplify
+proposals before manuscript changes. Slides remain deferred by author.
+
+## 2026-10-07 — Platform-neutral wording review checklist prepared
+
+Created `docs/capstone_papers/README_PLATFORM_NEUTRAL_REVIEW.md` at the user's
+request: section-specific approval checkboxes, stable IDs, before/after wording,
+rationale and blank author-note fields for manuscript and presentation proposals.
+Incorporates the latest discussion: use mobile application in general descriptions;
+retain named frameworks when introducing technologies or identifying comparisons.
+Withdraws anonymous Extractor A/B labels; preserves iPhone 13 attribution for the
+28 ms/frame recorded-input preparation-and-recognition result. Requirements proposals
+add Kotlin and describe paired extraction/model/runtime implementations. All items
+remain unchecked; this is a review artifact, not approval or application of edits.
+Verified unique item IDs, one author-note field per item, local presentation link,
+and whitespace. No manuscript, Google Doc, presentation, runtime or data changes.
+Next: receive author feedback by item ID, then apply only the agreed revisions
+after refreshing the live document.
+
 ## 2026-09-30 — MFET slides appended to Canva and verified
 
 Completed the authorized continuation in Canva design `DAHWo5UJHoA`: original

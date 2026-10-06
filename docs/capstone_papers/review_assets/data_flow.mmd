@@ -1,0 +1,18 @@
+flowchart TD
+    input["Camera frames"]
+    visual["1. Visual Extraction: landmarks and hand-image features"]
+    recognition["2. Streaming Sign Recognition"]
+    gloss["3. Gloss Management"]
+    english["4. T5-efficient-tiny: incremental English generation"]
+    finish["Finish button or held open palms"]
+    finalize["Finalize English text"]
+    output["English text and local speech"]
+    history["Session history"]
+    input -->|"Video"| visual
+    visual -->|"Landmarks and image features"| recognition
+    recognition -->|"Accepted glosses"| gloss
+    gloss -->|"Ordered gloss sequence"| english
+    english --> finish
+    finish -->|"Completion control"| finalize
+    finalize -->|"English text"| output
+    output -->|"Session record"| history

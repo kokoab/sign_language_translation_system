@@ -1,0 +1,19 @@
+flowchart TD
+    goal["On-device sign recognition and English output"]
+    visual["Compare landmark extractors"]
+    language["Evaluate English-output quality"]
+    apple["Landmarks with complementary hand-image features"]
+    tiny["T5-efficient-tiny with incremental generation"]
+    temporal["Compare temporal recognition architectures"]
+    coreml["Export models for on-device inference"]
+    selected["Multimodal Squeezeformer and segmental decoding"]
+    app["Integrated mobile application"]
+    goal --> visual
+    goal --> language
+    visual -->|"Local comparison"| apple
+    language -->|"English quality"| tiny
+    apple --> temporal
+    tiny --> coreml
+    temporal -->|"Local comparison"| selected
+    selected --> app
+    coreml --> app

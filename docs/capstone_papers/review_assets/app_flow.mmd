@@ -1,0 +1,63 @@
+flowchart TD
+    open["Open ATLAS"]
+    home{"Home: choose an activity"}
+    live["Live: camera preview"]
+    start["Start recognition"]
+    sign["Sign and view words; Reset clears input"]
+    t5["T5-efficient-tiny: incremental English generation"]
+    spoken["English text and local speech output"]
+    finish["Finish button or held-open-palms gesture"]
+    english["Finalize English text"]
+    continue["Continue signing (repeat) or Stop"]
+    saved["Session saved on the device"]
+    livehome["Home / another activity"]
+    glosses["Glosses"]
+    browse["Browse and select a sign"]
+    example["Watch the sign demonstration"]
+    back["Back to Glosses or Home"]
+    practice["Practice: select 5, 10 or 20 signs"]
+    targets["Start a random practice set"]
+    reference["View target sign and demonstration"]
+    attempt["Sign for the camera"]
+    correct{"Matches target?"}
+    retry["Try again or Skip"]
+    next["Advance to next sign"]
+    complete{"Round complete?"}
+    more["Show next target and repeat the attempt"]
+    result["Show score and skipped signs"]
+    again["Practice again or return Home"]
+    history["History"]
+    sessions["View saved session dates, duration and text"]
+    historyhome["Home / another activity"]
+    open --> home
+    home -->|"Live"| live
+    home -->|"Glosses"| glosses
+    home -->|"Practice"| practice
+    home -->|"History"| history
+    live --> start
+    start --> sign
+    sign --> t5
+    t5 --> finish
+    finish --> english
+    english --> spoken
+    spoken --> continue
+    continue -->|"Stop"| saved
+    saved --> livehome
+    glosses --> browse
+    browse --> example
+    example -->|"Back"| back
+    example -->|"Practice this sign"| reference
+    practice --> targets
+    targets --> reference
+    reference --> attempt
+    attempt --> correct
+    correct -->|"Yes"| next
+    correct -->|"No"| retry
+    retry -->|"Retry"| attempt
+    retry -->|"Skip"| next
+    next --> complete
+    complete -->|"No"| more
+    complete -->|"Yes"| result
+    result --> again
+    history --> sessions
+    sessions --> historyhome

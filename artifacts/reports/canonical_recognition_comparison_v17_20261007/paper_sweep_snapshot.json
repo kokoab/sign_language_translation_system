@@ -1,0 +1,1839 @@
+{
+  "documentId": "1sC2JZ23mSpnLWeEEFDm5ce2x_As0XTS7ayMGvk5uuD4",
+  "tabId": "t.pzqwjycim1ix",
+  "revisionId": "ANLCKQlBUyg6WYdXaqYkJ_btLkvzbPMJhERCt_R_94Csey5WxmKDDk5JU70DAIgRJtLJproAHom_cXj7a9Uvo-6tBdTDEHtZMgkc3t38yhU",
+  "paragraphs": [
+    {
+      "text": "The current ATLAS implementation should not, however, be described as a completed production mobile deployment. The evaluated implementation is Mac-based and has been tested using signer-disjoint recorded clips and controlled live testing. The current evaluation does not establish production-level Android or iOS performance, power consumption, thermal behavior, or unrestricted conversational operation.",
+      "startIndex": 58275,
+      "endIndex": 58680,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Mac-based resources support Apple framework integration, model conversion and application builds; training resources support the corresponding model recipes.",
+      "startIndex": 85691,
+      "endIndex": 85848,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 8. Proposed System Flowchart",
+      "startIndex": 100534,
+      "endIndex": 100569,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.3 Data Preparation and Model Development",
+      "startIndex": 100572,
+      "endIndex": 100614,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_2",
+      "isListItem": false
+    },
+    {
+      "text": "This section presents the data preparation and model development procedures used in ATLAS. It explains how recordings were cleaned and annotated, how model inputs were prepared, and how training methods supported recognition and English generation. The discussion then connects these procedures with the integration of the trained components into the  mobile  application.",
+      "startIndex": 100615,
+      "endIndex": 100987,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.3.1 Preparation, Annotation and Data Separation",
+      "startIndex": 100989,
+      "endIndex": 101038,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "The development of ATLAS required examples that represent both individual vocabulary signs and their use within a sequence. Isolated-sign clips supplied the labels for vocabulary recognition, sign-sequence recordings supplied connected signing, and gloss-to-English pairs supplied sentence-generation targets. Keeping these roles distinct allowed the researchers to prepare each input according to the task it supports, while retaining the relationship between the recording, its annotation and the resulting training example.",
+      "startIndex": 101039,
+      "endIndex": 101565,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Preparation included label checks, annotation review and manual clipping of selected recordings. A gloss annotation identifies the sign, while a temporal annotation identifies where it occurs in a recording. Selected portions were manually clipped when needed to isolate the relevant content. Automatic activity trimming separately removed surrounding inactivity during isolated-sign preparation. For sequences with a known gloss order but no manually timed boundaries, alignment assigned the sequence to candidate intervals. These assigned intervals served as training supervision without being treated as manually annotated timing.",
+      "startIndex": 101566,
+      "endIndex": 102199,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Signer-disjoint separation kept a person's isolated-sign recordings within the same assigned split, preventing that person's examples from appearing in both training and evaluation. This supports an assessment of recognition across people rather than repeated exposure to the same signer (Desai et al., 2023). Sequence studies retained their documented recording groups, and generated English sessions using held-out examples. Validation or designated tuning results guided model selection; the different study groups were retained when interpreting each comparison.",
+      "startIndex": 102200,
+      "endIndex": 102766,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.3.2 Input Preparation and Training Controls",
+      "startIndex": 102768,
+      "endIndex": 102813,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "Landmark preparation expresses movement relative to the body so that changes in camera placement and signer size do not dominate the representation. Coordinates use a common scale, normally shoulder width, with a palm-based fallback when appropriate. Image proportions are preserved, and missing landmarks retain presence indicators. Each candidate sign interval is sampled into 32 frames containing 61 landmark points and five values per point: body-relative X and Y, a relative scale-based depth proxy, presence and confidence. This gives a 32 × 61 × 5 input. The fixed number describes the recognizer's input length; candidate intervals may occupy different amounts of recording time.",
+      "startIndex": 102814,
+      "endIndex": 103501,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "MobileCLIP2 supplies complementary appearance features from hand images. These features preserve visual information that may not be fully represented by landmark positions, while the landmark sequence describes motion and relative configuration. Their combination allows recognition to consider both sources of evidence (Jiang et al., 2021; Faghri et al., 2025).",
+      "startIndex": 103502,
+      "endIndex": 103864,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Training introduces controlled variation so that the recognizer learns beyond the exact presentation of its examples. Position, uniform scale, rotation, timing and visibility can vary, and mirroring includes the corresponding left–right landmark exchange. During sign-interval adaptation, candidate boundaries also shift slightly. Regularization addresses how the model learns from these examples: dropout reduces dependence on particular internal activations, while weight decay discourages excessive parameter growth (Srivastava et al., 2014; Loshchilov & Hutter, 2019). Table 10 brings these preparation and training activities together.",
+      "startIndex": 103865,
+      "endIndex": 104505,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 10. Data Preparation and Training Methods",
+      "startIndex": 104507,
+      "endIndex": 104554,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Method",
+      "startIndex": 104558,
+      "endIndex": 104564,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Application in ATLAS",
+      "startIndex": 104566,
+      "endIndex": 104586,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Purpose",
+      "startIndex": 104588,
+      "endIndex": 104595,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Label and recording checks",
+      "startIndex": 104598,
+      "endIndex": 104624,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Preserve the selected vocabulary labels, verify recording identity and usable features, and retain preparation records.",
+      "startIndex": 104626,
+      "endIndex": 104745,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Keep each example connected to its intended target.",
+      "startIndex": 104747,
+      "endIndex": 104798,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Annotation and manual clipping",
+      "startIndex": 104801,
+      "endIndex": 104831,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Review sign labels and isolate selected portions of recordings; use timed annotations where available.",
+      "startIndex": 104833,
+      "endIndex": 104935,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Associate sign content with the relevant video interval.",
+      "startIndex": 104937,
+      "endIndex": 104993,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Automatic trimming and sampling",
+      "startIndex": 104996,
+      "endIndex": 105027,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Remove surrounding inactivity from isolated-sign inputs and sample frames into the recognizer's input format.",
+      "startIndex": 105029,
+      "endIndex": 105138,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Represent the signing portion consistently.",
+      "startIndex": 105140,
+      "endIndex": 105183,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Landmark normalization",
+      "startIndex": 105186,
+      "endIndex": 105208,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Express positions relative to the body and use a common scale, normally shoulder width, while preserving image proportions. Missing landmarks retain presence indicators.",
+      "startIndex": 105210,
+      "endIndex": 105379,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Reduce variation from camera placement and signer size while preserving relative hand movement.",
+      "startIndex": 105381,
+      "endIndex": 105476,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Training augmentation",
+      "startIndex": 105479,
+      "endIndex": 105500,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Vary landmark position, uniform scale, rotation, timing and visibility; mirror with the corresponding left/right landmark swap. Sign-interval training also varies candidate start and end positions.",
+      "startIndex": 105502,
+      "endIndex": 105699,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Expose recognition to variation in appearance, motion and interval selection.",
+      "startIndex": 105701,
+      "endIndex": 105778,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Regularization",
+      "startIndex": 105781,
+      "endIndex": 105795,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Use dropout and weight decay in model training; retain isolated-sign examples and reference predictions during sign-interval adaptation.",
+      "startIndex": 105797,
+      "endIndex": 105933,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Reduce reliance on particular training patterns and preserve learned vocabulary recognition during adaptation.",
+      "startIndex": 105935,
+      "endIndex": 106045,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Data separation and model selection",
+      "startIndex": 106048,
+      "endIndex": 106083,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Keep the isolated-sign evaluation signer-disjoint; preserve the documented recording groups for sequence studies. Use validation or designated tuning results for model selection.",
+      "startIndex": 106085,
+      "endIndex": 106263,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Assess performance on examples separated from the corresponding training procedure.",
+      "startIndex": 106265,
+      "endIndex": 106348,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.3.3 Recognition and Streaming Integration",
+      "startIndex": 106351,
+      "endIndex": 106394,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "The researchers compared landmark extractors, visual input combinations, recognition architectures and model families before examining their integration into streaming recognition. Part-wise processing represents regions such as the hands and upper body before global temporal processing combines their movement. Squeezeformer provides attention and convolution within this temporal design, allowing the adapted recognizer to consider relationships across frames alongside nearby movement patterns (Lee et al., 2023; Kim et al., 2022).",
+      "startIndex": 106395,
+      "endIndex": 106930,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Within the camera stream, recognition also requires a decision about which portion of movement belongs to a sign. ATLAS therefore uses a boundary model to suggest intervals and a segmental decoder to select and commit their recognized content. Its four-layer Transformer boundary model learned timing predictions through knowledge distillation from the pretrained Sign Language Segmentation teacher. The teacher's 2026 CNN–Transformer implementation uses MediaPipe pose inputs and was pretrained on German Sign Language; the related segmentation research and implementation are cited separately (Moryossef et al., 2023; Sign Language Processing, 2026). During this transfer, the teacher remained frozen while the ATLAS model learned from landmark features. A short look-ahead supports timing decisions in the application, while the recognizer supplies the ASL vocabulary labels.",
+      "startIndex": 106931,
+      "endIndex": 107809,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The recognizer was separately fine-tuned on candidate intervals resembling those encountered during streaming. Isolated-sign examples and reference predictions were retained during adaptation to preserve vocabulary recognition while learning from intervals with variable boundaries. The decoder then combined recognition scores with temporal evidence to form the accepted gloss sequence. Figure 9 shows how these responsibilities cooperate; the recorded HELLO HOW YOU example in Chapter 3 illustrates their operation within a clip.",
+      "startIndex": 107810,
+      "endIndex": 108341,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 9. Streaming Recognition Decisions",
+      "startIndex": 108344,
+      "endIndex": 108385,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The researchers also tried Connectionist Temporal Classification (CTC), which learns sequences without requiring an exact boundary annotation for every sign (Graves et al., 2006). In the tested window-based implementation, the first full-window prediction required approximately 1.07 seconds of input before processing. Predictions could change as additional input arrived, and speech waited for a stable sequence. Live observations included repeated output for a held sign and a camera-timing mismatch, while separately trained causal CTC variants produced substantial connected-sign validation errors. These findings supported the choice of explicit boundary estimation and stable gloss commitment for this application. The decision concerns the tested implementations and their interaction behavior, rather than a general claim that CTC is inherently slow. Responsive interaction is also consistent with the real-time translation priorities reported in research involving Deaf and hard-of-hearing signers (Kamikubo et al., 2025).",
+      "startIndex": 108387,
+      "endIndex": 109419,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.3.4 English Generation and Mobile Application Integration",
+      "startIndex": 109421,
+      "endIndex": 109480,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "T5-efficient-tiny learns the mapping from gloss sequences to English through text-to-text fine-tuning (Raffel et al., 2020). Incremental generation prepares sentence updates as glosses accumulate, retaining completed sentences after consistency checks. When the user selects Finish or holds both open palms for one second, the application finalizes the remaining text before presenting English and producing local speech. This arrangement distributes sentence-generation work across the interaction while keeping completion under an explicit control.",
+      "startIndex": 109481,
+      "endIndex": 110031,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The trained neural components are exported for on-device inference. FP32 uses 32-bit floating-point values, while FP16 uses 16-bit values. The selected configuration uses FP16 visual and recognition components and retains FP32 for English generation. The deployment evaluation examines recognition performance, model storage, and processing time. Figure 10 summarizes how the component comparisons inform these engineering choices.",
+      "startIndex": 110032,
+      "endIndex": 110463,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 10. Model and Deployment Selection",
+      "startIndex": 110466,
+      "endIndex": 110507,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.4 Results and Discussion",
+      "startIndex": 110509,
+      "endIndex": 110535,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_2",
+      "isListItem": false
+    },
+    {
+      "text": "The results are organized around the decisions that shape ATLAS: visual representation, recognition architecture, streaming output, English generation and mobile-device execution. Top-1 accuracy measures how often the highest-scoring sign is correct; Top-5 accuracy measures how often the correct sign appears among the five highest-scoring predictions. Word error rate counts substitutions, missing signs and additional signs relative to the reference sequence, with lower values indicating fewer errors. Median processing time is the middle value of the recorded timings.",
+      "startIndex": 110536,
+      "endIndex": 111109,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Each comparison retains its own task and measurement conditions. Recognition percentages below describe the corresponding validation studies, while the streaming comparison uses the same recorded sequences for both configurations. Base-classifier CPU timings use prepared inputs; the mobile-device measurements include the stated processing work on the device. Detailed hardware, recording membership and source records are retained in the measurement notes. This separation allows each result to answer the engineering question for which it was measured.",
+      "startIndex": 111110,
+      "endIndex": 111665,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.4.1 Visual Inputs and Recognition Pipeline Comparison",
+      "startIndex": 111667,
+      "endIndex": 111722,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "The Apple Vision and MediaPipe pipelines were compared across three recognition stages using the same validation set and vocabulary. The landmark-only base recognizer uses structured movement information. The combined-input recognizer adds hand-image features, while the interval-adapted recognizer is prepared for candidate sign intervals during streaming. Table 11 and Figure 11 compare isolated-sign validation accuracy at these stages.",
+      "startIndex": 111723,
+      "endIndex": 112162,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 11. Recognition Performance Across Three Model Stages",
+      "startIndex": 112164,
+      "endIndex": 112223,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Model stage",
+      "startIndex": 112227,
+      "endIndex": 112238,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Apple Vision",
+      "startIndex": 112240,
+      "endIndex": 112252,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "MediaPipe",
+      "startIndex": 112254,
+      "endIndex": 112263,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Landmark-only base recognizer",
+      "startIndex": 112266,
+      "endIndex": 112295,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "95.77%",
+      "startIndex": 112297,
+      "endIndex": 112303,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "91.80%",
+      "startIndex": 112305,
+      "endIndex": 112311,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Combined-input recognizer",
+      "startIndex": 112314,
+      "endIndex": 112339,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "96.30%",
+      "startIndex": 112341,
+      "endIndex": 112347,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "94.44%",
+      "startIndex": 112349,
+      "endIndex": 112355,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Interval-adapted recognizer",
+      "startIndex": 112358,
+      "endIndex": 112385,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "95.24%",
+      "startIndex": 112387,
+      "endIndex": 112393,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "94.44%",
+      "startIndex": 112395,
+      "endIndex": 112401,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 11. Recognition and Processing Time Across Three Model Stages",
+      "startIndex": 112407,
+      "endIndex": 112475,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The Apple Vision pipeline recorded higher validation Top-1 accuracy at each of the three stages in this comparison. Combining landmark and hand-image features produced 96.30% accuracy for Apple Vision inputs and 94.44% for MediaPipe inputs. After adaptation to candidate intervals, the corresponding isolated-sign validation values were 95.24% and 94.44%. These results describe the evaluated configurations rather than every possible implementation of either extractor.",
+      "startIndex": 112477,
+      "endIndex": 112947,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Processing speed was measured on the same Apple M4 development computer using identical recordings from the same validation set. Each clip's measured stages were combined: landmark extraction and preparation, applicable hand-image feature extraction, and recognition. Initial video decoding, model loading, English generation, and speech output were excluded. The Apple Vision pipeline recorded median times of 356.1, 668.6, and 668.7 ms per clip for the landmark-only, combined-input, and interval-adapted stages, respectively. The corresponding MediaPipe results were 546.7, 809.3, and 808.6 ms. Figure 11 presents these development-computer measurements alongside recognition accuracy; device processing is evaluated separately.",
+      "startIndex": 112948,
+      "endIndex": 113679,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The visual-input comparison then examined whether hand appearance contributed information beyond landmark motion. Each configuration was assessed on the same validation recordings.",
+      "startIndex": 113680,
+      "endIndex": 113860,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 12. Recognition Input Comparison",
+      "startIndex": 113862,
+      "endIndex": 113900,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Recognition input",
+      "startIndex": 113904,
+      "endIndex": 113921,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Top-1",
+      "startIndex": 113923,
+      "endIndex": 113928,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Top-5",
+      "startIndex": 113930,
+      "endIndex": 113935,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Hand-image features",
+      "startIndex": 113938,
+      "endIndex": 113957,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "80.69%",
+      "startIndex": 113959,
+      "endIndex": 113965,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "94.71%",
+      "startIndex": 113967,
+      "endIndex": 113973,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Landmarks",
+      "startIndex": 113976,
+      "endIndex": 113985,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "95.50%",
+      "startIndex": 113987,
+      "endIndex": 113993,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "98.68%",
+      "startIndex": 113995,
+      "endIndex": 114001,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Learned combination",
+      "startIndex": 114004,
+      "endIndex": 114023,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "96.30%",
+      "startIndex": 114025,
+      "endIndex": 114031,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "99.21%",
+      "startIndex": 114033,
+      "endIndex": 114039,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Landmarks provided the stronger individual input, reaching 95.50% Top-1 accuracy compared with 80.69% for hand-image features. Combining the inputs reached 96.30%, an increase of 0.80 percentage points over landmarks alone. The improvement supports complementary use of motion and appearance within the recognition component without implying that either input contributes equally.",
+      "startIndex": 114042,
+      "endIndex": 114422,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.4.2 Recognition Architecture and Model Families",
+      "startIndex": 114424,
+      "endIndex": 114473,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "The architecture comparison considered how landmark information should be organized before temporal classification. Table 13 reports earlier design-screening checkpoints; Table 14 reports a separate matched training experiment. Their Squeezeformer results therefore refer to different trained models. Both tables concern landmark-based classifiers and exclude the hand-image encoder and combined recognition model. M denotes millions of parameters, and CPU median denotes classifier inference on prepared inputs on the development Mac. A flat model processes the input together, part-wise processing first represents anatomical regions, and the graph-part alternative represents connections between landmarks.",
+      "startIndex": 114474,
+      "endIndex": 115183,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 13. Earlier Landmark Architecture Screening",
+      "startIndex": 115185,
+      "endIndex": 115234,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Architecture",
+      "startIndex": 115238,
+      "endIndex": 115250,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Parameters",
+      "startIndex": 115252,
+      "endIndex": 115262,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Top-1",
+      "startIndex": 115264,
+      "endIndex": 115269,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Top-5",
+      "startIndex": 115271,
+      "endIndex": 115276,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "CPU median",
+      "startIndex": 115278,
+      "endIndex": 115288,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Graph-part replacement",
+      "startIndex": 115291,
+      "endIndex": 115313,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6.48 M",
+      "startIndex": 115315,
+      "endIndex": 115321,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "78.31%",
+      "startIndex": 115323,
+      "endIndex": 115329,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "95.77%",
+      "startIndex": 115331,
+      "endIndex": 115337,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "11.42 ms",
+      "startIndex": 115339,
+      "endIndex": 115347,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Wider flat Squeezeformer",
+      "startIndex": 115350,
+      "endIndex": 115374,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "14.34 M",
+      "startIndex": 115376,
+      "endIndex": 115383,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "95.24%",
+      "startIndex": 115385,
+      "endIndex": 115391,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "99.74%",
+      "startIndex": 115393,
+      "endIndex": 115399,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "7.35 ms",
+      "startIndex": 115401,
+      "endIndex": 115408,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Flat Squeezeformer",
+      "startIndex": 115411,
+      "endIndex": 115429,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6.47 M",
+      "startIndex": 115431,
+      "endIndex": 115437,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "95.77%",
+      "startIndex": 115439,
+      "endIndex": 115445,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "100.00%",
+      "startIndex": 115447,
+      "endIndex": 115454,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.90 ms",
+      "startIndex": 115456,
+      "endIndex": 115463,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Part-wise + global Squeezeformer",
+      "startIndex": 115466,
+      "endIndex": 115498,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6.79 M",
+      "startIndex": 115500,
+      "endIndex": 115506,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "96.83%",
+      "startIndex": 115508,
+      "endIndex": 115514,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "99.21%",
+      "startIndex": 115516,
+      "endIndex": 115522,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6.50 ms",
+      "startIndex": 115524,
+      "endIndex": 115531,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Part-wise and global Squeezeformer processing achieved the highest Top-1 accuracy in this comparison, at 96.83%. Relative to the flat Squeezeformer, the gain was 1.06 percentage points with an additional 1.60 milliseconds of median classifier computation. The flat model was faster and achieved the highest Top-5 value, while the selected architecture prioritized the correctness of the first prediction presented by recognition.",
+      "startIndex": 115534,
+      "endIndex": 115963,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The selected family comparison presents a bidirectional long short-term memory network (BiLSTM), a temporal convolutional neural network (Temporal CNN), a Flat Transformer and the ATLAS landmark-recognition branch, evaluated using the same training recordings, validation recordings, training procedure and random seed. Recurrent models track information through a sequence; temporal convolution learns nearby frame patterns; Transformers relate frames using attention; and Squeezeformer combines attention with convolution. These families offer different balances between computation and recognition.",
+      "startIndex": 115964,
+      "endIndex": 116565,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 14. Matched Recognition Family Comparison",
+      "startIndex": 116567,
+      "endIndex": 116614,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Model family",
+      "startIndex": 116618,
+      "endIndex": 116630,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Parameters",
+      "startIndex": 116632,
+      "endIndex": 116642,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Validation top-1",
+      "startIndex": 116644,
+      "endIndex": 116660,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "CPU median",
+      "startIndex": 116662,
+      "endIndex": 116672,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "BiLSTM",
+      "startIndex": 116675,
+      "endIndex": 116681,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6.10 M",
+      "startIndex": 116683,
+      "endIndex": 116689,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "89.15%",
+      "startIndex": 116691,
+      "endIndex": 116697,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "3.39 ms",
+      "startIndex": 116699,
+      "endIndex": 116706,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Temporal CNN",
+      "startIndex": 116709,
+      "endIndex": 116721,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "5.90 M",
+      "startIndex": 116723,
+      "endIndex": 116729,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "92.59%",
+      "startIndex": 116731,
+      "endIndex": 116737,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.34 ms",
+      "startIndex": 116739,
+      "endIndex": 116746,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Flat Transformer",
+      "startIndex": 116749,
+      "endIndex": 116765,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6.72 M",
+      "startIndex": 116767,
+      "endIndex": 116773,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "95.50%",
+      "startIndex": 116775,
+      "endIndex": 116781,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "2.88 ms",
+      "startIndex": 116783,
+      "endIndex": 116790,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "ATLAS (part-wise + global Squeezeformer)",
+      "startIndex": 116793,
+      "endIndex": 116833,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6.79 M",
+      "startIndex": 116835,
+      "endIndex": 116841,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "96.30%",
+      "startIndex": 116843,
+      "endIndex": 116849,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6.15 ms",
+      "startIndex": 116851,
+      "endIndex": 116858,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "In the matched experiment, Squeezeformer achieved 96.30% validation Top-1 accuracy versus 95.50% for the flat Transformer, a difference of 0.79 percentage points. Transformer was faster on the development Mac CPU: 2.88 versus 6.15 milliseconds. However, a separate iPhone 13 comparison of the same two classifiers in FP16 measured 0.95 milliseconds for Transformer and 0.99 milliseconds for Squeezeformer. Both retained their original validation predictions. The 0.04-millisecond difference was small relative to variation across four counterbalanced runs. Thus, Squeezeformer provided higher measured accuracy with similar FP16 classifier speed on the evaluated phone. These single-seed accuracy results do not establish general architectural superiority. Classifier timings exclude landmark extraction, hand-image encoding and streaming processing; they are separate from the system's historical 28-millisecond measurement.",
+      "startIndex": 116861,
+      "endIndex": 117786,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.4.3 Streaming Recognition",
+      "startIndex": 117788,
+      "endIndex": 117815,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "Individual-sign accuracy does not fully describe connected signing, where the system must also decide when a sign begins, ends and becomes stable enough to accept. The streaming comparison therefore measures sequence errors across two complete configurations on the same recordings. Boundary-guided interval classification passes predicted intervals to recognition; ATLAS streaming recognition combines the distilled boundary model, interval-adapted recognition and sequence selection.",
+      "startIndex": 117816,
+      "endIndex": 118301,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 15. Streaming Recognition Comparison",
+      "startIndex": 118303,
+      "endIndex": 118345,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Recognition configuration",
+      "startIndex": 118349,
+      "endIndex": 118374,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Word error rate",
+      "startIndex": 118376,
+      "endIndex": 118391,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Boundary-guided interval classification",
+      "startIndex": 118394,
+      "endIndex": 118433,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "39.78%",
+      "startIndex": 118435,
+      "endIndex": 118441,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "ATLAS streaming recognition",
+      "startIndex": 118444,
+      "endIndex": 118471,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "9.68%",
+      "startIndex": 118473,
+      "endIndex": 118478,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Word error rate decreased from 39.78% to 9.68%, a difference of 30.10 percentage points. This reflects the combined configuration, rather than an isolated effect of boundary distillation. The recordings include familiar-signer and unseen-signer sequences, providing a development comparison of how the system handles connected input. The result supports coordinating interval detection, recognition and gloss commitment instead of judging the streaming workflow solely from individual-sign accuracy.",
+      "startIndex": 118481,
+      "endIndex": 118980,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Distinction Between Technical System Testing and Human Participant Evaluation",
+      "startIndex": 118982,
+      "endIndex": 119059,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "The evaluation of ATLAS shall consist of two distinct components: (1) technical system evaluation and (2) human participant evaluation. These components shall be treated separately to distinguish system performance measurements from information obtained directly from research participants.",
+      "startIndex": 119060,
+      "endIndex": 119350,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Technical system evaluation refers to the assessment of the technical and functional performance of the developed system. This evaluation does not require human participants and shall be conducted using prepared datasets, sign-sequence data, gloss-to-English pairs, trained and exported models, controlled system inputs, and other development or testing resources. Technical evaluation shall include appropriate measures of system performance, such as Top-1 accuracy, Top-5 accuracy, Word Error Rate (WER), English-output performance, processing time, and model size, as applicable to the developed system.",
+      "startIndex": 119351,
+      "endIndex": 119957,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Human participant evaluation, on the other hand, refers to information obtained directly from eligible research participants during the evaluation of the system. Participant-provided information may include their responses to the evaluation procedures, observations, comments, suggestions, and other feedback collected through the approved research process.",
+      "startIndex": 119958,
+      "endIndex": 120315,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The technical performance results generated from datasets and system testing shall not be treated as participant data. Conversely, information directly provided by research participants shall be treated as research data and shall be handled in accordance with the informed consent process, data protection safeguards, and the approved research protocol.",
+      "startIndex": 120316,
+      "endIndex": 120669,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.4.4 English-Output Quality",
+      "startIndex": 120671,
+      "endIndex": 120699,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "English-output assessment used generated gloss-to-English sessions containing two to four sentences. DeepSeek supplied reference sentences and automatic judgments under a rubric that distinguishes fully correct, mostly correct and incorrect output. Fully correct output preserves the reference meaning, grammatical English and important content; mostly correct output retains the main meaning with a minor error; incorrect output changes, omits or invents important meaning. Research on language-model evaluation supports the use of explicit criteria, while the ratings here come from the study's own evaluator (Liu et al., 2023).",
+      "startIndex": 120700,
+      "endIndex": 121330,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 16. English-Output Comparison",
+      "startIndex": 121332,
+      "endIndex": 121367,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Configuration",
+      "startIndex": 121371,
+      "endIndex": 121384,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Judged fully correct",
+      "startIndex": 121386,
+      "endIndex": 121406,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Judged wrong",
+      "startIndex": 121408,
+      "endIndex": 121420,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "BLEU",
+      "startIndex": 121422,
+      "endIndex": 121426,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "NO retained",
+      "startIndex": 121428,
+      "endIndex": 121439,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "T5-efficient-tiny: whole-sequence generation",
+      "startIndex": 121442,
+      "endIndex": 121486,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "60%",
+      "startIndex": 121488,
+      "endIndex": 121491,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "6%",
+      "startIndex": 121493,
+      "endIndex": 121495,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "75",
+      "startIndex": 121497,
+      "endIndex": 121499,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "100%",
+      "startIndex": 121501,
+      "endIndex": 121505,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "T5-efficient-tiny: incremental generation",
+      "startIndex": 121508,
+      "endIndex": 121549,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "60%",
+      "startIndex": 121551,
+      "endIndex": 121554,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "8%",
+      "startIndex": 121556,
+      "endIndex": 121558,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "74",
+      "startIndex": 121560,
+      "endIndex": 121562,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "100%",
+      "startIndex": 121564,
+      "endIndex": 121568,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Both configurations used the same fine-tuned model with approximately 15.6 million parameters and received a 60% fully correct automatic rating. Incorrect ratings were 6% for whole-sequence generation and 8% for incremental generation. Neither configuration dropped NO in the evaluated examples containing that gloss. This measure concerns NO specifically; it does not cover every form of negation in ASL. BLEU measures overlap with reference wording, complementing the meaning-oriented rubric (Papineni et al., 2002). These are automatic judgments of generated text, with the same model family providing references and ratings; they describe English generation rather than human-assessed signing accuracy.",
+      "startIndex": 121571,
+      "endIndex": 122277,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.4.5 From Trained Models to Mobile Application Execution",
+      "startIndex": 122279,
+      "endIndex": 122336,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "ATLAS brings together four neural components with different responsibilities: the temporal boundary model, the Squeezeformer-based recognizer, the MobileCLIP2 image encoder and T5-efficient-tiny. The boundary model estimates candidate sign timing, while the recognizer determines which signs those intervals contain. MobileCLIP2 supplies hand-appearance features that complement landmark motion, and T5-efficient-tiny turns the accepted gloss sequence into English. These components connect visual recognition with sentence generation, but they are not a single trained model.",
+      "startIndex": 122337,
+      "endIndex": 122913,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The trained models were exported for execution within the mobile application. The selected configuration uses reduced-precision visual and recognition models. Comparisons examined recognition performance, model storage, and processing time after export. The application connects the components with camera input, gloss management, English generation, and local speech output.",
+      "startIndex": 122914,
+      "endIndex": 123289,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The deployment evaluation considers accuracy and processing speed together. Model storage is reported as an additional implementation measure; the selected configuration is assessed through its recognition behavior and measured operation on the device.",
+      "startIndex": 123290,
+      "endIndex": 123542,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "All four neural components have exported forms for on-device inference. In the selected configuration, MobileCLIP2, the boundary model, and the recognizer use FP16 exports. T5-efficient-tiny uses FP32 encoder and decoder exports, which are two computational parts of the same English-generation model. Table 17 identifies each model and its exported form.",
+      "startIndex": 123543,
+      "endIndex": 123898,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 17. Neural Models and Their Deployment Exports",
+      "startIndex": 123899,
+      "endIndex": 123951,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Neural model",
+      "startIndex": 123955,
+      "endIndex": 123967,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Purpose",
+      "startIndex": 123969,
+      "endIndex": 123976,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Exported form",
+      "startIndex": 123978,
+      "endIndex": 123991,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Temporal boundary model",
+      "startIndex": 123994,
+      "endIndex": 124017,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Estimates where candidate signs begin and end from landmark features.",
+      "startIndex": 124019,
+      "endIndex": 124088,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Boundary-model export using FP16.",
+      "startIndex": 124090,
+      "endIndex": 124123,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Squeezeformer-based recognizer",
+      "startIndex": 124126,
+      "endIndex": 124156,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Identifies candidate signs using landmark motion and hand-image features.",
+      "startIndex": 124158,
+      "endIndex": 124231,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Recognition-model export using FP16.",
+      "startIndex": 124233,
+      "endIndex": 124269,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "MobileCLIP2 image encoder",
+      "startIndex": 124272,
+      "endIndex": 124297,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Extracts appearance features from cropped hand images.",
+      "startIndex": 124299,
+      "endIndex": 124353,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Image-encoder exports using FP32 or FP16; the selected configuration uses FP16.",
+      "startIndex": 124355,
+      "endIndex": 124434,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "T5-efficient-tiny",
+      "startIndex": 124437,
+      "endIndex": 124454,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Generates English from accepted gloss sequences.",
+      "startIndex": 124456,
+      "endIndex": 124504,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Encoder and decoder exports using FP32; both belong to one language model.",
+      "startIndex": 124506,
+      "endIndex": 124580,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The landmark extractor supplies visual observations through an existing framework and is separate from the neural components exported by the researchers. The segmental decoder, Gloss Management, and Finish controls coordinate the model outputs. Camera capture, the interface, and speech output use native application frameworks.",
+      "startIndex": 124583,
+      "endIndex": 124911,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The selected precision settings apply to the exported neural components. English generation remains FP32 in both device configurations compared in this study.",
+      "startIndex": 124912,
+      "endIndex": 125070,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 12 follows the preparation of trained models for deployment and then their integration into the application. Export changes the executable representation of a model; the application still supplies preprocessing, connects model outputs and manages the interaction. The following subsection compares recognition accuracy, model storage, and on-device processing time.",
+      "startIndex": 125071,
+      "endIndex": 125443,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Combined operation of the deployed system. Camera frames supply landmark and hand-image information. Boundary estimates guide candidate-interval selection, and the recognizer scores those intervals using both visual inputs. The segmental decoder selects the accepted sequence, Gloss Management preserves its order, and T5-efficient-tiny prepares English as that sequence grows. Finish finalizes the remaining text for display and local speech. The models therefore cooperate within one workflow, while each retains a specific input, output and responsibility.",
+      "startIndex": 125444,
+      "endIndex": 126003,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 12. Model Export and Mobile Application Integration",
+      "startIndex": 126006,
+      "endIndex": 126064,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.4.6 Recognition Performance and On-Device Execution",
+      "startIndex": 126066,
+      "endIndex": 126119,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "The FP32 and FP16 recognizer exports were evaluated using the same validation inputs and reference labels. Landmark and cached hand-image inputs were held constant to examine the recognizer's predictions separately from changes in visual extraction. The comparison found similar recognition accuracy, while the device evaluation examined the processing cost of each precision configuration.",
+      "startIndex": 126120,
+      "endIndex": 126510,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The boundary-model export retained the original model's timing-state predictions on the same tuning inputs. This measures whether conversion changes the predicted state—outside a sign, at its beginning or within it. It is an agreement measure with the original model, rather than accuracy against manually annotated sign boundaries.",
+      "startIndex": 126511,
+      "endIndex": 126843,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Table 18. Recognition Accuracy and Model Storage by Precision",
+      "startIndex": 126845,
+      "endIndex": 126906,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Model and measure",
+      "startIndex": 126910,
+      "endIndex": 126927,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "FP32",
+      "startIndex": 126929,
+      "endIndex": 126933,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "FP16",
+      "startIndex": 126935,
+      "endIndex": 126939,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Squeezeformer recognizer: validation Top-1 accuracy",
+      "startIndex": 126942,
+      "endIndex": 126993,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "95.24%",
+      "startIndex": 126995,
+      "endIndex": 127001,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "94.97%",
+      "startIndex": 127003,
+      "endIndex": 127009,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Squeezeformer recognizer: validation Top-5 accuracy",
+      "startIndex": 127012,
+      "endIndex": 127063,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "98.94%",
+      "startIndex": 127065,
+      "endIndex": 127071,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "98.94%",
+      "startIndex": 127073,
+      "endIndex": 127079,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Squeezeformer recognizer: saved model size",
+      "startIndex": 127082,
+      "endIndex": 127124,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "49.62 MB",
+      "startIndex": 127126,
+      "endIndex": 127134,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "25.51 MB",
+      "startIndex": 127136,
+      "endIndex": 127144,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Boundary model: saved model size",
+      "startIndex": 127147,
+      "endIndex": 127179,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "9.25 MB",
+      "startIndex": 127181,
+      "endIndex": 127188,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.68 MB",
+      "startIndex": 127190,
+      "endIndex": 127197,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Model sizes compare saved FP32 inference weights with complete FP16 deployment packages, in decimal megabytes. They describe model storage rather than working memory or the size of the complete application.",
+      "startIndex": 127200,
+      "endIndex": 127406,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "The FP32 recognizer recorded 95.24% validation Top-1 accuracy, compared with 94.97% for FP16. Top-5 accuracy was 98.94% for both. These values describe the interval-adapted recognizer, whereas the model-family comparison reports separately trained configurations.",
+      "startIndex": 127407,
+      "endIndex": 127670,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "On the iPhone 13, the current FP16 visual and recognition configuration recorded 24.1 ms per processed frame, compared with 112.6 ms for the corresponding FP32 configuration. Both used identical recorded inputs, and English generation remained FP32 and outside the timed work. The reported values are the medians of two run medians per configuration. Figure 13 compares these integrated configurations; the difference should not be attributed to numerical precision alone. Timing includes frame preparation and recognition, rather than camera capture or complete English and speech output.",
+      "startIndex": 127671,
+      "endIndex": 128260,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 13. On-Device Processing by Precision",
+      "startIndex": 128264,
+      "endIndex": 128308,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "4.4.7 Training Behavior",
+      "startIndex": 128310,
+      "endIndex": 128333,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_3",
+      "isListItem": false
+    },
+    {
+      "text": "The training curves provide a view of how the component models learned before integration. They complement the comparison tables by showing changes across recorded training progress, while retaining the loss definitions and evaluation settings of each training procedure.",
+      "startIndex": 128334,
+      "endIndex": 128605,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 14. Landmark Recognition Training",
+      "startIndex": 128609,
+      "endIndex": 128649,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 14 shows landmark-recognition training across the recorded epochs. The selected checkpoint at epoch 100 achieved 96.83% validation Top-1 accuracy. Selection follows validation behavior rather than assuming that the final recorded epoch must provide the best recognition.",
+      "startIndex": 128651,
+      "endIndex": 128928,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 15. Recognition Adaptation to Sign Intervals",
+      "startIndex": 128933,
+      "endIndex": 128984,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 15 follows the eight-epoch adaptation of recognition to candidate sign intervals, with epoch zero representing the starting recognizer. The sequence-error panel uses the decoder configuration designated for this adaptation study. Together, loss and sequence error show how interval training affects the inputs that streaming recognition must handle; its curve is interpreted within that training study rather than substituted for the complete-configuration comparison in Table 15.",
+      "startIndex": 128986,
+      "endIndex": 129473,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 16. English-Model Fine-Tuning",
+      "startIndex": 129477,
+      "endIndex": 129513,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "Figure 16 presents the saved English-model training observations through optimizer step 4,539, where the recorded validation loss was 0.2515. Lower loss indicates closer agreement with the reference training objective. The separate English-output assessment in Table 16 examines the generated sentences themselves, connecting model fitting with the meaning and wording produced for the application.",
+      "startIndex": 129515,
+      "endIndex": 129913,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    },
+    {
+      "text": "REFERENCES",
+      "startIndex": 129916,
+      "endIndex": 129926,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "HEADING_1",
+      "isListItem": false
+    },
+    {
+      "text": "Amiruzzaman, S., Batchu, R. M., Amiruzzaman, M., Ngo, L., & Dewan, M. A. A. (2026). ASL recognition and game-based interaction: A machine learning–driven, gamified and accessible vocabulary learning system for Deaf learners. Computers, 15(5), 299. https://doi.org/10.3390/computers15050299",
+      "startIndex": 129927,
+      "endIndex": 130216,
+      "tabId": "t.pzqwjycim1ix",
+      "namedStyleType": "NORMAL_TEXT",
+      "isListItem": false
+    }
+  ]
+}

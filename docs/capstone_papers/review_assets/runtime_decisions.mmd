@@ -1,0 +1,16 @@
+flowchart TD
+    input["Landmarks and hand-image features"]
+    boundary["Boundary estimates and candidate intervals"]
+    scores["Squeezeformer recognition and combined scores"]
+    decode["Segmental decoder selects sign and rest intervals"]
+    accept{"Commit conditions met?"}
+    wait["Keep observing the next frames"]
+    words["Commit output and manage gloss buffer"]
+    language["Update English; Finish finalizes remaining text"]
+    input --> boundary
+    boundary --> scores
+    scores --> decode
+    decode --> accept
+    accept -->|"No"| wait
+    accept -->|"Yes"| words
+    words --> language
