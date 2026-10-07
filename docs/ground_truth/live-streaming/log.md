@@ -1,5 +1,39 @@
 # live-streaming — log
 
+## 2026-10-08 — Session 211045 (gate 0.95): HOME/CHILD fixed; BIG/HEAR missing in local domain
+
+HOME committed 4×, CHILD 2×, WHERE mostly. BIG → LANGUAGE 3, HELP 3, GO 4, HOW 1; HEAR never
+committed. Not mislabelled data: local GO/LANGUAGE/HELP visually consistent with Citizen. Cause is
+domain imbalance created by the Citizen-variant filter: BIG and HEAR now have 0 local clips (Citizen
+15+SemLex 21; 15+8) while LANGUAGE/GO/HELP/HOW have 141–154 local clips each; local LANGUAGE
+(L-hands pulling apart) is nearly Citizen BIG's movement. Public val BIG 4/4 + 12/17, HEAR 4/4 + 5/5.
+Fix needs local BIG/HEAR in the Citizen form (or the user's actual form). Session saved no video:
+Start/↺ discards the take; only Finish/Back saves.
+
+## 2026-10-08 — Gated letter sink (0.95) installed on iPhone 13
+
+Word mode now lets hidden letters compete only when top word p < 0.95 (Python letter_gate, Swift
+letterGate, LiveReelEngine.wordLetterGate). Citizen val 378 phone view: correct 311→315, silent 30→26,
+extra words 68→68 (words-only 321/13/92). User WHERE take: 2 WHEREs recovered. Decoder-variant replay
+memory flat (2.4/2.2 GB, no leak); earlier replay was killed with the session (now resumable,
+nice 15). Device tests pass; Release installed. Report:
+artifacts/reports/citizen_variant_local_filter_v17_20261008/letter_gate_replay/REPORT.md.
+
+## 2026-10-08 — Live failures traced to the hidden letter sink, not bad data
+
+Phone sessions 20261008_165721 / _174458 (Citizen-variant recognizer installed): HOME/HEAR give no
+preview or commit, CHILD previewed 0.91 but never committed, BIG→LANGUAGE, WHERE→HE. With letters
+"off", LiveReelEngine.wordModeLetterSink=true still decodes words with the 26 letters competing and
+then hides FS_ results (preview too), so a letter-won span is silent. Replay of take _174458_05 through
+the Python reference (same boundary/recognizer/letter head): new recognizer scores WHERE 0.96–0.97 on
+spans the decoder gives to letters X and D (hidden); one span is a genuine HE (0.92); August recognizer
+would say HE on most. Isolated Citizen/SemLex replay (59 clips): HOME → letter O and HEAR → letter C with
+the August recognizer (7× each), reduced to 1× with the new one; several clips still commit nothing.
+Local data: HE 25/204 clips mostly index-up, WHERE 15/187 mostly sideways (minor). YESTERDAY is pinned
+to ASL-LEX D_01_024 (single curved movement), so one movement is the Citizen form. Face present in
+~80% of model frames. Decoder-variant replay (letter sink vs words-only) over all Citizen+SemLex val
+running. Disk /Volumes/secret filled up; removed 4 superseded Xcode build caches I created (~4.4 GB).
+
 ## 2026-10-08 — Citizen-variant recognizer installed on iPhone 13 for live testing
 
 User approved. SpanRecognizerV17CitizenVariantLettersB8FP16 (citizen_variant_local_filter_v17_20261008
