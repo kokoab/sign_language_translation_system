@@ -7,6 +7,15 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-08 — v2 chain: local ASK restored + 37 reviewed web clips
+
+Same recipe as the installed Citizen-variant chain; local pool = Citizen-variant filter + 147 local ASK
+(ASL-LEX ask is static 1-hand; wrongly excluded before) + 37 WLASL/MS-ASL clips (HOME 11, SIGN 8, BIG 7,
+CHILD 6, ASK 3, WHAT 1, GOODBYE 1). Same inputs (Citizen 378 / SemLex 978 / local v2 val 2626):
+recognizer v1 362/865/2555 vs v2 363/866/2563; local ASK 7/23 → 20/23; tune WER 30.09 → 29.65%.
+Public val per class unchanged except HEAR 9→7/9, COME 6→5/9, NEED 12→11/13, ASK 10→11/13 (noise level).
+Domain effect on BIG/HEAR only testable on the phone. Driver run_experiment_v2.py; output run_v2/.
+
 ## 2026-10-08 — Citizen-variant local data experiment (96.83 chain rebuilt)
 
 User: for all confused classes use the Citizen variant. Removed local train/val clips of HOME
