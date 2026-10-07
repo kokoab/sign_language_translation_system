@@ -7,6 +7,20 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-08 — Citizen-form supplement for signs without local data (v2)
+
+User signs Citizen forms; BIG/HEAR etc. had 0 local clips after the Citizen-variant filter. ASL-LEX
+check of pinned codes: ASK (B_02_023) is a static 1-hand → local ASK was wrongly excluded, restored
+(147 train, 23 val). HEAR is hear_2 (C-hand at ear, J_02_006) — WLASL HEAR (index to ear) rejected; a
+C-hand also explains HEAR→hidden letter C. COME open-B curved (web index-roll rejected); WHAT what_2
+(index across B palm; 5/6 palms-up web clips rejected). Sources: SemLex train has many more exact-entry
+clips (BIG 126 vs 22 used; plan of 3,853 extra) but the Drive archive now requires a signed-in Google
+account after the terms form — not downloaded. MS-ASL train/val (not test): 20 clips retrieved;
+WLASL non-test: 33. Visually reviewed against Citizen + ASL-LEX: 37 accepted (HOME 11, SIGN 8, BIG 7,
+CHILD 6, ASK 3, WHAT 1, GOODBYE 1), 16 rejected. Accepted clips added to the local pool under tier
+visual_review_web_citizen_variant_20261008 (data/local/web_variant_supplement_v17_20261008, combined
+landmark/hand roots are symlink views; originals untouched). v2 chain training launched.
+
 ## 2026-10-08 — Two-handed-only GOOD experiment removes THANKYOU→GOOD confusion
 
 Variant C local replay from 96.83 with one-handed/unclear GOOD excluded from training (Citizen 13
