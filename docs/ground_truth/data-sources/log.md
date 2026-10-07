@@ -7,6 +7,39 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-08 — Two-handed-only GOOD experiment removes THANKYOU→GOOD confusion
+
+Variant C local replay from 96.83 with one-handed/unclear GOOD excluded from training (Citizen 13
+via rejections copy, SemLex 15, local 85; 30 two-handed GOOD kept). e60: THANKYOU Citizen 3/3,
+SemLex 4/6 (2 other), local 24/24; THANKYOU→GOOD 0 (Variant C 5); two-handed GOOD val 4/4
+(unchanged); all 33 one-handed GOOD val clips now read THANKYOU (by design). Original-label totals
+Citizen 366, SemLex 859, local 2822 (Variant C 368/854/2843). Scoring without out-of-scope
+one-handed GOOD: Citizen 366/374 vs 364, SemLex 858/965 vs 850, local 2822/2875 vs 2823.
+Evidence thin (4 two-handed val clips; 18/30 train clips one signer). Not promoted; no
+downstream rerun; vocabulary variant contract unchanged pending user decision.
+
+## 2026-10-08 — Web GOOD search; "local poisoning" test negative
+
+WLASL v0.3 "good" (16 URLs): 8 reachable; only 2 new two-handed clips (spreadthesign 25066,
+StartASL 25067), rest duplicates of local web clips/one-handed/wrong segment; stored unadmitted in
+data/local/web_good_variant_v17_20261008/. Experiment: Variant C local replay from 96.83 without
+226 local GOOD/THANKYOU train clips (e67): Citizen 368, SemLex 857 (+3), local 2823 (−20);
+GOOD/THANKYOU on Citizen/SemLex unchanged (Citizen TY 1/3, SemLex GOOD 7/15 vs 6/15, TY 2/6)
+while local GOOD 22→14/23, TY 23→13/24. Confusion already exists in 96.83 isolated (no local
+data): it comes from one-handed public GOOD ≈ THANKYOU (SemLex one-handed GOOD 6/9 → THANKYOU
+in Variant C). Hypothesis that local clips poisoned GOOD/THANKYOU not supported. Two-handed-only
+GOOD experiment launched (run_two_handed_good.py). Report dir good_thankyou_variant_audit_v17_20261008.
+
+## 2026-10-08 — GOOD two-handed variant audit (read-only)
+
+User wants GOOD as the two-handed form (chin → non-dominant palm) to separate it from THANKYOU.
+Pinned GOOD = ASL-LEX B_01_052 one-handed; THANKYOU H_02_053 one-handed; ASL-LEX has no
+two-handed GOOD entry. Every GOOD clip visually reviewed (5-frame sheets). Two-handed: Citizen
+train 2 / val 0; SemLex train 6 / val 2; local train 22 (18 one signer + 4 web dictionary) / val
+2; MS-ASL 2 (not eligible). Usable: 30 train / 4 val. GOOD MORNING phrases: one signer uses it.
+Citizen val has no two-handed GOOD. Report artifacts/reports/good_thankyou_variant_audit_v17_20261008/.
+No data, manifest or model changes.
+
 ## 2026-09-25 — repo moved to SSD; 30,486 symlinks retargeted
 
 User: "this ssd will be the new path for everything". The repo is now /Volumes/secret/SLT/SLT.
