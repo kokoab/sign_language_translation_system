@@ -1,6 +1,6 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-09-22 PHT (+0800, Asia/Manila)
+**Last updated:** 2026-10-07 PHT (+0800, Asia/Manila)
 
 This file is the current state of the project, and it is the only file you must read
 before changing the pipeline. It states what is true and what binds you now.
@@ -26,7 +26,327 @@ The isolated-sign vocabulary is **100 signs**, locked. Splits must be signer-dis
 Target minimum is 20 training and 5 test signers, ideally 5 clips per person per sign.
 The old seven-person dataset is not acceptable evidence of generalization.
 
+## Capstone paper authoring
+
+**2026-10-08 review delivery:** README_PLATFORM_NEUTRAL_REVIEW.md now contains exact
+before/after wording, table proposals,20checkboxes and nativebefore/proposedtraining
+chart previews. Oldauthornotes archived beside previewassets. Userrequests95.53%
+“validationaccuracy,” one31.42%developmentWER, no“pooled”/three-dataset wording,
+preserveexisting signer-disjoint discussion. Complete-dataset FP16parity andHELLOtrace
+remainpending. No manuscript writes; reviewcheckboxes are not yet approved.
+
+
+**Latest author direction (2026-10-07):** one final ATLAS result, no August/current
+comparison or five-phase results ladder. Proposal under discussion:95.53% pooled
+isolated validation (94.40% equal-domain mean is a different statistic). Live paper
+sweep complete; no edits. Current tab contains95.24/94.97 conversion, not96.31.
+Old9.68%streamingWER, broadsigner-disjoint wording, stale figures and precision scopes
+need revision. New FP16 parity is verified onprimaryvalidation only; pooled95.53%
+post-conversion needs matching all-domain check. See capstone-paper/log.md latestentry.
+
+
+Before paper work, read `docs/capstone_papers/ATLAS_WRITING_GUIDE.md`. Author-approved
+2026-10-07 platform-neutral rules supersede the older iPhone-focused review: use mobile
+application/device camera/landmark extractor/on-device inference. Named frameworks remain
+in introductions, literature, requirements and measured comparisons; add Kotlin/Android
+requirements, never Huawei novaY70. Canonical working Google Doc tab is `t.pzqwjycim1ix`
+((Oct 6) Revision), document `1sC2JZ23mSpnLWeEEFDm5ce2x_As0XTS7ayMGvk5uuD4`.
+Approved prose/tables, seven diagrams and both result charts are applied. Navigation
+references are refreshed from the PDF export; revised figure/table pages were visually
+checked. This was targeted revision QA, not a full review of the549-page all-tabs export.
+Chart cleanup: removed five redundant comparison figures while retaining result tables;
+remaining figures now1–16, navigation refreshed. Base-classifier phone comparison complete: Transformer FP32/FP16 7.28/0.95ms;
+Squeezeformer FP32/FP16 8.98/0.99ms. Both precisions preserve original validation
+predictions (95.50%/96.30% respectively). Four counterbalanced iPhone13 passes, nominal
+thermal. Classifier-only results, not full pipeline or historical28ms comparison.
+Evidence: `artifacts/reports/transformer_phone_feasibility_v17_20261007/REPORT.md`.
+Historical six-family checkpoints independently revalidated: scores reproduce exactly,
+histories/schedule agree, same current data and admitted SemLex hashes verified.
+Single-seed whole-design results do not rule out better part-wise Transformer variants.
+User authorized fast improvements and matched downstream stages, requested audit first;
+audit complete, no new training or full-pipeline replacement started. Evidence:
+`artifacts/reports/transformer_run_audit_v17_20261007/REPORT.md`.
+Tables13/14 now explicitly distinguish earlier architecture screening from matched
+family training. Discussion contrasts MacCPU timings with similar iPhone13FP16
+classifier speed (Transformer0.95/Squeezeformer0.99ms), higher Squeezeformer
+validationaccuracy96.30vs95.50%; no historical rows substituted.
+Slides and other tabs remain outside scope. The current tab title is (Oct 6) Revision.
+Matched M4 stage timing (landmark-only/combined/interval-adapted): Apple356.1/668.6/668.7
+versus MediaPipe546.7/809.3/808.6ms per clip, medians of measured stage sums. Evidence:
+`artifacts/reports/capstone_mac_comparison_v17_20261007/REPORT.md`. Both completed
+all identical validation inputs; failed partial MediaPipe run excluded and preserved.
+Original manuscript remains the style reference. Preserve participant-research sections,
+ASL scope and author edits. Do not overwrite the independently edited local revisedMD.
+Compare recognition across all3stages on the same validation set, without giving its size
+or dataset name in comparison passages. Matched Mac processing and iPhone13 execution
+are separate. Current FP16 deployment retained; phone comparison uses current FP16visual/
+recognition versus FP32visual/recognition, EnglishFP32outside timing:24.1vs112.6ms/frame.
+The historical28ms remains a separate measurement, not a matched baseline or new speedup.
+Precision alone does not isolate execution-resource effects. Keep conversion accuracy/
+storage but remove detailed threads/processor mechanics, batch/window timing rows,
+untrained-language screening and148/208ms estimates. No technical-notes section in paper.
+Recognizer conversion:95.24%FP32vs94.97%FP16Top1;98.94%Top5both, validation only and
+cached identicalinputs, not fullpipeline/phoneaccuracy. Boundary stateagreement is not
+annotated-boundaryaccuracy. Storage:recognizer49.62→25.51MB;boundary9.25→4.68MB
+(savedFP32inferenceweights vsFP16packages; notRAM/appsize). Evidence:phone_precision_v17_
+20261007 andcapstone_conversion_v17_20260930 underartifacts/reports/. Signer-disjoint
+is defined/cited for isolatedsignsplits; no blanket label or subgroupbreakdown forstreaming.
+The Sashimi figure uses the original Google Docs image in capstone_papers/source_images;
+original PERT and seven Gantt images are embedded in their Chapter 4 sections.
+Final review reconciled the Activity List with the source Google Docs schedule at the author’s request.
+Source dependency ambiguities and the unverified subset attribution remain for discussion;
+see capstone_papers/ATLAS_FINAL_REVIEW.md. Grammar/navigation/citation and metric-context fixes
+are applied. The manuscript snapshot is transferred to Google Docs tab `t.5at7inr8zi4x`
+(REVISED NOT FINAL (SEPT 30)), with images, copied footers and refreshed page references.
+Preserve the author’s subsequent Activity List edits. Section 4.3 now has a short overview.
+The local revised Markdown independently changed into an MFET presentation brief;
+do not overwrite it with the transferred manuscript snapshot. Figure/table navigation
+is updated; a BLEU reference is added alongside the Chapter 2 bibliography additions. Its original subset passage is preserved at the author’s
+request, with unverified standardization attribution recorded in measurement notes. The requested 15-signer (10/3/2)
+allocation is recorded separately from existing results' actual split provenance and
+does not change training or test gates. Decisions: `docs/ground_truth/capstone-paper/high.md`.
+Paper comparison audit (2026-09-30): saved general CTC selector replays the streaming
+recordings at6.45%WER, but51/72 are listed in its pinned training manifest. Do not call
+that validation accuracy. Common historical-validation subset across all three systems:
+CTC23.40%, earlier boundary48.94%, current Swift21.28%WER (21videos/47signs); development
+comparison, not a new independent test. Report:
+`artifacts/reports/capstone_ctc_comparison_v17_20260930/REPORT.md`. No runtime changes.
+Latest paper presentation: omit CTC numerical results from reader-facing review; use
+boundary-guided39.78% versus ATLAS9.68% on the larger recorded set. Keep actual hardware
+and provenance in `docs/capstone_papers/ATLAS_MEASUREMENT_NOTES.md`; never relabel as phone accuracy.
+
+
 ## Pipeline state
+
+**2026-10-07 paper claims independently checked:** fresh inference reproduces all five
+new-chain phases on all three domains and the clean August recognizer. CoreML FP32/FP16
+rerun retains all top1 decisions. See canonical_recognition_comparison_v17_20261007/
+PAPER_CLAIM_REVIEW.md. Fusion selected fixed epoch0, not distillation-improved weights;
+new phone FP32 comparison changes recognizer only, not all components. Scoped phrase
+membership/hashes pass, but recipe's claimed derived span-input/label hashes are absent.
+New31.42%tuneWER is worse than clean August30.09%; original leaking comparator excluded.
+Paper changes remain proposals; production unchanged.
+
+
+**2026-10-07 no-full-roll Transformer baseline COMPLETE:** selected epoch47, stopped77,
+strict CPU restore94.71%Top1. Eight-angle landmark evaluation upright/mean-nonzero/worst:
+new mild94.71/32.65/1.59; existingTransformer95.50/93.58/92.06. The earlier Transformer
+is now verified rotation-robust in software-landmark diagnostics, comparable to robust
+Squeezeformer95.77/93.73/92.06. Explicit new full-roll probability0; historical code not
+immutably pinned, so do not claim causal augmentation effect. No promotion, protected
+test, raw-camera/phone accuracy claim or manuscript change. No active training from this
+experiment. Report: artifacts/reports/transformer_mild_roll_v17_20261007/REPORT.md.
+
+
+
+**2026-10-07 selected-checkpoint comparison and new fine-tune:** historical partwise
+96.83% reproduced on Mac and physicaliPhone13, FP32/FP16 predictions unchanged.
+Selected flatTransformer95.50/flatSqueeze95.77/partwiseSqueeze96.83; phoneFP16
+.9540/.8866/.9917ms, sixrotatingpasses, nominalthermal. Fullchain isolatedresults
+local-landmark95.50/unified96.30/phrase96.03/span95.24. Differentselectedhistorical
+trainingruns, not a newmatchedfromscratchcomparison. Report:
+`artifacts/reports/canonical_recognition_comparison_v17_20261007/REPORT.md`.
+Paired20epoch strict fine-tune from 96.83 (mild-roll control vs fullroll.35, same
+approved Citizen/SemLex inputs, seed1701, lr5e-5) COMPLETE and audited: neither arm
+strictly beat96.83 upright, so both selected epoch0 = original weights (tensor-identical).
+Bit-reproducible diagnostic rerun kept trained weights (landmark roll, upright/mean-rotated):
+fullroll final94.71/72.07, mild final96.03/36.02, original96.83/35.71; from-scratch
+orientation-robust a7490409 95.77/93.73 dominates the warm-start fullroll on both axes.
+No new candidate; 96.83 remains upright-best, a7490409 orientation-best. Reports:
+finetune/REPORT.md, finetune_diagnostic/REPORT.md under that directory. Trainer has
+opt-in --save-diagnostic-checkpoints (selection unchanged). Manuscript/defaults unchanged.
+User chose 96.83 as paper isolated result. Matched chain (CHAIN_PLAN.md, chain_9683/REPORT.md):
+96.83 + Vision auto-orient raw-pixel roll mean92.75% (a7490409 same code92.25%; Aug
+91.50 used older evaluator). Local replay from 96.83 failed predeclared gates (Citizen
+<=363 every epoch, floor365; local still rising at patience stop e20); fusion on
+unadapted 96.83: Citizen366/SemLex862/local2447 (not gate-eligible). Phrase/interval
+blocked (training_ready=false). Those local/fusion results are CONFOUNDED: recipe imposed full roll .35 on a parent trained without it (the parents' only provenance difference). 96.83 chain COMPLETE through recognizer (validation, Citizen/SemLex/local): local 97.35/87.32/98.17; fusion 97.62/88.04/98.20; phrase 97.62/88.04/98.03; recognizer 97.09/88.34/97.76, tune WER 31.42%; Core ML FP32=FP16=PyTorch 367/378; iPhone13 FP16 23.69 vs August 24.25 ms (equivalent). Recipe-scoped phrase manifest active/v17/phrase_segment_recipe_manifest_20261007.json (user review pending). LEAK: shipped reel_v2/local_a trained on 51/72 lab test + 73/89 tune clips via parent head — their streaming WERs are not held out. Reports: chain_9683_floor361_mildroll/, downstream_recipe/. Paper/manuscript unchanged pending discussion. Preserve orientation-robust intermediate inolddeployedlineage;
+it is not directlyinitialized from the96.83checkpoint based onavailablemetadata.
+
+
+**Matched iPhone precision benchmark 2026-10-07 — defaults unchanged:** physical
+iPhone13,226recorded-input example frames/configuration,2reversed-order runs:
+median of run medians24.05ms selectedFP16,57.43ms recognizerFP32only,87.29ms
+hand-encoderFP32only,112.64ms allvisualFP32;selectedFP16withrecognizerCPU/GPU57.47ms.
+Nominal thermals throughout. Preparation+recognition only, not live-camera/speech
+latency; historical28ms is a separate profile. FP32recognizer matches original
+predictions378/378 (360correct), versus savedFP16359correct. No training or protected
+test access. Report:artifacts/reports/phone_precision_v17_20261007/REPORT.md.
+
+**iPhone distribution feasibility 2026-10-06:** a disposable Mac-hosted page loaded
+in the paired iPhone13 Safari over USB after enabling tethered sharing. With Mac
+Wi-Fi off and no Ethernet, bridge100 disappeared and phone reachability failed in
+two probes despite the device remaining wired/paired. This configuration is not
+verified for the offline venue. Plain-HTTP Mac Safari diagnostic lacks camera and
+service-worker APIs; trusted HTTPS and a complete browser pipeline remain unresolved.
+Follow-up found a direct link-local USB interface reachable without Mac Wi-Fi or
+sharing (6/6 pings); Safari delivery, fresh pairing and Developer Mode-off setup are
+unverified. USB is still a candidate; see the companion RECONSIDERED_OPTIONS.md.
+No SLT app/models changed or installed; no model evaluation gates consumed. Mac
+sharing/settings restored and probe server stopped. Report:
+`artifacts/reports/iphone_usb_delivery_20261006/REPORT.md`.
+
+**Android MediaPipe family 2026-10-04 — retrained (all gates pass) and converted to TFLite (lossless):** user chose two model
+families: Apple Vision → Core ML on iOS (unchanged), MediaPipe Tasks → TFLite on Android, from the
+same training code. Exact rebuild of the words-only live chain first (part-wise landmark Stage 1 →
+MobileCLIP2 hand branch → unified fusion → reel_v2 → span_recognizer local_a, plus the word
+boundary student from the cached DGS teacher; stream_config_v2). Gate: every MediaPipe stage within
+5 points of its Apple counterpart on the same validation sets (end-to-end held-out 72/186 WER
+<= 16.83% vs 11.83%). Letters deferred. Crops vs landmark-only on Android decided by measured speed
+on a 4 GB phone. Training on MPS. **Never delete or overwrite existing models/data:** all MediaPipe
+outputs go to new dated paths; new scripts refuse existing outputs. Extraction backend is pinned
+(MediaPipe GPU/Metal needs SRGBA input; CPU and GPU landmarks differ ~1 px median, so never mix).
+Plan/evidence: `docs/ground_truth/mobile-deployment/high.md` (2026-10-03).
+All rebuild inputs extracted to `data/local/mediapipe_full_v17_20261003/` (fingerprint d17b7cd2ecc5614f,
+pose lite, GPU): 20,376 isolated (121 no-hands, 20 of them validation: score MediaPipe on the full Apple
+validation lists, counting those as errors), 543 phrase windows, 1,675 continuous captures + span inputs.
+MediaPipe detects hands in ~8-13 pp fewer continuous frames than Apple (not threshold/tracking).
+Details: `docs/ground_truth/mobile-deployment/log.md` (2026-10-04).
+Retrained chain (Apple recipes, current code, MPS): every stage within 5 points of Apple; held-out 72/186
+8.60% WER vs Apple 11.83% (local60 1.85 vs 8.64) but unseen ASLLRP12 54.17% vs 33.33% — the hand-detection
+gap is the main Android accuracy risk. Config `artifacts/reports/mediapipe_rebuild_v17_20261004/stream_config_mediapipe_v2.json`;
+report `artifacts/reports/mediapipe_rebuild_v17_20261004/REPORT.md`. TFLite FP32 exports
+(`artifacts/tflite/mediapipe_v17_20261004/`) are word-identical end to end (tune 89/89, held-out 72/72).
+M4 CPU LiteRT: ~85-90 ms/frame vs 50 ms budget, ~64 ms is the MobileCLIP hand encoder; ~251 MB files,
+~378 MB RAM. Measured on the 4 GB target (Huawei nova Y70, Kirin 710, Mali-G51): full chain ~390 ms/frame
+(~2.5 fps), MobileCLIP hand crops ~310 ms of it (193 ms/crop CPU; GPU delegate does not help); without
+crops ~80 ms/frame. Report `artifacts/reports/android_device_bench_20261004/REPORT.md`. Next: user decision
+on a landmark-only Android recognizer before the Kotlin app. Done (user-approved): landmark-only recognizer
+held-out 9.14% WER (hand-image 8.60%, Apple 11.83%), tune 17.70%, ~70 ms/frame on the phone; Android ships
+both modes bundled with an automatic first-launch default and a settings override. Report
+`artifacts/reports/mediapipe_rebuild_v17_20261004/LANDMARK_ONLY.md`. Kotlin native layer inside the Flutter
+app written, built and installed on Huawei MGA-LX9. Saved 2026-10-05 Kotlin landmark-only fixture
+parity passes: 89/89 videos, zero commitment mismatches across 5,161 frames. Decoder observe cost
+mean247.29/median210.77/p90524.31ms excludes MediaPipe/camera and Stage3; the earlier ~70ms/frame
+estimate is not achieved in-app. LiteRT CompiledModel/CpuOptions replaces the Interpreter path
+whose XNNPACK execution remained single-threaded. App multithread scaling is still unresolved.
+Stage3 rendered89/89 fixtures (mean605.59ms/sentence); Python sentence comparison now passes89/89.
+2026-10-06 diagnostics: app batch8 medians4threads display279.6-333.5ms, urgent-display245.7-254.6ms;
+standalone4bigcores108.799ms. App1thread667.6-732.5ms vs standalone383.957ms; scaling alone is
+not an established cause. Report: artifacts/reports/android_runtime_takeover_20261006/REPORT.md.
+Parent-led debug tests: boundary-pool isolation has no consistent gain; in-app big-core pinning
+degrades median340.5-352.1ms vs default185.4-190.3ms. Direct input-write bypass also gives no
+consistent gain(native variation persists). Report: artifacts/reports/android_runtime_pool_isolation_20261006/REPORT.md.
+Debug APK rebuilt under bounded JVM/worker settings and installed; production runtime unchanged.
+Live-camera empty-scene smoke advances265frames with no crash(snapshot10.3FPS/latest85ms,0hands);
+not signer accuracy or signed-input latency. Temporary per-tag logging restored.
+Next:native operator/thread/frequency tracing and live-camera/front-end/sustained acceptance.
+Command-exit same-session resume failed; agent mailbox completion wake-up works while parent waits.
+Token savings unmeasured; no desktop notifications.
+iPhone landmark-only (for iPhone X and older; iOS minimum version decision deferred by user): two candidates
+pass the 1-point floors, tune replays running. Details: mobile-deployment log 2026-10-04.
+
+**Fingerspelling 2026-10-03 — continuous letter reader trained, not deployed:** the deployed FINGERSPELL
+trigger never fired on the phone. User wants no trigger and natural speed. `letter_ctc_v17` run I
+(CTC, landmarks only, FSboard + ChicagoFSWild, 204 signers): ChicagoFSWild test 42.2% CER (natural,
+unseen signers), ASLLRP in-sentence test 73.2%, deliberate FSboard 10.0%, user's GELO read exactly 20
+times (old decoder 5). A spelling-vs-signing gate (`spell_gate_v17`, per-run mean >= 0.4) cuts fake
+spelled words during continuous signing from 8-10 to 2-5 per minute and keeps the user's GELO; both models are
+landmarks-only and streamable. Not deployed; phone port not started. ASLLRP `live_features` and FSWild test are final-test only (ASLLRP dev =
+signer Cory). Report: `artifacts/reports/letter_ctc_v17_20261002/REPORT.md`.
+
+**iPhone signer lock 2026-09-30 — installed:** when another person's face is in view, face, body and
+hands stay on the signer (largest face at pick, re-picked after 2 s unseen). One person in view uses the
+previous selection exactly: 238-clip full-engine replay gives identical words. Two-person composites:
+wrong-person hands 50% -> 5%, faces/bodies nearly eliminated; iPhone cost +1 ms only with two people.
+Desktop app unchanged. Report: `artifacts/reports/signer_lock_v17_20260929/REPORT.md`.
+
+**Stage3 multi-sentence tiny model 2026-09-29 — installed on iPhone 13 with incremental translation:**
+same 15.6M T5 size, continued from v2 on a new 54K-row English-first DeepSeek corpus with "N: sentence"
+counted targets. Held-out 300 sessions: 60% judged fully right / 6% wrong / NO never dropped (v2: 6% /
+31% / 21 of 42); verified incremental locking 60% / 8%. `artifacts/models/stage3_multisentence_tiny_v17_20260929`
+is the phone default (desktop still defaults to v2). Swift `LiveIncrementalTranslator` locks finished
+sentences while signing; Finish renders only the tail. Native Swift replay 323/323 equals Python;
+10/10 device tests pass; Release installed. Not yet checked with live camera signing. Corpus spend $2.37
+exceeded the user's $2 cap (guard fixed). DeepSeek references/judge; not ASL accuracy. Report:
+`artifacts/reports/stage3_multisentence_bakeoff_v17_20260929/REPORT.md`. Next: user live-camera check.
+
+**Stage3 multi-sentence evaluation + iPhone latency 2026-09-29 — no model change:** new
+DeepSeek-built held-out set (300 sessions of 2–4 sentences, none in training) shows installed v2
+fully right on only 6% (DeepSeek judge), wrong on 31%, dropping ≥1 sign in 68%, no better than
+word-by-word literal; worse with more sentences. iPhone 13 idle timing for a p90 session (28
+tokens): v2 241 ms, flan-t5-small KV 249, flan-t5-base KV 391, Qwen2.5-0.5B int4 502; Gemma-3-270M
+and SmolLM2-360M too slow, Qwen FP16 does not load. User budget: <1 s for multiple sentences.
+Not ASL accuracy (LLM references/judge). Reports:
+`artifacts/reports/stage3_multisentence_eval_v17_20260929/REPORT.md`,
+`artifacts/reports/stage3_latency_bench_v17_20260929/REPORT.md`. **User decided:** flan-t5-base,
+incremental translation, ~30–50K-session DeepSeek corpus with the eval set held out. Next: build
+corpus, train, score on the held-out set, verify real-weight FP16/Core ML before any app work.
+
+**Stage3 composition repair 2026-09-29 — v2 installed:** model-only fine-tuning fixes
+both user greetings and recipient requests; no phrase triggers. Checkpoint
+`stage3_composition_v17_20260929_v2` is the Torch/CoreML/segmental/mobile default.
+Metadata disables phrase overrides and gives the model the full Finish buffer.54Python
+tests,200/200CoreML numerical parity,44/44native Swift parity and five desktop smokes pass.
+Physical iPhone13 Stage3 test passes greetings/request/time/name/negation and neural-only
+mode; signed final Release rebuilt, verified, installed and launched. Old weights/resources preserved;
+future phone histories record checkpoint ID. No independent signing-accuracy claim;
+malformed/noisy buffers still have errors. Next: user live-camera check. Report:
+`artifacts/reports/stage3_composition_v17_20260929/REVIEW.md`.
+
+**Phone translation audit 2026-09-29:** all12saved Live sessions/26translations reviewed.
+Latest115725session correctly recognizes HELLO MY FRIEND HOW YOU as one clause but
+renders “Hello, how are my friend?”; this case isolates downstream translation failure.
+Mac CoreML mobile-package probe also renders HELLO GOOD MORNING HOW YOU FRIEND as
+“Hello, how are you a friend?”; six text probes, original error reproduced exactly.
+Earlier history also adds HE/FRIEND, drops DAY, misattaches MORNING and fragments
+questions at the hard1.5s pause cutoff. LiveStage3's nonempty/length and spelling-slot
+checks are insufficient meaning safeguards. No app/model changes. Next: exact-history
+regressions, meaning-preserving acceptance/fallback and phrase-aware segmentation.
+Report:`artifacts/reports/phone_all_history_review_20260929/REVIEW.md`.
+
+**Live landmark/orientation correction 2026-09-29:** Live/Practice retain the original
+landscape-only layout. Signed Release installed/launched on iPhone13. Display hands now
+run on a separate capture/Vision queue; recognition keeps only the newest pending frame.
+Stop/reset/rotation invalidate old results. Short recorded-input device check:120display
+frames versus48recognition frames, display median12.30ms/p9529.61ms; not sustained camera
+FPS/thermal or visual alignment proof.4device tests,31Python focused tests and3Flutter tests pass.
+Final93clip/4528frame replay:91explicit sequence targets70→75exact,5fixes/0regressions;
+2ANGELOexcerpts qualitative.
+Conservative G/Q and U/R geometry:1271existing full-span letter validation clips1099→1129
+correct,30fixes/0regressions (session-separated, not an independent signer/iPhone test).
+Spelling stays pending with visible hands, commits at the next word/Finish; absent-hand
+idle uses sign-end time. Narrow same-onset lexical overlap removes provisional letters
+without erasing a preceding name. Word-versus-letter and N errors remain under investigation;
+no retraining or threshold rescue promoted. Phone preview history autosaves every5s.
+Report: `artifacts/reports/live_correctness_v17_20260929/REVIEW.md`.
+
+**Live speed update 2026-09-28:** same FP32 model/crops/20Hz target and decision rules;
+batched hand encoding, final-row boundary features and Swift output/UI optimizations.
+78 paired validation/tuning/user-session replays (3652 frames) retain exact outputs,
+scores and commit timestamps; Mac recognition-only median45.77->39.27ms (excludes
+Vision/camera/UI). Physical iPhone13 encoder parity passes, three-crop median32.90->30.55ms;
+not a sustained full-camera benchmark. Signed release installed/launched on iPhone13.
+HELLO/letter confusion and spelling delay remain.
+Report: `artifacts/reports/live_speed_v17_20260928/REVIEW.md`.
+
+**Streaming segmental decoder + Apple Vision boundary student 2026-09-27 — user targets met on
+held-out, not yet promoted/wired live:** user targets (WER<=25%, P>=90, R>=80, sign-end->word
+<0.5 s, vocabulary-only). Held-out 72/186 streaming simulation, config frozen first: 13.44% WER,
+173/186, P 91.5, R 93.0; local60 9.26%, asllrp12 15/24. ~97% of words within 0.5 s incl. measured
+M4 compute (39 ms median/frame). MediaPipe (73 vs 10.7 ms/frame) is offline teacher only.
+Caveat: local60 familiar signer + training templates; unseen ASLLRP weak. Wired 2026-09-28:
+`app_shell_v17.py --segmental`; live-code replay 11.83% WER, P 92.6, R 94.6, 98.9% <0.5 s.
+**App default since 2026-09-28 at user request** (old Reel: `--classic-reel`): Reel HUD with Apple
+Vision skeleton (body/face kept visible between detections), amber in-progress WORD? + top-3 chips,
+each committed word spoken, Finish (button/F/Space or both open palms held up for 1 second)
+-> Stage 3 sentence shown and spoken. The gesture is wired in desktop segmental Live and
+iPhone Live source (2026-09-28), disabled in Practice, with hold progress and release-to-rearm.
+Control frames skip word/letter inference. Python tests and Swift checks pass; iPhone
+build installed with the speed update; live-camera confirmation remains pending.
+**v3 (2026-09-28): static A-Z letters as a supplemental track (user decision; vocabulary stays
+100), dual word/letter decoder, Stage 3 slot model for spelled words, Core ML backend by default.**
+Held-out live-code replay 10.75% WER, P 93.6, R 94.1, 96.7% <0.5 s. Held-out letters 77.2% exact
+(J/Z weak). WE->I fixed by the early-display guard (prefix_confusion.json). iPhone 13 figures are
+estimates only. Next: user live-camera check of words, WE and spelling. Report `artifacts/reports/segmental_decoder_v17_20260927/REPORT.md`.
+
+**Unfrozen-encoder phrase adaptation COMPLETE 2026-09-25 — no promotion:** controlled
+frozen vs unfrozen arms from student_v1 on approved-v2 train. Unfrozen ep9 held isolated floors
+(Cit95.77/SemLex89.16/local96.69). Held-out ASLLRP oracle 18/24,19/24 vs frozen control 16,18 and
+shipped 16,16: inside noise on 24 events. Local phrase val 66.3->76.7% is template-confounded.
+Shipped phrase head equals base on the oracle; its old split held 158 approved-val clips.
+Report `artifacts/reports/unfrozen_phrase_adapt_v17_20260925/REPORT.md`. Repo now lives on SSD
+`/Volumes/secret/SLT/SLT`; data/local symlinks retargeted (data-sources log).
 
 **Reel context adaptation COMPLETE 2026-09-22:** 14epochs/0.04min fitting, selectedepoch0. No promotion. Report `artifacts/reports/reel_context_adapt_v17_20260922/REPORT.md`. Proposalclassifier/verifierfusion heads; frozenencoders/BIO/acceptance. Next inspect retention, isolatedvalidation and confirmation before deployment.
 
@@ -195,7 +515,7 @@ centreprotocol differsfromSHuBERTreadout; letterbox/poseprovenance deviations do
 Dataregister/weights/verification: zuo_twostream_probe_v17_20260922/REPORT.md. No dataset
 payload or training. Zhao component availability reviewed above; next prepare ASL boundary adaptation recipe.
 
-**Stage 3 ASL-order renderer IS NOW THE LIVE DEFAULT 2026-09-22 (user instruction):**
+**Stage 3 ASL-order prior default 2026-09-22 (superseded by composition v2 above):**
 `artifacts/models/stage3_v17_asl_order_v1` replaced the legacy checkpoint as
 `DEFAULT_STAGE3_TINY`. Input format is read from `stage3_input_contract.json` beside the
 weights, so `--stage3-encoding auto` resolves evidence/plain per checkpoint and a caller
@@ -569,7 +889,7 @@ retry that mechanism. Training sends a macOS notification on completion/failure.
 | **Stage 2** repair | `stage2_v17_transition_repair_v3/seed_1702.pth` | Passes dev gates | local/exact/contextual 6/9/43, Citizen 331/378, STEM 16/21 |
 | **Stage 3** translation | `stage3_v17_asl_order_v1` | **Live default 2026-09-22 at user request** | 92.74 BLEU vs 43.58 paired control; reordering 89.43 vs 7.53 |
 | **Stage 3** legacy | `stage3_v17_t5_efficient_tiny_locked100_v1` | Rollback target; monotone/SVO defect | 93.36% exact on its own synthetic test; 43.58 BLEU on ASL-order rows |
-| **Live / streaming** | — | **Nothing promoted** | See below |
+| **Live / streaming** | segmental Reel (`scripts/live_segmental_v17.py`) | **App default 2026-09-28 at user request**; camera check pending | Held-out live-code replay 11.83% WER, P 92.6, R 94.6 |
 
 ### Live and continuous work — current frontier
 
@@ -1009,9 +1329,11 @@ full resumable acquisition is active as managed session18670 with one worker.
 3. **Per-class floor is 10 train / 3 validation / 5 test signers.** Pin one exact raw
    gloss plus one ASL-LEX code per class. Do not merge numeric variants by normalized
    label. Citizen has 35/6/11 signers overall — do not claim every class has 20.
-4. **Apple Vision is the locked v17 extractor.** MediaPipe stays a separately
+4. **Apple Vision is the locked v17 extractor for iOS.** MediaPipe stays a separately
    fingerprinted challenger; never mix its archives with Apple archives, and never
-   replace Apple without new signer-disjoint evidence.
+   replace Apple without new signer-disjoint evidence. Amended 2026-10-03 (user): a
+   separate MediaPipe model family for Android is authorized. It is trained only on
+   MediaPipe archives; Apple models may serve as teachers only, never as input features.
 5. **v17 is a clean schema boundary.** The 96% v16 checkpoint is not compatible with v17
    features. Do not silently connect them or report v17 accuracy from a v16 model. v16
    scored 40.28% top-1 on an external Citizen audit and had reversed Apple chirality,

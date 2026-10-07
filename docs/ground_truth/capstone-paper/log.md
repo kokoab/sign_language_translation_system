@@ -7,6 +7,61 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-08 — User-authorized date/topic commit series completed on main
+
+User authorized committing the outstanding work as 25 chronological date/topic groups
+from September 25 through October 8. Both Git author and committer dates follow the
+logged Manila calendar date; date-only entries use ordering times, not claimed event
+timestamps. Source files spanning multiple days use the available final snapshot in
+the latest relevant group; missing intermediate source versions are not reconstructed.
+Eligible source, tests, manifests, documentation and compact report evidence are selected
+explicitly. Incidental executable-bit changes, AppleDouble files, local datasets,
+weights, caches, large result files and unrelated personal files remain local.
+The .gitattributes whitespace rules preserve generated SVG formatting and blank final
+lines in saved baseline source snapshots, without rewriting manuscript or evidence files.
+Focused validation: 125 tests pass across live Reel/app integration, temporal boundary,
+segmental runtime, fingerspelling trigger, Stage 3 composition, legacy fine-tune config
+and MediaPipe extraction, plus the Stage 3 corpus, hand RGB and unified-model suites;
+git diff --check passes. No training or protected test access.
+Completed all 25 local date/topic commits. User then requested main: its prior tip
+26884461 was an ancestor, so main was fast-forwarded to the full committed history
+and selected as the active branch, preserving working files, permissions and the index.
+No remote push. A redundant full-worktree content scan was stopped because it rehashes
+unrelated tracked local assets after the index refresh; final verification uses commit
+metadata, tree paths/modes and the explicitly selected source/documentation snapshots.
+Final log amendment initially failed with ENOSPC. Automatic Git maintenance had left
+25 abandoned temporary packs created during this operation (9.86 GiB); only those
+session-created tmp_pack files were removed. Older temporary packs and all canonical
+packs were preserved. Retry disables automatic maintenance for that command only.
+Final audit passes: 25 commits have matching author/committer dates in +08:00;
+802 selected snapshots match the committed tree and working files. No staged changes,
+mode changes, local datasets, weights or AppleDouble files entered the series, and
+the complete commit-series whitespace check passes.
+User corrected the Git identity to kokoab <batiancelafrancis747@gmail.com>.
+All 25 commits are rewritten with that author and committer while preserving their
+logged dates and messages; repository-local identity is set for future commits.
+Source trees are unchanged except this required decision record in the final commit.
+Next safe action: review the local main series; preserve excluded local assets and
+unrelated changes.
+
+## 2026-10-08 — Exact before/after review checklist and chart preview delivered
+
+User requested exact proposed wording and chart changes in reviewMD with checkboxes.
+Refreshed live canonical tabt.pzqwjycim1ix; revision unchanged from sweep. Updated
+README_PLATFORM_NEUTRAL_REVIEW.md with20unchecked items, exactbeforeextracts, afterprose,
+replacementtables, chartremovals, andverificationdependencies. Earlier checklist and
+allauthornotes preserved in review_assets/20261008_proposals/README_PLATFORM_NEUTRAL_
+REVIEW_20261007_archive.md. Four currentnativefigures copied asbeforepreviews; actual
+newhistory generates proposed_recognizer_training.png/svg (selectedepoch4,31.42WER),
+visuallychecked. Sourcegeneratorincluded; link/checklistverificationpasses.
+Explained evaluation umbrella vsvalidation/tuning vstest. Use95.53validationaccuracy,
+no“pooled”/datasetcount inpaperprose; one31.42developmentWER. Signer-disjointsection
+preservedperuser, no newclaim aggregate is signer-disjoint. FP16complete-datasetvalues
+andHELLOtrace remainexplicitlypending, notfabricated. ProposedremovalofredundantFigure15
+andprecisionchart. NoGoogleDoc/manuscript/chartreplacement orproductionchanges.
+Next: author checks specificitems; carryoutapproved verification beforeapplyingdependent
+claims. Do not treat checkboxes as alreadychecked by prior general approval.
+
 ## 2026-10-07 — Live paper sweep: one final result, proposal only
 
 Read canonical GoogleDoc tabt.pzqwjycim1ix ((Oct6)Revision) via connector; examined
