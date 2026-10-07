@@ -361,6 +361,9 @@ def build_caches(args: argparse.Namespace, device: torch.device) -> dict[str, Pa
         "citizen_train": 1475, "citizen_val": 378, "semlex_train": 1388,
         "semlex_val": 978, "local_train": 13381, "local_val": 2896,
     }
+    if args.expected_record_counts:
+        # Opt-in for documented filtered manifests; defaults keep the pinned counts.
+        expected_counts = {**expected_counts, **json.loads(args.expected_record_counts)}
     actual = {name: len(value) for name, value in records.items()}
     if actual != expected_counts:
         raise ValueError(f"unified record counts changed: {actual}")
@@ -727,6 +730,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cache-dir", type=Path, default=Path("artifacts/generated/unified_multimodal_student_v17"))
     parser.add_argument("--output", type=Path, default=Path("artifacts/models/stage1_v17_unified_multimodal_student_v1"))
     parser.add_argument("--rebuild-cache", action="store_true")
+    parser.add_argument("--expected-record-counts", default=None,
+                        help="JSON overrides of the pinned per-split record counts (filtered manifests only)")
     parser.add_argument("--extractor", choices=("apple", "mediapipe_full"), default="apple")
     parser.add_argument("--citizen-floor-correct", type=int, default=361,
                         help="landmark-branch Citizen correct the fusion must keep (Apple 361)")

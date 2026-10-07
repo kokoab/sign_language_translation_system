@@ -82,7 +82,11 @@ def selection_items(
             manifest.get("format") != DEEP_CLEAN_FORMAT
             or manifest.get("split") != split
             or manifest.get("extraction_complete") is not True
-            or int(manifest.get("selected_classes", -1)) != 94
+            or int(manifest.get("selected_classes", -1)) != (
+                # A documented derived subset (e.g. Citizen-variant filtering) keeps its own class count.
+                len({str(row.get("canonical_label")) for row in rows})
+                if isinstance(manifest.get("derived_from"), dict) else 94
+            )
             or manifest.get("signer_disjoint") is not False
             or manifest.get("signer_overlap_user_approved") is not True
             or manifest.get("citizen_test_accessed") is not False

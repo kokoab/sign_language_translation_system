@@ -7,6 +7,19 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-08 — Citizen-variant local data experiment (96.83 chain rebuilt)
+
+User: for all confused classes use the Citizen variant. Removed local train/val clips of HOME
+(=HOUSE), CHILD, GOODBYE, HEAR, WHAT, BIG, SIGN, ASK, COME and non-ME I (letter-I, landmark
+pinky/index split visually checked): 1,425 train / 293 val removed. Same Variant C + phrase
+recipe. Loader guard for 94 classes now accepts documented derived manifests
+(active/v17/extract_hand_rgb_supplement_v17.py); fusion gained opt-in --expected-record-counts.
+Recognizer (same inputs: Citizen/SemLex/filtered local): current 367/864/2546 vs new 362/865/2548;
+tune WER 31.42 → 30.09%. Citizen −5 = single-clip changes across 9 classes. Affected classes on
+public val essentially unchanged (they were already correct there); the benefit can only show on
+the user's live Citizen-form signing. Not exported/installed. Report:
+artifacts/reports/citizen_variant_local_filter_v17_20261008/REPORT.md.
+
 ## 2026-10-07 — Independent paper-claim verification and proposed interpretation
 
 Fresh MPS inference reproduces all15 domain counts across the five new phases and
