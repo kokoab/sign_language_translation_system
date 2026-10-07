@@ -664,23 +664,59 @@ def is_finish_hand(hand: HandDetection | None) -> bool:
     return bool(fingers_open and thumb_open)
 
 
-def is_finish_gesture(
-    assigned: dict[str, HandDetection | None],
+def is_fist_hand(hand: HandDetection | None) -> bool:
+    """Detect a closed fist: at least three of four fingertips folded back past the knuckles."""
+    if hand is None:
+        return False
+    required = np.array([0, 5, 9, 13, 17])
+    if np.any(hand.confidence[required] <= 0):
+        return False
+    xy = hand.xy
+    wrist = xy[0]
+    if float(np.linalg.norm(xy[9] - wrist)) < 0.025:
+        return False
+    curled = sum(
+        hand.confidence[tip] > 0
+        and np.linalg.norm(xy[tip] - wrist) < np.linalg.norm(xy[mcp] - wrist)
+        for mcp, tip in ((5, 8), (9, 12), (13, 16), (17, 20))
+    )
+    return bool(curled >= 3)
+
+
+def is_control_gesture_pose(
+    assigned: dict[str, HandDetection | None], shoulder_y: float | None,
 ) -> bool:
-    """Detect two separated upright open palms: the ten-finger finish sign."""
+    """Signer's right hand open and upright, left hand a fist, both wrists above the shoulders.
+
+    Hand slots follow Vision chirality (the signer's anatomical hands). Without a recent
+    shoulder line the pose is not accepted.
+    """
     left, right = assigned["left"], assigned["right"]
-    if not is_finish_hand(left) or not is_finish_hand(right):
+    if shoulder_y is None or not is_finish_hand(right) or not is_fist_hand(left):
         return False
     assert left is not None and right is not None
-    return bool(np.linalg.norm(left.xy[0] - right.xy[0]) >= 0.12)
+    return bool(left.xy[0][1] < shoulder_y and right.xy[0][1] < shoulder_y)
+
+
+def is_finish_gesture(
+    assigned: dict[str, HandDetection | None], shoulder_y: float | None = None,
+) -> bool:
+    """Finish control pose (2026-10-08): right hand open, left fist, both above the shoulders.
+
+    Replaces the two-open-palm pose, which two-handed signs entered mid-signing.
+    """
+    return is_control_gesture_pose(assigned, shoulder_y)
 
 
 @dataclass
 class FinishGesture:
     """Hold/latch policy that prevents a single noisy frame or repeated finish."""
 
-    hold_seconds: float = 0.4
+    hold_seconds: float = 1.0
     dropout_grace_seconds: float = 0.15
+    shoulder_max_age_seconds: float = 1.5
+    shoulder_y: float | None = None
+    shoulder_seen_at: float | None = None
     started_at: float | None = None
     last_seen_at: float | None = None
     active: bool = False
@@ -689,8 +725,17 @@ class FinishGesture:
 
     def update(
         self, assigned: dict[str, HandDetection | None], seconds: float,
+        body_xy: np.ndarray | None = None, body_confidence: np.ndarray | None = None,
     ) -> bool:
-        observed = is_finish_gesture(assigned)
+        # Body runs every few frames; keep the last shoulder line briefly.
+        if body_xy is not None and body_confidence is not None and np.all(body_confidence[:2] > 0):
+            self.shoulder_y = float(np.mean(body_xy[:2, 1]))
+            self.shoulder_seen_at = seconds
+        fresh = (
+            self.shoulder_seen_at is not None
+            and seconds - self.shoulder_seen_at <= self.shoulder_max_age_seconds
+        )
+        observed = is_finish_gesture(assigned, self.shoulder_y if fresh else None)
         if observed:
             self.last_seen_at = seconds
             if self.started_at is None:
@@ -1880,7 +1925,10 @@ def run(
                 allow_finish = getattr(shell, "allow_finish", True)
                 gesture_triggered = (
                     False if args.no_finish_gesture or not allow_finish
-                    else finish_gesture.update(assigned, seconds)
+                    else finish_gesture.update(
+                        assigned, seconds, model_detection.body_xy,
+                        model_detection.body_confidence,
+                    )
                 )
                 gesture_frame = (
                     not args.no_finish_gesture and allow_finish
@@ -2162,7 +2210,7 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--expected-sequence", nargs="*", default=())
     value.add_argument("--finish-at-eof", action="store_true")
     value.add_argument(
-        "--finish-gesture-hold-seconds", type=float, default=0.4,
+        "--finish-gesture-hold-seconds", type=float, default=1.0,
         help="seconds both open palms must remain raised before finishing",
     )
     value.add_argument(

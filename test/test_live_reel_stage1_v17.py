@@ -15,6 +15,7 @@ from scripts.live_reel_stage1_v17 import (
     clicked_reel_control,
     draw_reel_detection,
     is_finish_gesture,
+    is_fist_hand,
     parser,
     persistent_auxiliary_detection,
     resolve_good_thankyou_context,
@@ -61,25 +62,64 @@ def open_hand(x: float) -> HandDetection:
     )
 
 
+def fist_hand(x: float, y: float = 0.30) -> HandDetection:
+    hand = open_hand(x)
+    shift = y - 0.72
+    hand.xy[:, 1] += shift
+    for mcp, tip in ((5, 8), (9, 12), (13, 16), (17, 20)):
+        hand.xy[tip] = hand.xy[0] + 0.6 * (hand.xy[mcp] - hand.xy[0])
+    return hand
+
+
+def raised_open_hand(x: float, y: float = 0.30) -> HandDetection:
+    hand = open_hand(x)
+    hand.xy[:, 1] += y - 0.72
+    return hand
+
+
+SHOULDERS = (np.array([[0.62, 0.55], [0.38, 0.55], [0.0, 0.0], [0.0, 0.0]], np.float32),
+             np.array([1, 1, 0, 0], np.float32))
+
+
 class StableGlossLockTest(unittest.TestCase):
-    def test_ten_finger_finish_requires_two_open_upright_hands(self) -> None:
-        hands = {"left": open_hand(0.32), "right": open_hand(0.68)}
-        self.assertTrue(is_finish_gesture(hands))
-        closed = open_hand(0.68)
-        closed.xy[[8, 12, 16, 20], 1] = 0.60
-        self.assertFalse(is_finish_gesture({"left": hands["left"], "right": closed}))
-        self.assertFalse(is_finish_gesture({"left": hands["left"], "right": None}))
+    def test_finish_pose_is_right_open_left_fist_above_shoulders(self) -> None:
+        pose = {"left": fist_hand(0.68), "right": raised_open_hand(0.32)}
+        self.assertTrue(is_fist_hand(pose["left"]))
+        self.assertFalse(is_fist_hand(pose["right"]))
+        self.assertTrue(is_finish_gesture(pose, 0.55))
+        self.assertFalse(is_finish_gesture(pose, None))
+        self.assertFalse(is_finish_gesture(pose, 0.25))
+        swapped = {"left": raised_open_hand(0.68), "right": fist_hand(0.32)}
+        self.assertFalse(is_finish_gesture(swapped, 0.55))
+        two_open = {"left": open_hand(0.68), "right": open_hand(0.32)}
+        self.assertFalse(is_finish_gesture(two_open, 0.80))
+        self.assertFalse(is_finish_gesture({"left": None, "right": pose["right"]}, 0.55))
 
     def test_finish_gesture_holds_latches_and_rearms_after_release(self) -> None:
-        hands = {"left": open_hand(0.32), "right": open_hand(0.68)}
+        pose = {"left": fist_hand(0.68), "right": raised_open_hand(0.32)}
         gesture = FinishGesture(hold_seconds=0.65)
-        self.assertFalse(gesture.update(hands, 0.0))
-        self.assertFalse(gesture.update(hands, 0.3))
-        self.assertTrue(gesture.update(hands, 0.7))
-        self.assertFalse(gesture.update(hands, 0.9))
+        self.assertFalse(gesture.update(pose, 0.0, *SHOULDERS))
+        self.assertFalse(gesture.update(pose, 0.3))
+        self.assertTrue(gesture.update(pose, 0.7))
+        self.assertFalse(gesture.update(pose, 0.9))
         self.assertFalse(gesture.update({"left": None, "right": None}, 1.1))
-        self.assertFalse(gesture.update(hands, 1.2))
-        self.assertTrue(gesture.update(hands, 1.9))
+        self.assertFalse(gesture.update(pose, 1.2, *SHOULDERS))
+        self.assertTrue(gesture.update(pose, 1.9))
+
+    def test_one_second_finish_requires_a_continuous_hold_and_fresh_shoulders(self) -> None:
+        pose = {"left": fist_hand(0.68), "right": raised_open_hand(0.32)}
+        gesture = FinishGesture(dropout_grace_seconds=0.)
+        self.assertFalse(gesture.update(pose, 0.0, *SHOULDERS))
+        self.assertFalse(gesture.update(pose, 0.99))
+        self.assertTrue(gesture.update(pose, 1.0))
+        self.assertFalse(gesture.update(pose, 1.4))
+        self.assertFalse(gesture.update({"left": pose["left"], "right": None}, 1.45))
+        self.assertFalse(gesture.active)
+        # The shoulder line expires after 1.5 s without a body detection.
+        self.assertFalse(gesture.update(pose, 2.6))
+        self.assertFalse(gesture.active)
+        self.assertFalse(gesture.update(pose, 3.0, *SHOULDERS))
+        self.assertTrue(gesture.update(pose, 4.0))
 
     def test_requires_repeated_agreement(self) -> None:
         lock = StableGlossLock(required_hits=3, release_hits=2)
@@ -142,7 +182,7 @@ class StableGlossLockTest(unittest.TestCase):
         )
         self.assertFalse(args.dense_model_auxiliary)
         self.assertFalse(args.no_finish_gesture)
-        self.assertEqual(args.finish_gesture_hold_seconds, 0.4)
+        self.assertEqual(args.finish_gesture_hold_seconds, 1.0)
 
     def test_large_reel_controls_match_their_drawn_area(self) -> None:
         from scripts.reel_hud_v17 import reel_control_button_rects

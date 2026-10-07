@@ -1,5 +1,27 @@
 # live-streaming — log
 
+## 2026-10-08 — Citizen-variant recognizer installed on iPhone 13 for live testing
+
+User approved. SpanRecognizerV17CitizenVariantLettersB8FP16 (citizen_variant_local_filter_v17_20261008
+recognizer + retrained head-A letter head, τ 0.6) replaces the August package as the app default;
+August package still bundled. FP16 = PyTorch 362/378 (378/378 agreement). Device stage profile
+≈22–23 ms/frame; finish-pose test passes; Release installed. Backups/hashes:
+artifacts/reports/citizen_variant_local_filter_v17_20261008/deploy/app_source_backup/.
+
+## 2026-10-08 — Finish gesture changed; similar-sign failures traced to local variants
+
+Phone session 20261008_081141 (alphabetical walk). Old finish pose (two open upright palms)
+suppresses classification on every frame it is seen: validation scan finds it in 326 clips,
+mostly the user's hard-to-trigger signs (local HOME 29/29, SMALL 28/30, BIG, FAMILY, EASY, SAD,
+WAIT 18/37 with 6 full finishes, ANGRY, MAYBE). New pose per user: right hand open/upright, left
+fist, both wrists above shoulder line (≤1.5 s old), 1 s hold; 0/3,274 validation clips. Python
+(scripts/live_reel_stage1_v17.py, live_segmental_v17.py) and Swift (LiveReelCore/Engine) updated;
+20+83 Python tests and on-device Swift test pass; Release installed on iPhone 13. Isolated
+validation: local adaptation reduces pair confusions (BIG/LANGUAGE 21→2, I/WE 14→0), but local
+HOME is HOUSE, CHILD is a wave-like raised hand, I mixes letter I/ME, GOODBYE is GOOD+BYE, and
+HEAR/WHAT/BIG/SIGN/ASK use other variants than Citizen. Report:
+artifacts/reports/similar_sign_local_audit_v17_20261008/REPORT.md. No data/model changes.
+
 ## 2026-10-07 — Phone session: HUNGRY read as MY — data gap, not the new chain
 
 Pulled iPhone session logs (data/local/phone_session_pull_v17_20261007/; 23:43 session has no
