@@ -96,6 +96,50 @@ def letter_clips(role, cap, seed):
     return out
 
 
+def isolated_clips(root, init_model, cap_frames, seed, device, threshold=.5):
+    """Isolated sign clips (one sign each): B at the first frame the initial student calls active, I
+    through its last active frame (internal dips bridged), O elsewhere. Teaches the student that a fast
+    movement inside one sign is not a boundary, without moving its onset/offset behaviour.
+    root/<source>/<label>/<clip>.npz from extract_isolated_raw.py (train clips only)."""
+    from active.v17.av_boundary_v17 import clip_bio
+    paths = sorted(Path(root).glob('*/*/*.npz'))
+    random.Random(seed).shuffle(paths)
+    out, frames, bridged = [], 0, 0
+    for path in paths:
+        d = np.load(path)
+        raw, times = d['raw'].astype(np.float32), d['times'].astype(np.float64)
+        if len(times) < 8:
+            continue
+        p = np.exp(clip_bio(init_model, raw, times, device))
+        on = np.flatnonzero(p[:, 2] + p[:, 3] >= threshold)
+        if len(on) < 3:
+            continue
+        a, b = int(on[0]), int(on[-1])
+        bridged += int((p[a:b + 1, 2] + p[a:b + 1, 3] < threshold).any())
+        y = np.zeros((len(times), 3), np.float32)
+        y[:, 0] = 1
+        y[a:b + 1] = [0, 0, 1]
+        y[a] = [0, 1, 0]
+        out.append((boundary_features(raw, times, True), y))
+        frames += len(times)
+        if cap_frames and frames >= cap_frames:
+            break
+    return out, bridged
+
+
+@torch.inference_mode()
+def isolated_single_run(model, clips, device, threshold=.5):
+    """Share of isolated clips whose active frames (B or I >= threshold) form one run."""
+    model.eval()
+    ok = 0
+    for f, _ in clips:
+        x, v = windows(f, model.lookahead)
+        p = torch.softmax(model(torch.from_numpy(x).to(device), torch.from_numpy(v).to(device)).float(), -1).cpu().numpy()
+        on = np.flatnonzero(p[:, 1] + p[:, 2] >= threshold)
+        ok += int(len(on) >= 3 and (p[on[0]:on[-1] + 1, 1] + p[on[0]:on[-1] + 1, 2] >= threshold).all())
+    return ok / max(len(clips), 1)
+
+
 def collect(excluded):
     keys = []
     for path in sorted((lab.CACHE / 'av_raw').glob('*.npz')):
@@ -171,6 +215,10 @@ def main():
     ap.add_argument('--init', type=Path, default=None, help='start from an existing student')
     ap.add_argument('--av-raw-dir', type=Path, default=None, help='MediaPipe continuous/av_raw (Android family)')
     ap.add_argument('--keys-file', type=Path, default=None, help='restrict to an exact video-key list (JSON)')
+    ap.add_argument('--isolated-raw', type=Path, default=None,
+                    help='isolated train clips (extract_isolated_raw.py); labels bridged from --init')
+    ap.add_argument('--isolated-ratio', type=float, default=1.0, help='isolated frames per teacher frame')
+    ap.add_argument('--isolated-val-raw', type=Path, default=None, help='isolated validation clips (report only)')
     args = ap.parse_args()
     if args.output_dir.exists():
         raise FileExistsError(args.output_dir)
@@ -195,6 +243,20 @@ def main():
     if args.letter_clips:
         train += letter_clips('train', args.letter_clips, args.seed)
         letters_val = letter_clips('validation', 400, args.seed)
+    isolated_val, bridged = [], 0
+    if args.isolated_raw is not None:
+        if args.init is None:
+            raise ValueError('--isolated-raw needs --init (labels come from the initial student)')
+        initial = AVBoundary(hidden=args.hidden, layers=args.layers, lookahead=args.lookahead, dropout=args.dropout)
+        initial.load_state_dict(torch.load(args.init, map_location='cpu', weights_only=False)['state_dict'])
+        initial.to(device).eval()
+        teacher_frames = sum(len(f) for f, _ in train)
+        isolated, bridged = isolated_clips(args.isolated_raw, initial, int(args.isolated_ratio * teacher_frames), args.seed, device)
+        train += isolated
+        if args.isolated_val_raw is not None:
+            isolated_val, _ = isolated_clips(args.isolated_val_raw, initial, 0, args.seed, device)
+        del initial
+        print(json.dumps(dict(isolated_clips=len(isolated), isolated_bridged=bridged, isolated_val=len(isolated_val))), flush=True)
     print(json.dumps(dict(train_clips=len(train), val_clips=len(val), train_frames=sum(len(f) for f, _ in train),
                           letter_val_clips=len(letters_val),
                           excluded=len(excluded))), flush=True)
@@ -221,6 +283,7 @@ def main():
             total += float(loss.detach()) * len(y); seen += len(y)
         row = dict(epoch=epoch, loss=total / seen, val=evaluate(model, val, device),
                    letters_val=letter_activity(model, letters_val, device) if letters_val else None,
+                   isolated_single_run=isolated_single_run(model, isolated_val, device) if isolated_val else None,
                    minutes=(time.perf_counter() - started) / 60)
         history.append(row)
         print(json.dumps(row), flush=True)

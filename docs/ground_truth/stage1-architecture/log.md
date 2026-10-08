@@ -7,6 +7,48 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-09 — Partial-read sweep fix: short fragments + "not a sign" pieces (not installed; report first)
+
+Sweep of all 100 classes (go_split_root_cause_v17_20261009/sweep): confident wrong reads of 30/50% prefix,
+suffix and middle views of val clips read correctly whole (Citizen/SemLex/local val, never test). Installed
+fragment recognizer 3,416. Retrains of the same recipe: --fragment-low 0.25 → 3,264; + --reject-prob 0.15
+(pieces 10–25% → flat target, weight 0.5) → 2,633 (val top1 95.18 → 95.53%); reject 0.3 / 10–35% → 2,259 but
+too silent in the decoder (Citizen silent 48). Candidate run_frag25_reject + own letter head (FP16 = PyTorch
+364/378, agreement 378/378) in the installed decoder (dip bridging + HAVE/ANGRY check), commit theta 0.4:
+tuning WER 15.5 → 15.0%; Citizen val correct 326 → 332, exact 286 → 307, extra 54 → 32, multi-word clips 47 →
+30, silent 19 → 23; SemLex/local ANGRY 21 → 23/25; user 20:18 session HAVE 14 → 17; take 11 HAVE 6 → 4.
+GOOD↔THANKYOU: Citizen GOOD is one-handed (1/15 clips two-handed); the 15 val GOOD→THANKYOU errors are
+one-handed; 2D path/shape LR does not separate them; the 3 two-handed val GOODs are already correct, so the
+planned two-hand ending check has no measured benefit — not built. Transition (glued-on) synthetic test did
+not reproduce HAVE→ANGRY; needs real sentences.
+
+## 2026-10-09 — Zero-local-class experiments (HAVE→ANGRY); user footage is the fix
+
+Scan of every corpus on disk for the 14 zero-local classes (go_split_root_cause_v17_20261009). Usable extras
+are few: ASLLVD exact 19, ASL-LEX 13, ASLLRP segmented HOME 47 (BEN/CORY/RACHEL; JONATHAN validation-only and
+RIT excluded); ASLLRP "HAVE" clips are mis-cut/different (thumbs), PopSign on disk are 82-px previews, MS-ASL
+unreviewed. Removed local clips re-scored by the installed recognizer: WHAT/GOODBYE/COME/HEAR/HOME 0 own-label
+(different forms; HOME = HOUSE), SIGN 25 and CHILD 32 Citizen-form (visually confirmed) — restored in "extra".
+Not-downloaded SemLex plan (Drive login) would add BIG 94, SICK 83, HOME 28, FIND/HUNGRY 25, HAVE 5.
+Span-recognizer variants on the installed fragment recipe, phone word decoder, take 135024_11 HAVE/ANGRY:
+fragment (installed) 4/5; no local ANGRY 4/5; +extra & restored 4/5; boost 14 classes ×3 with synthetic
+sentence context 5/4 — none fixes in-sentence HAVE. 5 user HAVE spans from the first half of take 11 (×25
+jitter, 124 rows): held-out second half TIRED HAVE I ANGRY BIG I HAVE BIG I ANGRY BIG → HAVE HAVE I BIG I
+HAVE BIG I HAVE BIG; Citizen val 327/285/56 → 329/286/53; tuning WER 15.5 → 17.7% (scattered non-HAVE
+changes, run-to-run level). Not installed.
+
+## 2026-10-09 — Recognizer/boundary experiments for mid-sign splits (go_split_root_cause_v17_20261009)
+
+All with the dip-bridging word decoder unless noted; tuning WER / Citizen val correct-exact-extra / user
+takes GO. v2 18.6% / 328-278-61 / 1. Fragment aug (--fragment-prob 0.3): 15.5% / 327-285-56 / 1 —
+INSTALLED. Fragment + sentence-context aug (--context-prob 0.3): 15.5% / 328-285-54 / 2 — tie, not
+installed; does not fix in-sentence HAVE→ANGRY. Boundary student fine-tuned with 3,565 isolated train clips
+labelled as one run from the initial student's own first..last active frame (--isolated-raw, epoch 2 by
+teacher KL 0.281; Citizen val single-run 30% → 72%): with fragment recognizer 17.7% / 337-288-62 / 1;
+without lag 16.8% / 332-282-62 / 6 (still splits the user's fast spreads, act ~0.1 for 2 frames) — not
+adopted (worse on continuous signing, user problem not solved without lag). Rejected: decoder min span 6
+(27.4%), c −1.0 (24.8%), min span 4 (21.7%).
+
 ## 2026-10-09 — v4 warm start rejected; SIGN/WHEN/BIG/LANGUAGE data audit
 
 Data audit (two-hand movement ratio, inter-wrist reversals; similar_sign_local_audit_v17_20261008/
