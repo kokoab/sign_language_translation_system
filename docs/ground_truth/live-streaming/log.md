@@ -1,5 +1,54 @@
 # live-streaming — log
 
+## 2026-10-09 — OPEN: live camera vs recording gap ("I HAVE BIG", session 20261009_201823)
+
+User signed I HAVE BIG ~20× (darker room, closer framing). Live phone: HAVE 5, ANGRY 5 (+TIRED, GO, GIVE…).
+Same recording: Mac Python 14 HAVE/1 ANGRY; Swift harness 17/0; iPhone on-device replay 17/0; iPhone simulated
+live (recording fed at camera pace through LiveLatestFrameGate, PTS deadline, finish gesture on, overlay Vision)
+19 HAVE/1 ANGRY at 19.9 fps. Ruled out: models, Swift port, ANE/FP16, frame timing/scheduling, finish gesture
+(1 frame), letters mode (off), mirroring (recording = model frames). Remaining difference: raw camera buffers
+vs the H.264 recording (hypothesis: sensor noise in low light, removed by compression, degrades fingertip
+landmarks/crops). Next: app logs raw frames for one sentence; if confirmed, light denoise before Vision/crops.
+Parked by the user for now. Tests: RunnerTests testReplaySavedTakesOnDevice / testSimulatedLiveReplayOnDevice.
+
+## 2026-10-09 — Root cause of BIG/LANGUAGE → GO splits; word-mode dip bridging installed
+
+Root cause (user takes 01–03, frames inspected; artifacts/reports/go_split_root_cause_v17_20261009/):
+(1) the AV boundary student marks the fast internal movement of a sign as rest (O 0.6–0.9 for 1–8 frames);
+it does so on 256/379 Citizen isolated train clips too (BIG 13/15, GO 11/15) — a DGS-teacher trait;
+(2) the decoder could not span more than 3 O frames and committed the first piece 1 frame after it
+ended, before the rest of the sign existed; (3) the recognizer never saw partial signs (span training
+keeps IoU ≥ 0.5 only, prefixes excluded in v2), so the user's raised bent-L end hold of BIG reads as the
+start of Citizen GO. Phone vs Mac: Mac Core ML FP16 replay = Mac torch replay word-for-word; phone
+differences come from live-camera vs recorded inputs flipping ~0.5 fragments.
+Fix (word decoders only; letters/full keep v3): stream.max_inner_o 8, decoder.inner_floor 0.5 (P(B|I)
+floor inside a segment), stream.lag 6. Installed v2 recognizer, phone word view: takes GO 7 → 1,
+BIG+LANGUAGE (01–02) 26 → 31; Citizen val correct 313 → 328, exact 264 → 278, silent 24 → 17, extra
+65 → 61; tuning-pool WER 17.7 → 18.6% (+2/226); commit latency p90 0.35 → 0.6 s. Lag alone or
+bridging alone does not fix it (commit happens before the second piece). SUPERSEDES the 6-frame minimum
+span entry below: min6 raised tuning WER to 27.4% (D 12 → 42, short sentence signs deleted); it was
+never installed. Python options (defaults unchanged) + tests; Swift LiveDecoderConfig.v3Words; simulator
+tests pass; Release installed on iPhone 13. Swift sources: app_source_installed/.
+
+## 2026-10-09 — Word-mode minimum span 3 → 6 frames (LANGUAGE/BIG split into GO)
+
+Cause: short (3–5 frame) tails of BIG/LANGUAGE were committed as separate signs (GO), helped by the
+per-segment bonus (c −1.5). Decoder grid on installed v2 recognizer, phone word mode (gate 0.95):
+Citizen val 378 correct/silent/extra c−1.5 min3 313/24/65 → min6 322/25/51 (+13 / −4 clips); user
+takes 01–03 GO 7 → 5, words 82 → 79. Larger c (−1.0…0.0) cut extras but lost correct commits.
+Python: stream.min_span_frames (default 3, segmental_runtime_v17.both_spans). Swift:
+LiveDecoderConfig.minSpanFrames, .v3Words (6) used by wordsOnly/wordsGated only; letter and
+full decoders keep 3. Simulator tests pass (new testWordModeMinimumSpanFrames); Release built;
+install pending phone connection. Grid: citizen_variant_local_filter_v17_20261008/decoder_grid/.
+Backups: swift_backup_minspan/.
+
+## 2026-10-09 — v2 Citizen-variant recognizer installed (letter gate 0.95 kept)
+
+SpanRecognizerV17CitizenVariantV2LettersB8FP16 (run_v2 recognizer + head-A letter head retrained,
+τ 0.5; 26-way 84.89%, recall 84.58%) is the app default; v1 and August packages still bundled. FP16 =
+PyTorch 363/378, 378/378 agreement. Release built and installed; device smoke test not run (phone
+locked at launch). Backups: deploy_v2/app_source_backup/.
+
 ## 2026-10-08 — Session 211045 (gate 0.95): HOME/CHILD fixed; BIG/HEAR missing in local domain
 
 HOME committed 4×, CHILD 2×, WHERE mostly. BIG → LANGUAGE 3, HELP 3, GO 4, HOW 1; HEAR never
