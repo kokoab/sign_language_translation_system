@@ -7,6 +7,21 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-08 — User-authorized main publication completed
+
+User authorized pushing main after the read-only publication checks. Normal fast-forward
+push advanced origin/main from 26884461 to af9b864c: 41 previously unpublished commits,
+including the 25 dated work commits and 16 earlier commits. Live ls-remote verification
+matches local main. The 25 work commits use kokoab <batiancelafrancis747@gmail.com> as
+author and committer, preserving their logged dates and messages; repository-local
+identity uses the same email. No force push or runtime/phone deployment.
+Pre-push evidence: dry run passed, largest new blob 2.2 MiB, no new blob above 100 MiB,
+no checked-in build/deployment workflow, and 125 focused tests previously passed.
+Local datasets, weights, caches, incidental permissions and unrelated files remain local.
+This publication record is committed and pushed separately without rewriting published
+history. Next safe action: verify main/origin/main synchronization; continue development
+under the existing training, evaluation and manuscript-review gates.
+
 ## 2026-10-08 — User-authorized date/topic commit series completed on main
 
 User authorized committing the outstanding work as 25 chronological date/topic groups
