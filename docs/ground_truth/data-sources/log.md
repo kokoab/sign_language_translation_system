@@ -7,6 +7,16 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-09 — Local LANGUAGE/BIG forms mixed; v3 keeps repeated LANGUAGE only
+
+Citizen LANGUAGE = ASL-LEX A_01_067: L hands, straight, repeated; Citizen BIG = bent-L, curved, single.
+Inter-wrist distance reversals (2+ = repeated): LANGUAGE Citizen 60%, SemLex 67%, local 42%; BIG
+Citizen 20%, SemLex 5%, removed local BIG 83%. Visual check: single-movement local LANGUAGE clips are a
+single L-hand pull-apart (BIG movement). v3 manifests keep local LANGUAGE only with 2+ reversals
+(train 65 kept / 89 dropped; val 10 / 17). SemLex val has 18,025 and test 15,514 videos; only the 22 GB
+train archive may be used for training (val is our SemLex measurement, test is sealed). v3 chain +
+deploy build launched.
+
 ## 2026-10-08 — Citizen-form supplement for signs without local data (v2)
 
 User signs Citizen forms; BIG/HEAR etc. had 0 local clips after the Citizen-variant filter. ASL-LEX

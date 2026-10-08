@@ -7,6 +7,16 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-09 — v4 warm start rejected; SIGN/WHEN/BIG/LANGUAGE data audit
+
+Data audit (two-hand movement ratio, inter-wrist reversals; similar_sign_local_audit_v17_20261008/
+audit_pairs.py): 43+6 local WHEN clips were SIGN-like (both hands circling) and 89+17 local LANGUAGE
+clips single-movement (BIG-like); removed in v4 manifests. Remaining labels consistent. SIGN (Citizen
+15/SemLex 8/web 8/ASL-LEX 1) and BIG (15/21/7/1) still have 0 local clips vs WHEN 108, LANGUAGE 65.
+v4 (warm start from run_v2 local replay, + 97 ASL-LEX citation clips, 20 epochs) recognizer:
+Citizen/SemLex/local val 362/856/2536 (of 378/978/2603) vs v2 363/866/2563 (of 2626); user takes GO
+7 → 20. Not installed; v2 stays. A fair full retrain on the v4 cleanups is still untested.
+
 ## 2026-10-08 — v2 chain: local ASK restored + 37 reviewed web clips
 
 Same recipe as the installed Citizen-variant chain; local pool = Citizen-variant filter + 147 local ASK
