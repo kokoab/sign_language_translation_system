@@ -11,6 +11,33 @@ vs the H.264 recording (hypothesis: sensor noise in low light, removed by compre
 landmarks/crops). Next: app logs raw frames for one sentence; if confirmed, light denoise before Vision/crops.
 Parked by the user for now. Tests: RunnerTests testReplaySavedTakesOnDevice / testSimulatedLiveReplayOnDevice.
 
+## 2026-10-09 — HAVE vs ANGRY handshape check installed (word decoders)
+
+Mechanism (take 135024_11): the recognizer reads HAVE when the span stops at the chest contact (e.g. 11.47–11.70 s
+HAVE 0.66 / ANGRY 0.05; 20.77–21.30 HAVE 0.80) and ANGRY 0.85–0.91 once the upward exit into the next sign
+(BIG) is included; the boundary student keeps the exit active, so the decoder covers it. Score trimming did not
+help (spans extend). User cue: HAVE = fingers together, ANGRY = spread claw. Landmark-shape LR alone separates
+Citizen but fails on SemLex/local ANGRY (8/25 kept); hand-crop LR alone 20/25; min(crop, landmark) re-sharing
+of P(HAVE)+P(ANGRY) when the pair is in the top 2 keeps SemLex/local ANGRY 21/25 (= baseline, 0 read as HAVE),
+take 11 ANGRY 5 → 0 / HAVE 4 → 6, take 03 64.6 s ANGRY → HAVE (video: HAVE), Citizen val correct 327 → 326
+(one ANGRY silent), exact 285 → 286, extra 56 → 54, tuning WER 15.5% unchanged. Python stream.crop_pair +
+stream.handshape_pair (artifacts/models/crop_have_angry_v17, handshape_have_angry_v17); Swift LivePairCheck
+(LiveDecoderConfig.v3Words.haveAngryCheck), parity test passes; Release installed on iPhone 13.
+
+## 2026-10-09 — Fragment-trained recognizer installed; HAVE→ANGRY traced
+
+SpanRecognizerV17FragmentLettersB8FP16 = run_v2 span-recognizer recipe + --fragment-prob 0.3 (isolated
+replay samples replaced by 50–85% prefix/suffix/middle views, parent label, no KD on them); selected epoch 2
+by the usual tuning rule, floors held (Citizen/SemLex/local 96.30/88.45/97.52). With the dip-bridging word
+decoder: tuning WER 18.6 → 15.5% (I 17 → 10), Citizen val exact 278 → 285, extra 61 → 56, correct 328 → 327,
+takes GO 1. FP16 = PyTorch 364/378, agreement 377/378. Installed on iPhone 13 (v2 package still bundled).
+HAVE (session 20261009_135024): alone HAVE 0.97; in "I HAVE BIG" ANGRY 0.84 on Mac and phone alike,
+landmarks-only also ANGRY (not a hand-image shortcut). Cause: HAVE has 0 local clips (Citizen 14 + SemLex 8)
+vs ANGRY 140 total, and the in-sentence HAVE exits upward into BIG (ANGRY's movement); local ANGRY labels
+verified correct. A sentence-context augmentation (--context-prob) did not fix it. 14 classes have 0
+local clips: WHAT GOODBYE HAVE COME FIND HEAR LISTEN TALK SICK HUNGRY BIG HOME CHILD SIGN — every
+user-reported miss is on that list. Report: artifacts/reports/go_split_root_cause_v17_20261009/.
+
 ## 2026-10-09 — Root cause of BIG/LANGUAGE → GO splits; word-mode dip bridging installed
 
 Root cause (user takes 01–03, frames inspected; artifacts/reports/go_split_root_cause_v17_20261009/):
