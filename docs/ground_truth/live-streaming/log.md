@@ -1,5 +1,29 @@
 # live-streaming — log
 
+## 2026-10-10 — HAVE vs TIRED: TIRED requires the downward roll (built, not installed)
+
+Exact-live replay (app trace of session 20261010_100646 → offline decode) reproduced the live output (ANGRY TIRED
+TIRED TIRED I BIG); the ORIGINAL v2 setup also reads these HAVEs as TIRED, so no recent change caused it. The
+earlier "live camera gap" was a replay artefact: replays assumed constant 30 fps on variable-frame-rate
+recordings; with real PTS the recording matches the live frames (landmark |diff| 0.002). Cue: TIRED rolls the
+bent hands down on the chest — fingertip droop (fingertip-minus-wrist height range, hand sizes) HAVE train/val
+median 0.79/0.94, TIRED 1.86/2.19; user HAVE spans 0.39–0.99. Rule (stream.tired_rescue_droop 1.0; Swift
+LiveDecoderConfig.v3Words.tiredRescueDroop): top word TIRED, HAVE in top 3, droop < 1.0 → swap to HAVE. HAVE/ANGRY
+check made rescue-only (pair_rescue_only): only a top-1 ANGRY moves to HAVE when cues agree; never demotes HAVE.
+Results (installed recognizer): 10:06 exact live HAVE ×5 + I BIG HAVE (was TIRED×3); 09:55 HAVE ×9; take 11 HAVE
+×8, ANGRY 0; SemLex/local val TIRED 31/36 and ANGRY 23/25 unchanged, none turned into HAVE; Citizen val and
+tuning WER (15.0%) identical. Python/Swift parity tests pass; Swift harness end-to-end confirms. App also logs
+per-frame traces (Documents/live_reel_traces) for exact replay of live misses.
+
+## 2026-10-10 — Fragment+reject recognizer and word-mode theta 0.4 installed
+
+SpanRecognizerV17FragmentRejectLettersB8FP16 (run_frag25_reject: fragment views 25–85% keep the parent label,
+15% of replay samples replaced by 10–25% pieces with a flat target; own letter head) is the app default;
+LiveDecoderConfig.v3Words.logTheta = log(0.4) (letters/full decoders keep 0.5). Validation (installed decoder +
+HAVE/ANGRY check): tuning WER 15.5 → 15.0%, Citizen val exact 286 → 307, correct 326 → 332, extra 54 → 32,
+multi-word clips 47 → 30, silent 19 → 23; user 20:18 session HAVE 14 → 17; take 11 HAVE 6 → 4. Previous
+packages stay bundled. Simulator tests pass (4); Release installed on iPhone 13. Sources: app_source_installed/.
+
 ## 2026-10-09 — OPEN: live camera vs recording gap ("I HAVE BIG", session 20261009_201823)
 
 User signed I HAVE BIG ~20× (darker room, closer framing). Live phone: HAVE 5, ANGRY 5 (+TIRED, GO, GIVE…).
