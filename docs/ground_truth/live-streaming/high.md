@@ -1,5 +1,22 @@
 # live-streaming — high
 
+## 2026-10-10 — Preserve sign evidence and output order; replay exact inputs
+
+Word-mode HAVE contact closure is enabled in the new Swift source and Python config_fixed.json
+under artifacts/reports/have_root_fix_v17_20261010/ (signed Release installed on iPhone 13, 2026-10-10; launch blocked by locked phone). Preserve its negative
+controls when changing candidate retention or TIRED rescue: an earlier open word owns its
+ending; a repeated frame or continuing two-hand descent is not a fresh contact. Retain only
+accepted HAVE cores, not every old candidate. Published words may not pass unresolved earlier
+signs; the 2026-10-11 entry clarifies that identity locking itself must remain independent. Keep threshold/lag/dip-bridging settings unless a new paired check justifies changing them.
+
+Use saved live observations/embeddings or actual video PTS. Frame-index/fps and OpenCV timed
+seeking are not exact replay. runtime.raw_cache contains POST-correction logits: do not share
+it across experiments changing corrections; share only raw model outputs keyed by inputs.
+The legacy shape canonical rotation and its weights are paired. A mathematically corrected
+rotation needs a corresponding model migration; the exploratory corrected LR is not deployed.
+Final evidence:570development clips,3exact-input CoreML Python/Swift replays,23tests,Releasebuild.
+No protected-test or universal-recognition claim. First take11 ANGRY substitution remains.
+
 ## 2026-09-29 — preserve landscape pages; separate landmark tracking from recognition
 
 User explicitly rejected changing Live/Practice to portrait. Keep their original landscape

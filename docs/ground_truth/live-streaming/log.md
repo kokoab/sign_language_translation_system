@@ -1,5 +1,257 @@
 # live-streaming — log
 
+## 2026-10-10 — User-requested HAVE fix installation verified
+
+User explicitly requested installation. Validated source hashes unchanged. Signed Runner
+Release build succeeded with existing development signing; codesign deep/strict verification
+passed. Installed in place on paired iPhone 13 (no uninstall). Device app inventory confirms
+com.kokoab.sltMobileApp 1.0.0 build 1 at the exact new URL returned by installation.
+Automatic launch failed because iOS reported the device locked. Installation succeeded;
+no new on-device recognition/performance claim. Next: unlock/open ASL Translator and capture
+new exact live traces. First take11 HAVE→ANGRY remains an independent known limitation.
+Evidence: have_root_fix_v17_20261010/{installation.json,ios_signed_build.log,ios_install.json,
+ios_installed_app.json,ios_launch.json}. Updated REPORT.md, verify_final.py (retains deployment
+state), final_results.json, PROJECT_GROUND_TRUTH.md and live-streaming/high.md. No production
+code, models or datasets changed during installation.
+
+
+## 2026-10-10 — HAVE omission fix complete: all final gates pass, build not installed
+
+Final verification: have_root_fix_v17_20261010/verify_final.py PASSES. Pair103 and Citizen378
+have IDENTICAL per-clip hypotheses to baseline; zero newfalseHAVEs (pair0, Citizen's same1).
+Development tune89/226 errors34→29 (15.04→12.83%): two NAME MY→MY NAME order repairs and
+one extra HELP removed. No protected test used. Five measured take11 omissions recovered,
+HAVE5→10 with following BIG; first-HAVE→ANGRY substitution remains outside this omission fix.
+09:55 matched original-model actual-PTS baseline8HAVE→9. Exact10:06 trace4→9HAVEs, including
+I HAVE BIG; seven isolated contacts verified visually with actual-PTS frames.
+
+Production Python with identical FP16 Core ML packages and exact inputs matches production
+Swift on all words AND start/end/commit frame triples across all3sessions; max score delta
+1.2764e-5. The fixed Python config previously inherited an old LocalA CoreML path; corrected
+to FragmentRejectLettersB8FP16 before exact-input parity. Production vs experiment Python
+also matches on6negative controls + old cached take11; old sampling is not the positivebenchmark.
+23focused unit tests pass. Original-code early-order check confirms BIG-before-HAVE failure;
+initial import monkeypatch hit the wrong module, corrected before the meaningful check.
+iOS unsignedRelease build SUCCEEDED. No installation and no new on-device performance claim.
+
+Source/config hashes, metrics, replays and remaining limitation: final_results.json; explanation
+and reproduction: REPORT.md in have_root_fix_v17_20261010/. Task-only sourcepatches andbefore
+snapshots retained. Full diff-check only pre-existing app_shell_v17.py:632 whitespace; scoped
+check clean. Other recorded Swift source hashes unchanged. Original model assets retained;
+no new phrase training. Rejected geometric LR and decoder variants remain diagnostic artifacts.
+Updated PROJECT_GROUND_TRUTH.md and live-streaming/high.md; regenerated large-artifact index.
+Next safe action: install if requested, capture new exact live traces, separately investigate
+first take11 ANGRY. Do not claim all future HAVEs are guaranteed or every phrase is repaired.
+
+## 2026-10-10 — HAVE contact fix implemented; positive replays and focused gates pass
+
+Production edits: active/v17/segmental_runtime_v17.py, test/test_segmental_runtime_v17.py,
+and sibling ios/Runner/LiveReel/LiveReelDecoder.swift. Original sources/hashes preserved in
+have_root_fix_v17_20261010/production_before/. Python opt-in config_fixed.json enables
+stream.have_contact_closure; Swift v3Words enables the matching fix. No model weights,
+datasets, phone install or protected-test access changed. Existing uncommitted work preserved.
+
+Final candidate uses ORIGINAL cue models/rotation and MIN fusion. Corrected-rotation LR
+and cue-odds experiments are not promoted (unnecessary to recover omissions). The legacy
+canonical-rotation sign error requires a paired model migration; never flip inference alone.
+
+Fix: retain accepted HAVE cores, close on two transition frames within the existing30-frame
+span limit, preserve that evidence against transition/next-sign spans, and prevent later early
+words from passing earlier undecided words. Merge TIRED/HAVE probability only when existing
+low-roll rescue applies AND the actual core contains new evidence; do not merge a held-frame
+pose or a continuing two-hand descent. Open earlier recognized words keep their endings.
+Unconditional closure initially added5falseHAVEs; open-word guard reduced to2, and new-core/
+descent checks removed both. The HAPPY false positive was in the synthetic held last-frame tail;
+merging must check the core itself, not context containing preceding genuine motion.
+
+Actual-PTS/FP16 take11: HAVE5 ->10, all five measured omissions recovered with following BIG,
+one pre-existing first ANGRY remains. Exact10:06 trace: seven isolated HAVEs then I HAVE BIG
+then HAVE. Those seven contacts visually confirmed with ffmpeg actual-PTS frames; OpenCV
+POS_MSEC seeking was WRONG on that video (do not use its frame sheet as evidence). 09:55
+actual-PTS replay: nineHAVEs. Final production Swift matches these experimental outputs.
+
+Uncached paired checks: pair103 unchanged correct82/exact58/silent18/extra26, falseHAVE0
+(ANGRY25/TIRED36/HAPPY38/HAVE4). Tune89/226 improves S6/D17/I11 ->S6/D15/I8,
+15.04% ->12.83% developmentWER. Citizen378 remains running at this entry. No held-out claim.
+23focused tests pass, including5new regressions. Early-order test fails against saved original
+runtime by emitting BIG before pending HAVE, and passes after fix. Swift/Python contact/rescue
+fixture:5cases, zero probability delta. iOS Release build SUCCEEDED (unsigned), not installed.
+Full git diff --check still flags only pre-existing scripts/app_shell_v17.py:632 whitespace.
+Minor fixture command initially used system Python lacking numpy; rerun with venv succeeded.
+Next: complete Citizen check, production Python parity, final verifier/report and handoff.
+
+## 2026-10-10 — Closed-contact evidence recovers hard HAVE; early commit violates word order
+
+Continued isolated Swift experiments (have_root_fix_v17_20261010): merging TIRED/HAVE
+probability when motion rules TIRED out plus retaining candidate spans alone is insufficient.
+An experimental contact closure carries an accepted HAVE core to its subsequent transition
+and excludes crossing spans; with agreeing cue odds this recovers the 4.1s and 7s HAVEs,
+and the 11.6s omission, preserving following BIG. It is NOT promoted; broader regression
+and unresolved later omissions remain. Threshold/cost-only sweeps remain rejected.
+
+Concrete ordering bug: at 20.8s, pending HAVE (417–432) precedes BIG (433–437), but early
+BIG is returned first (22.17s), then HAVE commits at22.30s: I BIG HAVE. Early loop scans
+past unresolved preceding signs. Correct ordering requires not emitting a later segment
+before the earlier unresolved segment. Testing that shared-runtime fix explicitly.
+Also tracing why last accepted HAVE prefix is lost before the transition. Saved variants,
+exact outputs and captured BIO/spans/steps distinguish each change. No phone installation.
+Uncached geometry regression passed pair103 and tune89 with identical baseline metrics;
+Citizen378 still running. The earlier cached shape comparison remains invalidated.
+
+## 2026-10-10 — Corrected handshape replay still misses HAVE; regression cache invalidated
+
+Native corrected-rotation/model replay remains 5 HAVE/1 ANGRY; no-early BIG 6/1;
+lag2 introduces failures on exact 10:06 input. Shape correction is real but not the
+omission fix. Combining agreeing crop/shape odds recovers 2 HAVEs but leaves others.
+Do not claim the rotation bug explains the whole symptom.
+The first broader shape regression is INVALID for comparing cue models: runtime.raw_cache
+stores post-rescue logits despite its name. Cached hits skip the changed correction.
+Stopped that run. New evaluate_shape.py shares only raw recognizer outputs keyed by
+complete input hashes and gives each runtime an empty post-correction cache. Rerunning
+baseline vs corrected-shape on pair/tune/Citizen validation only. Earlier cost/lag-only
+comparisons use unchanged corrections and are not invalidated by this issue.
+
+## 2026-10-10 — Handshape canonical rotation is wrong; isolated-only refit experiment
+
+Measured actual-PTS baseline: older fragment-only recognizer also omits HAVE. Removing
+score floor, changing boundary onset scoring, denser candidates/retention and interior
+floor alone do not solve the omissions; low lag adds fragments. Experimental results
+under have_root_fix_v17_20261010; none promoted.
+Found concrete mathematical bug: atan2(vx,-vy) with the current rotation matrix doubles
+hand tilt instead of setting wrist-to-middle-MCP to (0,-1). Correct angle is atan2(-vx,-vy).
+Training and both runtimes share the bug, so correcting inference alone is invalid.
+Refit the same C=.3 balanced LR on exactly the existing 68 isolated HAVE/ANGRY train
+clips (1,165 hand frames); no phone/phrase fitting. Paths/hashes pinned in shape_inputs.json.
+Full raw isolated validation handshape-only positive HAVE scores: HAVE8/8 both;
+ANGRY14/28 ->7/28; TIRED37/40->40/40 (expected similar handshape, motion gate required).
+This is a cue diagnostic, not recognizer accuracy. Next: matched native replay and
+broader development regression with paired corrected geometry/model. Production untouched.
+Correction to previous 7s analysis: .3786 was the candidate's ANGRY probability, not HAVE;
+HAVE was .1243. Oracle .4237 HAVE is a different 136–147 window after pair correction.
+Files: refit_shape.py, handshape_correct_rotation.json, shape_validation.json, copied Swift.
+
+## 2026-10-10 — User requires continued root-cause fix; investigation resumed
+
+Previous handoff was premature; user explicitly requires continuing through a fix.
+New isolated causal workspace: artifacts/reports/have_root_fix_v17_20261010/.
+Current focus: exact candidate membership, DP score terms and commitment history, not
+another class-prior sweep. Added full boundary probabilities to identical-input Swift
+replay. Around 7.4s the boundary DOES mark a transition: O=.60/.91/.86 across frames
+147–149, followed by a second onset. The unconditional .5 interior-activity floor
+suppresses that evidence just as it suppresses false within-sign dips. Candidate
+step2 also excludes some useful cuts. Testing those mechanisms independently, plus
+candidate retention and onset context; no production change or training yet.
+
+## 2026-10-10 — HAVE omission experiment handoff: all candidates rejected
+
+Sixteen configurations including baseline completed on fixed PTS/FP16 take-11 inputs.
+Extra preceding context .2/.3/.4s also fails (adds ANGRY/HAPPY/WHEN). Exact 10:06 trace:
+baseline HAVE HAVE HAVE I BIG HAVE; disabling early BIG adds ANGRY between I and BIG.
+Therefore the take-11 5→6 HAVE improvement is not promoted. HAVE cost -2 also rejected
+for adding HAVE after genuine ANGRY. No configuration fixes the user's full request.
+
+Broader Python development check completed, 570 clips ×3 configurations: tuning89/226
+unchanged S6/D17/I11 (15.04%); Citizen378 baseline/noearly/cost2 correct332/332/332,
+exact301/301/300, extra39/38/39, false-HAVE1/1/2. Pair103 correct82/82/82,
+exact58/58/57, false-HAVE0/0/1. Corrected one-second held-tail differs from historical
+helper padding; new within-experiment comparisons only. No protected test consumed.
+Native-capture/trace replay word parity and all saved result invariants pass verify.py;
+original Swift source SHA256s unchanged. Python production runtime unchanged.
+
+Changed files: new report/harness/configs/replays/verifier under
+`artifacts/reports/have_omission_v17_20261010/`, this log, PROJECT_GROUND_TRUTH.md and
+regenerated artifacts/LARGE_FILES.md. No production source/model/install changes.
+Next safe action: review exact contact/transition annotations from existing recordings,
+reserve a complete session, then prepare the required reviewed boundary/input recipe.
+Do not repeat failed classifier-only user adaptation or deploy more threshold/cost rules.
+Full evidence and reproduction: have_omission_v17_20261010/REPORT.md. Omission unresolved.
+Handoff diff check: repository-wide `git diff --check` reports unrelated trailing whitespace
+in scripts/app_shell_v17.py:632 (not edited here); preserved. Task-scoped tracked-file check passes.
+
+## 2026-10-10 — HAVE decoder candidates mostly negative; exhaustive windows locate onset loss
+
+Matched PTS trace, copied Swift only. Removing future context or both context sides does not
+recover all contact signs; some settings add WHEN. Allowing HAVE early at .4 loses a later BIG.
+Halving boundary weight adds words including ANGRY/WHEN. Geometry-based upward-only boost of
+already-top HAVE has no improvement over no-early-BIG. A HAVE-specific segment cost of -2
+raises take11 HAVE count 6→8 but leaves omissions; development pair-val rejects it: genuine
+local ANGRY_ANGRY_20 becomes ANGRY HAVE (no-early-BIG/baseline no false HAVE).
+Tuning 89/226 remains identical for baseline, no-early-BIG and HAVE-cost -2 (S6 D17 I11, 15.04%).
+Pair-val comparison uses a corrected one-second held-last-frame tail; the historical helper
+accumulated .05*(k+1) on the previously padded timestamp, causing growing gaps/reset. Thus
+new isolated absolute counts must not be compared directly with the old report's padding.
+Current pair-val 103: baseline/no-early-BIG correct82/exact58/silent18/extra26; cost -2
+correct82/exact57/silent18/extra27, false HAVE1. Citizen regression still running.
+
+Exhaustive short-window diagnostic, not runtime selection: best HAVE probability at six
+contact regions .527/.667/.424/.736/.936/.675. Several strong windows start before the
+boundary-selected onset; the weakest requires earlier approach context. Visual frame sheet
+confirms contact around 7.1s, release ~7.3s, BIG ~7.5s. Next: left-context .2/.3/.4s in
+experimental harness, then stop/reject unless justified by measured improvement. Initial
+oracle Swift build failed on missing LR resource arguments/type inference; fixed and rebuilt.
+Files/results: have_omission_v17_20261010/{round2.json,round3.json,oracle.json,evaluate_cached.py,
+contact_review.jpg,regression_pair_val_tune_citizen_val.json}; source and binaries preserved.
+No production changes, training, install, or protected-test evaluation.
+
+## 2026-10-10 — Matched Swift HAVE ablation: early BIG explains only one omission
+
+New PTS replay using current Swift sources and actual phone settings (FP16 hand encoder,
+recognizer/encoder .all), then identical traced inputs through three decoders:
+baseline 5 HAVE/1 ANGRY; no-early-BIG 6 HAVE/1 ANGRY; no-early-anything same words as
+no-early-BIG. All zero TIRED. The recovered HAVE is at ~11.57 seconds. Native capture
+and traced baseline agree word-for-word. The older rescue narrative/replay is not the
+matched baseline; input timing/encoder settings must stay pinned.
+At ~4.1 seconds, HAVE is selected at frames 94–97 (~.416–.462) but the growing span
+becomes BIG at frame 98, before fixed-lag commitment. Disabling early BIG does not
+prevent this later merge. At ~7 seconds the selected contact candidate peaks at .379,
+below .4. Thus early-BIG suppression alone fails the objective.
+Evidence: have_omission_v17_20261010/{take11_pts.json,ablation.json}, inspect targeted fields.
+Next bounded tests in copied Swift only: remove/reduce future recognition context,
+allow stable HAVE early at existing .4 word gate, and halve boundary-start weight.
+No production edits, retraining, protected test or install.
+
+## 2026-10-10 — HAVE omission experiments authorized; matched replay preparation
+
+User authorized experiments to resolve missing HAVE. New isolated workspace:
+`artifacts/reports/have_omission_v17_20261010/`, with copied current Swift sources,
+source SHA256s, diagnostic harness and linked model resources. Production sources unchanged.
+Found the old harness still uses index/fps for ordinary videos (PTS only with LIVE_TIMES);
+experimental copy always uses video PTS. First test: capture take 11 once, then replay identical
+observations/hand embeddings through baseline, BIG early-disabled, and all early-disabled
+word decoders; share span logits only where scoring config is identical. Record candidate
+scores and selected segments. Compare exact sequences and four omission intervals before
+any broader evaluation. No training, downloads, install or protected-test access.
+Acceptance requires recovery without false HAVE, TIRED/ANGRY regressions or BIG/LANGUAGE
+fragment regressions; validation and tuning are development checks, not new held-out accuracy.
+
+## 2026-10-10 — Follow-up: missing HAVE in I HAVE BIG (read-only diagnosis)
+
+Reviewed current Python runtime, current Swift source in the sibling mobile app, prior failed
+experiments, and saved rescue replays. `harness/out_rescue_more.json` under
+`artifacts/reports/go_split_root_cause_v17_20261009/` has four adjacent I/BIG pairs without HAVE
+in take 135024_11. Their BIG spans start/end at 1.30–2.20, 4.10–5.00, 7.00–7.87 and
+28.40–29.50 seconds; all four are early emissions. HAVE is in `earlyUnsafe`, BIG is not.
+Both runtimes keep an early word's identity when a later segment starts within two frames,
+then advance past the covered frames. This is a plausible contributor, not an ablation-proven
+cause of all omissions. The TIRED rescue only swaps TIRED/HAVE logits and cannot split a BIG span.
+
+Targeted inspection of the existing Python `takes2_spans_have_rescue/20261009_135024_11.pkl`
+cache found best HAVE probabilities in/near those four frame intervals of .332, .468, .308,
+.459 (current word threshold .4); these candidates' letter heads chose not-a-letter.
+Thus low confidence and segment competition both warrant inspection. These are historical
+Python cache inputs, not exact Swift/live-frame parity evidence. Do not transfer their scores
+to the phone or claim that an early-BIG guard alone fixes all four cases.
+
+Evidence reconciliation: saved Swift `out_rescue_more.json` contains 7 HAVE, 0 ANGRY, 0 TIRED
+for take 11, versus 8 HAVE in the preceding narrative. Python `results_have_rescue.json` has
+5 HAVE/2 ANGRY on its older cache; replay inputs must be matched before comparing counts.
+Next safe action: instrument these four intervals with PTS-correct inputs and compare ordinary
+decoding against disabling early BIG; inspect separate contact/exit candidates before testing
+a bounded segmentation change. Preserve real TIRED/ANGRY, BIG/LANGUAGE anti-split behavior,
+and no-HAVE sentences; no blanket confidence reduction or language-based word insertion.
+No model/runtime/default/install changes or protected-test access. Files changed: this log and
+the current-state follow-up in PROJECT_GROUND_TRUTH.md. No new training/evaluation run.
+
 ## 2026-10-10 — HAVE vs TIRED: TIRED requires the downward roll (built, not installed)
 
 Exact-live replay (app trace of session 20261010_100646 → offline decode) reproduced the live output (ANGRY TIRED
