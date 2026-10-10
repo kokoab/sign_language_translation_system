@@ -1,0 +1,157 @@
+Clean-lineage recovery experiment — 2026-10-11
+
+RESULT: completed; no replacement accepted or installed.
+The proposed clean-model recovery improves MY and HAVE on some recordings, but
+does not repair MY reliably and loses other vocabulary. The bounded retraining
+and temporal inference experiment do not clear that failure. Production Python,
+iOS sources, and the installed guarded-rollback app remain unchanged.
+
+What was built and measured
+
+1. Existing older clean-split interval recognizer, with a newly matched corrected
+   A–Z/NONE head and FP16 Core ML export. The frozen base checkpoint is
+   canonical_recognition_comparison_v17_20261007/downstream_recipe/august/
+   span_recognizer/best_model.pth. This is NOT the original leaking LocalA model.
+2. Continuous word decoding through NAME mode. Only letter state restarts; word
+   evidence survives the mode switch. Word/letter caches are separate because
+   their frame-index origins can differ. Delayed merged output sorts by sign
+   start time. Existing one-way HAVE/ANGRY shape and TIRED roll guards remain.
+3. The same runtime with the existing HAVE contact-preservation rule restored.
+4. A class-independent three-view word probability average: normal window,
+   earlier onset, shorter release. Original letter logits retained. No MY/LIKE
+   swap, per-class threshold or additional fallback model is enabled.
+5. Six-epoch frozen-encoder fusion-head continuation, then its own matched
+   corrected letter head/export. Both visual encoders are tensor-identical to
+   the clean base; all14fusion-head tensors changed. Epoch1 selected.
+
+Five completed arms ×17 native video cases =85 phase replays:
+
+Arm                         Sept30 exact   First MY       HAVE in take11
+Clean model/current runtime      8/8          6/8               7
++ continuous word state          8/8          6/8               7
++ HAVE contact preservation      8/8          6/8              11
++ temporal window averaging      8/8          6/8              11
+Retrained head + continuous/
+contact runtime                  8/8          6/8              11
+
+The two first-MY failures remain LIKE (sampling phases3 and5). All arms preserve
+HELLO MY FRIEND I FEEL EXCITED in the actual September30 video at all8phases.
+The previous controlled investigation's installed-model first-MY result was0/8;
+that comparator is reused, not a newly run phone test. HAVE numbers are emitted
+word counts, not an accuracy denominator. No ANGRY/TIRED in these take11 outputs.
+The contact arm still contains an extra I; averaging removes that extra I on
+this recording but retains the first-MY failures. This is not an all-sentence fix.
+
+At the9.2s contact, clean/current runtime emitsLIKE5/8 and silence3/8. Continuous
+state emitsLIKE8/8. Averaging emitsMY2/8 andLIKE6/8; retraining emitsLIKE8/8.
+The user deliberately mixed MY and LIKE in the recording and does not remember
+the switch point. These later-contact outputs are diagnostics, not a scored
+transcript or training labels. FirstMY is the previously inspected target.
+
+Broader retention:570 completed cached native trace cases with identical inputs,
+compared with saved installed guarded-rollback results. Pools overlap; these are
+not570independent clips. This comparison uses clean model/current runtime, not
+the adapted/contact/averaging arms, which already fail the phase gate.
+
+Pool                    Installed       Clean replacement
+Citizen exact output       302/378           282/378
+Citizen word errors         84/378           104/378
+Citizen silence                23                27
+Pair exact output           58/103            61/103
+Phrase tune exact           66/89             65/89
+Phrase tune WER             29/226            29/226 (12.83% both)
+
+All100Citizen classes represented.15classes improve,30regress,55tie in exact
+output counts. Examples:HOME4→1, HEAR4→2, SIGN3→1. Each class has few validation
+clips; these are observed changes, not precise population estimates. Per-class
+counts:validation_control_perclass.json. This is why the older model was not
+installed despite its MY improvement. Whole-clip classifier accuracy alone is
+misleading here: both new exports score362/378 and agree with PyTorch on all378
+predictions, while streaming exact outputs are substantially lower.
+
+Retraining result and supervision limits
+
+Approved179videos supply3370native spans across only13classes. MY has224spans
+from24videos; HAVE andLIKE have zero native phrase spans. Isolated training
+replay still contains these classes. This does not mean the project has no other
+usable data: the reconciled ASLLRP/O5S5/STEM inventory remains available subject
+to reviewed source/identity/schema/role contracts.
+
+Six-epoch continuation: training-selector WER68→67errors/226 (30.09→29.65%).
+Citizen95.767% unchanged; SemLex89.059% unchanged; local96.344→96.306%.
+Its62overlapping first-MY diagnostic windows remain30MY winners, same as the
+unadapted clean model. Window counts are not independent accuracy. Selected
+epoch1 does not change the phase-sweep outcome. Declared selection floors were
+94.77/88.0/95.5; these were experiment-selection floors, not deployment gates.
+The training selector and native streaming runtime use different decoder
+configurations, so30% and12.83% WER must not be compared as before/after repair.
+
+Both matching letter heads select threshold0.7, epoch14.26-way letter accuracy
+83.95%; thresholded recall78.76% clean /78.91% adapted on existing validation.
+These are classifier-head checks, not full fingerspelled-name accuracy. Each
+Core ML package is25.506MB. No new on-device latency/thermal claim is made.
+
+Other completed diagnostics
+
+Auxiliary body/face sampling every1or4frames does not cure the error. Every-frame
+sampling still emitsLIKE at9.2s under both previously captured phone schedules.
+The adapted normal-cadence candidate also emitsLIKE there under both schedules.
+These are Mac replays of actual phone-selected timestamps, not new loaded-phone
+measurements. Auxiliary experiments retain the initial prototype's ordering
+bug; only their classification/cadence findings are used, not ordering claims.
+
+Full-mode trace prototype verified on321frames each in automatic word/NAME,
+manual always-letter, and explicitly forced spelling modes. Every processed
+frame has its hand embedding. Automatic NAME has159word/162NAME rows, all4mode
+events, and monotonic word evidence count. A focused Swift assertion checks
+chronological merging when identity-lock times conflict with sign order.
+Forcing spelling tests branch coverage, not trigger accuracy. No production
+trace change has been installed. Initial continuous prototype wrongly sorted
+merged outputs by commit time; failed results are preserved as *_v1_ordering_failure.
+Final phase runs and trace checks use the corrected start-time comparator.
+
+Interpretation and next repair
+
+The model lineage change is a real contributor, and the temporal runtime is a
+separate contributor. The controlled results do not establish which one October
+training change caused all representation drift. Restoring the older clean
+lineage is insufficient; merely retaining word state, increasing auxiliary
+cadence, averaging windows or continuing the same head recipe is insufficient.
+
+The next training experiment needs a reviewed input contract that actually
+covers the missing continuous behavior: verified short MY/LIKE cores, HAVE
+contact followed by BIG, release motion, and native sampling-phase variants.
+Start from the reconciled existing-source inventory, preserve original gloss
+variant identities and split exclusions, and treat all derived windows of a
+video as one source. Do not label the mixed phone recording from its model
+predictions or call a repeatedly tuned phone recording an independent test.
+Pin a separate untouched phone evaluation session before candidate selection.
+
+Use the current vocabulary behavior as a retention target; compare against the
+older clean model rather than replacing the whole model blindly. Test a small
+matched adaptation only after the reviewed spans/input recipe exists, with
+per-class retention, complete phrase outputs, every sampling phase, genuineLIKE
+controls and normal loaded-phone performance as promotion gates. Reuse the
+continuous-state/trace changes as separately evaluated runtime components.
+The existing one-way geometry/roll guard remains a useful cue; the earlier
+direct MY geometry sweeps already harmed trueLIKE and are not revived here.
+This is a concrete next experiment, not a claim that an untested recipe will fix it.
+
+Safety and reproduction
+
+Canonical494-archive verifier passed before training; its training_ready flag
+remains false. Only the recipe-scoped179train admission was used for phrase
+training. Existing A–Z splits/corrections and isolated replay are pinned in the
+letter/adaptation recipes. Protected test metadata used only to exclude shared
+training videos; no protected test features, inference or checkpoint selection.
+New checkpoints record canonical/scoped recipe hashes. No data deleted, source
+model overwritten, Git reset, phone installation or production code mutation.
+
+Main scripts:build_candidate.py,prepare_runtime.py,run_replays.py,
+launch_adaptation.py,finalize_adaptation.py,run_adapted.py,
+test_temporal_consensus.py,test_auxiliary.py,prepare_tracing.py,
+test_trace_modes.py,measure.py,verify_results.py.
+Exact commands/inputs in adaptation_recipe.json and letter_recipe.json;
+source hashes in source_manifest.json. Verification passes:verification.json.
+Measured machine-readable results:measured_results.json. No training remains
+pending. Model and runtime candidates are report-local and rejected for deployment.

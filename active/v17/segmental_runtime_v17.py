@@ -21,6 +21,171 @@ UNK, O, B, I = 0, 1, 2, 3
 CONFIG = ROOT / 'artifacts/reports/segmental_decoder_v17_20260927/stream_config_v3_final.json'
 
 
+def fingertip_droop(raw):
+    """How far the fingertips drop relative to the wrist during a span (per hand, in hand sizes; mean over
+    visible hands). TIRED rolls the bent hands down on the chest (median 1.9); HAVE only touches (median 0.8)."""
+    raw = np.asarray(raw, np.float32)
+    out = []
+    for st in (0, 21):
+        frames = [f for f in raw if (f[st:st + 21, 4] >= .3).sum() >= 15]
+        if len(frames) < 3:
+            continue
+        size = np.median([np.linalg.norm(f[st + 9, :2] - f[st, :2]) for f in frames]) + 1e-6
+        tip = np.array([f[[st + 8, st + 12, st + 16], 1].mean() - f[st, 1] for f in frames]) / size
+        out.append(tip.max() - tip.min())
+    return float(np.mean(out)) if out else None
+
+
+def have_contact_core(raw, start):
+    """New visual evidence, not a held frame or both hands continuing down from TIRED."""
+    core = raw[start:]
+    if len(core) < 2 or np.max(np.abs(np.diff(core[:, :42, :2], axis=0))) < 1e-6:
+        return False
+    rises = []
+    for st in (0, 21):
+        before, after = raw[:start + 1], core
+        before = before[(before[:, st, 4] >= .3) & (before[:, st + 9, 4] >= .3)]
+        after = after[(after[:, st, 4] >= .3) & (after[:, st + 9, 4] >= .3)]
+        if len(before) < 2 or len(after) < 2:
+            continue
+        size = np.median(np.linalg.norm(after[:, st + 9, :2] - after[:, st, :2], axis=1))
+        if size < 1e-3:
+            continue
+        rises.append((np.median(before[:3, st, 1]) - np.median(after[-3:, st, 1])) / size)
+    return not (len(rises) == 2 and max(rises) < -.5)
+
+
+def tired_rescue(word_logits, labels, raw, threshold, merge=False):
+    """Rescue low-roll TIRED into HAVE; optionally combine their evidence for a new contact."""
+    t, h = labels.index('TIRED'), labels.index('HAVE')
+    order = np.argsort(word_logits)[::-1]
+    if order[0] != t or h not in order[:3]:
+        return word_logits
+    d = fingertip_droop(raw)
+    if d is None or d >= threshold:
+        return word_logits
+    out = np.array(word_logits, copy=True)
+    if merge:
+        # Movement has ruled TIRED out: keep the evidence for the remaining HAVE hypothesis.
+        out[h] = np.logaddexp(word_logits[h], word_logits[t])
+        out[t] = -1e9
+    else:
+        out[t], out[h] = word_logits[h], word_logits[t]
+    return out
+
+
+class CropPair:
+    """HAVE vs ANGRY from the hand-crop embeddings the recognizer already receives (fingers together vs spread
+    claw is visible in the crops; Apple Vision fingertips are not reliable with the palm on the chest).
+    Logistic regression on mean left+right and union-view embeddings (artifacts/models/crop_have_angry_v17);
+    when the pair is in the recognizer's top 2, their combined probability is re-shared by it."""
+
+    def __init__(self, path):
+        m = json.loads(Path(path).read_text())
+        self.pair, self.positive = m['pair'], m['positive']
+        self.mean, self.scale = np.asarray(m['mean']), np.asarray(m['scale'])
+        self.coef, self.intercept = np.asarray(m['coef']), float(m['intercept'])
+
+    def score(self, hand_embeddings, hand_valid):
+        he = np.asarray(hand_embeddings, np.float32)
+        hv = np.asarray(hand_valid, np.float32)[..., None]
+        if hv.sum() == 0:
+            return None
+        hands = (he[:, :2] * hv[:, :2]).sum((0, 1)) / max(hv[:, :2].sum(), 1)
+        union = (he[:, 2] * hv[:, 2]).sum(0) / max(hv[:, 2].sum(), 1)
+        z = (np.concatenate([hands, union]) - self.mean) / self.scale @ self.coef + self.intercept
+        return float(1 / (1 + np.exp(-z)))
+
+    def reshare(self, word_logits, labels, g, rescue_only=False):
+        lp = log_softmax(word_logits)
+        i, j = labels.index(self.pair[0]), labels.index(self.pair[1])
+        if g is None or not ({i, j} & set(np.argsort(lp)[-2:].tolist())):
+            return word_logits
+        pos, neg = (i, j) if self.positive == self.pair[0] else (j, i)
+        # rescue_only: only move a top-1 negative (ANGRY) towards the positive (HAVE) when the cues say so;
+        # never demote a positive the recognizer already chose (2026-10-10, user HAVE with low cue scores).
+        if rescue_only and (int(np.argmax(lp)) != neg or g < .5):
+            return word_logits
+        p = np.exp(lp)
+        mass = p[i] + p[j]
+        p[pos], p[neg] = mass * g, mass * (1 - g)
+        return np.log(np.clip(p, 1e-12, 1)).astype(np.float32)
+
+    def refine(self, word_logits, labels, hand_embeddings, hand_valid):
+        lp = log_softmax(word_logits)
+        i, j = labels.index(self.pair[0]), labels.index(self.pair[1])
+        if not ({i, j} & set(np.argsort(lp)[-2:].tolist())):
+            return word_logits
+        g = self.score(hand_embeddings, hand_valid)
+        if g is None:
+            return word_logits
+        p = np.exp(lp)
+        mass = p[i] + p[j]
+        pos, neg = (i, j) if self.positive == self.pair[0] else (j, i)
+        p[pos], p[neg] = mass * g, mass * (1 - g)
+        return np.log(np.clip(p, 1e-12, 1)).astype(np.float32)
+
+
+class HandshapePair:
+    """Two signs that share place and movement but differ in handshape (HAVE: bent fingers together;
+    ANGRY: spread claw). Logistic regression on canonicalised hand landmarks (artifacts/models/
+    handshape_have_angry_v17); a span's score is the mean P(positive) of its 3 most positive hand frames
+    (the contact moment), and the pair's combined probability is re-shared by it."""
+
+    def __init__(self, path):
+        m = json.loads(Path(path).read_text())
+        self.pair, self.positive = m['pair'], m['positive']
+        self.mean, self.scale = np.asarray(m['mean']), np.asarray(m['scale'])
+        self.coef, self.intercept = np.asarray(m['coef']), float(m['intercept'])
+
+    @staticmethod
+    def canon(hand, left):
+        xy = hand[:, :2].astype(np.float64) - hand[0, :2]
+        v = xy[9]
+        size = np.linalg.norm(v)
+        if size < 1e-3:
+            return None
+        a = np.arctan2(v[0], -v[1])
+        rot = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
+        xy = (xy @ rot.T) / size
+        if left:
+            xy[:, 0] *= -1
+        return xy[1:].ravel()
+
+    def score(self, raw):
+        """P(positive) for a span from per-frame landmarks [n, 61, 5] (raw observation features, or the
+        recognizer's 32-frame v17 landmark input: the canonical hand is similarity-invariant), or None."""
+        feats = []
+        for f in raw:
+            for start, left in ((0, True), (21, False)):
+                hand = f[start:start + 21]
+                if hand[:, 4].min() < .3 or hand[:, 3].min() < .5:
+                    continue
+                c = self.canon(hand, left)
+                if c is not None:
+                    feats.append(c)
+        if len(feats) < 2:
+            return None
+        z = (np.asarray(feats) - self.mean) / self.scale @ self.coef + self.intercept
+        p = 1 / (1 + np.exp(-z))
+        return float(np.sort(p)[-3:].mean())
+
+    def refine(self, word_logits, labels, raw):
+        lp = log_softmax(word_logits)
+        i, j = labels.index(self.pair[0]), labels.index(self.pair[1])
+        top2 = set(np.argsort(lp)[-2:].tolist())
+        if not ({i, j} & top2):
+            return word_logits
+        g = self.score(raw)
+        if g is None:
+            return word_logits
+        p = np.exp(lp)
+        mass = p[i] + p[j]
+        pos, neg = (i, j) if self.positive == self.pair[0] else (j, i)
+        p[pos], p[neg] = mass * g, mass * (1 - g)
+        return np.log(np.clip(p, 1e-12, 1)).astype(np.float32)
+
+
 def log_softmax(x):
     x = np.asarray(x, np.float64)
     m = x.max()
@@ -128,7 +293,9 @@ def segmental_decode(bio, memo, spans, labels, cfg):
     not emitted (unknown/OOV signing), which keeps them from being forced into a vocabulary word.
     """
     p = np.exp(bio)
-    act = np.log(np.clip(p[:, B] + p[:, I], 1e-6, 1))
+    # decoder.inner_floor: floor on P(B|I) inside a sign segment, so a short rest-like dip within one
+    # sign (a fast internal movement) does not force the decoder to split the sign. None: off.
+    act = np.log(np.clip(p[:, B] + p[:, I], cfg.get('inner_floor') or 1e-6, 1))
     rest = np.log(np.clip(p[:, O] + p[:, UNK], 1e-6, 1))
     logb = np.log(np.clip(p[:, B], 1e-6, 1))
     cact = np.concatenate([[0], np.cumsum(act)])
@@ -203,8 +370,9 @@ def dense_spans(bio, step=2, min_len=3, max_len=20, active=.3, max_inner_o=3):
     return spans
 
 
-def both_spans(bio):
-    return sorted(set(candidate_spans(bio)) | set(dense_spans(bio)))
+def both_spans(bio, min_len=3, max_inner_o=3):
+    return sorted(set(candidate_spans(bio, min_len=min_len, max_inner_o=max_inner_o)) |
+                  set(dense_spans(bio, min_len=min_len, max_inner_o=max_inner_o)))
 
 
 # ----------------------------------------------------------------------------- live runtime
@@ -384,7 +552,7 @@ class SpanRecognizer:
 class SegmentalRuntime:
     """Frame-in, words-out. Indices are absolute observation numbers since the last reset."""
 
-    def __init__(self, boundary, recognizer, config=None, mode='auto'):
+    def __init__(self, boundary, recognizer, config=None, mode='auto', letter_gate=None):
         from active.v17.av_boundary_v17 import AVBoundaryStream
         self.config = json.loads(Path(config or CONFIG).read_text()) if not isinstance(config, dict) else config
         dec = dict(self.config['decoder'])
@@ -395,6 +563,7 @@ class SegmentalRuntime:
         dec.pop('span_mode', None)
         self.cfg = dict(dec, alpha=1.0)
         stream = self.config['stream']
+        self.have_contact_closure = mode != 'letters' and bool(stream.get('have_contact_closure', False))
         self.lag = int(stream['lag'])
         self.context = int(stream.get('context_frames', 2))
         self.early_k, self.early_q = int(stream['early_k']), float(stream['early_q'])
@@ -409,6 +578,9 @@ class SegmentalRuntime:
         self.letters = self.mode in ('both', 'letters')
         self.labels = list(recognizer.labels) + ([c for c in recognizer.letter_classes[:-1]] if self.letters else [])
         self.letter_gap = int(stream.get('letter_duplicate_gap', 2))
+        # Word mode with hidden letters (mode 'both'): letters may only compete for a span when the
+        # recognizer's top word probability is below this gate (None: always compete, the old sink).
+        self.letter_gate = letter_gate
         self.timing = None      # set to {} to collect per-stage wall-clock seconds
         self.raw_cache = None   # optional dict shared with a second decoder: span -> raw logits
         self.reset()
@@ -448,8 +620,15 @@ class SegmentalRuntime:
         shared = self.raw_cache if self.raw_cache is not None else {}
         cached = [(k, shared[k]) for k in spans if k in shared]
         spans = [k for k in spans if k not in shared]
+        # stream.score_trim_end / score_trim_start: the recognizer judges the span without its last / first
+        # share of frames, where the transition into the next sign (or out of the previous) sits; the
+        # segment still covers the whole span. 0 (default): whole span.
+        trim_end = float(self.config['stream'].get('score_trim_end', 0))
+        trim_start = float(self.config['stream'].get('score_trim_start', 0))
         for s, e in spans:
-            ids = self._span_obs(s, e)
+            n = e - s + 1
+            a, b = s + int(round(trim_start * n)), e - int(round(trim_end * n))
+            ids = self._span_obs(a, b) if b - a + 1 >= 3 else self._span_obs(s, e)
             if len(ids) < 4:
                 self.scores[(s, e)] = None
                 shared[(s, e)] = None
@@ -469,6 +648,43 @@ class SegmentalRuntime:
             # Fist letters (A E M N S T): head x hand geometry, once per span for both decoders.
             weight = float(self.config['stream'].get('fist_head_weight', 0.25))
             logits = [np.concatenate([l[:words], fist.refine(l[words:], x[0], weight)]) for x, l in zip(batch, logits)]
+        crop = self._crop_pair()
+        pair = self._handshape_pair()
+        if crop is not None and pair is not None and len(logits):
+            # Both cues: re-share HAVE/ANGRY by the weaker (min) of the crop and landmark-shape scores.
+            from active.v17.stage1_window_v17 import raw_observation_features
+            labels_w = list(self.recognizer.labels)
+            refined = []
+            for k, x, l in zip(keys, batch, logits):
+                # Hand-crop embeddings of the recognizer input + per-frame raw landmarks of the span
+                # (LiveFeatures.raw on the phone). The 32-frame v17 input lost 2/3 Citizen val ANGRY.
+                raw, _ = raw_observation_features([self.obs[i] for i in self._span_obs(*k)])
+                g1, g2 = crop.score(x[1], x[2]), pair.score(raw)
+                g = None if g1 is None or g2 is None else min(g1, g2)
+                refined.append(np.concatenate([crop.reshare(l[:words], labels_w, g,
+                                                            bool(self.config['stream'].get('pair_rescue_only', False))),
+                                               l[words:]]))
+            logits = refined
+            crop = pair = None
+        if crop is not None and len(logits):
+            labels_w = list(self.recognizer.labels)
+            logits = [np.concatenate([crop.refine(l[:words], labels_w, x[1], x[2]), l[words:]]) for x, l in zip(batch, logits)]
+        if pair is not None and len(logits):
+            from active.v17.stage1_window_v17 import raw_observation_features
+            refined = []
+            for k, l in zip(keys, logits):
+                raw, _ = raw_observation_features([self.obs[i] for i in self._span_obs(*k)])
+                refined.append(np.concatenate([pair.refine(l[:words], list(self.recognizer.labels), raw), l[words:]]))
+            logits = refined
+        rescue = self.config['stream'].get('tired_rescue_droop')
+        if rescue and len(logits) and 'TIRED' in self.recognizer.labels:
+            from active.v17.stage1_window_v17 import raw_observation_features
+            labels_w = list(self.recognizer.labels)
+            logits = [np.concatenate([tired_rescue(l[:words], labels_w,
+                                                   raw_observation_features([self.obs[i] for i in self._span_obs(*k)])[0],
+                                                   float(rescue), self.have_contact_closure
+                                                   and int(np.argmax(l[:words])) == labels_w.index("TIRED")
+                                                   and self._have_contact_core(*k)), l[words:]]) for k, l in zip(keys, logits)]
         for k, l in zip(keys, logits):
             shared[k] = l
         for k, l in cached:
@@ -496,11 +712,30 @@ class SegmentalRuntime:
             # One distribution over words and letters: P(word) = P(not a letter) * q(word).
             word_lp = log_softmax(l[:words])
             p = np.exp(log_softmax(l[words:]))
-            if p[:-1].max() >= self.recognizer.letter_threshold:
+            confident_word = self.letter_gate is not None and float(np.exp(word_lp.max())) >= self.letter_gate
+            if p[:-1].max() >= self.recognizer.letter_threshold and not confident_word:
                 combined = np.concatenate([word_lp + np.log(max(p[-1], 1e-9)), np.log(np.clip(p[:-1], 1e-9, 1))])
             else:
                 combined = np.concatenate([word_lp, np.full(len(p) - 1, -1e9)])
             self.scores[k] = dict(v_raw=combined.astype(np.float32))
+
+    def _crop_pair(self):
+        """stream.crop_pair: path of a CropPair model (HAVE vs ANGRY from hand crops); None: off."""
+        path = self.config['stream'].get('crop_pair')
+        if not path:
+            return None
+        if getattr(self, '_crop', None) is None:
+            self._crop = CropPair(ROOT / path)
+        return self._crop
+
+    def _handshape_pair(self):
+        """stream.handshape_pair: path of a HandshapePair model (HAVE vs ANGRY); None: off."""
+        path = self.config['stream'].get('handshape_pair')
+        if not path:
+            return None
+        if getattr(self, '_pair', None) is None:
+            self._pair = HandshapePair(ROOT / path)
+        return self._pair
 
     def _fist_geometry(self):
         """The fist-letter geometry model when letters are decoded and stream.fist_geometry is on."""
@@ -558,6 +793,53 @@ class SegmentalRuntime:
             self.bio_off = keep
         self.scores = {k: v for k, v in self.scores.items() if k[0] >= self.origin}
 
+    def _have_contact_core(self, s, e):
+        from active.v17.stage1_window_v17 import raw_observation_features
+        begin = max(self.off, s - 6)
+        raw, _ = raw_observation_features(self.obs[begin - self.off:e - self.off + 1])
+        return have_contact_core(raw, s - begin)
+
+    def _close_have_contacts(self, spans, known):
+        """Preserve an accepted contact core until its transition; BIG cannot cover both signs.
+
+        An open earlier word still owns its ending. Require new contact evidence, and
+        carry its score only to the first two-frame transition within the 30-frame span limit.
+        """
+        h = self.labels.index('HAVE')
+        rest = np.exp(np.asarray(self.bio))[:, [O, UNK, B]].sum(1)
+        closures = []
+        for (s, e), record in sorted(self.scores.items()):
+            if any(a <= e and w['gloss'] != 'HAVE' and not w.get('closed', False)
+                   for a, w in self.shown_early):
+                continue
+            if record is None or s < self.origin or e > known:
+                continue
+            row = record['v_raw']
+            if int(np.argmax(row)) != h or log_softmax(row)[h] < self.cfg['log_theta']:
+                continue
+            if not self._have_contact_core(s, e):
+                continue
+            limit = min(known - 1, s + 29)
+            gaps = [g for g in range(e + 1, limit + 1)
+                    if rest[g - self.bio_off] >= .5 and rest[g + 1 - self.bio_off] >= .5]
+            if not gaps:
+                continue
+            gap = gaps[0]
+            if any(rest[g - self.bio_off] >= .5 and rest[g + 1 - self.bio_off] >= .5
+                   for g in range(s, gap - 1)):
+                continue
+            closures.append(((s, gap - 1), record))
+        for (s, e), record in closures:
+            spans = [(a, b) for a, b in spans if not (
+                a <= e and b >= s and (b > e or self.scores.get((a, b)) is None
+                                      or int(np.argmax(self.scores[a, b]['v_raw'])) != h))]
+            old = self.scores.get((s, e))
+            if old is not None and log_softmax(old['v_raw'])[h] > log_softmax(record['v_raw'])[h]:
+                continue
+            self.scores[s, e] = record
+            spans.append((s, e))
+        return sorted(set(spans))
+
     def _step(self, final):
         T = self.count - 1
         known = self.bio_off + len(self.bio) - 1
@@ -565,11 +847,21 @@ class SegmentalRuntime:
             return []
         origin = self.origin
         sub = np.asarray(self.bio[origin - self.bio_off:known + 1 - self.bio_off])
-        spans = [(s + origin, e + origin) for s, e in both_spans(sub)
+        spans = [(s + origin, e + origin) for s, e in both_spans(sub, int(self.config['stream'].get('min_span_frames', 3)),
+                                                               int(self.config['stream'].get('max_inner_o', 3)))
                  if final or e + origin + self.context <= T]
+        if self.have_contact_closure:
+            h = self.labels.index('HAVE')
+            retained = {k for k, r in self.scores.items()
+                        if k[0] >= origin and k[1] <= known and r is not None
+                        and int(np.argmax(r['v_raw'])) == h
+                        and log_softmax(r['v_raw'])[h] >= self.cfg['log_theta']}
+            spans = sorted(set(spans) | retained)
         missing = [sp for sp in spans if sp not in self.scores]
         if missing:
             self._score(missing)
+        if self.have_contact_closure:
+            spans = self._close_have_contacts(spans, known)
         local = {(s - origin, e - origin): self.scores.get((s, e)) for s, e in spans}
         segs = segmental_decode(sub, local, list(local), self.labels, dict(self.cfg, merge_duplicates=False))
         horizon = known - self.lag if not final else known
@@ -592,7 +884,12 @@ class SegmentalRuntime:
         gap = self.cfg.get('duplicate_gap', 2)
         if self.early_k and not final:
             nxt = {}
-            for g in segs:
+            for index, g in enumerate(segs):
+                # Early identity must not publish a later word ahead of an unresolved earlier sign.
+                if any((p['gloss'] is not None or p['end'] + origin > horizon)
+                       and not any(abs(p['start'] + origin - a) <= 2 for a, _ in self.shown_early)
+                       for p in segs[:index]):
+                    continue
                 if g['end'] + origin <= horizon or not g['gloss']:
                     continue
                 st = g['start'] + origin

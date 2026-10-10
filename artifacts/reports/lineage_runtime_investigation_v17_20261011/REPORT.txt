@@ -1,0 +1,160 @@
+MY / HAVE: model-lineage and runtime investigation — 2026-10-11
+
+Outcome
+-------
+The October replacements introduced a reproducible loss of tolerance for short MY-to-NAME
+windows. They also worsen HAVE on the reviewed sentence recording with the historical
+runtime held fixed. Decoder changes contribute separately. Neither the old model, old
+runtime, disabling NAME mode, nor unifying word-mode settings is a complete repair.
+The original successful September 30 recording still works in every tested combination.
+This is a transition/window-sensitive regression, not loss of all MY recognition.
+No production source, dataset, model package or installed app was changed.
+
+New experiments and controls
+----------------------------
+68 native Mac video replays = 4 model/runtime combinations x 17 inputs:
+* Actual September30_152243_04 recording, eight auxiliary-detection phases each.
+  Phone log reference: HELLO MY FRIEND I FEEL EXCITED.
+* First 16 seconds of October11 take03, the same eight phases each.
+* Full October9 take11 HAVE recording, phase0 once per combination.
+16 further take03 replays: NAME automatic entry disabled, or identical word configuration
+and letter gate in ordinary and NAME modes, eight phases per intervention.
+
+Same FP16 crop encoder, model compute setting (.all), source presentation timestamps,
+20Hz selection and observation implementation across matrix arms. Phase0..7 changes when
+body/face detection occurs, keeping hand cadence fixed. Each case explicitly sets phase
+after reset. Finish detection is disabled in every arm to isolate recognition/modes.
+No changes to model weights. Concurrent experiments mean timing is NOT a latency benchmark.
+
+Historical runtime means saved pre-October8-letter-gate decoder plus saved pre-October8-
+finish-change engine. This is a historical word/NAME runtime reconstruction, NOT a verified
+complete September30 binary. Shared current observation/model-loading code supplies the
+same inputs; an old finish-call signature is adapted, with Finish disabled. Current runtime
+is the installed October11 guarded HAVE rollback. Old model = LocalA; new = FragmentReject.
+Letter thresholds remain0.5 in these two endpoint packages. No claim of original phone-frame
+identity: videos are decoded and Vision/crops regenerated. These are controlled Mac replays,
+not new physical-phone or live-camera measurements. Phases are repeated conditions on the
+same videos, not independent clips or new accuracy estimates.
+
+Measured matrix
+---------------
+Runtime       Model       Sept30 whole sentence   First Oct11 MY   HAVE/ANGRY/TIRED
+                          exact /8 phases         present /8       take11 counts
+historical    LocalA      8/8                     6/8              10 /1 /0
+historical    current     8/8                     0/8               4 /5 /1
+current       LocalA      8/8                     6/8               7 /0 /0
+current       current     8/8                     0/8               5 /1 /0
+
+First-MY region is start_seconds[2.7,3.15); raw word sequences, endpoints and mode events
+are preserved in each result. Historical/LocalA's other phases yield LIKE or a merged NAME;
+current/LocalA yields LIKE or no MY. HAVE counts describe outputs on a repeated-sign recording,
+not independently scored recall. The current runtime's lower wrong-word count sometimes
+comes with omissions. No combination fixes every reviewed MY or HAVE occurrence.
+
+NAME interventions (current model)
+----------------------------------
+Disabling NAME entry: firstMY0/8; contact near9.2s LIKE8/8, MY0/8.
+Uniform word config/gate while retaining NAME switches: firstMY0/8; contact near9.2s
+MY1/8 andLIKE5/8, with other phases silent in the counted region. Baseline current/current
+is also MY1/8 andLIKE5/8 there. These reject the claims that removing the spelling switch
+or merely making its settings equal cures the model. They do not test a redesigned
+continuous word state across mode changes. Mode resets still exist in the uniform arm.
+
+Lineage and window evidence
+---------------------------
+Fresh FP32 checkpoint evaluation on the four existing native-prepared diagnostic inputs:
+completed first-MY window (frames56–61,100ms context):
+LocalA             MY0.787 /LIKE0.064
+old clean-split    MY0.693 /LIKE0.066
+new pre-filter     MY0.032 /LIKE0.861
+October8 v1        MY0.049 /LIKE0.824
+V2                 MY0.034 /LIKE0.851
+Fragment           MY0.022 /LIKE0.860
+FragmentReject     MY0.014 /LIKE0.863
+
+New native input export + four checkpoint evaluations over the same62 overlapping windows:
+MY wins LocalA35, old clean-split30, new pre-filter12, current6.
+This is window sensitivity on one occurrence, NOT62 independent MY examples. Windows also
+contain varying amounts of neighboring movement. It supports better tolerance in the older
+lineage, not perfect old-model accuracy. Old clean-split preserves the first-MY behavior
+without restoring the original overlapping phrase split. It is not a validated drop-in
+phone package: matched letter-head/export/full-engine and physical-phone checks are pending.
+
+Old fusion and old clean phrase-stage outputs also initially prefer LIKE on the problematic
+window; the old clean interval recognizer recovers MY. Thus final interval adaptation matters,
+and simply choosing a base/fusion checkpoint is not the repair. All259 landmark,108 hand and14
+fusion-head tensors differ between old final and old clean final checkpoints; do not claim
+these are identical encoders with just one classifier swapped. The new pre-filter branch
+already fails: variant exclusions are not necessary for this failure. Exact causal contribution
+of parent initialization, augmentation and learning dynamics remains unresolved; no matched
+training ablation was performed and no individual source example is blamed.
+
+Whole-vocabulary retention (reanalysis, no rerun)
+------------------------------------------------
+Existing3959 isolated validation predictions across100classes: current vsLocalA has higher
+correct counts in34classes, lower in19, equal in47. MY remains30/31,LIKE45/48,HAVE7/8 in all
+three old/current/old-clean comparisons. These whole-sign checks missed the transition issue.
+Examples of current losses:GOOD32->29,YOU36->34,HEAR9->7,ANGRY28->26.
+Examples of gains:I36->40,WHERE39->42,STOP39->45.
+This pool uses filtered local validation and familiar local signers; no independent-test claim.
+A total-score promotion criterion can hide class-specific and temporal regressions.
+
+Data and deployment findings carried forward
+--------------------------------------------
+October8 replaced both lineage and training inputs:1425localtrain/293val exclusions, a new
+96.83-parent chain, and the corrected phrase split282videos/6254spans->179/3370. V2 restored
+ASK and added37reviewed webclips. MY/LIKE/HAVE manifest rows are identical before/v1/v2;
+HAVE had no local isolated training examples even before the regression. Actual manifests
+and histories are pinned in ../my_like_regression_v17_20261011/model_replacement_audit/.
+The original phrase lineage overlaps evaluation clips; do not reintroduce those as new
+training data or call its historical tune/test numbers independent evaluation.
+Some class-wide exclusions were too broad (ASK; reviewed SIGN/CHILD examples in unshipped
+experiments). Corrections should be per reviewed clip/variant, not wholesale restoration.
+The complete dataset inventory was read:179phrase videos is one recipe view, not all usable
+supervision. Existing interval sources have separate identity/schema/role gates.
+
+Proposed repair, with separate acceptance gates
+---------------------------------------------
+1. Freeze this replay pack and add true LIKE plus ANGRY/TIRED and BIG/LANGUAGE controls,
+   preserving reviewed intent. First repair observability: capture all modes, resets,
+   auxiliary sampling and actual processed timestamps. Diagnostic recordings used for
+   selection remain development data. Keep a separate subsequent phone confirmation set.
+2. Use the existing old clean-split interval recognizer as the first recovery candidate;
+   prepare its matched letter head/export and compare it with the current model in the
+   same full runtime. Passing one span or a whole-clip score is not permission to deploy.
+3. Target temporal recognition: bounded adaptation on reviewed real sign cores with genuine
+   neighboring transitions, realistic short durations and auxiliary sampling-phase variation.
+   Retain correctly labeled full-sign/LIKE controls and full100-class replay. Correct variant
+   exclusions per clip. Pin the recipe/inputs/split hashes before any training; do not bypass
+   canonical training_ready=false or treat the scope-limited recipe as blanket permission.
+   Do not label arbitrary fragments as full signs or infer intent from the model's outputs.
+4. Repair decoder state separately: stable word-state semantics through NAME mode and a
+   general tested policy for retaining valid short-sign evidence as the following sign starts.
+   Preserve chronological publication/endpoints; include HELP duplicate and NAME-order tests.
+   Shape/roll cues may remain bounded checks, but the previously failed MY relabel heuristics
+   and timer/threshold-only changes are not the proposed repair.
+5. Promotion requires MY FRIEND/MY NAME/I HAVE BIG plus genuine LIKE/ANGRY/TIRED and
+   BIG/LANGUAGE controls to survive repeated phase/timestamp schedules, with acceptable
+   per-class full-vocabulary retention, then normal loaded-app tests on the physical phone.
+   Evaluate model-only and decoder-only changes separately before combining them. Record
+   every substitution AND omission; fewer wrong words achieved by silence is not success.
+
+This is an investigation and proposed repair, not a claim that all signs are now fixed.
+No existing tested configuration meets the complete gate. The model repair and temporal
+state repair need independent evidence; neither training alone nor rollback alone is proven.
+
+Reproduction and verification
+-----------------------------
+prepare.py -> isolated Swift sources and two probes (no app-tree edits).
+run_matrix.py -> four17-case native results.
+run_mode_ablation.py -> two8-case diagnostic results.
+analyze_lineages.py -> checkpoint scores, tensor comparison and reused retention analysis.
+window_probe.py -> native-prepared binary tensors and four62-window checkpoint scores.
+summarize.py -> completeness checks, source hashes unchanged, summary.json.
+Initial historical compile failed on old finish-call signature; compatibility adapter added
+in report copies only, then both probes built successfully. No failed run is counted.
+All84replays and4x62window results complete; source hash verification passes.
+
+Final checks: six experiment scripts compile; completeness/source-hash verifier passes.
+Full git diff --check reports only pre-existing scripts/app_shell_v17.py:632 trailing whitespace.
+Large-artifact index regenerated. No active experiment process remains.

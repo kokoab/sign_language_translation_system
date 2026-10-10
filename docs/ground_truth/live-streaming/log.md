@@ -1,5 +1,326 @@
 # live-streaming — log
 
+## 2026-10-11 — Recognition window ablation confirms transition contamination; global fix rejected
+
+Seven context arms × two identical auxiliary phases × current/September LocalA completed (28 full-engine replays). Baseline parity against saved matched outputs passes4/4. Fresh MY→next-sign cores: current baseline4/16, no-future12/16; LocalA baseline8/16, 200ms past/no future16/16. These are correlated development observations. Global current200ms/no-future retains aggregate genuineMY18/22 andLIKE21/37 but breaks two previouslycorrectLIKE clips (oneMY+LIKE insertion, oneomission); aggregate equality hides regressions, so no promotion. Six narrow rank-rescoring arms complete screening; September second-opinion helps but leaves errors. Probability/confidence-preserving and broader candidate eligibility ablations prepared; controls running. No production/data/training changes. Evidence: my_transition_recovery_v17_20261011/{context_summary.json,global_current_genuine.json,rescore_screen.json}.
+
+## 2026-10-11 — Real-phone v3 ABBA completed: first MY 0/2; reliable-landmark gap isolated
+
+Shared-appiPhone13testpassedXCTestin241.542s; allfour57.335sreplayscompletewithresidentEnglish,overlayandlatestframequeue. FirstreviewedMY:off0/2(oneomission,oneLIKE),on0/2(twoLIKE). Thermalstate0throughout;1145–1147processedframes/run;mediancompute24.0–28.7ms,p9046.0–54.2ms,peak sampled260–268MiB. These arediagnosticreplaytimings, notnewcameraaccuracy or sustainedthermalqualification. Sourcesuntouched(test-without-building), guardedrollbackrelease restoredaftertest.
+
+Bothonwordeventsreturnunknownbecause reliablefingerrowsjump2.9→3.0667s(166.7ms), exceeding150msguard. The video frames at2.9667/3.0333wereprocessed, but theirlandmarksfailedcueconfidence; thisisnotanabsenceofprocessedframes. Lastoffpassincludedreliable3.0sample, maxgap100ms, andcuewouldhaveacceptedMY. Counterfactual175/200msacceptsbothonphoneevents;59genuinefinal-wordcueeventsunchanged, butthisaloneisnotastreamingregressiontest. Isolatedgap175armpreparedforgenuine/nativechecks;v3savedunchanged. No newreleasepromoted. Evidence:phone_summary.json,phone_gap_diagnostic.json,phone_test_unlocked.log underordered_my_like_v17_20261011.
+
+## 2026-10-11 — Isolated retention fails to preserve streaming; letter confound excluded
+
+Selected temporal checkpoint passes all isolated per-class counts but native570cached control replay loses four Citizen exact clips302→298/378: BIG→BIGGO, DRINK→DRINKMOTHER, FEEL→FEELLIKE, THANKYOU→THANKYOUYESTERDAY. All378isolated Citizen predictions were unchanged. Pair exact58/103unchanged; tune66→67/89recovers one MYNAME. GenuineMY18/22andLIKE21/37exact unchanged, but LIKEclips containingMY increase2→3/37. This candidate already fails deployment gates; complete diagnostic/runtime comparisons continue.
+
+Actual FP16 letter logits from both exports are bit-identical to installed CoreML across378inputs; zero confidence/threshold changes at.5/.95. Native MYcontext sensitivity quantified independently afterselection: with model/phase/capture fixed, three left-context views yield16/24,18/24,21/24MY and7/24schedules change identity. All3checkpoints give the same reviewedMYcore decisions. These controls separate unchanged letter export from the remaining window/model interaction; they do not prove that a boundary-only fix suffices. HAVEassessment now also requires following outputBIG, rather than counts alone. No installation.
+
+## 2026-10-11 — Clean-lineage recovery complete; no safe replacement, installed app unchanged
+
+Five final native arms×17phase cases=85 completed:clean/current,continuouswordstate,continuous+HAVEcontact,3viewprobabilityaverage,andadaptedhead+continuous/contact. Everyarm September30exact8/8 and firstOctober11MY6/8 (phases3/5stillLIKE). Contact raises take11HAVEs7→11, noANGRY/TIRED; countsnotaccuracy. Continuous/contact retainextraI;averagingremovesit butMYfirstfailuresremain. Thirdcontact9.2LIKE8/8 forcontinuous/contact/adapted;averagingMY2/8 LIKE6/8. LatermixedMY/LIKEintentnotusedasgroundtruth. Twoactualphone scheduleswithadaptedcandidatebothretainLIKE9.2. Every1/4auxiliarysamplingalsorejected. No newphysicalphoneaccuracy/latencyclaim.
+
+570cached native cases complete witholdclean/currentruntime vs savedinstalled:Citizenexact302→282/378,errors84→104,silence23→27;15classesbetter/30worse/55same. Pairexact58→61/103; tuneexact66→65/89,errors29/226unchanged12.83%. Pools overlap. Adapted/contact/averaging do not receive a broad safety-pass claim:they already failfirstMYphasegate. Full59genuineMY/LIKEandnewloadedphonepromotiontestsnotrunbecausecandidatefailedpriorgates. ExistingphoneandproductionPython/Swiftunchanged.
+
+Sixepochadaptationselectedepoch1(67vs68/226selectorerrors);bothencodersunchanged,14fusiontensorschanged. Adapted62windowMYwins30,unchanged. Bothcorrectedmatchingletterheadsand25.506MBFP16exportscomplete:362/378correct,378/378PyTorchagreement,threshold.7,letter26way83.95%. Canonical/scopedmanifestandexperimentrecipehashesrecordedinnewcheckpoints;canontraining_readyfalse. Protectedtestmetadataonlyforexclusion,nofeatures/inference/selection. Approvedcontinuouscoverage13classes,MY224/24videos,HAVE0/LIKE0; widerreviewedsourcesremainavailablewithcontracts.
+
+All-mode tracecoveragechecked321frameseach(automaticword159/NAME162,forcedalways321,forcedspelling321),embeddingspresent,4NAMEmarkers,wordcountmonotonic. Explicitmergecasewithoppositecommit/startorderspasses. Tracingandcontinuousstatefixesremainreport-local;forcedspellingtestsbranchcoverage,notthetrigger. V1orderingfailurespreserved. Initialvalidationlaunchbeforebinaryexistedfailed127;rerun570completed. Initialconsensuscompilerargumentlabelfailurecorrectedbeforeall17runs. 12experimentscriptscompile;verify_results.py passes85phase/570cached/100class/parity/source-preservationchecks. Fullgitdiffcheckonlypreexistingapp_shell_v17.py:632whitespace. Largeartifactindexregenerated;task-scopedgitdiffcheckpasses.
+
+Report:artifacts/reports/clean_lineage_recovery_v17_20261011/REPORT.txt,measured_results.json,verification.json. No training remains pending. Nextsafeaction: reviewed temporal-span/phase input contract using reconciled existing sources, verified MY/LIKE/HAVE→BIG transitions and separatelyreservedphoneevaluation. No blindoldermodelreplacement,repeatofsame13classrecipe,unguardedMYgeometry,orclaimthatanuntestednextrecipewillwork.
+
+## 2026-10-11 — Bounded adaptation completed; coverage limits and continuous-state trace verified
+
+Clean recovery six-epoch fusion-head experiment completed, selected epoch1: tune errors68→67/226 (30.09→29.65%) under the trainer's frozen configuration, not the installed native decoder. Citizen95.767 unchanged, SemLex89.059 unchanged, local96.344→96.306. Both encoders tensor-identical;14fusion-head tensors changed. Checkpoint now records canonical and scoped phrase-manifest SHA256 plus experiment-recipe hash, with tensor preservation verified. Matched corrected letter head/export for this new checkpoint launched detached with notification; candidate not promoted.
+
+Fresh approved-span coverage count:3370 spans/179videos, only13word classes. MY224 spans from24videos; HAVE0 and LIKE0 native phrase spans. Isolated replay still includes these classes. This bounds what this continuation can teach; it cannot learn HAVE→BIG transitions absent from its admitted native span pool. Wider source inventory remains available subject to explicit schema/identity/role contracts, not general dataset scarcity.
+
+Report-local continuous-word-through-NAME prototype trace has321/321 frames with embeddings,159word-mode and162NAME-mode,4mode-change markers, no word-count reset across NAME boundaries. Corrected merge by sign start restores HELLO MY NAME order in phase4; prior prototype ordering failure is preserved separately. A class-independent3-view temporal word-probability averaging diagnostic is running, with original letter logits retained and no MY/HAVE lookup; initial Swift build used wrong SpanKey labels, corrected before replay. Auxiliary-every-frame diagnostics still produce LIKE under both captured phone schedules; no cadence change promoted. Full-class native checks and phase sweeps continue. Phone/app sources remain unchanged.
+
+## 2026-10-11 — Authorized clean-lineage recovery experiment in progress
+
+User authorized the proposed bounded recovery and requested completed results. Rechecked canonical phrase verifier (494 archives, still not general-training-ready). Built a matched corrected A–Z/NONE head for existing older clean-split interval recognizer, with NONE phrase negatives restricted to the 179 approved training videos; protected test metadata used only for exclusion, no test features or inference. Export FP16 362/378 Citizen validation predictions, matching all378 PyTorch top1 outputs; selected letter threshold0.7. Base recognizer hash unchanged. New head/package and source-pinned recipes stay under artifacts/reports/clean_lineage_recovery_v17_20261011.
+
+Report-local control, continuous-word-through-NAME, and continuous+HAVE-contact runtimes compiled. Early replay shows clean-lineage MY improvement but remaining LIKE errors; auxiliary cadence1/4 diagnostics do not remove them. Continuous prototype exposed merge sorting by identity-lock commit time, which reverses delayed MY/NAME output; correcting report-local merge to sign start time before judging it. No production fix claimed. All-mode frame/mode trace prototype built. Six-epoch frozen-encoder head adaptation launched detached with completion notification, only approved179/3370 phrase spans plus existing isolated train replay; no synthetic fragments/rejects or phone-label guesses. Selection includes eligible epoch0, declared isolated floors and tune WER; these are not deployment acceptance gates. Installed phone and production sources unchanged. Next: complete comparisons, strict validation and only then consider normal-phone promotion.
+
+## 2026-10-11 — Model/runtime factorial investigation complete; September30 video recovered
+
+User requested substantial investigation before proposing repair. Located actual September30_152243_04.mp4 in Oct9b/c phone pulls.84new native Mac FP16 video replays complete:4model/runtime combinations×17cases plus2NAME ablations×8phases. Shared Vision/crop/20Hz/sourcePTS, phase0..7 explicitly set; Finish disabled in allarms. Historical word/NAME runtime from savedOct8pre-gate/pre-finish snapshots, not an immutable September30binary. No production edits, training, device install or new protected evaluation.
+
+September30 HELLO MY FRIEND I FEEL EXCITED exact8/8phases in ALL4combinations. October11firstMY:LocalA6/8 with either runtime; current0/8 with either. HAVEtake11 counts(HAVE/ANGRY/TIRED):historical+old10/1/0,historical+new4/5/1,current+old7/0/0,current+new5/1/0. Thus model and runtime contribute separately; older configuration improves this recording but is not a universal cure. HAVE counts are output counts, not independent recall. NoNAME ablation leaves9.2contactLIKE8/8; equalizing wordconfig/gate acrossNAME mode retains firstMY0/8 andlaterMY1/8. Neither simplemodechange repairs model fragility.
+
+Fresh old-clean-split checkpoint recognizes exactfirstMY(.693vsLIKE.066);pre-filternewLIKE.861, currentLIKE.863. Native62window grid:MYwinsLocalA35,oldclean30,newprefilter12,current6. These overlappingwindows are diagnostics, not independentaccuracy. Oldclean recognizer recoversMY after oldfusion/cleanphrase stillLIKE, so intervaladaptation matters. Oldphone/oldclean tensors all differ; not a head-only swap. Reused3959isolated predictions:currentbetter34classes,worse19,equal47; MY/LIKE/HAVEwholeclipcounts unchanged. Fullphase/phonebehavior for oldclean and matchedletterhead remainpending.
+
+Recommendation: older clean-split interval model as recovery candidate, reviewed true short-core/neighbor-transition and sampling-phase supervision under pinnedrecipe, repair wordstate/short-evidence handling separately, perclipvariant corrections, full-mode traces, perclass+phrase/schedule gates followed by normalphysicalphone tests. Do not restore leakingdata, use arbitraryLIKEpredictionsaslabels, or deployfromsingletracepass. Complete source/provenance/methods/results/limitations/proposal:artifacts/reports/lineage_runtime_investigation_v17_20261011/REPORT.txt andsummary.json. summarize.py passes84case/4×62window/sourcehashchecks. Initial old-engine compilation failed on finishsignature and was repaired onlyin reportcopies. Allapp sources unchanged. Sixscripts compile; full diff-check only pre-existing app_shell_v17.py:632 whitespace; largeartifact index regenerated. Nextsafeaction: review proposed bounded recovery implementation; no model promoted.
+
+## 2026-10-11 — October 8–10 model replacement rationale and data audit; repairs held
+
+User requests why replacements happened before repair. Read deployment records, actual manifest builder/experiment drivers, model-history provenance, and compared original/v1/v2 manifest rows. Evidence snapshot: artifacts/reports/my_like_regression_v17_20261011/model_replacement_audit/verified_inputs.json. No production/model/data edit, training, device test or install.
+
+Oct8 CitizenVariant was a rebuilt 96.83-parent chain, not a small update to the September phone LocalA. Purpose: align confused local variants with the pinned Citizen signs (historical user direction recorded in build_manifests.py). Original local train13381/val2896 -> v1train11956/val2603. Removed train1425: ASK147,BIG119,CHILD113,COME159,GOODBYE108,HEAR157,HOME158,I208,SIGN143,WHAT113; I retained118 ME-form rows. Original source manifests were preserved; exclusions are derived input lists. The new lineage also used the Oct7 recipe-scoped phrase split:179videos/3370spans vs originalLocalA282/6254. Historical overlap in the original parent included51/72labtest and73/89tune; this explains the split cleanup, not the MY error by itself. New local recipe starts from the96.83partwise checkpoint, mildroll12/fullroll0; old branch has different a7490409 lineage. Exact sole training cause is not isolated.
+
+Oct9v2 deployment corrected overly broad ASK exclusion (147train/23val restored) and added37reviewed web training clips:HOME11,SIGN8,BIG7,CHILD6,ASK3,WHAT1,GOODBYE1. V2local manifests12140train/2626val. Direct row comparisons confirm MY150train/22val,LIKE151/37,ANGRY109/19,TIRED119/18 unchanged through original/v1/v2; HAVE0local before and after. These are manifest-record equality checks, not new full media hash audits. Claims that HAVE or MY local examples were removed are unsupported. Some other classes lost all familiar-camera examples; web additions do not replace that capture domain.
+
+Oct9Fragment retrained only the recognizer from v2phrase parent with30%partial isolated replay (50–85% views keeping labels), to address BIG/LANGUAGE mid-sign splitting; tuneWER18.6->15.5 with dip bridging. Oct10FragmentReject again used v2phrase parent/cache (not successive fine-tuning of Fragment):25–85%fragments plus15%10–25%flat-target reject pieces; no user-HAVE augmentation, classboost or contextaugmentation in shipped command. It reduced wrong partial reads3416->2633; installedtheta.4 plus pairguard improved Citizen exact286->307 andtune15.5->15.0, but silence19->23 andtake11HAVE6->4. Known tradeoffs were accepted; full MY-transition robustness was unverified. V4WHEN/LANGUAGE cleanup, extra/restored-data arm, userHAVE training and boundary retrain were experiments, not shipped replacements.
+
+Runtime changed alongside models: letter-head retraining/thresholds, hidden-letter gate.95, dipbridging3->8/lag1->6/activityfloor.5, theta.5->.4, then HAVE guards/contact/globalordering. Existing identical-input evidence localizes firstMY regression to Oct8new lineage already before variant filtering, with unchanged isolatedMY30/31; same-data counts do not imply unchanged shared-model behavior. Next safe step is a controlled old/new lineage and runtime comparison that preserves valid data cleanup and tests actual phrase transitions; no repair started in this audit.
+
+## 2026-10-11 — September 30 successful MY baseline confirmed; rollback scope corrected
+
+User identifies September 30 as working MY FRIEND / MY NAME / HAVE baseline. Targeted review of seven preserved September 30 session logs confirms session20260930_152243: final finished words HELLO MY FRIEND I FEEL EXCITED, MY score0.986611 at32.333s, and matching rendered sentence. Three MY word commits in that session. These seven logs do not contain NAME or HAVE commits, so those two historical claims are not independently verified by this subset. Video-start events name four clips; recordings were not found in the inspected Oct8/Oct9 pull video directories. Do not equate missing local recordings with evidence against the user's report.
+
+Dated deployment history identifies LocalA as the Sept28 phone recognizer, retained through Oct7; Oct8 CitizenVariant explicitly replaced it and retained the old package. Sept29 already adopted FP16 encoder/.all/20Hz; Sept30 added signer lock and automatic NAME spelling mode with hidden letter sink. Old LocalA package remains available in my_like_regression_v17_20261011/resources. Existing exact-input comparison gives old HELLO MY NAME vs newer HELLO LIKE NAME; separate Oct10 global early-order guard changed NAME-mode timing with model fixed. Current installed guarded rollback only removes HAVE contact/global-delay policy; it is NOT a September30 full-stack restoration and retains the newer model.
+
+Recovery decision: use the September30 working configuration as historical reference. Reconstruct model plus decoder/mode/config from preserved sources/deployment records, marking unavailable exact source/binary provenance; compare old/current model and old/current runtime separately, then evaluate full normal phone behavior on MY FRIEND, MY NAME, HAVE / I HAVE BIG and deliberate LIKE. Existing cached/isolated passes alone do not establish success. No new runtime edits, model installation, training or protected evaluation in this review. Earlier source/model crossovers were not a verified exact September30 application. Source log: data/local/phone_session_pull_v17_20261009/live_reel_sessions/20260930_152243.json.
+
+## 2026-10-11 — Phone investigation complete; guarded pre-contact HAVE rollback installed
+
+User's conditional fallback applied after normal-app tests rejected the joint MY rescue. Signed normal Release installed and launched on angelo/iPhone13 (`com.kokoab.sltMobileApp`, binary under /Users/frnzlo/slt_my_have_guarded_rollback_build). The iOS decoder restores pre-contact HAVE policy while retaining independently validated chronological publication, latest-word tracking, and consistent frame/time endpoints. Existing one-way HAVE/ANGRY geometry and TIRED roll guards remain. No new model, ensemble, capture scheduling, or Vision reset rule is deployed. Python runtime is unchanged.
+
+Guarded rollback: all570 cached native hypotheses identical to pre-test installed-source baseline (103pair,378Citizen/all100classes,89tune; overlapping pools); tune29/226errors,12.83%WER. Phone assertions pass for ordered HELLO LIKE NAME and singleHELP, and shape/roll parity. HAVE counts return to5/8/4 versus contact-build10/9/9. Exact first MY stillLIKE; normal shared-app MY9.2 alsoLIKE. This is a rollback, not a MY cure. Shared-app paced median25.10ms,p90 45.76ms,1147frames,230.30MiBready/260.45MiBsampledpeak,fairthermals.
+
+Earlier experimental joint/reset candidate preserves all59labeled phone MY/LIKE control hypotheses and fixes exact firstMY, but fails loaded-app replay. Counter carry-over is causally verified (MY/LIKE/silence across8sampling phases); resetting it fixes repeated offline inputs but not frame-selection changes. Actual selected phone timestamp replay reproduces MY↔LIKE with fixed decoder/model. Capture-grid off/on/on/off is rejected: one on-run loses earlierMY, and off-run varies. These candidates remain report-local.
+
+Only external mobile LiveReelDecoder.swift intentionally differs from pre-test hashes. AppDelegate, RunnerTests, Engine, Core, Models, and Stage3 restored/verified; all diagnostic startup suppression/test hooks removed; normal app has no XCTest bundle. Session/video data and old build preserved. No training or protected evaluation. Final verifier passes; diff-check has only pre-existing app_shell_v17.py:632 whitespace. Report, patches, source/binary hashes, device outcomes, install/launch evidence: artifacts/reports/my_have_phone_v17_20261011/REPORT.md and FINAL_RESULTS.json.
+
+Next safe action: labeled MY/LIKE capture with full NAME-mode frame trace and capture timestamps, then evaluate robustness to temporal/frame selection changes. Do not call the candidate reliable from a saved-trace pass, guess labels for the mixed LIKE/MY recording, or bypass recipe/test gates.
+
+## 2026-10-11 — Exact rollback reintroduces bookkeeping defects; narrow rollback retains their repairs
+
+Physical phone exact rollback confirms HAVE5/8/4, first MY stillLIKE, and shared-app MY9.2stillLIKE. It also reintroduces PLEASE HELP HELP I and out-of-order HELLO NAME LIKE; fullvideo has duplicateNAME. These are old decoder bookkeeping defects, not acceptable unmentioned consequences of dropping the HAVE contact rule. The exact rollback Release was built but NOT installed as final.
+
+Prepared guarded_rollback_LiveReelDecoder.swift: pre-contact HAVE policy plus the independently tested chronological publication, latest-word, and frame/time endpoint invariants from V2. No MY ensemble or new Vision/capture behavior. Phone assertions explicitly require oneHELP and chronological HELLO LIKE NAME (still a known model error). All570 cached native validation cases are being replayed before deployment. Normal app source restoration and signed final build follow these checks; earlier sources/binary remain preserved.
+
+## 2026-10-11 — Requested rollback prepared as normal Release; diagnostic source edits removed
+
+The user authorized reverting before the HAVE contact/ordering fix if a safe joint MY/HAVE fix could not be established. The normal-app test and capture-grid experiment fail that gate. Preparing the measured pre-contact rollback with existing one-way HAVE/ANGRY geometry and TIRED roll cues; no older model substitution, new ensemble, or new capture-clock rule.
+
+Restored AppDelegate, RunnerTests, Engine, and Core exactly to pre-test hashes. Only external iOS LiveReelDecoder.swift differs, and it matches the preserved fallback byte for byte. Python runtime remains unchanged. Source manifest and exact rollback patch are in my_have_phone_v17_20261011. Rollback phone recognition/guard tests are finishing; fresh signed Release is building at /Users/frnzlo/slt_my_have_rollback_build. Installation waits for their results. Existing recordings and the earlier app build are preserved.
+
+## 2026-10-11 — Capture-grid fix rejected; requested pre-HAVE rollback entering phone checks
+
+Off/on/on/off paced capture-grid experiment completed246.53s. At9.2s:LIKE/MY/MY/MY;at6.37s:MY/silent/MY/MY. Frames1147/1143/1142/1146;allthermalsfair. One grid run loses an earlier MY and the off control varies: do not promote this sampling heuristic. The actual phone timestamp schedules replayed through fixed MacFP16 model/decoder reproduce MY→LIKE and NAME5.267→4.767 entry; frame selection causally matters. No capture callback or timestamp-based auxiliary change was applied.
+
+Per user's conditional rollback instruction, the pre-contact-HAVE decoder with one-way bent-finger and TIRED-roll cues is being tested on iPhone. This restores prior sequencing; it is not assumed to cure the model-sensitive first MY miss. Original engine/core and current model weights retained. Diagnostic changes stay backed up. Next: inspect rollback phone results, remove all benchmark startup/test edits, build/install the supported rollback if its behavior matches the measured fallback, and record remaining MY limitations honestly.
+
+## 2026-10-11 — Normal shared-app load exposes remaining MY failure; 59 phone controls unchanged
+
+Paired phone controls with explicit FP16 image encoder and phase-zero inputs: all 59 hypotheses identical between installed decoder and joint/reset candidate. MY18/22 exact; LIKE21/37 exact, with two existing clips containing MY. No new MY/LIKE errors in this comparison.
+
+Normal shared-engine + warmed resident Stage3 paced replay: candidate MY9.2 still LIKE, despite reset repair and all eight reset-state assertions passing. 1146 frames; median25.90ms, p90 46.90, p99 63.29, max387.02; ready238.24MiB, sampledpeak270.52MiB; thermal serious throughout. Baseline comparable run median26.55ms,p90 45.94,p99 63.01,max399.49;ready227.36MiB,peak261.50MiB;thermalfair. Differentthermal/startupconditions prohibit attribution of small timing differences. Both exhibit cold Vision latency not covered by CoreML warm().
+
+Correction to preliminary causal suspicion: candidate's single lost frame occurs after27.17s, after MY9.2; coldfirstframe cannot be asserted to cause this MY error. Compared successful paced trace, actual selected frame differs already at3.2→3.233s (auxiliary frame index64, near NAME), plus3.3,5.3,9.3 selections. Original gate queues all30Hz frames and chooses20Hz on the processing queue; scheduling changes selection. Paired off/on/on/off capture-side20Hz selection experiment is running in the test harness only. No timestamp-based auxiliary change was made. Candidate remains unpromoted; restore pre-test sources/app after device experiments. Source and device logs under my_have_phone_v17_20261011.
+
+## 2026-10-11 — Phone confirms sampling cause and reset repair; final controls in progress
+
+iPhoneforcedphase0..7matchesMac:MYonce,LIKEfive,silenttwointarget9swindow. Withprocessed=0inresetTracking,8/8prior-statechecksassertMYandidenticalshortvideohypotheses. Fulltake03repeats2/2nowMY9.167;exactfirstMYbothrunsandHAVE10/9/9unchanged. Resetcandidate3XCTests126.575spassed,including59FP16fullvideoMY/LIKEcontrols. Controls18/22MYexact,21/37LIKEexact;baselinephonecomparisonpending,donotclaimnoregressionyet. 5624cachedframesmedian0.708ms;2294fullvideoframesmedian10.684ms,p90 24.466,max55.875. Modelreloadafterearlierphaseengine270ms,warm16.6ms,showingcold-cache12.36sisnotsteadystartup. Back-to-backunpacedreplaypushedthermalfair→serious;controlledsteady/loadclaimsneednormalsharedengine+residentStage3check(currentlyrunning). ActualpublicationinputtimesalreadyloggedbyVCevent.secondsseparatefromword.commit_seconds;harnessalsoexplicitlyrecordsdecoderpublication. No finaldeploymentdecision;alltemporaryfilesbackedup.
+
+## 2026-10-11 — Auxiliary sampling carry-over causes MY repeat instability; bounded reset fix under test
+
+ControlledMac sweepwithphoneFP16encoder:phase0MY9.167;phases1/2/3/6/7LIKE;4/5silentat9s. Samevideo/models,onlyprocessed%8samplingphasechanged. LiveVision.resetTracking intentionallyleftcounterrunning;1147framesadvancesphase3betweenreplays. Report-localCorecandidate nowresetsprocessed=0withwrists/signer. This restoresnew-stream feature-clock consistency;not evidenceofphase-invariantrecognition. Physicalphone8phase sweepnowrunningafteruserunlocked. Prepared59labeledMY/LIKEfullvideocontrols(27MB) forphone;noheldouttest. EarlierMacfullvideoharness inheritedFP32handencoderdefault;newMacandallphoneharnesses explicitlyFP16. Priorcachedexactphoneinputsremainvalid;donotlabeloldMacfullvideoasphoneFP16parity. Candidatewarminganddecoderfixremainreport-local;temporarytestsourceanddiagnosticapprestorationpending.
+
+## 2026-10-11 — iPhone candidate passes exact trace but second full-video MY still fails
+
+Interrupted device run completed successfully:5XCTests,121.687s. CandidateexactfirstMY→MY bothpasses;HAVE10/9/9unchanged. Fullvideo take03 MY9.2s recoveredpass0 butremainsLIKEpass1. NAMEon/offpass0=5.267/9.267s;pass1=4.867/8.867s. BaselinebothpassesLIKE. Candidatevideo median11.01ms,p90 24.92,p99 40.33ms,5/2294frames>50ms;load12.36s vsbaseline7.98s,warm29.4ms vs17.6ms. Fairthermals,lowpoweroff. Processfootprintabsolutevalues vary withtesthoststartup;donotclaimcandidateuseslessmemory. Pacedreplayfinished58.698s,1147frames,MY9.167correct;compute median27.89ms,p90 48.53,max82.74ms withconcurrentoverlayVision. No promotion:successonepacecannotcoverrepeatfailure.
+
+Continueauthorizedafterinterruption. Suspect confirmedcodepath:LiveVision.resetTracking clearswrists/signer but deliberatelykeepsprocessedcounter;body/facefeatures sampleprocessed%8.1147frames advancesphaseby3. Diagnosticphone sweepforcesphase0..7 onsamefirst16seconds ofrecording toisolatethisvariable. Corefilealso snapshottedbeforetemporarytesthook. Resultsandbackupsunder my_have_phone_v17_20261011;diagnosticappcurrentlyinstalled,productionrestorationpending.
+
+## 2026-10-11 — iPhone baseline completed; warmed shared candidate entering device test
+
+Physical iPhone13 baseline XCTest passed56.775s:7traces x2 and fulltake03 x2, 5624cached-input frames and2294fullvideo frames. ExactfirstMY reproducesLIKE bothruns;HAVE10/9/9retained. Model load7977ms,warm17.6ms;video median10.64ms,p90 23.67,p99 39.13,max407.25ms,2/2294over50ms. Processfootprint sampledpeak150.6MiB;thermalfair(1)throughout,lowpoweroff. TracecostexcludesVision/crops. Video repeats differ in some hypotheses despiteidenticalPTS;compare each andavoidclaimingfullvideoexactness. Firstbuildneededexplicitexistingdevelopmentteam/ENABLE_TESTABILITY;retry succeeded. Four productioniOSfiles temporarilyinstrumented; originalsbackedup. Candidatehasoneeagerfallback sharedthreeworddecoders,warmedbeforeframes. Results:my_have_phone_v17_20261011/baseline_device.json. Next: matchedcandidatepluspacedreplay,thenrestoreorrecorddeploymentdecision.
+
+## 2026-10-11 — Connected iPhone MY/HAVE performance test started
+
+Device angelo iPhone13 available and unlocked. User requested phone test. Four external iOS sources snapshotted/hash-recorded under my_have_phone_v17_20261011/source_backup. Candidate V2 now report-local with explicit shared eager LocalA dependency and warm-up; no lazy loading or swallowed initialization failure. Temporary XCTest harness owns engine to avoid duplicate automatic model residency. Paired seven-trace and full actual-PTS take03 replays will measure recognition, load/warm, per-frame cost, physical footprint and thermals. Published-input timestamps logged separately from identity lock. No training/protected evaluation. Restore source/app baseline after diagnostics pending measured decision.
+
+## 2026-10-11 — Joint MY/HAVE V2 experiment passes final paired accuracy checks; not installed
+
+Final native Swift/CoreML installed-source vs jointV2: identical per-case hypotheses on
+pair103, Citizen378(all100classes), tune89/226references. Native exact58/103pair,
+302/378Citizen; tune29errors12.83% both. Pools overlap;570replays are not570independentclips.
+V2also leaves all59localMY/LIKE fullvideo hypotheses unchanged (15/22MY,23/37LIKEexact;
+existing errors retained). ExactfirstMY trace nowHELLO MY NAME; fullvideoMY~9.2restored;
+HAVE10/9/9allhypotheses retained. Other two completeMYword traces unchanged. Python/CoreML
+andSwiftV2 first trace frames/words/scores agree;23existing tests + focused order/flush/reset/
+endpoint/latest-identity checks and final verifier pass. Production hashes unchanged.
+
+Tested six decoder arms, Fragment/LocalA crossovers, earlyMY,576static and14400motion-augmented
+geometry rules, old-vote-only, jointV1/V2. Direct geometry always harmedtrueLIKE; old-vote-only
+harms3trueLIKEwholeclips. Combined gate usescurrentLIKE/MYtop3,span>=6,conservativeflatpalm+
+lowmotion,thenrequiresLocalAMY. V1hadHELPduplicate onone sentence; V2chronologicallast fixesit.
+Pre-contactrollback+bent/claw+roll keeps5/8/4HAVEs and stillmissesexactfirstMY. Fullrollback
+is therefore measured fallback, not assumedMYcure. No training,testaccess or installation.
+
+Changed only experiment artifacts, live-streaming log/high,currentGT,andlarge-artifactindex.
+REPORT.md,FINAL_RESULTS.json,verify_results.py,cleanrollbackpatches,andallcandidateoutputs:
+artifacts/reports/my_have_joint_experiment_v17_20261011/. Native exported input dimensions
+verified against decoded first frames570/570. Completed correctedV2run uses*_run.log; earlier
+mistypedpath launch failed before replay. Supersededpartialruns are markedincomplete.
+`git diff --check` finds only pre-existing scripts/app_shell_v17.py:632whitespace.
+
+Nextsafeaction: integrate/load/warm the second recognizer outside frame processing, logactual
+publicationtime separately from identitylocktime, measure iPhone latency/memory, then a clearly
+labeledMY/LIKE session. Concurrentdesktop timings include acold~4.2sframe and cannot establish
+phone readiness. Do not install the lazy prototype as-is or claim allMY/HAVE failures solved.
+
+
+## 2026-10-11 — Broader check caught HELP duplicate; chronological identity V2 fixes it
+
+Initial ordered-publication candidate keeps all378Citizen hypotheses but addsHELP in
+PLEASE HELP I (89-sentence development errors29→30). EarlierPLEASE closure overwrote
+later earlyHELP as `last`, so the nextHELP fragment duplicated. V2 only advances `last`
+chronologically; focused synthetic and real cached sentence now outputPLEASE HELP I.
+Native V2 without the ensemble completes all570case replays: pair103 unchanged,
+Citizen378 unchanged vs nativeV1 control (302exact/332containing target), tune29errors
+instead of30. These pools overlap;570cases are not570independent clips.
+
+Joint old-vote+geometry V1: exactfirstMY recovered with Python/CoreML–Swift identicalframes
+and scores(maxdelta<5e-16); all59localMY/LIKE fullvideo hypotheses unchanged vscontrol.
+V2 retains the fullphonevideo/mode results and all6phone trace hypotheses from jointV1,
+except correcting the additionalHELP control. Both repairedMY cases and10/9/9HAVEs retained.
+NativeV2MY/LIKE59, full570joint run, and installed-source native control are being completed.
+No deployment/training. Prototype cold-model residency/first-use cost unmeasured onphone;
+desktop concurrent timings cannot establish mobile readiness. Superseded nativeV1hybrid
+run stopped in favor ofV2. Initial Python evaluator dict/path error fixed; repeated-input
+memoization added; obsolete slow duplicate runs stopped after saved completed subsets.
+
+
+## 2026-10-11 — Timestamp root bug verified; broader geometry sweep rejected
+
+Ordered publication plus consistent endFrame/endSeconds updates removes duplicateNAME
+and restores take03MY~9.2s, while retaining10/9/9HAVEs on all three native controls.
+First exactMY remainsLIKE. All103pair validation hypotheses unchanged across six arms;
+23production tests and focused ordering/flush/reset/timestamp checks pass. Experimental
+clean candidate and exact pre-contact rollback source/patches prepared report-locally.
+Expanded MY geometry sweep adds wrist movement/finger droop:14400 combinations, none
+rescue first miss without harming at least one trueLIKE validation clip. Old-model override
+alone changes3 trueLIKE clips toMY. A final dual check (oldmodelMY plus static open-palm
+geometry, currentLIKE/MYtop3, span>=6frames) recovers exactfirstMY in native replay; whole
+engine and59local MY/LIKEvalidation videos are running. This is a development experiment,
+not an accepted fix or deployment. No protected test, production change, or training.
+
+
+## 2026-10-11 — MY/HAVE joint experiments authorized; MY takes priority
+
+User explicitly accepts rollback before HAVE omission repair if a joint fix fails and asks
+for geometry/curl/roll-only alternatives as experiments. Report-local plan and native
+harness variants prepared in my_have_joint_experiment_v17_20261011. Compare model-fixed
+whole-engine NAME behavior as well as exact word traces; no training or installation.
+Current sources hashed before work. New candidate separates identity locking from output
+publication; rollback arms remove contact closure/global ordering with cue ablations.
+Results pending; intentional LIKE location remains unknown.
+
+
+## 2026-10-11 — Global HAVE ordering guard causally changes MY/NAME behavior
+
+Current recognizer fixed, full real-PTS video replay: current engine take03 ~9.2sLIKE;
+current sources with ONLY global early-order guard disabled →MY and exact old-source
+hypotheses/mode event times on both videos. FirstNAME entry/exit shifts4.767/8.767 to
+5.267/9.267s. Existing NAME mode uses another decoder/reset path. Guard added forHAVE
+therefore has non-HAVE consequences: previous model-only narrative is incomplete.
+
+HAVE-only scoped guard restores old behavior and retains exact current take11/09:55
+hypotheses (10/9HAVEs), but reintroduces duplicateNAME and wrong word order: not promoted.
+Removing just unresolved-rest clause did not repair interaction.27settings replays complete;
+first exact-inputMY→LIKE survives all9, and HAVE-rule-off matches all3current word sequences.
+Seven checkpoints each scored3959same isolated validation clips; current3784vsold3743,
+oldclean3745. Saved all100confusions/logits. User intentionalLIKE remains unlocated;12phone
+spans are diagnostic visually reviewed contacts, not reliable training/accuracy labels.
+
+Audit ledger covers source changes to capture/features/crops, Finish, letter gating, boundary
+settings, model/letter heads, threshold, HAVE rules, global ordering, automatic modes and
+synchronoustrace I/O. Camera source comparison finds no relevant capture edit; complete
+historical binary hashes unavailable. No production source/model/training/install changed.
+Report+verifier:my_like_regression_v17_20261011/rollback_review/. Next safe implementation:
+separate early identity locking from ordered publication, validate whole-engineNAME effects;
+do not blindly rollback or restarttraining to mask app-state behavior.
+
+
+## 2026-10-11 — Broader rollback audit finds decoder/NAME-mode contribution
+
+User stresses that pre-HAVE/ANGRY worked and deliberately signed LIKE somewhere (probably
+middle); no exact timestamp known. Do not count all LIKE outputs as false. Refreshed phone
+video inventory still only saves this session's takes03/04. Reviewed contact sheets show
+open-palm contacts; deliberate LIKE not confidently located in the available two files.
+
+Read Oct8–10 live-streaming and stage1 logs, diffed saved app sources. Changes include
+letter gate, rest-gap bridging/lag/floor, theta .5→.4, HAVE/ANGRY cues, TIRED rescue,
+contact closure, global early commit ordering, and synchronous trace recording/saving.
+Saved model-input/crop implementation differs only in default recognizer name since Oct8;
+Core difference is Finish pose; camera/UI capture code comparison ongoing.
+
+Nine settings crossed on3contiguous word-mode traces: first MY substitution survives all;
+removing HAVE-specific rules leaves all three sequences unchanged; removing the inner floor
+turns first take04MY intoHUNGRY, and lag1 addsLIKE. Four recognizers crossed with actual
+pre-HAVE/ANGRY decoder snapshot (theta.5); rollback does not universally repairMY.
+
+IMPORTANT: full video replay (Vision/crops/NAME mode, realPTS; not exact phone frames)
+with recognizer FIXED finds a source effect missed by word-only replay. Take03 ~9.2s:
+pre-pair app logic MY vs currentLIKE. AutomaticNAME entry/exit times shift. Take04 identical
+old/current logic with fixed recognizer. Therefore earlier model-only explanation is
+incomplete for broader live behavior; first exact-input substitution remains model-sensitive.
+Now isolating global ordering guard versus other changes before recommending correction.
+
+Seven preserved checkpoints on12complete native-prepared contact spans and3959 identical
+isolated validation clips: current3784correct, oldphone3743, oldclean recognizer3745;
+MY30/31 andLIKE45/48 both current/old. Fixed-phone-span MY winners6/12current,7/12old;
+these are diagnostic supplied spans, NOT full-decoder accuracy. Oldbase fusion5/12; blindly
+restarting from base is not established remedy. No training/install/production edits.
+Evidence:my_like_regression_v17_20261011/rollback_review/ (source_audit, settings_*, video_*,
+base_comparison.json, cached logits). Next: isolate commit-order andNAME coupling.
+
+
+## 2026-10-11 — MY regression mechanism localized; no unsafe fix promoted
+
+Native phone inputs exported and scored through preserved training stages. New landmark
+branch already LIKE .9048/MY .0015 before phrase adaptation; fused .9121LIKE. Pre-filter
+96.83-derived fusion also .9316LIKE, final .8606LIKE: exclusion filter alone is not cause.
+Old final fusion MY .7871 despite ambiguous old landmark output. Removing100ms context
+still fails (.8998LIKE in new fusion); earlier shorter contact is MY. Model sensitivity to
+MY→NAME transition is demonstrated, sole training/architecture cause not isolated.
+Old/full rollback also fails the visually reviewed later open-palm MY contact around85.5s.
+No correction, training or installation performed. Report and reproducible diagnostic sources:
+artifacts/reports/my_like_regression_v17_20261011/REPORT.md. Next safe correction requires
+transition-aware recognition validation with genuineLIKE/chest-sign/HAVE controls; do not
+call isolatedMY30/31 evidence of unchanged streaming behavior or globally relabelLIKE.
+
+
+## 2026-10-11 — Exact-input MY regression isolated to recognizer replacement
+
+Five native Core ML packages compared on the same 103-frame pre-NAME trace and current
+production decoder. LocalA returns HELLO MY NAME (MY .7908, LIKE .0628 on frames56–61).
+CitizenVariant returns HELLO LIKE NAME (LIKE .8215, MY .0501); V2 .8500/.0341;
+Fragment .8593/.0222; FragmentReject .8619/.0142. Before-HAVE decoder with current model
+also LIKE .8619. Thus a real regression predates the HAVE closure and begins at the Oct8
+recognizer replacement among deployed versions, not Stage3 or label mapping.
+Native window sweep: current model calls early contact MY .934, then final span LIKE .862;
+old model retains MY .791 on final span. No change to installed models or production code.
+Prior isolated validation missed it: both recognizers MY30/31 (Citizen4/4, SemLex4/5,
+local22/22). MY/LIKE local examples were not removed by the Citizen-variant manifest filter;
+do not attribute this specifically to removing MY data. Older model does NOT cure all later
+LIKE emissions in the long recorded run; a whole-model rollback is not established safe.
+Next: isolate affected model stage/input contribution and evaluate a correction with genuine
+LIKE controls. Evidence in my_like_regression_v17_20261011/*model*.json and grid files.
+
+
+## 2026-10-11 — MY→LIKE live regression investigation; Stage3 work paused
+
+User redirected authorized Stage3 implementation to latest phone logs before any code changes
+or training had started. Pulled 10:26:47session,10.2MBtrace and videos03/04 into
+ data/local/phone_session_pull_v17_20261011/. Session has9MY and15LIKE commits. First miss
+in video03:64.068–64.335session seconds, LIKEscore.863 live.103saved frames61.268–66.368
+replay current decoder as HELLO LIKE NAME with same word boundaries(LIKE.862); old decoder
+snapshot before HAVEcontact fix alsoLIKE.862, but old early-order bug emitsNAMEbeforeLIKE.
+This rules out that decoder change as cause of the first substitution; broader model/input
+comparison still pending. Do not claim all historical app versions agree yet.
+
+Trace limitation found: LiveReelEngine records only word mode, omitting frames in automatic
+NAME/fingerspelling mode and explicit reset markers. The saved trace is incomplete for many
+later misses. Use the fully captured first pre-NAME run for exact-input comparisons; video
+replays elsewhere are separate evidence. Report dir:my_like_regression_v17_20261011/.
+Next: compare prior recognizer packages, inspect MYcontact versus exit windows and hand
+tracking/crop evidence, then validate targeted correction without damagingLIKE or HAVE.
+
+
 ## 2026-10-10 — User-requested HAVE fix installation verified
 
 User explicitly requested installation. Validated source hashes unchanged. Signed Runner

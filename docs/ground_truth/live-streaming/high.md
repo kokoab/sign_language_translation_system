@@ -1,5 +1,52 @@
 # live-streaming — high
 
+## 2026-10-11 — Phone follow-up supersedes the earlier locked-device status
+
+After unlock, the150ms ordered rule failed0/2candidatephonepasses because166.7ms reliable-landmark gaps caused unknown. Changing only that limit to175ms succeeds2/2MY NAME versus0/2controls, with570cached/59genuineoutputs unchanged and72phasechecks complete. Ninecuefixturespass. The two unresolved desktopcommit/window failures remain, so the caution against forcing transientMYcues below still applies. Candidatewasnotpromoted:priorreleaseandsources restored. RequirefreshliveMY/LIKEevaluation forreleasepromotion; these areknown-video replays. Evidence:artifacts/reports/ordered_my_like_v17_20261011/gap175/REPORT.txt.
+
+## 2026-10-11 — Clean-lineage recovery is not a validated rollback
+
+The old clean-split model with matching corrected letters recovers firstMY6/8 sampling
+phases, not8/8, while losing20Citizen exact streaming outputs (302→282/378;30classes
+regress). Continuous word state, HAVE contact preservation,3-view inference averaging,
+and six-epoch fusion-head continuation all retain those2MY failures. No candidate was
+installed. Do not repeat the same recipe or claim whole-model rollback is safe from
+isolated accuracy or the successful September30clip. Approved179video native spans cover
+13classes:MY224spans/24videos, but HAVE/LIKE0; isolated replay is a different supervision
+role. Review temporal transition/phase contracts using the reconciled source inventory
+before new training, and require full-class retention plus normal loaded-phone checks.
+Evidence:clean_lineage_recovery_v17_20261011/REPORT.txt underartifacts/reports.
+
+
+## 2026-10-11 — Phone readiness requires actual scheduling and full model residency
+
+A saved-input decoder pass does not establish normal-app MY/HAVE correctness. The joint
+candidate recovered exact MY, preserved570cached cases and59phone validation hypotheses,
+but failed with the real shared engine, resident warmed English model, concurrent overlay,
+and latest-frame queue. A33ms selected-frame change nearNAME reproduced the MY/LIKE flip
+with the model/decoder fixed. Body/face sampling also carries its modulo8counter through
+reset, so repeated videos can differ; a reset repair alone did not pass normal-app testing.
+Do not promote the reset, capture-grid, or two-model candidate on these results. Keep
+identity-lock timestamps distinct from actual publication; app event.seconds already logs
+publication on the input timeline. Report: my_have_phone_v17_20261011/REPORT.md.
+
+## 2026-10-11 — Order publication without changing identity; keep word state chronological
+
+The Oct10 global early-order guard changes NAME identity and automatic mode timing, and can
+change laterMY intoLIKE with the model held fixed. A publication-order requirement must not
+be implemented by postponing identity locking across all classes. Preserve identity and
+hold output until earlier segments resolve. Any such change requires full-engine NAME-mode
+replay, not only a word decoder replay.
+
+When a span grows, endFrame and endSeconds must describe the same endpoint. Late closure
+of an earlier word must not replace a later recognized word in duplicate tracking. Otherwise
+NAME replays its consumed tail, or PLEASE HELP I becomes PLEASE HELP HELP I. Native V2
+and focused checks confirm these causes; production remains unchanged pending review.
+Evidence and rollback alternatives: artifacts/reports/my_have_joint_experiment_v17_20261011/.
+Direct flat-palm MY overrides failed trueLIKE controls; a dual-model/geometry guard remains
+an experiment, not a blanket permission to convertLIKE intoMY or install another model.
+
+
 ## 2026-10-10 — Preserve sign evidence and output order; replay exact inputs
 
 Word-mode HAVE contact closure is enabled in the new Swift source and Python config_fixed.json

@@ -75,6 +75,89 @@ class Decoder(unittest.TestCase):
         self.assertEqual([g for g in segmental_decode(bio, memo, spans, ['A', 'B', 'C', 'D'], cfg) if g['gloss']], [])
 
 
+
+class HaveContactRegression(unittest.TestCase):
+    @staticmethod
+    def raw_contact(dy=0.):
+        raw = np.zeros((10, 61, 5), np.float32)
+        raw[:, :42, 3:] = 1
+        for st in (0, 21):
+            raw[:, st:st + 21, 1] = np.arange(10)[:, None] * dy
+            raw[:, st + 9, 1] -= .1
+            raw[:, [st + 8, st + 12, st + 16], 1] -= .12
+        return raw
+
+    def test_rescue_preserves_probability_when_motion_rules_tired_out(self):
+        from active.v17.segmental_runtime_v17 import tired_rescue, log_softmax
+        logits = np.log(np.array([.1, .6, .3], np.float32))
+        out = tired_rescue(logits, ['HAVE', 'TIRED', 'BIG'], self.raw_contact(), 1., merge=True)
+        np.testing.assert_allclose(np.exp(log_softmax(out)), [.7, 0, .3], atol=1e-6)
+
+    def test_contact_requires_new_evidence_and_rejects_a_lowering_tail(self):
+        from active.v17.segmental_runtime_v17 import have_contact_core
+        self.assertFalse(have_contact_core(self.raw_contact(), 6))
+        self.assertFalse(have_contact_core(self.raw_contact(.03), 6))
+        self.assertTrue(have_contact_core(self.raw_contact(-.03), 6))
+        raw = self.raw_contact()
+        raw[:, 8, 0] = np.arange(10) * .001  # finger movement with a stationary wrist
+        self.assertTrue(have_contact_core(raw, 6))
+
+    @staticmethod
+    def runtime():
+        from active.v17.segmental_runtime_v17 import SegmentalRuntime
+        rt = SegmentalRuntime.__new__(SegmentalRuntime)
+        rt.labels = ['HAVE', 'BIG', 'ANGRY']
+        rt.cfg = {'log_theta': np.log(.4), 'duplicate_gap': 20}
+        rt.origin = rt.bio_off = rt.off = 0
+        p = np.tile([.001, .01, .01, .979], (16, 1))
+        p[8:10] = [.001, .95, .01, .039]
+        rt.bio = list(np.log(p).astype(np.float32))
+        rt.shown_early = []
+        rt._have_contact_core = lambda s, e: True
+        rt.scores = {k: {'v_raw': np.log(v)} for k, v in {
+            (2, 5): [.65, .2, .15], (2, 7): [.2, .1, .7],
+            (2, 14): [.03, .95, .02], (10, 14): [.03, .95, .02]}.items()}
+        return rt
+
+    def test_completed_contact_survives_angry_exit_and_big_crossing_span(self):
+        rt = self.runtime()
+        spans = rt._close_have_contacts(list(rt.scores), 15)
+        self.assertIn((2, 7), spans)
+        self.assertEqual(int(rt.scores[2, 7]['v_raw'].argmax()), 0)
+        self.assertNotIn((2, 14), spans)
+        self.assertIn((10, 14), spans)
+
+    def test_open_word_owns_its_tail_and_no_transition_does_not_force_have(self):
+        rt = self.runtime()
+        original = list(rt.scores)
+        rt.shown_early = [(0, {'gloss': 'ANGRY', 'closed': False})]
+        self.assertEqual(rt._close_have_contacts(original, 15), sorted(original))
+        rt.shown_early = []
+        rt.bio = [rt.bio[0]] * 16
+        self.assertEqual(rt._close_have_contacts(original, 15), sorted(original))
+
+    def test_early_big_cannot_jump_a_pending_have(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        rt = self.runtime()
+        rt.have_contact_closure = False
+        rt.count, rt.context, rt.lag = 21, 2, 6
+        rt.config = {'stream': {'min_span_frames': 3, 'max_inner_o': 8}}
+        rt.early_k, rt.early_q, rt.early_min = 3, .9, 4
+        rt.early_unsafe = {'HAVE'}
+        rt.early = {11: ('BIG', 2)}
+        rt.soft_extra, rt.hard, rt.letter_gap = 2, .5, 6
+        rt.last = None
+        rt.obs = [SimpleNamespace(seconds=i / 20.) for i in range(21)]
+        rt._score = lambda spans: None
+        rt._trim = lambda: None
+        segments = [dict(start=2, end=10, gloss='HAVE', log_q=np.log(.65)),
+                    dict(start=11, end=15, gloss='BIG', log_q=np.log(.99))]
+        with patch('active.v17.segmental_runtime_v17.both_spans', return_value=[(2, 10), (11, 15)]), \
+             patch('active.v17.segmental_runtime_v17.segmental_decode', return_value=segments):
+            self.assertEqual(rt._step(final=False), [])
+        self.assertIsNone(rt.last)
+
 if __name__ == '__main__':
     unittest.main()
 
@@ -255,3 +338,29 @@ class SpellingPieces(unittest.TestCase):
                                end_frame=int(e * 20), score=.9, early=False))
         out += b.flush()
         self.assertEqual([w['gloss'] for w in out], ['fs-CAT'])
+
+
+class RestDipInsideSign(unittest.TestCase):
+    """stream.max_inner_o / decoder.inner_floor: a rest-like dip inside one sign (a fast internal
+    movement) must not force a split (go_split_root_cause_v17_20261009)."""
+
+    def bio(self):
+        lp = lambda o, b, i: np.log(np.array([1e-6, o, b, i]))
+        rows = [lp(.04, .94, .02)] + [lp(.04, .02, .94)] * 4 + [lp(.94, .02, .04)] * 5 + \
+               [lp(.04, .02, .94)] * 5 + [lp(.94, .02, .04)] * 5
+        return np.stack(rows)
+
+    def test_whole_sign_span_needs_max_inner_o(self):
+        self.assertNotIn((0, 14), both_spans(self.bio()))
+        self.assertIn((0, 14), both_spans(self.bio(), max_inner_o=8))
+
+    def test_inner_floor_prefers_the_whole_sign(self):
+        bio = self.bio()
+        spans = [(0, 4), (10, 14), (0, 14)]
+        conf = lambda g, p: dict(v_raw=np.log(np.where(np.arange(3) == g, p, (1 - p) / 2)))
+        memo = {(0, 4): conf(1, .6), (10, 14): conf(2, .6), (0, 14): conf(0, .95)}
+        cfg = dict(w_r=2, w_a=.25, w_b=.5, c=-1.5, log_theta=np.log(.5), alpha=1.0, merge_duplicates=False)
+        split = [g['gloss'] for g in segmental_decode(bio, memo, spans, ['BIG', 'LANGUAGE', 'GO'], cfg)]
+        whole = [g['gloss'] for g in segmental_decode(bio, memo, spans, ['BIG', 'LANGUAGE', 'GO'], dict(cfg, inner_floor=.5))]
+        self.assertEqual(split, ['LANGUAGE', 'GO'])
+        self.assertEqual(whole, ['BIG'])
