@@ -4,11 +4,65 @@
 
 Seven context arms × two identical auxiliary phases × current/September LocalA completed (28 full-engine replays). Baseline parity against saved matched outputs passes4/4. Fresh MY→next-sign cores: current baseline4/16, no-future12/16; LocalA baseline8/16, 200ms past/no future16/16. These are correlated development observations. Global current200ms/no-future retains aggregate genuineMY18/22 andLIKE21/37 but breaks two previouslycorrectLIKE clips (oneMY+LIKE insertion, oneomission); aggregate equality hides regressions, so no promotion. Six narrow rank-rescoring arms complete screening; September second-opinion helps but leaves errors. Probability/confidence-preserving and broader candidate eligibility ablations prepared; controls running. No production/data/training changes. Evidence: my_transition_recovery_v17_20261011/{context_summary.json,global_current_genuine.json,rescore_screen.json}.
 
+## 2026-10-11 — 175ms ordered MY/LIKE production Release installed and launched
+
+User explicitly said “okay install,” authorizing the measured candidate after disclosed limits and superseding the earlier suggested fresh-capture-before-promotion sequence. Normal signed Release installed and launched on iPhone13 (com.kokoab.sltMobileApp, PID54598); subsequent process list confirms it is running. Build: /Users/frnzlo/slt_ordered_my_like_gap175_build. Prior guardedrollback build retained for rollback.
+
+Only productionLiveReelDecoder.swift changes. Tested175ms cue/helper appended within the existing target; experiment mode switches, global logging sets/arrays and per-word audit removed. No XCTest bundle shipped. Five focused source-video parity cases match full hypotheses and word/frame/time/score fields exactly versus the tested candidate: MY NAME, MY FRIEND, HAVE and two trueLIKEcontrols with transientMY cues. Signedbuild/codesignpass;all15compiledmodelweightpayloads equal previousrelease. Core/Models/Engine/Stage3/AppDelegate/RunnerTests/Pythonruntime unchanged. DecoderSHA256 9dd80a57f13a1f78aa1b1113ea95dd3c66868ef3f29cd02cbfa67d623e90a4c7.
+
+Earlier175ms evidence remains2/2phoneMY NAMEversus0/2controls,570cached/59genuinehypotheses unchanged,72samplingcases/ninecuefixtures;twoof24desktopMYvariantsstillfail. FreshliveMY NAME/MY FRIEND/completedLIKEsigningisnext,notclaimedcompleted. No retraining ormodelreplacement. Fullgitdiffcheckonlypre-existingapp_shell_v17.py:632whitespace. Deploymentreport,patch,exactsource,binaryhashes,installationandlaunchrecords:artifacts/reports/ordered_my_like_v17_20261011/deployment/REPORT.txt.
+
+## 2026-10-11 — User explicitly authorizes installing the 175ms MY/LIKE candidate
+
+User said “okay install” after the successful physical-phone follow-up and recommendation. This authorizes deployment now despite the previously suggested fresh-capture-before-promotion sequence. Preparing a normal Release build of the tested175ms rule. Removed experiment mode switches, global event buffers and per-word diagnostic geometry audit; kept cue thresholds, candidate-score refinement and LIKE delay unchanged. Only production Runner/LiveReel/LiveReelDecoder.swift changes; helper appended there to preserve Xcode target membership. Existing model, HAVE guards, Core/Vision, Engine, Stage3, AppDelegate, RunnerTests and Python runtime retained. Focused clean-code parity and signed build are in progress. Prior guardedrollback build retained at /Users/frnzlo/slt_my_have_guarded_rollback_build for rollback. Evidence:artifacts/reports/ordered_my_like_v17_20261011/deployment/.
+
+## 2026-10-11 — Ordered rule phone follow-up complete: 175ms gap succeeds 2/2, controls unchanged; prior release restored
+
+After the user unlocked the iPhone, two full off/on/on/off experiments completed, eight 57.335-second paced-video passes total. Normal shared engine, resident English model, overlay Vision and latest-frame queue were active. Initial v3 150ms candidate failed the first reviewed MY in both passes. Reliable thumb/middle rows skipped from2.9s to3.0667s, exceeding the guard; those intermediate video frames were processed but failed landmark confidence. The model and thermal state did not change. Increasing only the gap tolerance to175ms produced MY NAME in both candidate passes; both controls produced LIKE NAME. All four follow-up runs had nominal thermal state. Median compute27.6–28.4ms/frame, p9046.2–48.3ms, sampled peak at most268.7MiB; reviewed-word commitment about700ms after its span end in both arms. Diagnostic timing and known-video replay, not fresh signing/general accuracy or sustained qualification.
+
+Full175ms regression complete:570cached hypotheses unchanged (all100Citizenclasses;302/378Citizen,58/103pair,66/89tune exact),59genuineMY/LIKEhypotheses unchanged,72nativephase cases complete. SeptemberMYFRIEND24/24exact and allHAVEsequences/26of168reviewedcontacts unchanged. OctoberfirstMY remains22/24; oneLIKE and one absorbedMY still fail. NinePython/Swiftcue fixtures pass, including both new phone cases. No newtraining, modelreplacement, source-datachange orprotectedtest inference. Do not claim allMY/HAVE failures solved or force transientMYcues tocommit.
+
+The175ms candidate and reproducible phone test are preserved in artifacts/reports/ordered_my_like_v17_20261011/gap175/. All15final checks pass. Sixapp/testsources restored, priorSwift/Pythonpins match, and previousguardedrollbackrelease reinstalled successfully after diagnostics. No experimental daily-use deployment. Current useful candidate isgap175, not the original150msv3; mainnative/v3 artifacts remain historical comparison inputs. Nextsafeaction:fresh live MY NAME/MY FRIEND/completedLIKE evaluation before any release promotion; separate completion/commit-boundary repair must retain trueLIKE negative controls. Fullreport:gap175/REPORT.txt. Parentreportandfinal_policyupdated to supersede earlier blocked-phone status.
+
 ## 2026-10-11 — Real-phone v3 ABBA completed: first MY 0/2; reliable-landmark gap isolated
 
 Shared-appiPhone13testpassedXCTestin241.542s; allfour57.335sreplayscompletewithresidentEnglish,overlayandlatestframequeue. FirstreviewedMY:off0/2(oneomission,oneLIKE),on0/2(twoLIKE). Thermalstate0throughout;1145–1147processedframes/run;mediancompute24.0–28.7ms,p9046.0–54.2ms,peak sampled260–268MiB. These arediagnosticreplaytimings, notnewcameraaccuracy or sustainedthermalqualification. Sourcesuntouched(test-without-building), guardedrollbackrelease restoredaftertest.
 
 Bothonwordeventsreturnunknownbecause reliablefingerrowsjump2.9→3.0667s(166.7ms), exceeding150msguard. The video frames at2.9667/3.0333wereprocessed, but theirlandmarksfailedcueconfidence; thisisnotanabsenceofprocessedframes. Lastoffpassincludedreliable3.0sample, maxgap100ms, andcuewouldhaveacceptedMY. Counterfactual175/200msacceptsbothonphoneevents;59genuinefinal-wordcueeventsunchanged, butthisaloneisnotastreamingregressiontest. Isolatedgap175armpreparedforgenuine/nativechecks;v3savedunchanged. No newreleasepromoted. Evidence:phone_summary.json,phone_gap_diagnostic.json,phone_test_unlocked.log underordered_my_like_v17_20261011.
+
+## 2026-10-11 — User unlocked iPhone; ordered-rule shared-app comparison resumed
+
+User answered the pending unlock request. Resumed the existing compiled v3 diagnostic with test-without-building, preserving restored production sources. Four paced-video passes use off/on/on/off order, normal shared engine and resident English model, overlay Vision, and latest-frame queue. Phone results pending; no fresh signing or release promotion claimed. Log:artifacts/reports/ordered_my_like_v17_20261011/phone_test_unlocked.log. Restore previous guarded-rollback release after diagnostics unless a separately validated deployment decision supersedes it.
+
+## 2026-10-11 — Ordered MY/LIKE experiment complete: 22/24 MY recovered, no measured control regression; not deployed
+
+Selectedexperimentalv3 usescurrentmodel, originaltimestamped same-hand orderedpinch/departure and positiveflat-chest/no-closureevidence. OnlyLIKEtop1/MYtop3 candidates relabelledlocallybeforedecode; modelMYneverdemoted, unknownpreservesmodel.0.5smaximumfuture, nextdecodedwordcapexcludingletters/MYLIKEfragments, confidence/gapcoverageguards. Exactphoneframe traceHELLO LIKE NAME→HELLO MY NAME;delayonlyunchanged;samecommit65.068050792.72nativephase/capturecases:OctoberfirstMY0→22/24correctlyfollowedbyNAME(oneLIKE,oneoldmissingMYremain),SeptemberMYFRIEND24/24exact,allHAVEsequencesand26/168reviewedcontactsunchanged.570cachedstreamingand59genuinecontrolhypothesesallunchanged(Citizen302/378across100classes,pair58/103,tune66/89;MY18/22,LIKE21/37exact).ExistingtwoLIKEclipscontainingMYremainerrors.7Python/Swiftcuefixturespass;notfullfeatureorphoneparity.
+
+Residualdiagnosis:shortMYexists, but pathgrowsMY→LIKE→LIKE+NAME→mergedNAMEbeforepublication. v4latchesidentity/skipssoft-extra;v5also retainsconfirmedcandidates. Bothfailthefocusedtworesidualcases;neitherfullysweptorpromoted. Cruciallytwo genuineLIKEclips also have transientpositiveMYcues (LIKE_5db52de4,LIKE_msasl_RMUydgQr9TE_5) withoutfinaloutputregressioninv3;forcingeverycue tocommitwouldnotbejustified. Earlierforgetting-onlyexplanationisincomplete:retainedcandidatescanstilllosetheglobalpath. Nextrepairneedsactualgesturecompletionandcommitboundaryvalidation together, withtheseLIKEcontrolsmandatory;donotclaimsimplecachefixsolvessilence.
+
+PhysicaliPhone13shared-appABBAcomparisoncompiled;Xcodecouldnotlaunchbecausephonelocked. Asyncunlockrequestsent, no replyduringwork;waitingtestcancelledwithoutresults. Sixbacked-upsourcefilesrestoredbyte-for-byte;Core/Models/Decoder/Engine/Stage3andPythonruntime matchpriorpins. Previousguardedrollbackrelease reinstalledsuccessfully(restore_install.json), noexperimentaldeployment. No model/training/source-datachanges orprotectedtestinference. Phoneaccuracy/latencyremainunmeasured. Report/source/results:artifacts/reports/ordered_my_like_v17_20261011/REPORT.txt;verificationpassesall18checks. v3sourceandbinariesrestoredasselectedexperiment;v1–v5failurespreserved. Nextsafeaction:unlockednormal-runtimephonecomparisonthenfreshMY/LIKEcapture;notanotherblanketoverrideormodelswap. Artifactindexregenerated;task-scopedgitdiffcheckpasses;fullcheckonlypre-existingapp_shell_v17.py:632whitespace. Nativev3probesrebuilt;noactiveexperimentworkers.
+
+## 2026-10-11 — Ordered v3 completes 72 phases; two MY failures expose transient confirmation and deferred closure
+
+All72nativecasescomplete: September30sentence24/24exact; firstOctoberMY22/24(upfrom0/24), oneLIKEandoneoriginalsilence; HAVEreviewedcores26/168unchanged.570cachedand59genuinecontrolsunchanged. Diagnosticphase0: internalpathMYat3.167s→LIKEat3.267→LIKE+NAMEat3.5→mergedNAMEat3.8. OrderedcuecorrectlyconfirmsMYat3.5butlocalrelabelisforgottenonnextstep, while normalsoft-boundaryhold permitslatermerge. BothremainingfailedscheduleshadpositiveMYconfirmationbeforefailure. This refines earlier “no candidate” hypothesis: the shortMYcandidateexistsbutdoesnotremaincommitted. Nextreport-localv4latchesconfirmedspanuntiltrim/resetandbypassesonlyextra soft-boundaryholdforconfirmedMY; ordinarylagretained. Fullregressionrerunrequired. Phonev3XCTestbuiltbutiOSlocked; asyncunlockrequestpending, no resultclaimed.
+
+## 2026-10-11 — Ordered rule v3 preserves all 570 cached and 59 genuine controls; normal phone comparison started
+
+Current-model one-way ordered LIKE→MY candidate refinement completes570/570cached replays with zerohypothesis changes (Citizen302/378exact across100classes,pair58/103,tune66/89); all59genuinecontrols also exactlyunchanged. Exactphonefirstmiss changesHELLO LIKE NAMEtoHELLO MY NAME; delayalone doesnotfixit. SevenorderedcuePython/Swiftfixturespass. September30nativevideo24/24schedulesremainexact; October24schedulescomplete but oneoriginalsilentMYschedule remainsmissing, underdiagnosticinspection. FullHAVEphasecheckstillrunning; notclaimingcompletionor100%MY.
+
+Temporaryphone test backed up currentDecoder,Core,Engine,Models,RunnerTests,AppDelegate withhashes; onlyDecoder/helper andRunnerTests changedforXCTest. ProductionbaselineDecoder exactlymatchestestedMaccontrolsource. Sharednormalappengine, residentEnglish, overlayVision, pacedcameraandlatestframegate exercised inoff/on/on/offorder onpairediPhone13. No shippingdecision; restoretesthooksaftermeasurement. No newtraining, officialtestinference, modelorinputdatachanges. Evidence:artifacts/reports/ordered_my_like_v17_20261011/{v3_validation_on.json,v3_genuine_on.json,v3_first_on.json,rule_tests.json,phone_source_before.json}.
+
+## 2026-10-11 — Ordered MY/LIKE confirmation implemented; first prototype failures isolated
+
+User authorized the ordered-motion experiment. Report-local Python/Swift rule measures original timestamped same-hand thumb/middle closure, chest-relative departure/scale, visible flat-palm support, confidence gaps and future coverage. Current model fixed; original production files untouched. Python sequence tests cover forward/reversed movement, missing frames and incomplete future. Exact phone trace off/delay-only remainHELLO LIKE NAME; cue-on givesHELLO MY NAME atsamecommit time. Initial two-way word-level override wrongly changesSeptember30MYtoLIKE and one genuineLIKE_msasl_RMUydgQr9TE_5toMY; rejected, snapshots preservedv1/v2. FalseLIKE clip visually inspected: pinch follows chest portion. Treating every decoded segment as nextword can truncate that motion (includes hiddenletter/sameword fragments); arbitrary sign windows cannot certify gesture completion.
+
+Revising to one-way LIKE→MY candidate-score refinement before decoding (so silentMY can be recovered), with original logits preserved in cache, onlyMYtop3 candidates eligible. ExistingMYneverdemoted. Next-boundary limit excludes hiddenletters and MY/LIKE fragments, lookahead .5s; unknown retains model decision. LIKE-only early-publication delay is a separate control. Full phase, genuineLIKE and all100class regressions required; no safe result or installation yet. Workspace:artifacts/reports/ordered_my_like_v17_20261011/. Initial systemPython NumPy inspection failed; rerun with requiredvenv. InitialOpenCV contact-sheet seek incomplete; ffmpeg extraction succeeded.
+
+## 2026-10-11 — User proposes ordered MY/LIKE motion confirmation; earlier sweep scope clarified
+
+User asks whether chest contact followed by LIKE pinch/outward motion can confirm LIKE, while a completed flat-palm contact without pinch supports MY. Code audit: previous geometry_probe.py summarizes thumb-middle distance using percentiles/range and wrist motion using maximum pairwise distance within already selected, resampled candidate windows. The14,400-rule sweep is therefore not a test of ordered chest→pinch→outward completion across the full gesture. Its falseMY findings still prohibit claiming simple no-pinch overrides are safe. Current production decoder has no explicit MY/LIKE pinch-completion gate. Existing evidence establishes model/window sensitivity, not proof of exactly which distinguishing frames are missing in every failure.
+
+Proposed experiment: same-hand, confidence-aware ordered motion confirmation on original timestamped frames, with a bounded pending MY/LIKE decision and separation from the following NAME/FRIEND gesture. Positive MY posture evidence plus a sufficiently observed completed gesture is required; missing/occluded pinch frames are not evidence of no pinch. Keep current model fixed, test genuineLIKE and MY→NAME/MY→FRIEND plus full-class/latency controls. No implementation, training, inference or installation in this discussion. Scope distinction supported by artifacts/reports/my_have_joint_experiment_v17_20261011/geometry_probe.py and sweep_geometry_motion.py. ASL form reference: https://www.lifeprint.com/asl101/pages-signs/l/like.htm (thumb-middle closure while moving away; literal chest contact need not occur in every LIKE variant).
 
 ## 2026-10-11 — Full temporal repair experiment complete; no safe MY/HAVE replacement
 
@@ -265,6 +319,21 @@ alone changes3 trueLIKE clips toMY. A final dual check (oldmodelMY plus static o
 geometry, currentLIKE/MYtop3, span>=6frames) recovers exactfirstMY in native replay; whole
 engine and59local MY/LIKEvalidation videos are running. This is a development experiment,
 not an accepted fix or deployment. No protected test, production change, or training.
+
+
+## 2026-10-11 — Joint experiment interim: rollback and ordered identity restore mode timing
+
+Report-local native runs: pre-contact rollback with one-way geometry+roll restores take03
+MY around9.2s but exact first word-mode miss remainsLIKE; HAVE counts fall from10/9/9 to
+5/8/4 (take11/09:55/10:06). Ordered-publication candidate restores oldNAME5.267–9.267s
+and retains all three current HAVE hypotheses; first exactMY stillLIKE. Both revive a
+preexisting duplicateNAME. Found a separate timestamp bug: same-word merge extends
+endFrame without endSeconds; NAME mode replays already consumed tail. Testing a consistent
+end timestamp report-locally. Ordinary earlyMY allowance does not fix first miss: only one
+3-frameMY.649 decoder candidate beforeLIKE; stable3/min4 guards cannot accept it.
+576 direct open-palm/pinch geometry rules tested against currentLIKE predictions across
+3959 isolated validation clips; every rule matching first miss harms genuineLIKE (at least3).
+Phone intent for other LIKE contacts remains unknown. No source/model installation changes.
 
 
 ## 2026-10-11 — MY/HAVE joint experiments authorized; MY takes priority

@@ -1,8 +1,16 @@
 # live-streaming — high
 
+## 2026-10-11 — User-authorized175ms Release now deployed
+
+User authorized installation after the measured phone result and disclosed remaining failures. The cleaned175ms orderedMY/LIKErule is installed/launched on iPhone13, same model/HAVEguards; previousbuildretained. This supersedes the historical not-deployed/fresh-capture-before-promotion wording below. Fresh signing is still unmeasured and is the next check, not a completed accuracy claim. Do not replace this deployment with the failed150msvariant or force transientMYcues tocommit. Deployment evidence:artifacts/reports/ordered_my_like_v17_20261011/deployment/REPORT.txt.
+
 ## 2026-10-11 — Phone follow-up supersedes the earlier locked-device status
 
 After unlock, the150ms ordered rule failed0/2candidatephonepasses because166.7ms reliable-landmark gaps caused unknown. Changing only that limit to175ms succeeds2/2MY NAME versus0/2controls, with570cached/59genuineoutputs unchanged and72phasechecks complete. Ninecuefixturespass. The two unresolved desktopcommit/window failures remain, so the caution against forcing transientMYcues below still applies. Candidatewasnotpromoted:priorreleaseandsources restored. RequirefreshliveMY/LIKEevaluation forreleasepromotion; these areknown-video replays. Evidence:artifacts/reports/ordered_my_like_v17_20261011/gap175/REPORT.txt.
+
+## 2026-10-11 — Ordered motion must establish completion before irrevocable MY publication
+
+Ordered MY/LIKE v3 improves the reviewed October MY from0/24to22/24sampling schedules with570cached/59genuinehypotheses unchanged, but two trueLIKEclips themselves produce transientpositiveMYcues before their finalLIKEdecision. A temporary flat-chest/no-pinch window is not proof the whole gesture ended. Do not force such cues tocommit, or claim retainingcandidateidentity/window fixes silence: both focused variants failed. Residualpath can absorb MY into NAME beforepublication. Rule-level fixtures and nativeMac replays are notnormalphonevalidation; orderedexperimentphoneXCTestneverranbecauseiOSlocked. Previousguardedrollbackrelease restored. Evidence:artifacts/reports/ordered_my_like_v17_20261011/REPORT.txt.
 
 ## 2026-10-11 — Temporal head adaptation is not a validated MY/HAVE repair
 

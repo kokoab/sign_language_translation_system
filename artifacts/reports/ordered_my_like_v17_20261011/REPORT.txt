@@ -1,0 +1,59 @@
+DEPLOYMENT UPDATE — User authorized installation; the cleaned175ms normal Release is now installed and launched on iPhone13. This supersedes the historical “not installed/restored previous release” status below. See deployment/REPORT.txt for signed-build, parity, source and device verification. Known limitations remain.
+
+PHONE FOLLOW-UP COMPLETE — this supersedes the initial blocked-phone status below.
+After the user unlocked the iPhone, v3 failed both candidate passes: a 166.7ms gap in reliable finger landmarks exceeded its 150ms guard. A separately tested 175ms version produced MY NAME in both candidate passes, versus LIKE NAME in both controls. All 570 cached and 59 genuine hypotheses remain unchanged; all 72 native phase cases complete with the same 22/24 October MY result, 24/24 September sentence and unchanged HAVE outputs. Nine cue fixtures pass. Median phone processing stayed about 28ms/frame; all runs had nominal thermal state. These are known-video development replays, not fresh signing accuracy. The previous app release and source files have been restored; no experimental daily-use release is installed. See gap175/REPORT.txt, gap175/summary.json and gap175/verification.json for current results. The remainder records the initial v3 experiment and its history.
+
+Ordered MY/LIKE motion confirmation — 2026-10-11
+
+RESULT
+Implemented and tested the user's ordered-motion idea with the installed recognizer fixed. The best experimental version (v3) corrects the reviewed October MY in 22/24 source-video sampling schedules, versus 0/24 for the installed runtime. The actual saved phone frame trace changes HELLO LIKE NAME to HELLO MY NAME. This is a useful measured improvement, not a complete fix or independent phone accuracy result. Two schedules remain wrong: one LIKE and one missing MY. No new model trained. No experimental release promoted.
+
+MEASURED COMPARISON
+- Exact saved phone trace: off HELLO LIKE NAME; delay-only HELLO LIKE NAME; motion-on HELLO MY NAME. Same final commit timestamp 65.068050792. Thus waiting alone does not explain the correction.
+- October first MY → NAME: baseline 0/24, v3 22/24 correctly followed by NAME. Remaining cases: oct11_offset0.00000000_phase0 is silent; oct11_offset0.03333333_phase0 remains LIKE. These are 24 correlated schedules of one known recording, not 24 independent signs or signers.
+- September30 HELLO MY FRIEND I FEEL EXCITED: 24/24 exact before and after.
+- HAVE take11: all 24 complete output sequences unchanged. Reviewed HAVE→BIG interiors remain 26/168, including the incumbent's known missing/merged HAVEs. This experiment does not repair HAVE.
+- 570 cached streaming checks: zero changed hypotheses. Citizen validation 302/378 exact across all 100 classes; pair validation 58/103; tuning 66/89. These overlapping development/retention pools must not be added into an accuracy denominator.
+- 59 genuine source-video controls: zero changed hypotheses. MY 18/22 exact, 4 silent. LIKE 21/37 exact, 12 silent; 23 contain LIKE and 2 already contain MY. These pre-existing errors remain; “unchanged” does not mean every genuine LIKE is correct.
+- Seven ordered-cue fixtures pass Python/Swift assessment parity. They cover order reversal, tracking gaps, insufficient future, next-word exclusion and the actual phone cue. This is cue-level parity on supplied features, not end-to-end feature-extraction or phone parity.
+
+WHAT THE RULE ACTUALLY DOES
+Use original timestamps and same-hand landmarks. Detect positive flat-palm/chest evidence; examine thumb-to-middle closure plus chest-relative hand departure or apparent hand-size growth. A closure blocks MY even when departure cannot be confirmed. Missing landmarks, gaps, ambiguous posture or incomplete future return unknown and preserve the model.
+
+Only an existing candidate whose top word is LIKE and whose top three include MY can be locally relabelled MY. Original cached model scores remain intact; the local MY/LIKE scores are exchanged before decoding. Existing model MY is never changed into LIKE. These relabelled scores are heuristic evidence, not newly calibrated MY probabilities. LIKE early publication is withheld while bounded future evidence is gathered. Maximum lookahead is 0.5 seconds, cut before a decoded next word; hidden letters and MY/LIKE fragments do not count as that next word. The shoulder cache is limited to 1.5 seconds, respecting sparse auxiliary observations.
+
+This is deliberately not “no visible pinch always means MY.” Two-dimensional departure/scale is a proxy for motion away from the body, and decoded word boundaries are fallible. A longer true LIKE can have a temporary flat-chest portion. The control set itself demonstrates why absence over an arbitrary short window cannot prove the whole sign has ended.
+
+FAILURES INVESTIGATED, NOT HIDDEN
+v1: two-way, word-level override fixes the exact trace but incorrectly changes a September MY into LIKE and a genuine LIKE into MY. Rejected.
+v2: one-way word-level rule still changes LIKE_msasl_RMUydgQr9TE_5 into MY. Visual review shows its pinch occurs after the initially selected chest portion; treating every decoded fragment as the next sign truncates the evidence.
+v3: next-word handling and longer lookahead preserve all 59 genuine final outputs and all 570 cached outputs; candidate-stage correction fixes 22/24 October schedules.
+v4: remember confirmed candidate identity and skip its extra soft-boundary hold. Both residual schedules still fail.
+v5: additionally retain confirmed span proposals until trim/reset. Both residual schedules still fail. Retaining a candidate does not force the decoder to select it. These two variants were stopped after the focused two-case failure; no full regression or safety claim is made for them.
+
+WHY THE REMAINING MY DISAPPEARS
+The phase0 diagnostic contains a correct short MY candidate. At available time 3.167s the decoded path is MY at 2.767–2.867s. At 3.267s it becomes LIKE; at 3.5s the path is LIKE 2.8–3.0s followed by NAME 3.1–3.2s, and the motion rule correctly supplies MY evidence. At 3.8s the model/decoder instead selects a longer NAME window beginning at 2.8s. Normal publication delay means the short MY has not been committed before that replacement. This is an observed interaction between candidate windows, path selection and commitment; it is not evidence of a new model change in this experiment.
+
+Both residual failures had temporary positive MY cues. However, so did two true LIKE control clips (LIKE_5db52de4 and LIKE_msasl_RMUydgQr9TE_5); their eventual outputs remain correct under v3. Therefore forcing every transient confirmation to commit is not justified by these results. A safe completion rule must distinguish an actual following gesture from the unfinished portion of LIKE, then protect that completed MY boundary. Simply retaining candidates, increasing their weight or committing early is not established as safe.
+
+PHONE STATUS
+The v3 diagnostic iPhone build compiled successfully. A four-pass off/on/on/off comparison was prepared using the normal shared app engine, resident English model, overlay Vision, paced video and the latest-frame queue. Xcode reports the paired iPhone13 is locked and cannot launch RunnerTests. The user was asked to unlock it. There are no results from this phone comparison; do not describe the Mac replay as a successful phone test. The waiting test was cancelled without execution. All six backed-up app/test sources were restored byte-for-byte; five production Swift files and the Python runtime also match prior source pins. The previously installed guarded-rollback release was reinstalled successfully to ensure no diagnostic binary remains. See phone_test.log, phone_source_restored.json, restore_install.json and verification.json.
+
+DECISION AND NEXT SAFE ACTION
+Keep v3 as the measured experimental candidate; do not promote v4/v5 or claim all MY/HAVE failures are fixed. No retraining or model rollback is justified by this motion experiment. Resume the normal-runtime phone comparison after unlock, then assess a fresh MY/LIKE recording with MY NAME, MY FRIEND and deliberately completed LIKE before deployment. To address the two remaining development failures, investigate actual gesture completion and commitment together, retaining the two genuine LIKE clips as mandatory negative controls.
+
+REPRODUCIBILITY / ARTIFACTS
+summary.json: per-pool metrics, phase outcomes and changed complete hypotheses.
+v3_phase_on.json, v3_validation_on.json, v3_genuine_on.json, v3_first_on.json: final selected experimental results.
+first_off.json / first_delay.json: exact-trace controls.
+v3/: source snapshot of the selected version; prepare_native.py rebuilds it.
+LiveMyLikeMotion.swift / ordered_rule.py / rule_tests.json: ordered cue implementations and fixtures.
+silence_audit.json / silence_summary.json: residual missing-word path evidence.
+v4/, v5/ and *_remaining_on.json: preserved failed variants and focused results.
+final_policy.json: scope and current decision.
+phone_source_before.json / phone_backup / PhoneTest.swift: phone test and restoration inputs.
+
+Official Citizen test and protected lab test were not rerun. Source recordings, model packages, training data and Python production decoder were not changed. See verification.json for source restoration and count checks.
+
+FINAL VERIFICATION
+All 18 result/source checks passed. Selected v3 native probes rebuilt successfully. Artifact size index regenerated. Task-scoped git diff --check passes; the full worktree check reports only the pre-existing scripts/app_shell_v17.py:632 trailing whitespace. No experiment worker or phone test is left running.

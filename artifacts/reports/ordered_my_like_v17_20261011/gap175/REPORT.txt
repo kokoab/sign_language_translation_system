@@ -1,0 +1,40 @@
+DEPLOYMENT UPDATE — User authorized installation; the cleaned175ms normal Release is now installed and launched on iPhone13. This supersedes the historical “not installed/restored previous release” status below. See ../deployment/REPORT.txt for signed-build, parity, source and device verification. Known limitations remain.
+
+Real-iPhone ordered MY/LIKE follow-up — 2026-10-11
+
+The adjusted motion rule fixes the reviewed first MY → NAME in both real-iPhone candidate passes. Both matched control passes still say LIKE → NAME. It uses the same installed model. The experimental build has been removed and the previous guarded-rollback release restored; this is a tested candidate, not a daily-use deployment or a complete MY/HAVE fix.
+
+WHY THE FIRST PHONE TEST FAILED
+The original 150ms version failed both candidate passes. At the first MY, reliable thumb/middle evidence jumped from 2.9s to 3.0667s, a 166.7ms gap. Frames at 2.9667s and 3.0333s were processed, but their landmarks did not meet the cue's confidence requirements. The rule therefore correctly followed its configured uncertainty policy and retained LIKE. A control pass that happened to include reliable evidence at 3.0s had only a 100ms gap and would have accepted MY. The difference is observable in phone_gap_diagnostic.json, not inferred from model replacement or temperature.
+
+BOUNDED FOLLOW-UP
+Changed only the maximum reliable-landmark gap from 150ms to 175ms. Original timestamps, positive flat-chest evidence, ordered pinch/departure check, next-word boundary, MY-top-three restriction, one-way correction, and unknown-preserves-model policy remain unchanged. This tolerance was chosen using this known failure, so the follow-up is development evidence, not independent validation. It is still not safe to interpret a long occlusion as absence of LIKE's pinch.
+
+NORMAL-RUNTIME PHONE RESULTS
+Four full 57.335-second passes, off/on/on/off order, on the paired iPhone13. The ordinary shared engine, resident English model, overlay Vision and latest-frame queue ran. One XCTest completed all four passes in 241.531 seconds.
+
+Pass  Rule       Reviewed first sign / next word   Median compute   P90 compute
+0     off        LIKE NAME                        27.71 ms         47.61 ms
+1     175ms on   MY NAME                          27.96 ms         46.21 ms
+2     175ms on   MY NAME                          27.62 ms         48.28 ms
+3     off        LIKE NAME                        28.36 ms         47.97 ms
+
+All passes had nominal thermal state before and after. Sampled peak footprint was at most 268.7 MiB (candidate passes about 262 MiB). The reviewed word was published about 700ms after its selected span ended in both arms. These diagnostic measurements show no evident median slowdown in these runs; they do not establish sustained device-wide performance or guarantee every frame fits the processing budget. Scheduling differs naturally between runs. The later mixed MY/LIKE repetitions remain unlabelled and are not counted as correctness evidence.
+
+REGRESSION AND REMAINING LIMITS
+All 570 cached streaming hypotheses are unchanged: Citizen 302/378 exact across 100 classes, pair 58/103, tuning 66/89. All 59 genuine MY/LIKE control hypotheses are unchanged, including their existing errors. Nine Python/Swift cue-level fixtures pass, including both newly observed phone cases.
+
+The full 72 source-video sampling replays preserve September's MY FRIEND in all 24 schedules and all HAVE output sequences. The original two October sampling failures remain: one first MY becomes LIKE and one is absorbed into NAME. These are the unresolved commitment/window-selection failures documented in the parent report. The rule's overall development-schedule result remains 22/24, versus 0/24 for the original runtime. No claim that all MY, LIKE or HAVE failures are fixed.
+
+No classifier training, model replacement, source-data changes, official Citizen test or protected lab test inference. Six temporarily touched/backed-up app/test sources were restored and prior production Swift/Python source pins verified. restore_install.json records successful restoration of the previous release.
+
+NEXT ACTION
+The 175ms candidate is the useful version for a fresh live signing evaluation of MY NAME, MY FRIEND and completed LIKE. Keep the genuine LIKE controls when addressing the separate missing-MY commitment problem; do not force every transient MY cue to commit. No additional installation was performed beyond restoring the previous release after diagnostics.
+
+EVIDENCE
+summary.json and verification.json: final counts, changed hypotheses and checks.
+phone_summary.json / phone_{off_0,on_1,on_2,off_3}.json: phone outputs, feature decisions and timings.
+phone_test.log: successful device XCTest.
+phase_on.json / validation_on.json / genuine_on.json: complete regression outputs.
+LiveMyLikeMotion.swift / ordered_rule.py / native/: exact 175ms candidate sources.
+phone_source_restored.json / restore_install.json: cleanup and prior-release restoration.
