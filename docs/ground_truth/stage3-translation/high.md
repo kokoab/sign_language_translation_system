@@ -7,6 +7,21 @@ stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
 ---
 
+## 2026-10-11 — Word coverage and repeated sentence agreement do not establish fidelity
+
+The all100class shared-meaning audit reproduced120/120accepted semantic corruptions in the
+legacy lexical checker(role/owner/tense/negation-scope swaps). Retain role/clause-sensitive
+counterfactual controls in future Stage3 evaluation; a corrected alias list alone is insufficient.
+I/ME canonicalization is distinct from possessiveI/MY; exact raw sign IDs must stay preserved.
+Do not label ambiguous same-input alternatives as a unique target, or infer visual FOOD coverage
+from admitting the English wordfood. No new alias policy was promoted by this diagnostic.
+
+Native323historical controls reproduce known locking behavior.180activate locks;57text changes
+include context loss(them→her) and dropped content. Text/count self-consistency is not semantic
+fidelity. Main765short incremental probes had no locks: always include controls with actual
+locks before claiming incremental safety. Report:stage3_shared_meanings_v17_20261011/REPORT.md.
+No production/model change, training, protected visual test or independent ASLaccuracy claim.
+
 ## 2026-09-29 — user decisions: multi-sentence, <1 s, flan-t5-base, incremental, DeepSeek data
 
 Requirements: a Finish may hold multiple sentences; translation must complete in under one second

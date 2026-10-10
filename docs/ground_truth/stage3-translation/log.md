@@ -7,6 +7,93 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-11 — Full-vocabulary shared-meaning experiment complete; production unchanged
+
+User requested the full sweep and report. Native current-production Swift + phone-matching
+CoreML resources ran1,188cases:865main diagnostic/phone cases(772distinct gloss sequences,
+213current-train exact matches), plus323historical locking/parity controls. Main suite covers
+all100classes in isolation/context/wrapped, roles, ownership, noun/verb senses, time/negation
+scope, questions, alternate orders, confidence and incomplete inputs.26saved real phone
+Finish inputs included; no new visual inference or protected Citizen/phrase test. No training,
+API spending or app installation. Source/model/corpus hashes verified unchanged; corpus hash
+matches training recipe. Report: artifacts/reports/stage3_shared_meanings_v17_20261011/REPORT.md.
+
+All52,961current training rows scanned:food0,meal33,job0,winter0,beverage0,assistance0 English
+row exposures. EAT admission omitsfood; model MY EAT WHERE→Where is my eat?; DRINK COLD→The
+drink is cold. I raw CitizenME→canonicalI; EAT rawEAT1. English alias coverage is not proof of
+visual variant coverage. Exact role-form checks78/80(SVO) and40/40(GIVE);36/36ordinary owner
+retention; alternate/topic participant sets31/40;2/15non-EAT postposed ownership losses.
+These are narrow diagnostic counts, NOT ASL accuracy. Past→future scope fails8/16; reverse
+0/16;15simple and12two-clause negation probes retain tested negation/scope. IsolatedI→Is it
+here?, TALK→Ask. Intentional ambiguous probes are not assigned a unique reference.
+
+Evaluator corruption controls:80role-swaps+18owner-swaps+16tense-swaps+6negation-scope-swaps
+ALL accepted, as are faithful counterparts.59additional lexical/role controls; local alias-only
+ablation fixes lexical admission but leaves semantic corruptions accepted. Four constructed
+same-input/different-meaning cases prove missing referent/nonmanual/context information cannot
+be recovered uniquely. These are offline checks; runtime has no equivalent semantic rejection.
+
+Main765incremental cases have zero locks and equalfull outputs; added323known controls to
+exercise locking. All323full/incremental outputs and lock counts equal saved expectations;
+180activate locks,57have full-vs-incremental differences(not all errors). Concrete harmful
+casegen034 loses FAMILY/THEY context and changes see them→see her;gen225dropsDOCTOR;
+gen275losesSLEEP/negation meaning after premature partial lock. Existing behavior, not HAVEfix.
+
+Artifacts: source/input hashes, initial/extended/phone/locking cases+rawJSONL, all100classCSV,
+resultsCSV, summary/final_summaryJSON, runnablebuild/analysis/ablation/verification scripts.
+verify.py PASSES all evidence invariants. Artifact scripts parse; scoped diff-check clean. Full diff-check
+reports only pre-existing scripts/app_shell_v17.py:632 whitespace; preserved. Large-artifact
+index regenerated. Setup fixes: manifest lives in Runner/, notModels/;
+summary must distinguish incremental=false from actual output; baseDIFFERENT stem false-positive
+excluded using evaluator's patched map. COLD illness candidate explicitly rejected after source
+check; metadata corrected without changing tested inputs. No production source/model/data edits.
+Next proposed work: version100class semantic contracts; role/scope-aware evaluation; bounded
+reviewed Stage3 data repair; context-preserving incremental generation with phone latency gate;
+separate exact-form visual coverage when required. No claim this experiment fixed live behavior.
+
+## 2026-10-11 — Full-vocabulary shared-meaning experiment launched
+
+User authorized a whole-vocabulary experiment and report. Prepared555 text diagnostic cases:
+100isolated,100context,100wrapped,80roles,36possession,21time,15negation,50meaning,
+30confidence,8multisentence,15ambiguous. All100 labels covered.178cases exactly overlap
+current training sequences, so this is a diagnostic sweep, not held-out accuracy. Added
+15legacy-validator controls and streamed all52,961current train rows for label/word exposure.
+Corpus SHA matches training recipe. CoreML package files/token table match phone source
+resources; native harness compiles current production Swift and exercises both full-Finish
+and actual LiveIncrementalTranslator paths. No training, API spending, protected test or
+installation. Initial identity check found manifest in Runner/, not Models/; corrected path.
+Evidence and runnable scripts: artifacts/reports/stage3_shared_meanings_v17_20261011/.
+Next: review complete outputs, audit all-class lexical contracts, contrast supported aliases
+with ambiguity and different sign forms, then write measured report and recommendations.
+
+## 2026-10-11 — Shared-meaning audit and proposed plan; no runtime change
+
+User requested understanding and a proposal for EAT/FOOD, I/ME and related distinctions.
+Bundled live_reel_labels.json has I, MY and EAT, no separate ME/FOOD. Bundled
+stage3_tokens.json identifies stage3_multisentence_tiny_v17_20260929, counted sentences,
+model utterance segmentation, phrase overrides disabled. LiveReelStage3 receives glosses
+and confidence buckets, not raw movement or spatial-role evidence; incremental locking
+must be tested alongside full-Finish rendering. This is the installed model identity,
+not the older composition-v2 identity in superseded project entries.
+
+Concrete data/evaluation issue: active/v17/asl_corpus_v17.py GLOSS_LEMMAS['EAT'] allows
+eat/ate/eaten/eating/meal but omits food; I allows i/me/my/mine. The multisentence evaluator
+imports this map, tests lexical presence rather than participant roles, and FUNCTION_WORDS
+allows me/him/her/them/us without corresponding role evidence. These checks can reject a
+valid FOOD rendering or miss meaning-changing pronoun errors. No model probe was run;
+actual installed-model success/failure on contrast cases remains unmeasured.
+
+Proposed next work: audit shared meanings against exact sign identities; freeze a small
+contrast/ambiguity diagnostic set; probe bundled Stage3 directly and incrementally; separate
+visual coverage, lost evidence, corpus admission and rendering failures; only then make
+bounded contract/data/model corrections. Keep original class IDs and raw dataset labels;
+do not assume an EAT-trained classifier covers all FOOD variants. Identical inputs with
+multiple valid meanings need accepted alternatives/uncertainty, not conflicting hard targets.
+This is a proposal, not authorization for training, API spending or deployment. No code,
+models or datasets changed. Linguistic references consulted in preceding discussion:
+https://www.lifeprint.com/asl101/pages-signs/f/food.htm and
+https://www.lifeprint.com/asl101/pages-signs/m/me.htm.
+
 ## 2026-09-29 — multi-sentence tiny model + incremental translation installed on iPhone 13
 
 User approved incremental integration with run 2. Swift: counted-output parsing,
