@@ -1,3 +1,7 @@
+## 2026-10-11 — Old isolated replay cache still includes excluded SemLex validation duplicates
+
+Temporal repair experiment audited all1388SemLex train/978cachedvalidation raw SHA256 values.25cachedvalidation videos are byte-identical to train recordings. This matches September22finalized exclusions; finalized source manifest already admits1388train/953validation. Prior per-training-run raw cache was not reconciled to that final validation membership. New temporal run filters by finalized membership, preserves1388train roles and953validation roles, keeps original files/caches untouched. Do not interpret old978-row retention results as independent source-disjoint evaluation. Evidence: artifacts/reports/temporal_repair_training_v17_20261011/isolated_role_check.json, replay_source_hashes.json, isolated_overlap_sources.json. Training has not yet started at this audit entry.
+
 # data-sources — log
 
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —

@@ -1,5 +1,12 @@
 # data-sources — high
 
+## 2026-10-11 — Replay caches must respect finalized source membership
+
+The old SemLex raw replay cache includes978validation rows,25of which duplicate train
+raw SHA256. Finalized admission is1388train/953validation. Filter stale caches to that
+manifest; merely pinning old cache bytes does not establish current admission. Preserve
+original source roles and files. See temporal_repair_training_v17_20261011/isolated_role_check.json.
+
 Dated evidence for constraints that still bind. The constraints themselves are
 stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
