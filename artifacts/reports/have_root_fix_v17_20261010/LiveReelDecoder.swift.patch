@@ -1,0 +1,158 @@
+--- before/LiveReelDecoder.swift
++++ /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelDecoder.swift
+@@ -71,6 +71,8 @@
+     var innerFloor: Float? = nil
+     /// HAVE vs ANGRY handshape check (LivePairCheck); word decoders only.
+     var haveAngryCheck = false
++    /// Preserve accepted HAVE contact evidence until its completed transition.
++    var haveContactClosure = false
+     /// TIRED is only accepted when the bent hands roll down on the chest: top word TIRED, HAVE in the top 3 and
+     /// fingertip droop below this (hand sizes) -> HAVE. nil: off. (segmental_runtime_v17.tired_rescue)
+     var tiredRescueDroop: Double? = nil
+@@ -90,7 +92,7 @@
+     /// Commit threshold 0.4 with the fragment+reject recognizer (tiny sign pieces trained to a flat output):
+     /// Citizen val exact 286 -> 307, extra 54 -> 32, tuning WER 15.5 -> 15.0% (go_split_root_cause_v17_20261009).
+     static let v3Words: LiveDecoderConfig = {
+-        var c = LiveDecoderConfig(); c.maxInnerO = 8; c.innerFloor = 0.5; c.lag = 6; c.haveAngryCheck = true; c.logTheta = log(0.4); c.tiredRescueDroop = 1.0; return c
++        var c = LiveDecoderConfig(); c.maxInnerO = 8; c.innerFloor = 0.5; c.lag = 6; c.haveAngryCheck = true; c.logTheta = log(0.4); c.tiredRescueDroop = 1.0; c.haveContactClosure = true; return c
+     }()
+ }
+ 
+@@ -122,12 +124,40 @@
+         return out.isEmpty ? nil : out.reduce(0, +) / Double(out.count)
+     }
+ 
+-    static func apply(_ word: [Float], tired: Int, have: Int, raw: [[Float]], threshold: Double) -> [Float] {
++    static func apply(_ word: [Float], tired: Int, have: Int, raw: [[Float]], threshold: Double, merge: Bool = false) -> [Float] {
+         let order = word.indices.sorted { word[$0] > word[$1] }
+         guard order.first == tired, order.prefix(3).contains(have), let d = droop(raw), d < threshold else { return word }
+         var out = word
+-        out.swapAt(tired, have)
++        if merge {
++            let hi = max(word[tired], word[have])
++            out[have] = hi + log(exp(word[tired] - hi) + exp(word[have] - hi))
++            out[tired] = -1e9
++        } else {
++            out.swapAt(tired, have)
++        }
+         return out
++    }
++}
++
++enum LiveHaveContact {
++    static func supported(_ raw: [[Float]], start: Int) -> Bool {
++        let core = Array(raw[start...])
++        guard core.count >= 2 else { return false }
++        let changed = (1..<core.count).contains { t in
++            (0..<42).contains { j in abs(core[t][j*5]-core[t-1][j*5]) >= 1e-6 || abs(core[t][j*5+1]-core[t-1][j*5+1]) >= 1e-6 }
++        }
++        guard changed else { return false }
++        func median(_ a: [Double]) -> Double { let b=a.sorted(); let n=b.count; return n%2 == 1 ? b[n/2] : (b[n/2-1]+b[n/2])/2 }
++        var rises: [Double] = []
++        for st in [0,21] {
++            let before = raw[...start].filter { $0[st*5+4]>=0.3 && $0[(st+9)*5+4]>=0.3 }
++            let after = core.filter { $0[st*5+4]>=0.3 && $0[(st+9)*5+4]>=0.3 }
++            guard before.count>=2, after.count>=2 else { continue }
++            let size = median(after.map { f in hypot(Double(f[(st+9)*5]-f[st*5]), Double(f[(st+9)*5+1]-f[st*5+1])) })
++            guard size>=1e-3 else { continue }
++            rises.append((median(before.prefix(3).map { Double($0[st*5+1]) })-median(after.suffix(3).map { Double($0[st*5+1]) }))/size)
++        }
++        return !(rises.count == 2 && rises.max()! < -0.5)
+     }
+ }
+ 
+@@ -589,7 +619,7 @@
+                 let word = Array(l[..<wordCount])
+                 guard word.indices.max(by: { word[$0] < word[$1] }) == tired else { return l }
+                 let raw = spanObs(key.s, key.e).map { LiveFeatures.raw(obs[$0]) }
+-                return LiveTiredRescue.apply(word, tired: tired, have: have, raw: raw, threshold: threshold) + Array(l[wordCount...])
++                return LiveTiredRescue.apply(word, tired: tired, have: have, raw: raw, threshold: threshold, merge: config.haveContactClosure && contactCore(key.s, key.e)) + Array(l[wordCount...])
+             }
+         }
+         for (key, row) in zip(keys, logits) { shared.values[key] = .some(row) }
+@@ -681,16 +711,69 @@
+                  endSeconds: seconds(end), commitSeconds: seconds(T), score: exp(logQ), early: early)
+     }
+ 
++    private func contactCore(_ s: Int, _ e: Int) -> Bool {
++        let begin = max(off, s-6)
++        let raw = (begin...e).map { LiveFeatures.raw(obs[$0-off]) }
++        return LiveHaveContact.supported(raw, start: s-begin)
++    }
++
++    /// Keep a completed contact from being absorbed into its exit or the next BIG.
++    /// An earlier open word retains ownership; do not reinterpret its ending as HAVE.
++    private func closeHaveContacts(_ candidates: [SpanKey], known: Int) -> [SpanKey] {
++        guard let h = labels.firstIndex(of: "HAVE") else { return candidates }
++        var spans = candidates
++        let origin = self.origin
++        // A contact sign can finish before its transition is classified as the next sign.
++        // Carry accepted core evidence only to the first two-frame rest boundary.
++        let rest = bio.map { exp($0[O]) + exp($0[UNK]) + exp($0[B]) }
++        var closures: [(SpanKey, [Float])] = []
++        for (key, value) in scores.sorted(by: { $0.key < $1.key }) {
++            if shownEarly.contains(where: { $0.0 <= key.e && $0.1.gloss != "HAVE" && !$0.1.closed }) { continue }
++            guard let row = value, key.s >= origin, key.e <= known,
++                  row.indices.max(by: { row[$0] < row[$1] }) == h,
++                  LiveSegmental.logSoftmax(row)[h] >= config.logTheta else { continue }
++            guard contactCore(key.s, key.e) else { continue }
++            let limit = min(known - 1, key.s + 29)
++            if key.e + 1 > limit { continue }
++            guard let gap = (key.e + 1...limit).first(where: { rest[$0-bioOff] >= 0.5 && rest[$0+1-bioOff] >= 0.5 }) else { continue }
++            // The supporting core must still be in this active run.
++            if key.s < gap-1 && (key.s..<gap-1).contains(where: { rest[$0-bioOff] >= 0.5 && rest[$0+1-bioOff] >= 0.5 }) { continue }
++            closures.append((SpanKey(key.s, gap-1), row))
++
++        }
++        for (key,row) in closures {
++            spans.removeAll { span in
++                guard span.s <= key.e, span.e >= key.s else { return false }
++                guard span.e <= key.e, let value = scores[span] ?? nil else { return true }
++                return value.indices.max(by: { value[$0] < value[$1] }) != h
++            }
++            if let old = scores[key] ?? nil, LiveSegmental.logSoftmax(old)[h] > LiveSegmental.logSoftmax(row)[h] { continue }
++            scores[key] = .some(row)
++            spans.append(key)
++        }
++        spans = Array(Set(spans)).sorted()
++        return spans
++    }
++
+     private func step(final: Bool) throws -> [LiveWord] {
+         let T = count - 1
+         let known = bioOff + bio.count - 1
+         if known < origin || bio.isEmpty { return [] }
+         let origin = self.origin
+         let sub = Array(bio[(origin - bioOff)...(known - bioOff)])
+-        let spans = LiveSegmental.bothSpans(sub, minLen: config.minSpanFrames, maxInnerO: config.maxInnerO).map { SpanKey($0.s + origin, $0.e + origin) }
++        var spans = LiveSegmental.bothSpans(sub, minLen: config.minSpanFrames, maxInnerO: config.maxInnerO).map { SpanKey($0.s + origin, $0.e + origin) }
+             .filter { final || $0.e + config.contextFrames <= T }
++        if config.haveContactClosure, let h = labels.firstIndex(of: "HAVE") {
++            let retained = scores.keys.filter { key in
++                guard key.s >= origin, key.e <= known, let row = scores[key] ?? nil else { return false }
++                return row.indices.max(by: { row[$0] < row[$1] }) == h
++                    && LiveSegmental.logSoftmax(row)[h] >= config.logTheta
++            }
++            spans = Array(Set(spans).union(retained)).sorted()
++        }
+         let missing = spans.filter { scores[$0] == nil }
+         if !missing.isEmpty { try score(missing) }
++        if config.haveContactClosure { spans = closeHaveContacts(spans, known: known) }
+         var local: [SpanKey: [Float]] = [:]
+         for span in spans { if case .some(.some(let row)) = scores[span] { local[SpanKey(span.s - origin, span.e - origin)] = row } }
+         let localSpans = spans.map { SpanKey($0.s - origin, $0.e - origin) }
+@@ -713,8 +796,13 @@
+         let gap = config.duplicateGap
+         if config.earlyK > 0 && !final {
+             var next: [Int: (String, Int)] = [:]
+-            for g in segs {
++            for (index, g) in segs.enumerated() {
+                 guard g.end + origin > horizon, let gloss = g.gloss else { continue }
++                // Never publish BIG ahead of an earlier HAVE that is still waiting to commit.
++                if segs[..<index].contains(where: { earlier in
++                    (earlier.gloss != nil || earlier.end + origin > horizon) &&
++                    !shownEarly.contains(where: { abs(earlier.start + origin - $0.0) <= 2 })
++                }) { continue }
+                 let st = g.start + origin
+                 let previous = early[st]
+                 let n = previous != nil && previous!.0 == gloss ? previous!.1 + 1 : 1
