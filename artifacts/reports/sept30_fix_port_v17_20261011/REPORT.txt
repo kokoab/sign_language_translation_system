@@ -1,0 +1,168 @@
+September 30 model + current repairs — 2026-10-11
+
+Status: COMPLETE. Experimental native ports built and evaluated. No full replacement meets the no-regression requirement. No app/model replacement installed.
+
+Question
+Can the September 30 LocalA model carry the later repairs without regressions?
+The working target is the old model plus independently measured repairs, not a claim that
+an exact September 30 binary has been recovered. That binary/source snapshot is unavailable.
+
+New phrase-supervision audit
+Preserved recognizer histories select282old versus179new training videos. Counting
+non-prefix cached span labels for those exact video hashes reproduces6254old and3370new
+span totals. MY:308spans/32videos ->224/24; FRIEND:166/22 ->88/14;
+NAME:271/33 ->207/26. All eight removed MY videos are MY NAME, explicitly assigned
+validation in the October7recipe. Their84MYspans explain the MY count difference.
+These videos were removed from training, not deleted. Do not put validation examples
+back into training to recover a score. The counts use preserved label metadata and
+historical video membership, not a new raw-media rehash of all original training inputs.
+This corrects the overbroad inference from unchanged isolated rows. It is not a causal
+ablation proving that these eight videos alone caused the regression: the older clean
+lineage also retained better MY windows with the cleaned recipe. Parent/optimization
+and temporal supervision changed together. Both historical recognizer histories record
+freeze_encoders=false; this was not a frozen MY component plus unrelated-class updates.
+Evidence:phrase_supervision_audit.json,removed_MY_phrase_inputs.json; historical
+history.json paths are in model_replacement_audit/verified_inputs.json.
+
+What changed historically
+1. October 8 replaced LocalA with a different shared parent/phrase-adaptation lineage.
+   Original/v1/v2 MY and LIKE local manifest rows were identical. Other classes' data,
+   parent initialization, phrase mixture and objectives changed. A shared classifier is
+   not one independent model per sign: unchanged MY files do not preserve MY decisions.
+   Prior identical-input tests locate the first MY loss before variant filtering, so
+   blaming only removed clips or only the later HAVE rules is unsupported.
+2. October 9/10 fragment/reject supervision changed treatment of incomplete windows;
+   runtime dip bridging, confidence thresholds and commitment delays changed as well.
+3. A global ordering change in an earlier HAVE fix also delayed NAME-mode entry. That
+   fault was demonstrated separately and removed by the current guarded rollback.
+4. The installed MY rule is one-way LIKE-to-MY refinement of candidate scores. It never
+   deliberately rewrites a model MY to LIKE. It requires positive flat contact and an
+   observed unpinched tail, capped at the next decoded sign. The physical transition can
+   start BEFORE that decoded boundary: forming FRIEND closes the fingers and defeats the
+   MY rescue. Unknown evidence retains the classifier; short MY can also be swallowed by
+   a later segmentation path. Passing isolated clips did not validate all these transitions.
+
+Fresh phone evidence
+Pulled session 20261011_220739, its saved frame trace, and retained take03 recording.
+Live events include MY previews changing to LIKE before FRIEND and NAME, with MY NAME
+and MY EAT succeeding elsewhere. User clarified some deliberate LIKE signs occur near
+start after several MYs. Do not relabel every LIKE in the session as an error.
+The retained take03 shows repeated flat chest contacts before FRIEND/NAME/EAT.
+The phone trace stops at40.80072375s; events continue past55s. It lacks explicit reset
+markers and NAME-mode observation coverage; cached crop embeddings use FP16. Chunk
+replay is a diagnostic, not a claim to reproduce every live decision bit-for-bit.
+
+Experiment design
+A: installed FragmentReject model + installed 175ms decoder.
+B: September LocalA model + that same decoder and current word settings.
+C: LocalA + earlier word settings, narrow HAVE and MY guards off.
+D: same as C with one-way HAVE/ANGRY, TIRED-roll and 175ms MY rules enabled.
+C/D retain current engine and repaired chronological publication. They reconstruct word
+settings only: maxInnerO3, no innerFloor, lag1, theta0.5. B uses8/0.5/6/0.4.
+All matched arms: recognizer letterThreshold0.5, separate word letterGate0.95,
+FP16 image encoder, source presentation timestamps,20Hz, same Vision implementation.
+New recording:8 auxiliary-detection phases per arm. These are correlated schedules of
+one recording, not eight independent users. Existing development checks:570 cached
+streams (378 Citizen validation across100classes,103 pair controls,89 tune),59 genuine
+MY/LIKE source videos, and72 historical source-video schedules for B. Pools overlap.
+Old LocalA lineage includes historical tune overlap: tune numbers cannot establish
+independent generalization for that model. No protected Citizen/lab test inference.
+
+Harness correction
+Initial commands incorrectly set recognizer letterThreshold0.95, confusing it with
+word letterGate0.95. Those results were quarantined in invalid_letter_threshold_095/;
+preliminary scores mentioned during work are superseded by the matched rerun below.
+No production files were changed by the mismatch. run_matched.py records exact commands
+and environment per result. run_legacy_port.py builds the report-local port variants.
+
+Implementation correction discovered during the port
+The old word decoder accepts scores >=0.5. The existing HAVE/ANGRY guard redistributes
+the pair's probability mass using geometry. It can select HAVE yet reduce the winning
+score below0.5. In three first-contact replay schedules, ANGRY therefore became silent.
+The rank variant changes only this adjustment to swap the HAVE/ANGRY logits when the
+existing positive geometry eligibility passes. It preserves the winning score and other
+class logits. TIRED already uses a score swap. These scores are not claimed calibrated
+probabilities after geometry refinement. Example arithmetic, not a measured event:
+ANGRY0.7+HAVE0.1 with geometry0.6 gives HAVE0.48 under redistribution, below0.5;
+a swap retains0.7. New rank evidence:53/56reviewed HAVE contacts versus49/56baseline
+and50/56directguard, withthreeoriginal omissions remaining. MY outputs are unchanged.
+
+Final matched results
+                           Citizen/378   Pair/103   Tune/89*   trueMY/22   trueLIKE/37
+Installed current              302          58         66          18          21
+LocalA + current fixes         284          63         73          18          17
+LocalA + earlier word settings  275          55         70          18          14
+  + direct narrow guards       275          55         70          18          14
+  + score-preserving HAVE       275          55         70          18          14
+These are exact whole-output counts, not isolated-classifier top1 accuracy.
+*Old lineage has historical tune overlap; no independent generalization claim from tune.
+Current references are the preserved tested175ms results; production source pins match.
+Direct current-settings port:27Citizenclassesworse,16better,57same versus installed.
+Earlier-settings port:33worse,18better,49same. Neither is regression-free versus installed.
+
+For the earlier-settings baseline, BOTH direct and score-preserving guards leave all
+570cached +59genuine +8fresh-video hypotheses unchanged. Rank HAVE improves reviewed
+contacts49/56 ->53/56; all formerly correct contacts remain correct. Remaining3omissions
+are not fixed. Correct HAVE immediately followed byBIG46/56 ->50/56. These56observations
+are seven reviewed contacts across eight schedules of one video, not56independent clips.
+
+Direct current-settings port72historical schedules: SeptemberMYFRIEND24/24exact;
+earlierOctoberMY NAME20/24 versus22/24installed; HAVE75/168reviewedcores versus26/168
+installed. It helps HAVE substantially yet still misses93reviewedcontacts; all24whole
+HAVE runs retain errors. No perfect phrase repair is demonstrated.
+
+Fresh22:07take03, firstMY FRIEND: installed0/8,LocalA/currentfixes8/8,
+LocalA/earlierwordsettings7/8; both guard versions leave that7/8unchanged. LaterMY
+contacts still fail or disappear with every arm. New video outcomes by contact,
+complete word sequences, per-class changes and exact command environments are retained.
+The two earlier successful phone replays were insufficient evidence for general paired
+sign behavior; isolated invariance did not protect transition recognition.
+
+Decision and next repair
+Keep the score-preserving HAVE patch as a measured report-local improvement on the
+older baseline. Do not install any tested whole-model rollback as a no-regression fix.
+The unresolved MY repair must distinguish completed MY from the hand transition into
+FRIEND/NAME and from genuine LIKE continuation, with candidate boundaries and commitment
+validated together. A flat contact followed by closure is insufficient by itself: the
+closure can belong to the next sign. Earlier positive-MY cues also occur in genuineLIKE,
+so forcing every transientMY tocommit is not justified. Existing isolated controls must
+be complemented by deliberate LIKE-to-next-sign controls before such a temporal policy
+is promoted. The eight validation MY NAME videos stay out of training. Pin the older
+checkpoint as a recovery reference; do not replace its whole shared training lineage
+while claiming the unaffected glosses are unchanged.
+
+No general zero-regression guarantee, complete MY/HAVE cure, normal-iPhone test of this
+port, new training, or immutable exactSeptember30full-stack restoration is claimed.
+All new comparisons were nativeMac/CoreMLreplays; phone evidence was pulled read-only.
+The installed175ms/FragmentRejectrelease remains unchanged. All production source pins
+match. Fullcontrol/verifierchecks pass; initial threshold-mismatch outputs are archived
+separately and excluded. Model selector patch and HAVE patch are experimental artifacts,
+not a production-ready release approval.
+
+Reproduce
+venv/bin/python artifacts/reports/sept30_fix_port_v17_20261011/run_matched.py localA
+venv/bin/python artifacts/reports/sept30_fix_port_v17_20261011/run_matched.py legacy
+venv/bin/python artifacts/reports/sept30_fix_port_v17_20261011/run_legacy_have.py
+venv/bin/python artifacts/reports/sept30_fix_port_v17_20261011/run_rank_port.py
+venv/bin/python artifacts/reports/sept30_fix_port_v17_20261011/audit_phrase_membership.py
+venv/bin/python artifacts/reports/sept30_fix_port_v17_20261011/summarize.py
+venv/bin/python artifacts/reports/sept30_fix_port_v17_20261011/verify_results.py
+Build scripts:run_legacy_port.py andprepare_rank_port.py. Existing175msnativeprobe reused.
+Artifact outputs:summary.json,verification.json,*.per_class.csv,transition_evidence.json,
+phrase_supervision_audit.json,removed_MY_phrase_inputs.json,production_pins.json,inputs.json,
+experimental_model_selector.patch,confidence_preserving_HAVE.patch,phone/.
+
+
+
+Final verification:22/22checks pass; production source hashes unchanged. Task-scoped
+git diff --check passes. Full check reports only pre-existing scripts/app_shell_v17.py:632
+trailing whitespace, preserved. Large-artifact index regenerated. Changed tracked docs:
+PROJECT_GROUND_TRUTH.md,live-streaming/log.md,live-streaming/high.md,artifacts/LARGE_FILES.md;
+new experiment files are under this report directory. All experiment workers finished.
+
+Follow-up clarification:the eight MY NAME videos were already validation in the canonical
+September21v2manifest; its hash matches the October7recipe pin. The new recipe enforced
+those existing roles. Earlier wording “moved to validation” describes changed training
+membership, not a newly invented October7split assignment. Recorded purpose:repair
+training/evaluation leakage. Source:live-streaming/log.md October7LEAKentry and
+scripts/build_phrase_segment_recipe_v17.py. Manifest says userreviewpending.

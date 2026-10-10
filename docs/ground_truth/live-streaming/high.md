@@ -1,5 +1,21 @@
 # live-streaming — high
 
+## 2026-10-11 — Historical split reuse authorized by user; prior MY-role restriction superseded
+
+UserexplicitlyallowsusingtheprevioussplitforrecoveryandrequiresMYphrasefix. Historical
+MYNAMEexamplesmaybereusedinascoped,pinnedrecoveryrecipewithoutaskingagain. Thoseexamples
+thenarenotindependentevaluation;usefreshreservedphonephrasesforreleaseassessment.
+Canonicalflagsandunrelatedprotectedtest/dataacquisitionrulesareunchanged. Notrainingstarted.
+
+## 2026-10-11 — Separate isolated and phrase data claims for the MY regression
+
+MY/LIKE original-v1-v2 isolatedlocalmanifestrows are unchanged, but MY phrase supervision
+is not: LocalA308spans/32videos versus October8recipe224/24. Eight MY NAME videos are
+assignedvalidationintheOctober7recipe;84MYspansremovedfromtraining. FRIEND166→88spans,
+NAME271→207. Do notsayallMYdatawasunchanged, orputthosevalidationvideosbackintotraining.
+Parentlineage andunfrozenoptimizationchangedtoo; noablationisolatesthesoletrainingcause.
+Evidence:artifacts/reports/sept30_fix_port_v17_20261011/phrase_supervision_audit.json.
+
 ## 2026-10-11 — User-authorized175ms Release now deployed
 
 User authorized installation after the measured phone result and disclosed remaining failures. The cleaned175ms orderedMY/LIKErule is installed/launched on iPhone13, same model/HAVEguards; previousbuildretained. This supersedes the historical not-deployed/fresh-capture-before-promotion wording below. Fresh signing is still unmeasured and is the next check, not a completed accuracy claim. Do not replace this deployment with the failed150msvariant or force transientMYcues tocommit. Deployment evidence:artifacts/reports/ordered_my_like_v17_20261011/deployment/REPORT.txt.
