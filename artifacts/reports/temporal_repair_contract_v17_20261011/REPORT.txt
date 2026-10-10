@@ -1,0 +1,126 @@
+CORRECTION — full materialization on 2026-10-11 found timestamp rounding errors in
+core eligibility checks. Earlier 720/720 eligible and all28MY timing statements below
+are superseded; frame annotations remain valid. Exact integer PTS/time_base extraction
+and corrected counts are recorded in ../temporal_repair_training_v17_20261011/.
+
+Temporal repair data and evaluation preparation — 2026-10-11
+
+Result
+The proposed preparation step is complete: source membership/hashes checked,
+MY contact cores visually reviewed, a native phase/input pilot measured, and a
+fail-closed draft contract written. This is not a repaired recognizer or a new
+accuracy result. No training, app-source change, model replacement or installation
+was performed. Existing canonical training gate remains false.
+
+Concrete training-data gap
+The prior approved 179-video recipe supplied MY spans from only 24 of 28 MY NAME
+videos. In the other four, cached model-based forced alignment returned either no
+timing (two videos) or NAME only (two videos), so no MY training spans were emitted.
+The four IDs are 02a79892, d00c3fd4, c6ef9014 and 06404dd0. Visual review confirms
+open-palm chest contact in all four. The last starts during contact, so its onset
+is explicitly left-censored, not invented rest.
+
+All four recovered MY cores produced valid native inputs with retained hand/crop
+evidence in every tested phase/offset/window combination: 288/288 views. Therefore
+these examples were absent because of alignment/admission, not because the native
+input builder could not represent their reviewed contact under this experiment.
+This identifies a supervision failure; it does not prove those four omissions alone
+caused the deployed MY→LIKE regression. Earlier factorial evidence still establishes
+separate model-lineage and runtime contributions.
+
+There are 263 cached MY labels in these 28 videos including later prefix additions;
+excluding prefixes gives the prior run's 224 spans. Do not mistake augmentation or
+prefix counts for independently recorded examples.
+
+Reviewed source inventory
+                         Train events     Validation events
+MY (approved local)             28                    0
+HAVE (ASLLRP/O5S5/STEM)          59                    4
+LIKE (ASLLRP)                   48                    5
+Total                         135                    9
+
+144 events, 138 distinct parent video hashes. Train HAVE = ASLLRP46 + O5S5 10 +
+STEM3; validation HAVE = ASLLRP1 + O5S5 2 + STEM1. One otherwise admitted validation
+LIKE occurrence was removed because its parent overlaps existing lab evaluation.
+Final eligible ASLLRP target occurrences: 100; full parent videos exist locally.
+All source media/feature hashes, existing feature contracts, occurrence uniqueness,
+parent/group role separation and within-source signer separation passed. This does
+not establish cross-corpus signer independence. Source roles were not reshuffled.
+Protected/tune metadata (161 rows) was used only for exclusion; no protected media,
+features or model evaluation was used.
+
+All 28 MY NAME clips have conservative visible-contact annotations, independent of
+model predictions. They cover only two local signer IDs. Review is by Codex against
+approved sequence labels and actual video, not expert/signer certification. Exact
+onset/offset remains bracketed; neighboring NAME is not relabeled as MY. Actual PTS
+checks retain >=4 context frames and >=2 core frames across all three capture offsets
+for all 28; detection/crop checks are measured for six of these in the native pilot.
+
+Transition evidence and remaining coverage gaps
+Seven complete HAVE→BIG contact occurrences and the first unambiguous MY→NAME in
+the phone failure footage have separate development-only annotations. The ambiguous
+later MY/LIKE switch and aborted HAVE attempt around 9–10 seconds remain unlabeled.
+No HAVE→BIG pair was found in the admitted ASLLRP metadata search. Existing HAVE
+parent context must not be described as HAVE→BIG training. No new MY FRIEND training
+sequence or independent MY validation pool was established in this preparation.
+Known failure recordings remain development evidence, not independent validation.
+
+Native input experiment
+Ten source events: six approved MY, one ASLLRP HAVE, one ASLLRP LIKE, two phone
+failure development events. Each starts a fresh production Vision/tracker stream
+at source start, using true presentation timestamps, 20 Hz deadline sampling,
+aspect-preserved video, the pinned FP16 hand encoder and production span builder.
+Eight auxiliary phases × three capture offsets × three context views = 72 per
+event. 720/720 views constructed; all arrays finite, validity masks binary, retained
+core has >=2 hand frames and >=1 valid sampled crop position. These are 10 events,
+not 720 independent examples. Encoders ran; word/letter/boundary classifiers did not.
+
+At fixed capture offset and base context, auxiliary phase generated 6–8 distinct
+landmark tensors per event, while hand-image embeddings were identical across the
+eight phases. Thus shifting input phase is a real landmark variation, not merely
+copying identical training arrays. No claim is made that phase training has already
+fixed classification. This native macOS extraction pilot is not a normal-iPhone
+accuracy/latency/thermal test. An initial 432-view run was repeated with retained-core
+instrumentation; the authoritative results are pilot_inputs_v2 plus recovered_my_inputs.
+
+Concrete contract
+contract.json pins source membership, variant codes, reviewed cores, source roles,
+encoder/runtime provenance, pilot tensors, and evaluation requirements. All
+augmentations stay grouped by source occurrence and parent/session. Gaps and uncertain
+edges cannot become background, and development-only phone arrays cannot be bulk-loaded
+as training. Canonical and October7 recipe manifests were not changed.
+
+The subsequent model experiment must freeze encoders and separate model/runtime arms,
+include epoch0, retain established 100-class isolated replay, and declare the complete
+optimizer/mixing/selection recipe before training. Full-class validation requires no
+aggregate or per-class correct-count regression in the bounded experiment. Report
+MY↔LIKE, HAVE↔ANGRY/TIRED, omissions, duplicates and sentence errors separately. Genuine
+LIKE/ANGRY/TIRED are controls. Native phase sweeps and matched letter/export checks are
+required; output HAVE counts alone do not establish recall.
+
+Not ready for training or promotion yet: only 8/144 source events have native pilot
+inputs; full role-filtered extraction/cache validation and executable recipe remain.
+The independent portrait-iPhone capture pack is still pending. A fresh labeled normal
+shared-app set must be reserved before candidate evaluation, with target sentences and
+genuine confusable controls; a set used to tune cannot then be called independent.
+This is an implementation prerequisite, not a request to acquire external datasets.
+
+Verification and failures
+verify_contract.py passes full source/pin checks and rejects seven invalid cases:
+hash tampering, split reassignment, relabeling, invalid core bounds, development into
+training, flag-only enablement, and training from the partial cache. Four production
+Swift files match pre-experiment hashes. Canonical494 verifier passes, still not
+training-ready. Python3.9 lacks hashlib.file_digest: first pilot preparation failed
+and the consequent native launch had no case file. Replaced with streamed SHA256 and
+reran successfully. A NumPy scalar JSON serialization failure was corrected before
+the contract was emitted. Neither failure modified production or source datasets.
+
+Primary evidence
+contract.json; source_inventory.json; my_visual_review.json; phone_visual_review.json;
+previous_my_alignment_audit.json; native_audit.json; verification.json. Timestamped
+contact sheets and raw native tensors remain alongside this report. Report-local
+scripts reproduce preparation, extraction, auditing and fail-closed verification.
+
+Final checks: all report-local Python scripts compile; artifact index regenerated.
+Task-scoped git diff check passes; full check reports only pre-existing trailing
+whitespace at scripts/app_shell_v17.py:632, left untouched.

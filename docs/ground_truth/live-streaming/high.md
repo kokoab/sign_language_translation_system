@@ -4,6 +4,34 @@
 
 After unlock, the150ms ordered rule failed0/2candidatephonepasses because166.7ms reliable-landmark gaps caused unknown. Changing only that limit to175ms succeeds2/2MY NAME versus0/2controls, with570cached/59genuineoutputs unchanged and72phasechecks complete. Ninecuefixturespass. The two unresolved desktopcommit/window failures remain, so the caution against forcing transientMYcues below still applies. Candidatewasnotpromoted:priorreleaseandsources restored. RequirefreshliveMY/LIKEevaluation forreleasepromotion; these areknown-video replays. Evidence:artifacts/reports/ordered_my_like_v17_20261011/gap175/REPORT.txt.
 
+## 2026-10-11 — Temporal head adaptation is not a validated MY/HAVE repair
+
+The complete four-arm reviewed-core experiment leaves the first October MY at 0/24
+native schedules for every tested model/runtime. Strong adaptation plus contact handling
+recovers 166/168 reviewed HAVE→BIG contacts, but produces false HAVEs on genuine ANGRY,
+TIRED and HAPPY and loses broader streaming accuracy. Even the isolated-retention-passing
+checkpoint adds spurious words on four Citizen classes. Isolated per-class floors and
+training-core success cannot substitute for streaming rejection and transition gates.
+Do not install these checkpoints or repeat this core-only recipe as a proven fix. Existing
+28 MY events are already nearly perfectly recognized by the incumbent; additional views
+are not representative new signing examples. Known phone cores remain development-only.
+Require reviewed actual transition/window supervision, preserved negative/rejection
+behavior and a fresh reserved phone evaluation before promotion. No official Citizen or
+protected lab test reuse. Evidence: temporal_repair_training_v17_20261011/REPORT.txt.
+
+# live-streaming — high
+
+## 2026-10-11 — Reviewed cores and native phase evidence must remain distinct from accuracy
+
+Temporal repair preparation found four approved MY NAME videos omitted by forced
+alignment; visual cores are recoverable, but exact-clock quality checks exclude some short views. Do not inherit
+model-based alignment as ground truth when it drops a visible target. Preserve source
+roles, parent/session groups, uncertain boundaries and variant codes in the pinned
+contract. Known phone failures remain development-only; an ambiguous MY/LIKE switch
+is not a negative label. The original720/720eligibility claim is superseded: exact rational source timestamps give624/720eligible pilot views and240/288for the four recoveredMYevents; all28MYevents retain usable views. Input integrity is not recognition accuracy or independent generalization. Contract remains draft and
+cannot enable training by flipping a flag; canonical/scoped recipe gates remain intact.
+Evidence: artifacts/reports/temporal_repair_contract_v17_20261011/REPORT.txt.
+
 ## 2026-10-11 — Clean-lineage recovery is not a validated rollback
 
 The old clean-split model with matching corrected letters recovers firstMY6/8 sampling
