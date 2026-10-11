@@ -1,0 +1,64 @@
+--- current/segmental_runtime_v17.py
++++ candidate_ordered/segmental_runtime_v17.py
+@@ -601,6 +601,7 @@
+         self.origin = 0
+         self.last = None
+         self.early, self.shown_early = {}, []
++        self.pending_output = []
+         self.last_seconds = -np.inf
+         self.preview = None     # best guess for the still-open segment (display only)
+ 
+@@ -884,12 +885,7 @@
+         gap = self.cfg.get('duplicate_gap', 2)
+         if self.early_k and not final:
+             nxt = {}
+-            for index, g in enumerate(segs):
+-                # Early identity must not publish a later word ahead of an unresolved earlier sign.
+-                if any((p['gloss'] is not None or p['end'] + origin > horizon)
+-                       and not any(abs(p['start'] + origin - a) <= 2 for a, _ in self.shown_early)
+-                       for p in segs[:index]):
+-                    continue
++            for g in segs:
+                 if g['end'] + origin <= horizon or not g['gloss']:
+                     continue
+                 st = g['start'] + origin
+@@ -924,20 +920,27 @@
+             if shown:
+                 # The word is already on screen; record where the sign actually ended.
+                 shown[0]['end_frame'] = max(shown[0]['end_frame'], end)
+-                shown[0]['end_seconds'] = self.obs[min(max(end - self.off, 0), len(self.obs) - 1)].seconds
++                shown[0]['end_seconds'] = self.obs[min(max(shown[0]['end_frame'] - self.off, 0), len(self.obs) - 1)].seconds
+                 shown[0]['closed'] = True
+                 new_origin = end + 1
+                 continue
+             if g['gloss']:
+                 same_gap = self.letter_gap if g['gloss'].startswith('FS_') else gap
+                 if self.last is not None and self.last['gloss'] == g['gloss'] and start - self.last['end_frame'] <= same_gap:
+-                    self.last['end_frame'] = end
++                    self.last['end_frame'] = max(self.last['end_frame'], end)
++                    self.last['end_seconds'] = self.obs[min(max(self.last['end_frame'] - self.off, 0), len(self.obs) - 1)].seconds
+                 else:
+                     self.last = self._word(g['gloss'], start, end, T, g['log_q'])
+                     committed.append(self.last)
+             new_origin = end + 1
+         # Rest never needs revisiting beyond the longest candidate span: bound the DP window.
+         self.origin = max(new_origin, min(pending, horizon + 1 - 30))
++        self.pending_output += committed
++        barrier = float('inf') if final else min((g['start'] + origin for g in segs
++            if g['end'] + origin >= self.origin
++            and not any(abs(g['start'] + origin - a) <= 2 for a, _ in self.shown_early)), default=float('inf'))
++        committed = sorted((w for w in self.pending_output if w['start_frame'] < barrier), key=lambda w: w['start_frame'])
++        self.pending_output = [w for w in self.pending_output if w['start_frame'] >= barrier]
+         self.shown_early = [e for e in self.shown_early if e[0] >= self.origin - 2]
+         self._trim()
+         return committed
+@@ -1023,8 +1026,7 @@
+     """LiteRT/TFLite interpreter with positional float inputs (Android family exports)."""
+ 
+     def __init__(self, path, threads=4):
+-        import os
+-        if os.environ.get('SLT_TFLITE_RUNTIME') == 'litert':  # the Android LiteRT runtime (ai-edge-litert)
++                if os.environ.get('SLT_TFLITE_RUNTIME') == 'litert':  # the Android LiteRT runtime (ai-edge-litert)
+             from ai_edge_litert.interpreter import Interpreter
+         else:  # default: TensorFlow's bundled interpreter (used for the recorded parity replays)
+             import tensorflow as tf

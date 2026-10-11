@@ -1,0 +1,152 @@
+--- current/segmental_runtime_v17.py
++++ fallback_before_contact/segmental_runtime_v17.py
+@@ -36,27 +36,8 @@
+     return float(np.mean(out)) if out else None
+ 
+ 
+-def have_contact_core(raw, start):
+-    """New visual evidence, not a held frame or both hands continuing down from TIRED."""
+-    core = raw[start:]
+-    if len(core) < 2 or np.max(np.abs(np.diff(core[:, :42, :2], axis=0))) < 1e-6:
+-        return False
+-    rises = []
+-    for st in (0, 21):
+-        before, after = raw[:start + 1], core
+-        before = before[(before[:, st, 4] >= .3) & (before[:, st + 9, 4] >= .3)]
+-        after = after[(after[:, st, 4] >= .3) & (after[:, st + 9, 4] >= .3)]
+-        if len(before) < 2 or len(after) < 2:
+-            continue
+-        size = np.median(np.linalg.norm(after[:, st + 9, :2] - after[:, st, :2], axis=1))
+-        if size < 1e-3:
+-            continue
+-        rises.append((np.median(before[:3, st, 1]) - np.median(after[-3:, st, 1])) / size)
+-    return not (len(rises) == 2 and max(rises) < -.5)
+-
+-
+-def tired_rescue(word_logits, labels, raw, threshold, merge=False):
+-    """Rescue low-roll TIRED into HAVE; optionally combine their evidence for a new contact."""
++def tired_rescue(word_logits, labels, raw, threshold):
++    """Top word TIRED, HAVE in the top 3 and the fingertips barely drop (< threshold): it is HAVE (swap the two)."""
+     t, h = labels.index('TIRED'), labels.index('HAVE')
+     order = np.argsort(word_logits)[::-1]
+     if order[0] != t or h not in order[:3]:
+@@ -65,12 +46,7 @@
+     if d is None or d >= threshold:
+         return word_logits
+     out = np.array(word_logits, copy=True)
+-    if merge:
+-        # Movement has ruled TIRED out: keep the evidence for the remaining HAVE hypothesis.
+-        out[h] = np.logaddexp(word_logits[h], word_logits[t])
+-        out[t] = -1e9
+-    else:
+-        out[t], out[h] = word_logits[h], word_logits[t]
++    out[t], out[h] = word_logits[h], word_logits[t]
+     return out
+ 
+ 
+@@ -563,7 +539,6 @@
+         dec.pop('span_mode', None)
+         self.cfg = dict(dec, alpha=1.0)
+         stream = self.config['stream']
+-        self.have_contact_closure = mode != 'letters' and bool(stream.get('have_contact_closure', False))
+         self.lag = int(stream['lag'])
+         self.context = int(stream.get('context_frames', 2))
+         self.early_k, self.early_q = int(stream['early_k']), float(stream['early_q'])
+@@ -682,9 +657,7 @@
+             labels_w = list(self.recognizer.labels)
+             logits = [np.concatenate([tired_rescue(l[:words], labels_w,
+                                                    raw_observation_features([self.obs[i] for i in self._span_obs(*k)])[0],
+-                                                   float(rescue), self.have_contact_closure
+-                                                   and int(np.argmax(l[:words])) == labels_w.index("TIRED")
+-                                                   and self._have_contact_core(*k)), l[words:]]) for k, l in zip(keys, logits)]
++                                                   float(rescue)), l[words:]]) for k, l in zip(keys, logits)]
+         for k, l in zip(keys, logits):
+             shared[k] = l
+         for k, l in cached:
+@@ -793,53 +766,6 @@
+             self.bio_off = keep
+         self.scores = {k: v for k, v in self.scores.items() if k[0] >= self.origin}
+ 
+-    def _have_contact_core(self, s, e):
+-        from active.v17.stage1_window_v17 import raw_observation_features
+-        begin = max(self.off, s - 6)
+-        raw, _ = raw_observation_features(self.obs[begin - self.off:e - self.off + 1])
+-        return have_contact_core(raw, s - begin)
+-
+-    def _close_have_contacts(self, spans, known):
+-        """Preserve an accepted contact core until its transition; BIG cannot cover both signs.
+-
+-        An open earlier word still owns its ending. Require new contact evidence, and
+-        carry its score only to the first two-frame transition within the 30-frame span limit.
+-        """
+-        h = self.labels.index('HAVE')
+-        rest = np.exp(np.asarray(self.bio))[:, [O, UNK, B]].sum(1)
+-        closures = []
+-        for (s, e), record in sorted(self.scores.items()):
+-            if any(a <= e and w['gloss'] != 'HAVE' and not w.get('closed', False)
+-                   for a, w in self.shown_early):
+-                continue
+-            if record is None or s < self.origin or e > known:
+-                continue
+-            row = record['v_raw']
+-            if int(np.argmax(row)) != h or log_softmax(row)[h] < self.cfg['log_theta']:
+-                continue
+-            if not self._have_contact_core(s, e):
+-                continue
+-            limit = min(known - 1, s + 29)
+-            gaps = [g for g in range(e + 1, limit + 1)
+-                    if rest[g - self.bio_off] >= .5 and rest[g + 1 - self.bio_off] >= .5]
+-            if not gaps:
+-                continue
+-            gap = gaps[0]
+-            if any(rest[g - self.bio_off] >= .5 and rest[g + 1 - self.bio_off] >= .5
+-                   for g in range(s, gap - 1)):
+-                continue
+-            closures.append(((s, gap - 1), record))
+-        for (s, e), record in closures:
+-            spans = [(a, b) for a, b in spans if not (
+-                a <= e and b >= s and (b > e or self.scores.get((a, b)) is None
+-                                      or int(np.argmax(self.scores[a, b]['v_raw'])) != h))]
+-            old = self.scores.get((s, e))
+-            if old is not None and log_softmax(old['v_raw'])[h] > log_softmax(record['v_raw'])[h]:
+-                continue
+-            self.scores[s, e] = record
+-            spans.append((s, e))
+-        return sorted(set(spans))
+-
+     def _step(self, final):
+         T = self.count - 1
+         known = self.bio_off + len(self.bio) - 1
+@@ -850,18 +776,9 @@
+         spans = [(s + origin, e + origin) for s, e in both_spans(sub, int(self.config['stream'].get('min_span_frames', 3)),
+                                                                int(self.config['stream'].get('max_inner_o', 3)))
+                  if final or e + origin + self.context <= T]
+-        if self.have_contact_closure:
+-            h = self.labels.index('HAVE')
+-            retained = {k for k, r in self.scores.items()
+-                        if k[0] >= origin and k[1] <= known and r is not None
+-                        and int(np.argmax(r['v_raw'])) == h
+-                        and log_softmax(r['v_raw'])[h] >= self.cfg['log_theta']}
+-            spans = sorted(set(spans) | retained)
+         missing = [sp for sp in spans if sp not in self.scores]
+         if missing:
+             self._score(missing)
+-        if self.have_contact_closure:
+-            spans = self._close_have_contacts(spans, known)
+         local = {(s - origin, e - origin): self.scores.get((s, e)) for s, e in spans}
+         segs = segmental_decode(sub, local, list(local), self.labels, dict(self.cfg, merge_duplicates=False))
+         horizon = known - self.lag if not final else known
+@@ -884,12 +801,7 @@
+         gap = self.cfg.get('duplicate_gap', 2)
+         if self.early_k and not final:
+             nxt = {}
+-            for index, g in enumerate(segs):
+-                # Early identity must not publish a later word ahead of an unresolved earlier sign.
+-                if any((p['gloss'] is not None or p['end'] + origin > horizon)
+-                       and not any(abs(p['start'] + origin - a) <= 2 for a, _ in self.shown_early)
+-                       for p in segs[:index]):
+-                    continue
++            for g in segs:
+                 if g['end'] + origin <= horizon or not g['gloss']:
+                     continue
+                 st = g['start'] + origin
