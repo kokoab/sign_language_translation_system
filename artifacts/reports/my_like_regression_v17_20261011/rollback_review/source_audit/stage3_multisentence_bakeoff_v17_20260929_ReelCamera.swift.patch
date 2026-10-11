@@ -1,0 +1,11 @@
+--- artifacts/reports/stage3_multisentence_bakeoff_v17_20260929/app_backup_before/ReelCamera.swift
++++ /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/ReelCamera.swift
+@@ -60,7 +60,7 @@
+                 try engine.warm()
+                 self.engine = engine
+                 DispatchQueue.main.async { self.ready = true; self.onReady?() }
+-                self.languageQueue.async { self.stage3 = try? LiveStage3() }
++                self.languageQueue.async { self.stage3 = try? LiveStage3(); self.stage3?.warm() }
+             } catch {
+                 DispatchQueue.main.async { self.onError?("Model load failed: \(error.localizedDescription)") }
+             }

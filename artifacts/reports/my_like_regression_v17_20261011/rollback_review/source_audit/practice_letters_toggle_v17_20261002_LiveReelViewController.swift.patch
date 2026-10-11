@@ -1,0 +1,222 @@
+--- artifacts/reports/practice_letters_toggle_v17_20261002/app_backup_before/LiveReelViewController.swift
++++ /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelViewController.swift
+@@ -1,6 +1,6 @@
+ // LIVE and PRACTICE (landscape, full-screen camera) of the ATLAS app. Both modes share one layout;
+ // panels are iOS 26 Liquid Glass (a dark blur before iOS 26) over the camera, buttons are gradients:
+-//   top bar      back · mode + status (dot while running) · LIVE Letters (blue = on) / PRACTICE score · gear
++//   top bar      back · mode + status (dot while running) · Letters (blue = on) · PRACTICE score · gear
+ //   under bar    LIVE: committed-word pills (newest last, amber "WORD?" preview) on the right,
+ //                the finished sentence on the left (its dot turns green while it is spoken)
+ //                PRACTICE: the round + sign to perform (top centre), the reference clip (top right)
+@@ -276,7 +276,7 @@
+     private let liveDot = UIView()
+     private let modeLabel = UILabel()
+     private let statusLabel = UILabel()
+-    /// LIVE: fingerspelling on/off (filled blue while on). PRACTICE: the score.
++    /// Fingerspelling on/off (filled blue while on), then (PRACTICE) the score.
+     private let lettersButton = UIButton(type: .custom)
+     private let lettersFill = UIView()
+     private let scoreChipLabel = UILabel()
+@@ -308,10 +308,16 @@
+     private let primaryButton = GradientButton(type: .custom)
+     private let hintGlass = GlassView()
+     private let hintLabel = UILabel()
+-    /// Live only: letters always on (manual override), remembered across launches. Off (default): words,
+-    /// and the FINGERSPELL sign (or NAME) switches spelling on; FINGERSPELL again or hands down ends it.
+-    private static let lettersKey = "SLTLiveLettersAlwaysV17"
+-    private var lettersOn: Bool = UserDefaults.standard.object(forKey: LiveReelViewController.lettersKey) as? Bool ?? false
++    /// Letters always on (manual override), remembered across launches, separately for LIVE and PRACTICE.
++    /// Off: words, and the FINGERSPELL sign (or NAME) switches spelling on; FINGERSPELL again or hands
++    /// down ends it. LIVE defaults off; PRACTICE defaults on (it judged with letters on before the switch).
++    private static func lettersKey(practice: Bool) -> String {
++        practice ? "SLTPracticeLettersAlwaysV17" : "SLTLiveLettersAlwaysV17"
++    }
++    private static func lettersSetting(practice: Bool) -> Bool {
++        UserDefaults.standard.object(forKey: lettersKey(practice: practice)) as? Bool ?? practice
++    }
++    private var lettersOn = false
+     /// The engine's spell mode, for the top-bar status.
+     private var spellMode: LiveReelEngine.SpellMode = .words
+     private let pipView = GlassView(radius: 18)
+@@ -326,6 +332,7 @@
+         self.mode = mode
+         if case .practice(let glosses) = mode { targets = glosses }
+         super.init(nibName: nil, bundle: nil)
++        lettersOn = Self.lettersSetting(practice: isPractice)
+         modalPresentationStyle = .fullScreen
+     }
+ 
+@@ -495,8 +502,8 @@
+ 
+     /// On `queue`.
+     private func startStream() {
+-        // Practice judges the 100 signs exactly as the desktop does (letters on); Live follows the switch.
+-        LiveReelShared.engine?.lettersAlways = isPractice || lettersSetting
++        // Both modes follow their own Letters switch (Practice on = the desktop's letters-on judging).
++        LiveReelShared.engine?.lettersAlways = lettersSetting
+         LiveReelShared.engine?.reset()
+         firstStamp = nil
+         deadline = 0
+@@ -505,6 +512,7 @@
+         frameGate.setEnabled(true)
+         running = true
+         events.append(["event": "start", "time": Date().timeIntervalSince1970])
++        LiveReelShared.engine?.startTrace()
+     }
+ 
+     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+@@ -637,13 +645,14 @@
+     }
+ 
+     /// Read on the engine queue.
+-    private var lettersSetting: Bool { UserDefaults.standard.object(forKey: Self.lettersKey) as? Bool ?? false }
++    private var lettersSetting: Bool { Self.lettersSetting(practice: isPractice) }
+ 
+     @objc private func lettersTapped() {
+-        guard !isPractice else { return }
+         lettersOn.toggle()
+-        UserDefaults.standard.set(lettersOn, forKey: Self.lettersKey)
++        UserDefaults.standard.set(lettersOn, forKey: Self.lettersKey(practice: isPractice))
+         let on = lettersOn
++        // Practice: the sign in progress was read by the other decoder; the attempt starts again.
++        if isPractice { previewText = nil; centerPreview = nil; top3 = [] }
+         render()
+         // Switching decoders restarts the open utterance's recognition (committed words stay).
+         queue.async {
+@@ -985,23 +994,20 @@
+             !isRunningUI ? (isPractice ? "Starting" : "Ready", dim) :
+             finishGestureProgress != nil ? (finishGestureProgress! < 1
+                 ? "Hold to finish \(Int(finishGestureProgress! * 100))%" : "Lower your hands", HUD.gold) :
+-            !isPractice && spellMode == .spelling ? ("Spelling…", HUD.blue) :
++            spellMode == .spelling ? ("Spelling…", HUD.blue) :
+             !isPractice && spellMode == .name ? ("Name? Letters on", HUD.blue) :
+             centerPreview != nil ? ("Reading sign…", HUD.gold) :
+             hasHands ? ("Signing", HUD.white) : ("Watching", dim)
+         statusLabel.text = state
+         statusLabel.textColor = stateColor
+         liveDot.backgroundColor = isRunningUI ? HUD.green : HUD.white.withAlphaComponent(0.4)
+-        if isPractice {
+-            scoreChipLabel.text = "Score \(practiceScore) / \(targets.count)"
+-        } else {
+-            lettersFill.isHidden = !lettersOn
+-            lettersButton.setTitleColor(lettersOn ? HUD.white : HUD.white.withAlphaComponent(0.7), for: .normal)
+-            lettersButton.accessibilityValue = lettersOn ? "On" : "Off"
+-            lettersButton.accessibilityHint = lettersOn ? "Letters always on"
+-                : "Sign FINGERSPELL to spell, FINGERSPELL again to stop"
+-            lettersButton.accessibilityTraits = lettersOn ? [.button, .selected] : .button
+-        }
++        if isPractice { scoreChipLabel.text = "Score \(practiceScore) / \(targets.count)" }
++        lettersFill.isHidden = !lettersOn
++        lettersButton.setTitleColor(lettersOn ? HUD.white : HUD.white.withAlphaComponent(0.7), for: .normal)
++        lettersButton.accessibilityValue = lettersOn ? "On" : "Off"
++        lettersButton.accessibilityHint = lettersOn ? "Letters always on"
++            : "Sign FINGERSPELL to spell, FINGERSPELL again to stop"
++        lettersButton.accessibilityTraits = lettersOn ? [.button, .selected] : .button
+ 
+         // Live: committed-word pills (newest at the right) and the amber preview after them.
+         let railKey = Array(rail.suffix(7)) + ["\u{0}", previewText ?? "\u{1}"]
+@@ -1201,7 +1207,7 @@
+     private func buildInterface() {
+         let guide = view.safeAreaLayoutGuide
+ 
+-        // Top bar: back · mode/status · Letters switch or score · gear.
++        // Top bar: back · mode/status · Letters switch · (Practice) score · gear.
+         let back = glassIcon(backButton, "chevron.left", "Back", #selector(backPressed))
+         let gear = glassIcon(gearButton, "gearshape", "Diagnostics", #selector(gearPressed))
+         liveDot.layer.cornerRadius = 4
+@@ -1217,26 +1223,22 @@
+         modeStack.alignment = .leading
+         for v in [modeLabel, statusLabel] { v.shadowed(0.6, radius: 3) }
+         let chip = GlassView()
+-        let chipContent: UIView
+-        if isPractice {
+-            text(scoreChipLabel, 13, .semibold, HUD.white)
+-            chipContent = scoreChipLabel
+-        } else {
+-            lettersFill.backgroundColor = HUD.blue
+-            lettersFill.layer.cornerRadius = 22
+-            lettersFill.layer.cornerCurve = .continuous
+-            inset(lettersFill, in: chip.contentView, 0, 0)
+-            lettersButton.setTitle("Letters", for: .normal)
+-            lettersButton.titleLabel?.font = HUD.font(14, .semibold)
+-            lettersButton.accessibilityLabel = "Letters"
+-            lettersButton.addTarget(self, action: #selector(lettersTapped), for: .touchUpInside)
+-            chipContent = lettersButton
+-        }
+-        inset(chipContent, in: chip.contentView, isPractice ? 12 : 0, isPractice ? 14 : 18)
++        lettersFill.backgroundColor = HUD.blue
++        lettersFill.layer.cornerRadius = 22
++        lettersFill.layer.cornerCurve = .continuous
++        inset(lettersFill, in: chip.contentView, 0, 0)
++        lettersButton.setTitle("Letters", for: .normal)
++        lettersButton.titleLabel?.font = HUD.font(14, .semibold)
++        lettersButton.accessibilityLabel = "Letters"
++        lettersButton.addTarget(self, action: #selector(lettersTapped), for: .touchUpInside)
++        inset(lettersButton, in: chip.contentView, 0, 18)
++        let scoreChip = GlassView()
++        text(scoreChipLabel, 13, .semibold, HUD.white)
++        inset(scoreChipLabel, in: scoreChip.contentView, 12, 14)
+         let spacer = UIView()
+         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+         modeStack.setContentHuggingPriority(.required, for: .horizontal)
+-        let topBar = UIStackView(arrangedSubviews: [back, modeStack, spacer, chip, gear])
++        let topBar = UIStackView(arrangedSubviews: [back, modeStack, spacer, chip] + (isPractice ? [scoreChip] : []) + [gear])
+         topBar.spacing = 14
+         topBar.alignment = .center
+ 
+@@ -1255,6 +1257,8 @@
+         text(bannerValue, 24, .semibold, HUD.white, align: .center)
+         bannerValue.adjustsFontSizeToFitWidth = true
+         bannerValue.minimumScaleFactor = 0.6
++        // On a narrow phone the banner gives way, not the top-bar chips.
++        for v in [bannerCaption, bannerValue] { v.setContentCompressionResistancePriority(.defaultLow, for: .horizontal) }
+         let bannerStack = UIStackView(arrangedSubviews: [bannerCaption, bannerValue])
+         bannerStack.axis = .vertical
+         bannerStack.spacing = 2
+@@ -1350,6 +1354,7 @@
+             topBar.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
+             topBar.heightAnchor.constraint(equalToConstant: 44),
+             chip.heightAnchor.constraint(equalToConstant: 44),
++            scoreChip.heightAnchor.constraint(equalToConstant: 44),
+             liveDot.widthAnchor.constraint(equalToConstant: 8),
+             liveDot.heightAnchor.constraint(equalToConstant: 8),
+ 
+@@ -1381,10 +1386,17 @@
+             statsPanel.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -12),
+         ])
+         if isPractice {
++            // Centred, but never under the status or the Letters/score chips beside it.
++            let centred = bannerBox.centerXAnchor.constraint(equalTo: guide.centerXAnchor)
++            centred.priority = .defaultHigh
++            let minimumWidth = bannerBox.widthAnchor.constraint(greaterThanOrEqualToConstant: 220)
++            minimumWidth.priority = .defaultHigh
+             NSLayoutConstraint.activate([
+                 bannerBox.topAnchor.constraint(equalTo: guide.topAnchor, constant: 12),
+-                bannerBox.centerXAnchor.constraint(equalTo: guide.centerXAnchor),
+-                bannerBox.widthAnchor.constraint(greaterThanOrEqualToConstant: 220),
++                centred,
++                minimumWidth,
++                bannerBox.leadingAnchor.constraint(greaterThanOrEqualTo: modeStack.trailingAnchor, constant: 12),
++                bannerBox.trailingAnchor.constraint(lessThanOrEqualTo: chip.leadingAnchor, constant: -12),
+                 bannerBox.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, multiplier: 0.5),
+                 pipView.topAnchor.constraint(equalTo: topBar.bottomAnchor, constant: 12),
+                 pipView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
+@@ -1438,6 +1450,7 @@
+     // MARK: - Session history
+ 
+     /// On `queue`: one History row per LIVE visit that recognised or said something.
++    private var lastTraceSave = Date.distantPast
+     private func saveSession(complete: Bool = false) {
+         guard !isPractice, !events.isEmpty else { return }
+         let value: [String: Any] = [
+@@ -1450,6 +1463,10 @@
+             "device": UIDevice.current.model, "system": UIDevice.current.systemVersion,
+         ]
+         LiveReelSessions.save(value, started: openedAt)
++        if complete || Date().timeIntervalSince(lastTraceSave) >= 20, let rows = LiveReelShared.engine?.takeTrace() {
++            LiveReelSessions.saveTrace(rows, started: openedAt)
++            lastTraceSave = Date()
++        }
+         lastHistorySave = Date()
+     }
+ }

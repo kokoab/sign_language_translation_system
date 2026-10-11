@@ -1,0 +1,67 @@
+--- artifacts/reports/similar_sign_local_audit_v17_20261008/app_source_backup/LiveReelCore.swift
++++ /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelCore.swift
+@@ -35,20 +35,32 @@
+     var score: Float = 0
+ }
+ 
+-/// Two upright open palms held continuously for one second, once per release.
+-/// Uses the same normalized geometry as the desktop FinishGesture detector.
++/// Finish control pose held continuously for one second, once per release (2026-10-08):
++/// the signer's right hand open and upright, the left hand a fist, both wrists above the
++/// shoulder line. Replaces the two-open-palm pose, which two-handed signs entered mid-signing.
++/// Body runs every few frames, so the last shoulder line is kept for `shoulderMaxAge` seconds.
++/// Same geometry as the desktop FinishGesture (scripts/live_reel_stage1_v17.py).
+ struct LiveFinishGesture {
+     let holdSeconds = 1.0
++    let shoulderMaxAge = 1.5
+     private var startedAt: Double?
++    private var shoulderY: Float?
++    private var shoulderSeenAt: Double?
+     private(set) var active = false
+     private(set) var latched = false
+     private(set) var progress = 0.0
+ 
+-    mutating func update(left: LiveHand?, right: LiveHand?, seconds: Double) -> Bool {
+-        guard Self.isOpenPalm(left), Self.isOpenPalm(right),
+-              let left, let right,
+-              Self.length(Self.xy(left.points[0]) - Self.xy(right.points[0])) >= 0.12 else {
+-            self = LiveFinishGesture()
++    mutating func update(left: LiveHand?, right: LiveHand?, body: [LivePoint], seconds: Double) -> Bool {
++        if body.count >= 2, body[0].c > 0, body[1].c > 0 {
++            shoulderY = (body[0].y + body[1].y) / 2
++            shoulderSeenAt = seconds
++        }
++        let fresh = shoulderSeenAt.map { seconds - $0 <= shoulderMaxAge } ?? false
++        guard Self.isControlPose(left: left, right: right, shoulderY: fresh ? shoulderY : nil) else {
++            startedAt = nil
++            active = false
++            latched = false
++            progress = 0
+             return false
+         }
+         active = true
+@@ -58,6 +70,24 @@
+         guard progress >= 1 else { return false }
+         latched = true
+         return true
++    }
++
++    static func isControlPose(left: LiveHand?, right: LiveHand?, shoulderY: Float?) -> Bool {
++        guard let shoulderY, let left, let right, isOpenPalm(right), isFist(left) else { return false }
++        return left.points[0].y < shoulderY && right.points[0].y < shoulderY
++    }
++
++    /// At least three of four fingertips folded back past their knuckles (closer to the wrist).
++    static func isFist(_ hand: LiveHand?) -> Bool {
++        guard let hand, hand.points.count == 21,
++              [0, 5, 9, 13, 17].allSatisfy({ hand.points[$0].c > 0 }) else { return false }
++        let p = hand.points.map(xy)
++        let wrist = p[0]
++        guard length(p[9] - wrist) >= 0.025 else { return false }
++        let curled = [(5, 8), (9, 12), (13, 16), (17, 20)].filter { mcp, tip in
++            hand.points[tip].c > 0 && length(p[tip] - wrist) < length(p[mcp] - wrist)
++        }.count
++        return curled >= 3
+     }
+ 
+     private static func xy(_ p: LivePoint) -> SIMD2<Float> { SIMD2(p.x, p.y) }

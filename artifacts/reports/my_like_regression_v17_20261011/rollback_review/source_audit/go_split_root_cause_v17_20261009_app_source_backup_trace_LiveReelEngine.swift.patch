@@ -1,0 +1,47 @@
+--- artifacts/reports/go_split_root_cause_v17_20261009/app_source_backup_trace/LiveReelEngine.swift
++++ /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelEngine.swift
+@@ -29,6 +29,28 @@
+     }
+     /// Letters always on (words + letters, the manual override; Practice). Off: words by default, and
+     /// the FINGERSPELL sign or NAME switches spelling on. Set on the engine queue; resets the stream.
++    /// Diagnostic trace (live vs recording comparison, go_split report 2026-10-10): when non-nil, every frame the
++    /// word decoder receives is recorded with its observation and hand-crop evidence. Guarded by traceLock.
++    private var traceRows: [[String: Any]]?
++    private let traceLock = NSLock()
++    func startTrace() { traceLock.lock(); traceRows = traceRows ?? []; traceRows!.append(["start": true]); traceLock.unlock() }
++    func takeTrace() -> [[String: Any]]? { traceLock.lock(); defer { traceLock.unlock() }; return traceRows }
++    private func traceFrame(_ o: LiveObservation, _ hand: LiveHandFrame?, held: Bool) {
++        traceLock.lock(); defer { traceLock.unlock() }
++        guard traceRows != nil else { return }
++        func pts(_ p: [LivePoint]) -> [[Float]] { p.map { [$0.x, $0.y, $0.c] } }
++        var row: [String: Any] = ["s": o.seconds, "w": o.width, "h": o.height, "b": pts(o.body), "f": pts(o.face),
++                                  "ff": o.faceForFeatures, "held": held]
++        if let l = o.left { row["l"] = pts(l.points); row["lc"] = l.chirality; row["ls"] = l.score }
++        if let r = o.right { row["r"] = pts(r.points); row["rc"] = r.chirality; row["rs"] = r.score }
++        if let hand {
++            let half = hand.embeddings.map { Float16($0) }
++            row["e"] = half.withUnsafeBufferPointer { Data(buffer: $0) }.base64EncodedString()
++            row["v"] = hand.valid; row["x"] = hand.boxes
++        }
++        traceRows!.append(row)
++    }
++
+     var lettersAlways = false {
+         didSet { if oldValue != lettersAlways { reset() } }
+     }
+@@ -160,6 +182,7 @@
+         let finishRequested = allowFinishGesture && finishGesture.update(
+             left: observation.left, right: observation.right, body: observation.body, seconds: seconds)
+         if finishGesture.active {
++            traceFrame(observation, nil, held: true)
+             // Preserve the pending sign for Finish; never classify the control pose.
+             return Step(observation: observation, committed: [], computeSeconds: Date().timeIntervalSince(started),
+                         finishRequested: finishRequested, finishProgress: finishGesture.progress)
+@@ -190,6 +213,7 @@
+             switch spellMode {
+             case .words:
+                 let out = try wordDecoder.observe(observation, image: image).filter { !$0.gloss.hasPrefix("FS_") }
++                traceFrame(observation, wordDecoder.hands.last, held: false)
+                 if let hand = wordDecoder.hands.last {
+                     backlog.append((observation, hand))
+                     if backlog.count > 40 { backlog.removeFirst(backlog.count - 40) }

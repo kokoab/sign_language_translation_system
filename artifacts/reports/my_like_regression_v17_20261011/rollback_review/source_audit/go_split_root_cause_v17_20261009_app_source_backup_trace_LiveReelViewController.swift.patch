@@ -1,0 +1,29 @@
+--- artifacts/reports/go_split_root_cause_v17_20261009/app_source_backup_trace/LiveReelViewController.swift
++++ /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelViewController.swift
+@@ -512,6 +512,7 @@
+         frameGate.setEnabled(true)
+         running = true
+         events.append(["event": "start", "time": Date().timeIntervalSince1970])
++        LiveReelShared.engine?.startTrace()
+     }
+ 
+     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+@@ -1449,6 +1450,7 @@
+     // MARK: - Session history
+ 
+     /// On `queue`: one History row per LIVE visit that recognised or said something.
++    private var lastTraceSave = Date.distantPast
+     private func saveSession(complete: Bool = false) {
+         guard !isPractice, !events.isEmpty else { return }
+         let value: [String: Any] = [
+@@ -1461,6 +1463,10 @@
+             "device": UIDevice.current.model, "system": UIDevice.current.systemVersion,
+         ]
+         LiveReelSessions.save(value, started: openedAt)
++        if complete || Date().timeIntervalSince(lastTraceSave) >= 20, let rows = LiveReelShared.engine?.takeTrace() {
++            LiveReelSessions.saveTrace(rows, started: openedAt)
++            lastTraceSave = Date()
++        }
+         lastHistorySave = Date()
+     }
+ }

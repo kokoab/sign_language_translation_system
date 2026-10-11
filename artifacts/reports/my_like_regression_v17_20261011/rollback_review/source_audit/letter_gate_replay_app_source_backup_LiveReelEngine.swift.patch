@@ -1,0 +1,134 @@
+--- artifacts/reports/citizen_variant_local_filter_v17_20261008/letter_gate_replay/app_source_backup/LiveReelEngine.swift
++++ /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelEngine.swift
+@@ -18,9 +18,39 @@
+     /// Word mode decodes with the letter classes as competitors (the dual runtime's word decoder) and
+     /// hides the letters: they absorb transitions between signs that words-only turns into extra words.
+     nonisolated(unsafe) static var wordModeLetterSink = true
+-    private var wordDecoder: LiveSegmentalRuntime { Self.wordModeLetterSink ? runtime.words : wordsOnly }
++    /// Letters may absorb a word-mode span only when the top word probability is below this gate
++    /// (2026-10-08: confident words such as WHERE/HOME/HEAR were lost to hidden letters D/X/O/C).
++    /// nil restores the ungated sink. Spelling/name modes keep the ungated dual runtime.
++    nonisolated(unsafe) static var wordLetterGate: Double? = 0.95
++    /// Word-mode decoder with the gated letter sink.
++    let wordsGated: LiveSegmentalRuntime
++    private var wordDecoder: LiveSegmentalRuntime {
++        Self.wordModeLetterSink ? (Self.wordLetterGate != nil ? wordsGated : runtime.words) : wordsOnly
++    }
+     /// Letters always on (words + letters, the manual override; Practice). Off: words by default, and
+     /// the FINGERSPELL sign or NAME switches spelling on. Set on the engine queue; resets the stream.
++    /// Diagnostic trace (live vs recording comparison, go_split report 2026-10-10): when non-nil, every frame the
++    /// word decoder receives is recorded with its observation and hand-crop evidence. Guarded by traceLock.
++    private var traceRows: [[String: Any]]?
++    private let traceLock = NSLock()
++    func startTrace() { traceLock.lock(); traceRows = traceRows ?? []; traceRows!.append(["start": true]); traceLock.unlock() }
++    func takeTrace() -> [[String: Any]]? { traceLock.lock(); defer { traceLock.unlock() }; return traceRows }
++    private func traceFrame(_ o: LiveObservation, _ hand: LiveHandFrame?, held: Bool) {
++        traceLock.lock(); defer { traceLock.unlock() }
++        guard traceRows != nil else { return }
++        func pts(_ p: [LivePoint]) -> [[Float]] { p.map { [$0.x, $0.y, $0.c] } }
++        var row: [String: Any] = ["s": o.seconds, "w": o.width, "h": o.height, "b": pts(o.body), "f": pts(o.face),
++                                  "ff": o.faceForFeatures, "held": held]
++        if let l = o.left { row["l"] = pts(l.points); row["lc"] = l.chirality; row["ls"] = l.score }
++        if let r = o.right { row["r"] = pts(r.points); row["rc"] = r.chirality; row["rs"] = r.score }
++        if let hand {
++            let half = hand.embeddings.map { Float16($0) }
++            row["e"] = half.withUnsafeBufferPointer { Data(buffer: $0) }.base64EncodedString()
++            row["v"] = hand.valid; row["x"] = hand.boxes
++        }
++        traceRows!.append(row)
++    }
++
+     var lettersAlways = false {
+         didSet { if oldValue != lettersAlways { reset() } }
+     }
+@@ -71,7 +101,10 @@
+         runtime = LiveDualRuntime(
+             words: LiveSegmentalRuntime(boundary: wordBoundary, recognizer: recognizer, encoder: encoder, mode: .both),
+             letters: LiveSegmentalRuntime(boundary: letterBoundary, recognizer: recognizer, encoder: encoder, mode: .letters))
+-        wordsOnly = LiveSegmentalRuntime(boundary: wordBoundary, recognizer: recognizer, encoder: encoder, mode: .words)
++        wordsOnly = LiveSegmentalRuntime(boundary: wordBoundary, recognizer: recognizer, encoder: encoder,
++                                         config: .v3Words, mode: .words)
++        wordsGated = LiveSegmentalRuntime(boundary: wordBoundary, recognizer: recognizer, encoder: encoder,
++                                          config: .v3Words, mode: .both, letterGate: Self.wordLetterGate)
+     }
+ 
+     /// The still-open segment's best guess, from whichever decoder is active.
+@@ -90,7 +123,7 @@
+     /// Restart recognition (after a rotation): the decoders only, not the spelling buffer.
+     func resetStream() {
+         runtime.reset()
+-        wordsOnly.reset()
++        wordsOnly.reset(); wordsGated.reset()
+         backlog = []
+         trigger?.reset()
+     }
+@@ -114,7 +147,7 @@
+     func reset() {
+         resetFinishGesture()
+         runtime.reset()
+-        wordsOnly.reset()
++        wordsOnly.reset(); wordsGated.reset()
+         _ = speller.flush()
+         vision.resetTracking()
+         resetSpellMode()
+@@ -149,6 +182,7 @@
+         let finishRequested = allowFinishGesture && finishGesture.update(
+             left: observation.left, right: observation.right, body: observation.body, seconds: seconds)
+         if finishGesture.active {
++            traceFrame(observation, nil, held: true)
+             // Preserve the pending sign for Finish; never classify the control pose.
+             return Step(observation: observation, committed: [], computeSeconds: Date().timeIntervalSince(started),
+                         finishRequested: finishRequested, finishProgress: finishGesture.progress)
+@@ -179,6 +213,7 @@
+             switch spellMode {
+             case .words:
+                 let out = try wordDecoder.observe(observation, image: image).filter { !$0.gloss.hasPrefix("FS_") }
++                traceFrame(observation, wordDecoder.hands.last, held: false)
+                 if let hand = wordDecoder.hands.last {
+                     backlog.append((observation, hand))
+                     if backlog.count > 40 { backlog.removeFirst(backlog.count - 40) }
+@@ -210,7 +245,7 @@
+                         && !(lastWord.map { $0.early && !$0.closed } ?? false))) {
+             for w in try runtime.finish() { shown += accept(w) }
+             shown += speller.flush()
+-            runtime.reset(); wordsOnly.reset(); backlog = []
++            runtime.reset(); wordsOnly.reset(); wordsGated.reset(); backlog = []
+             spellMode = .words; event = "off:name"
+         }
+         let spent = Date().timeIntervalSince(started)
+@@ -237,7 +272,7 @@
+             : wordDecoder.finish().filter { !$0.gloss.hasPrefix("FS_") }
+         for w in pending where w.endSeconds <= signStart + 0.1 { shown += accept(w) }
+         shown += speller.flush()
+-        runtime.reset(); wordsOnly.reset(); backlog = []
++        runtime.reset(); wordsOnly.reset(); wordsGated.reset(); backlog = []
+         spellMode = .spelling; spellSince = seconds
+         return shown
+     }
+@@ -250,7 +285,7 @@
+         }
+         if let signStart { speller.drop(from: signStart - 0.1) }
+         let shown = speller.flush()
+-        runtime.reset(); wordsOnly.reset(); backlog = []
++        runtime.reset(); wordsOnly.reset(); wordsGated.reset(); backlog = []
+         spellMode = .words; spellSince = 0
+         return shown
+     }
+@@ -262,7 +297,7 @@
+         for w in try wordDecoder.finish() where w.endSeconds <= nameEnd + 0.1 && !w.gloss.hasPrefix("FS_") {
+             shown += accept(w)
+         }
+-        wordsOnly.reset(); runtime.reset()
++        wordsOnly.reset(); wordsGated.reset(); runtime.reset()
+         let replay = backlog.filter { $0.0.seconds > nameEnd }
+         backlog = []
+         for (o, h) in replay { for w in try runtime.observeWithHand(o, hand: h) { shown += accept(w) } }
+@@ -289,7 +324,7 @@
+         }
+         shown += speller.flush()
+         runtime.reset()
+-        wordsOnly.reset()
++        wordsOnly.reset(); wordsGated.reset()
+         resetSpellMode()
+         return shown
+     }

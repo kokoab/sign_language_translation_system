@@ -1,0 +1,18 @@
+--- artifacts/reports/go_split_root_cause_v17_20261009/app_source_backup_trace/LiveReelApp.swift
++++ /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelApp.swift
+@@ -62,6 +62,15 @@
+         let url = directory.appendingPathComponent(stamp(started) + ".json")
+         if let data = try? JSONSerialization.data(withJSONObject: value, options: [.prettyPrinted]) {
+             try? data.write(to: url, options: .atomic)
++        }
++    }
++
++    /// Diagnostic per-frame trace of one visit (LiveReelEngine.startTrace): Documents/live_reel_traces/<stamp>.json.
++    static func saveTrace(_ rows: [[String: Any]], started: Date) {
++        let dir = directory.deletingLastPathComponent().appendingPathComponent("live_reel_traces", isDirectory: true)
++        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
++        if let data = try? JSONSerialization.data(withJSONObject: ["format": "slt_live_trace_v1", "frames": rows]) {
++            try? data.write(to: dir.appendingPathComponent(stamp(started) + ".json"), options: .atomic)
+         }
+     }
+ 
