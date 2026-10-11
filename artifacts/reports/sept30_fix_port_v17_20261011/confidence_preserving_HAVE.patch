@@ -1,0 +1,13 @@
+--- legacy_guard/LiveReelDecoder.swift
++++ confidence_preserving_guard/LiveReelDecoder.swift
+@@ -200,9 +200,7 @@
+         guard top2.contains(have) || top2.contains(angry) else { return word }
+         guard lp.indices.max(by: { lp[$0] < lp[$1] }) == angry, g >= 0.5 else { return word }
+         var p = lp.map { exp($0) }
+-        let mass = p[have] + p[angry]
+-        p[have] = mass * g; p[angry] = mass * (1 - g)
+-        return p.map { Float(log(min(max($0, 1e-12), 1))) }
++        var out = word; out.swapAt(have, angry); return out
+     }
+ }
+ 
