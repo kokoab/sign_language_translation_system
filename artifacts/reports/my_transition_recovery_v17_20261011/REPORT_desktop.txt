@@ -1,0 +1,79 @@
+MY transition recovery — experiment results, 2026-10-12
+
+Status: desktop experiments complete. Candidate built for iPhone comparison; NOT installed or phone-verified. Connected phone requires unlock. Normal installed release and production sources are unchanged.
+
+RESULT
+The final candidate reproduces the complete 16-token reference in all 24 original capture/auxiliary schedules and all 12 additional offset/frame-drop schedules. The installed-equivalent baseline reproduces none of those full sequences. These are correlated development replays of ONE known recording, not 36 independent recordings or new signer accuracy.
+
+Reference: MY FRIEND MY FRIEND MY NAME MY NAME MY FRIEND MY EAT MY FRIEND MY NAME
+
+The candidate preserves all recognized sequences in 570 cached streaming controls (including all 100 Citizen classes), 59 genuine MY/LIKE clips, 66 synthetic LIKE+successor controls, and 24 synthetic MY+successor+WRITE controls. 'Unchanged' refers to recognized gloss sequences; it does not mean every score/timestamp or every baseline result is correct.
+
+WHY IT REGRESSED
+1. The October replacements changed shared weights, parent initialization, phrase supervision and later fragment/reject objectives. Unchanged isolated MY/LIKE files did not freeze those decisions. Historical phrase MY supervision changed from 308 spans/32 videos to 224/24; eight MY NAME videos were excluded from training to enforce previously assigned validation roles. This was a leakage correction, not deletion of the source videos. Historical trainers also changed shared encoders. Earlier identical-input tests locate MY loss before variant filtering, so the HAVE geometry rule alone does not explain the regression.
+2. Short MY in a phrase reaches the recognizer in a different window than a clean isolated MY. The following FRIEND/NAME/EAT motion enters the context. The prior clean-core fit did not test this: the current head got only 24/89 exported actual MY windows right. Cutting future context helped MY but hurt genuine LIKE, ruling out a global crop change.
+3. Segmentation/commitment matters even when the classifier says MY. A larger following-sign span can absorb the short contact. Increasing MY confidence indiscriminately changed the decoding path and even introduced unrelated words on a DRINK control. True LIKE can also begin with a flat MY-looking prefix, so 'no pinch yet' is insufficient evidence for an early MY.
+4. Restoring old supervision alone is not a demonstrated cure. Six bounded restoration arms on the eight user-authorized historical sources improved the actual-window diagnostic only 24/89 to 25/89 and failed retention. The best repair instead uses actual transition inputs. This does not prove every possible full retraining or old split is useless; it rejects the tested restoration-only recipe.
+
+Historical evidence: ../sept30_fix_port_v17_20261011/REPORT.txt and ../lineage_runtime_investigation_v17_20261011/REPORT.txt. User authorization to reuse old roles supersedes their earlier training restriction; this turn's restoration recipe explicitly records that reuse. The final selected head does not use those eight restored clips.
+
+TRAINING EXPERIMENTS — 62 configurations
+- Actual MY/LIKE output-row adaptation: 8 arms; all nonzero checkpoints rejected by retention gates. Evidence: actual_training_results.json.
+- Balanced MY actual-window head: 12 arms; fits89/89 actual MY windows, but full replacement swallows NAME and hurts genuine LIKE/streaming controls. Evidence: balanced_training_results.json.
+- Restore historical MY NAME supervision: 6 arms; best diagnostic changes actual MY windows24/89 to25/89 only, with retention losses. Restoration alone insufficient. Evidence: restored_training_results.json.
+- Paired MY plus successor windows: 12 arms; selected220/220 windows; full head still causes streaming regressions. One-way calibrated use is substantially safer. Evidence: paired_training_results.json.
+- Capture-offset temporal augmentation: 12 arms; selected597/598 windows; initial native policy only172/192 strict pairs despite perfect development top1. Evidence: jitter_training_results.json.
+- Confidence-aware selection: 12 arms; selected598/598 windows and zero formerly correct isolated losses. Original head retained alongside adapted head for scoped runtime repair. Evidence: confidence_training_results.json.
+
+All encoders stayed frozen in these experiments. The final confidence-aware head uses 598 actual runtime windows: 223 from three physical MY+successor pairs for training, 375 from the other five physical pairs for development/selection. Repeated capture schedules are augmentation, not extra signers. General class-balanced replay and genuine LIKE temporal negatives retain the admitted source contracts. Selected seed27931, learning rate0.0001, phone share20%, epoch10. All 57 selected recipe/input hashes were reverified.
+
+Selected isolated head counts (validation/development, not protected test): Citizen365/378 versus364, SemLex847/953 versus846, local2572/2626 versus2569. Zero formerly correct examples lost in any of those sets. Isolated retention alone was NOT an acceptance gate: earlier heads passed it and still failed streaming.
+
+RUNTIME EXPERIMENTS AND REJECTIONS
+- September/old-expert rollback and alternative window context: useful partial recovery; neither a safe complete replacement nor a complete MY repair. Old-expert90% fallback recovered42/64 zero-offset pairs with controls retained.
+- Twelve movement-completion variants and old/current alternative-window rescoring: insufficient recovery and/or false MY on genuine LIKE.
+- Full adapted-head replacement: catches MY but swallows NAME and harms LIKE/other streaming clips. Rejected.
+- Bounded/scoped one-way MY updates, probability mixtures, rank swaps, calibration and successor confirmation: progressively improve54–63/64 original pairs. Some variants introduce DRINK MOTHER; rejected.
+- Confidence-preserving paired head: 64/64 original pairs, but only176/192 after capture offsets. Confidence-aware head raises this to182/192 while retaining570/59 controls. This exposes why eight favorable replay phases were insufficient.
+- Broad boundary insertion:21/24 full sequences, but false MY prefixes in HAPPY/PLEASE/FEEL. Rejected. Positive stationary contact removes most; requiring distinct following handshape removes all eight focused failures.
+- Three-contact-row confirmation misses a very brief MY when only two reliable observations survive. Two stationary rows at least30ms apart plus bounded observed follow-through restores those cases; all32 negative-fixture/configuration combinations retained baseline outputs.
+- Broad successor confidence boosting repairs one FRIEND/WRITE split but creates WRITE on three other schedules. Rejected even though570cached,59genuine and66synthetic controls retain their recognized sequences. Its historical sweep was explicitly stopped after rejection; partial output is preserved and never counted as a completed gate.
+- Final narrow merge: only strengthens a highly confident whole candidate covering two conflicting decoded pieces whose first-piece adapted identity agrees. It preserves a genuine trailing WRITE on24/24 synthetic controls and fixes the spurious WRITE in the target replays. No FRIEND/NAME/EAT label whitelist or removal of the word WRITE.
+
+FINAL REPAIR IMPLEMENTATION
+A dual-output recognizer shares the frozen encoders and retains the original word head plus original letter head. The trained head supplies narrowly scoped transition evidence. Original word AND letter outputs are bit-exact against the installed FP16 model for all378parity inputs (maximum absolute difference0). The original word head still feeds the letter head.
+
+1. Positive MY correction requires adapted MY evidence, short plausible chest contact or an independently recognized following gesture. It preserves the original non-MY relative distribution and avoids indiscriminately boosting already-MY spans.
+2. A swallowed MY gets a local boundary hint only after positive stationary flat contact and a distinct observed following handshape; missing landmarks do not authorize inserting MY. The contact episode is bounded, preventing a slice of a long held pose/rub from automatically becoming MY.
+3. The immediate successor can use confident adapted identity; a whole-span merge requires agreement across whole-gesture and first-piece evidence. Other scores are not globally replaced. Whole-successor score correction preserves total word-score mass and every letter score.
+
+Exact source/model/parameters: candidate_source_manifest.json. Native code: merge_native/. Model: SpanRecognizerV17ConfidenceDualB8FP16.mlpackage. Parameters include MYfloor0.5, short-span350ms, agreement0.9, stationary range0.06shoulder-widths, at least2rows/30ms, maximum contact350ms, following-shape window350ms, local onsetfloor0.4, successor identityfloor0.85/gap600ms, whole-mergefloor0.995. These are tested development settings, not universal ASL definitions.
+
+MEASURED RESULTS
+Original24schedules: complete sequences 0/24 -> 24/24; token errors 152 -> 0 over384reference tokens.
+Additional12schedules: complete sequences 0/12 -> 12/12; token errors 85 -> 0 over192reference tokens. Baseline and candidate processed timestamps match exactly.
+Strict tiny-core overlap counts:49/192 ->191/192 on the original schedules;19/96 ->94/96 on the additional schedules. Every final text sequence is correct. The remaining strict-core discrepancies are timing/overlap against narrow annotated interiors, not silent MY outputs.
+validation/citizen_val: exact 302/378 -> 302/378; changed sequences 0; formerly correct lost 0.
+validation/pair_val: exact 58/103 -> 58/103; changed sequences 0; formerly correct lost 0.
+validation/tune: exact 66/89 -> 66/89; changed sequences 0; formerly correct lost 0.
+genuine/all: exact 39/59 -> 39/59; changed sequences 0; formerly correct lost 0.
+splice/synthetic_like_successor: exact 23/66 -> 23/66; changed sequences 0; formerly correct lost 0.
+Genuine MY: 18/22 exact, unchanged; LIKE controls containing MY remain2/37.
+Genuine LIKE: 21/37 exact, unchanged; LIKE controls containing MY remain2/37.
+Historical September MY FRIEND: 24/24 -> 24/24 exact.
+Reviewed first October MY→NAME: 22/24 -> 24/24.
+Reviewed HAVE→BIG cores: 26/168 -> 26/168. Existing HAVE omissions remain; this experiment does not establish a complete HAVE repair.
+
+Source-time decoder publication lag after the conservative MY contact-core end: median703ms, p95867ms over191overlap-matched outputs. On168paired baseline-overlap events, median publication-time change is0ms. This is source-timestamp decoder timing; cached Mac compute times are not iPhone latency or thermal measurements.
+
+PHONE / DEPLOYMENT
+Diagnostic Release build succeeds for iPhone13. It uses the real app engine, resident English model, camera-paced source playback and latest-frame processing, with ABBA baseline/candidate passes. It records processed timestamps, words, compute times, sampled memory and thermal states. All three temporarily patched iOS source files were restored byte-exact. The candidate package is in a separate diagnostic Documents folder only; the installed normal app does not select it.
+
+The device reports passcodeRequired=true. run_phone_comparison.py exits before installation/launch while locked. The comparison has NOT run, so there is no new phone accuracy, sustained speed, memory or thermal claim. After unlock, the prepared runner uses the existing xctestrun and restores the normal signed release in finally. No new app is installed by this completed desktop experiment.
+
+LIMITS / NEXT ACTION
+Keep the frozen-base, scoped transition repair as the candidate for the prepared physical-phone comparison. Do not promote any of the rejected broad scoring or boundary rules. After that comparison, fresh naturally signed MY FRIEND/MY NAME/MY EAT, genuine LIKE phrases and HAVE/ANGRY/TIRED controls are needed before a generalization claim. The repair has only three new physical training pairs and five physical development pairs from the same signer/video. Constructed sequences have hard cuts; they are regression controls, not natural coarticulation.
+
+Canonical approved phrase manifest remains training_ready=false and unchanged. Protected Citizen test was not accessed. No new dataset acquisition, deletion, global split rewrite or unrelated worktree cleanup. Scoped recipe/input contracts and all rejected outcomes are retained.
+
+Evidence index: merge_summary.json; stress_summary.json; final_per_class.csv; training_family_summary.json; confidence_input_reverification.json; confidence_fp16_parity.json; publication_timing.json; candidate_source_manifest.json; phone_build_status.json; phone_source_before.json / phone_source_restored.json; phone_lock_check.json. Full task verification: 29/29 checks pass in final_verification.json. Normal production release: /Users/frnzlo/slt_ordered_my_like_gap175_build. Report-local runner: run_phone_comparison.py.

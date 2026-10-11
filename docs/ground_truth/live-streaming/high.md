@@ -1,4 +1,16 @@
-# live-streaming — high
+## 2026-10-12 — Installed normal release is the scoped MY transition candidate
+
+Supersedes the earlier not-deployed status. User-authorized signed Release installed/launched on iPhone13, build /Users/frnzlo/slt_my_transition_release_build. Selected ConfidenceDual plus frozen scoped decoder passes9exact cleanup cases and14release checks; candidate weights match tested package and15previous model weights remain unchanged. No diagnostic/test code shipped. Prior175msrelease remains rollback only. Deployment evidence: my_transition_recovery_v17_20261011/deployment/REPORT.txt. Fresh natural signing and sustained thermals are still separate gates; existing HAVE omissions are not fixed by this installation.
+
+## 2026-10-12 — Physical-phone replay now passes; fresh signing remains a separate gate
+
+Supersedes the earlier locked-phone status below. Candidate ABBA replay on iPhone13 is2/2 complete16-token sequences exact versus0/2 baseline; MY16/16 versus4/16, token errors0 versus12. Median frame compute31.14ms versus30.37ms; thermal state nominal during four short passes. Normal release restored and launched, production sources unchanged, candidate not deployed. Evidence: my_transition_recovery_v17_20261011/phone_comparison_summary.json and pinned raw results. This replays the known development video and does not establish fresh-signing generalization, long-duration thermals or a complete HAVE repair.
+
+## 2026-10-12 — Actual transition inputs and sequence gates bind MY repair claims
+
+The selected frozen-encoder confidence head and scoped contact/boundary/whole-gesture repair reproduce36/36complete development replay schedules while retaining570cached/59genuine/90synthetic recognized sequences. They are not36independent recordings: onlythreephysicalpairs train andfiveotherpairs develop fromoneknownvideo. Physical-phone comparison is still blocked by lock; no new candidate deployed. Source/model/parameters: artifacts/reports/my_transition_recovery_v17_20261011/candidate_source_manifest.json; findings: REPORT.txt inthatdirectory.
+
+Do not equate isolated retention or perfect clean-window top1 with continuous recognition. Earlier candidates passed isolated gates yet swallowed NAME, inserted MY into LIKE, changed DRINK into DRINK MOTHER, or split FRIEND into FRIEND WRITE. Original-phase success alone also failed new timing schedules. Preserve all-class streaming, trueLIKE, MY+successor and timing controls when changing recognition/decoding. Broad onset floors and broad successor confidence boosts are rejected. The narrow final merge must also retain a genuine following WRITE. The existing HAVE omissions remain; unchanged HAVE control counts are not a HAVE fix. All57selected recipe hashes and original word/letter378input FP16 parity pass; canonical training_ready staysfalse and protectedtest stayssealed. Historicalsplitreuse authorization remains valid but the tested restoration-only control was insufficient.
 
 ## 2026-10-11 — Historical split reuse authorized by user; prior MY-role restriction superseded
 
