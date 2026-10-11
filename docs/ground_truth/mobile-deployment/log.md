@@ -1,3 +1,13 @@
+## 2026-10-12 — Installation guide for another iPhone with a different Apple Account
+
+Read October5distribution history, current MY-repair deployment receipts, current Xcode signing/scheme and the signed Release embedded profile. Latest native app is /Users/frnzlo/slt_my_transition_release_build/Build/Products/Release-iphoneos/Runner.app; source workspace /Volumes/secret/SLT/mobile_app/slt_mobile_app/ios/Runner.xcworkspace. Team2BJ6GHCUJ2, bundlecom.kokoab.sltMobileApp, LocalProvision=true, one authorized device. Profile issued2026-10-07T03:13:29Z, expires2026-10-14T03:13:29Z (October14,11:13:29Asia/Manila); today's installation did not reset the profile lifetime. Existing binary cannot simply be copied to an unlisted phone.
+
+For one additional phone, its iCloud account can remain unchanged and existing signing team can provision it through Xcode if account quota permits. Guide uses cable/trust, Xcode device preparation, Developer Mode/restart, automatic signing, correct physical destination and Run configuration Release (current shared scheme defaultsDebug). A participant's own signing account is an optional alternative: add that account only in Xcode, use its Personal Team and unique bundle ID, then restore the original project signing settings afterward. No credentials requested/collected and no app/account/project changes made this turn. Free profiles require rebuild/reinstall after7days; Apple currently documents3devices/3apps perdevice. Additional phone performance remains unmeasured.
+
+Earlier IPA+iloader proposal was later superseded by no-participant-account/no-Developer-Mode preferences; browser alternative was never implemented. Do not claim this native guide meets those old no-Developer-Mode constraints or that iloader compatibility was tested. Current request is a guide to the working native app, not authorization to change accounts/install another device. Next: connect the target phone if installation is subsequently requested.
+
+Sources checked: https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices ; https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device ; https://developer.apple.com/help/account/basics/about-your-developer-account ; https://help.apple.com/xcode/mac/current/en.lproj/dev7ccaf4d3c.html ; https://github.com/nab138/iloader .
+
 # mobile-deployment — log
 
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
