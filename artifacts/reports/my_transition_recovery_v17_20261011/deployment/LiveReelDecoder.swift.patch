@@ -1,0 +1,309 @@
+--- a/LiveReelDecoder.swift
++++ b/LiveReelDecoder.swift
+@@ -407,7 +407,7 @@
+ 
+     /// Semi-Markov DP over rest frames and labelled segments (no duplicate merge: streaming).
+     static func decode(_ bio: [[Float]], spans: [SpanKey], records: [SpanKey: [Float]], labels: [String],
+-                       config: LiveDecoderConfig) -> [Segment] {
++                       config: LiveDecoderConfig, boundaryFloors:[SpanKey:Float]=[:]) -> [Segment] {
+         let n = bio.count
+         var act = [Float](repeating: 0, count: n), rest = [Float](repeating: 0, count: n), logb = [Float](repeating: 0, count: n)
+         for t in 0..<n {
+@@ -428,7 +428,7 @@
+             let lq = q[g]
+             let emit = lq >= config.logTheta
+             let seg = config.wR * max(lq, config.logTheta) + config.wA * (cact[span.e + 1] - cact[span.s])
+-                + config.wB * Double(logb[span.s]) - config.c
++                + config.wB * Double(max(logb[span.s],log(boundaryFloors[span] ?? 1e-6))) - config.c
+             byEnd[span.e, default: []].append((span.s, seg, emit ? labels[g] : nil, lq))
+         }
+         var best = [Double](repeating: -.infinity, count: n + 1)
+@@ -461,6 +461,7 @@
+ /// Raw 127-logit rows shared between the word and letter decoders (nil = unscorable span).
+ final class LiveSpanCache {
+     var values: [SpanKey: [Float]?] = [:]
++    var repairValues: [SpanKey: [Float]] = [:]
+ }
+ 
+ // MARK: - Streaming runtime
+@@ -494,6 +495,8 @@
+     private var bio: [[Float]] = []
+     private var bioOff = 0
+     private var scores: [SpanKey: [Float]?] = [:]
++    private var lastMyEnd = -Double.infinity
++    private var repairScores: [SpanKey: [Float]] = [:]
+     private(set) var origin = 0
+     private var last: LiveWord?
+     private var early: [Int: (String, Int)] = [:]
+@@ -525,7 +528,7 @@
+         boundary.reset()
+         off = 0; count = 0
+         obs = []; hands = []; bio = []; bioOff = 0
+-        scores = [:]; origin = 0; last = nil
++        scores = [:]; repairScores = [:]; lastMyEnd = -Double.infinity; origin = 0; last = nil
+         early = [:]; shownEarly = []; pendingOutput = []
+         lastSeconds = -.infinity
+         preview = nil
+@@ -537,8 +540,8 @@
+     }
+ 
+     private func spanObs(_ s: Int, _ e: Int) -> [Int] {
+-        let lo = obs[s - off].seconds - 0.1, hi = obs[e - off].seconds + 0.1
+-        let from = max(0, s - off - 3), to = min(obs.count, e - off + 4)
++        let lo = obs[s - off].seconds - LiveMYTransitionRepair.pre, hi = obs[e - off].seconds + LiveMYTransitionRepair.post
++        let from = max(0, s - off - 5), to = min(obs.count, e - off + 5)
+         guard from < to else { return [] }
+         return (from..<to).filter { lo - 1e-9 <= obs[$0].seconds && obs[$0].seconds <= hi + 1e-9 }
+     }
+@@ -559,7 +562,11 @@
+             batch.append(x); keys.append(key)
+         }
+         t = tick("span_inputs", t)
+-        var logits = batch.isEmpty ? [] : try recognizer.logits(batch)
++        let repairFeatures=LiveMyLikeMotion.features(obs)
++        var logits = batch.isEmpty ? [] : try recognizer.logits(batch,repairEligible:keys.map { LiveMYTransitionRepair.eligible(repairFeatures,start:seconds($0.s),end:seconds($0.e)) })
++        if !batch.isEmpty { for (key,row) in zip(keys,recognizer.lastAdapted) { shared.repairValues[key]=row } }
++        for key in spans { if let row=shared.repairValues[key] { repairScores[key]=row } }
++
+         _ = tick("recognizer", t)
+         let wordCount = recognizer.labels.count
+         if mode != .words, config.fistGeometry, let fist = Self.fist {
+@@ -593,6 +600,7 @@
+                 return LiveTiredRescue.apply(word, tired: tired, have: have, raw: raw, threshold: threshold) + Array(l[wordCount...])
+             }
+         }
++
+         for (key, row) in zip(keys, logits) { shared.values[key] = .some(row) }
+         var rows = Array(zip(keys, logits))
+         for (key, row) in cached {
+@@ -673,6 +681,7 @@
+         drop = keep - bioOff
+         if drop > 0 { bio.removeFirst(drop); bioOff = keep }
+         scores = scores.filter { $0.key.s >= origin }
++        repairScores = repairScores.filter { $0.key.s >= origin }
+     }
+ 
+     private func seconds(_ k: Int) -> Double { obs[min(max(k - off, 0), obs.count - 1)].seconds }
+@@ -695,11 +704,35 @@
+         var local: [SpanKey: [Float]] = [:]
+         for span in spans { if case .some(.some(let row)) = scores[span] { local[SpanKey(span.s - origin, span.e - origin)] = row } }
+         let localSpans = spans.map { SpanKey($0.s - origin, $0.e - origin) }
++        let completionFeatures=LiveMyLikeMotion.features(obs)
+         var segs = LiveSegmental.decode(sub, spans: localSpans, records: local, labels: labels, config: config)
+-        // Confirm ambiguous LIKE as MY only with observed flat contact and no pinch.
+-        // Unknown motion preserves the model; the original score cache stays unchanged.
++        if mode != .letters, let my=recognizer.labels.firstIndex(of:"MY") {
++            let wordCount=recognizer.labels.count
++            // A second independently recognized gesture confirms the preceding contact ended.
++            // No successor label is whitelisted; LIKE/MY are excluded because they share the ambiguous onset.
++            let supports=spans.filter { span in
++                guard let row=local[SpanKey(span.s-origin,span.e-origin)] else {return false}
++                let lp=LiveSegmental.logSoftmax(row);guard let top=lp.indices.max(by:{lp[$0]<lp[$1]}),top<wordCount else{return false}
++                return !["MY","LIKE"].contains(recognizer.labels[top]) && exp(lp[top])>=LiveMYTransitionRepair.support
++            }
++            var refined=false
++            for span in spans {
++                guard seconds(span.e)-seconds(span.s)>LiveMYTransitionRepair.maxDuration+1e-6 && LiveMYTransitionRepair.plausibleMY(completionFeatures,start:seconds(span.s),end:seconds(span.e)) else {continue}
++                let key=SpanKey(span.s-origin,span.e-origin)
++                guard var row=local[key],let adapted=repairScores[span] else {continue}
++                let ap=LiveSegmental.logSoftmax(adapted).map {exp($0)}
++                guard ap.indices.max(by:{ap[$0]<ap[$1]})==my && ap[my]>=LiveMYTransitionRepair.floor else {continue}
++                guard let next=supports.first(where:{$0.s>span.e && seconds($0.s)-seconds(span.e)<=LiveMYTransitionRepair.nextGap}) else {continue}
++                let word=Array(row.prefix(wordCount))
++                guard let updated=LiveMYTransitionRepair.refine(word,adapted:adapted,labels:recognizer.labels) else {continue}
++                row=updated+Array(row.dropFirst(wordCount))
++                local[key]=row;refined=true
++            }
++            if refined {segs=LiveSegmental.decode(sub,spans:localSpans,records:local,labels:labels,config:config)}
++        }
++
+         if mode != .letters, let my=recognizer.labels.firstIndex(of:"MY"), let like=recognizer.labels.firstIndex(of:"LIKE") {
+-            let motionRows=LiveMyLikeMotion.features(obs)
++            let motionRows=completionFeatures
+             var changed=false
+             for span in spans {
+                 let key=SpanKey(span.s-origin,span.e-origin)
+@@ -714,6 +747,78 @@
+                 }
+             }
+             if changed { segs=LiveSegmental.decode(sub,spans:localSpans,records:local,labels:labels,config:config) }
++        }
++        if mode != .letters && LiveMYTransitionRepair.contextScoreFloor<1 {
++            let myEnds=segs.filter{$0.gloss=="MY"}.map{seconds($0.end+origin)}+[lastMyEnd]
++            var changed=false
++            for span in spans {
++                guard myEnds.contains(where:{seconds(span.s)>$0 && seconds(span.s)-$0<=LiveMYTransitionRepair.successorGap+1e-6}),
++                    let adapted=repairScores[span],var row=local[SpanKey(span.s-origin,span.e-origin)] else{continue}
++                let p=LiveSegmental.logSoftmax(adapted).map{exp($0)},top=p.indices.max(by:{p[$0]<p[$1]})!
++                guard !["MY","LIKE"].contains(recognizer.labels[top]),p[top]>=LiveMYTransitionRepair.contextScoreFloor else{continue}
++                // Only strengthen a whole candidate that covers two conflicting decoded pieces.
++                let pieces=segs.filter{g in
++                    guard let label=g.gloss,!["MY","LIKE"].contains(label),!label.hasPrefix("FS_") else{return false}
++                    return g.start+origin>=span.s-1 && g.end+origin<=span.e+2 && g.start+origin<span.e && g.end+origin>span.s
++                }
++                guard pieces.count>=2,pieces[0].gloss != pieces[1].gloss,
++                    pieces[1].start-pieces[0].end<=3,
++                    let first=repairScores[SpanKey(pieces[0].start+origin,pieces[0].end+origin)] else{continue}
++                let fp=LiveSegmental.logSoftmax(first).map{exp($0)}
++                guard fp.indices.max(by:{fp[$0]<fp[$1]})==top,fp[top]>=LiveMYTransitionRepair.successorFloor else{continue}
++                let count=recognizer.labels.count
++                let lp=LiveSegmental.logSoftmax(Array(row.prefix(count))),q=lp.map{exp($0)},target=min(p[top],0.999999)
++                guard target>q[top] else{continue}
++                let mass=Double(row[top])-lp[top],adjustment=log((1-target)/max(1-q[top],1e-9))
++                row=row.enumerated().map{index,value in index>=count ? value : (index==top ? Float(mass+log(target)) : value+Float(adjustment))}
++                local[SpanKey(span.s-origin,span.e-origin)]=row;changed=true
++            }
++            if changed {segs=LiveSegmental.decode(sub,spans:localSpans,records:local,labels:labels,config:config)}
++        }
++        if mode != .letters, let my=recognizer.labels.firstIndex(of:"MY"),LiveMYTransitionRepair.onsetFloor>0 {
++            let wordCount=recognizer.labels.count
++            let supports=spans.compactMap { span -> (SpanKey,Int)? in
++                guard let row=local[SpanKey(span.s-origin,span.e-origin)] else{return nil}
++                let lp=LiveSegmental.logSoftmax(row),top=row.indices.max(by:{row[$0]<row[$1]})!
++                guard top<wordCount,!["MY","LIKE"].contains(recognizer.labels[top]),exp(lp[top])>=0.8 else{return nil}
++                return (span,top)
++            }
++            var floors:[SpanKey:Float]=[:]
++            for span in spans where seconds(span.e)-seconds(span.s)<=0.350001 {
++                let key=SpanKey(span.s-origin,span.e-origin)
++                guard let row=local[key],let adapted=repairScores[span] else{continue}
++                let lp=LiveSegmental.logSoftmax(row)
++                guard row.indices.max(by:{row[$0]<row[$1]})==my,exp(lp[my])>=0.8,
++                    adapted.indices.max(by:{adapted[$0]<adapted[$1]})==my,
++                    LiveMYTransitionRepair.stableTouch(completionFeatures,start:seconds(span.s),end:seconds(span.e)),
++                    let covering=segs.first(where:{g in
++                        guard let gloss=g.gloss,!["MY","LIKE"].contains(gloss),!gloss.hasPrefix("FS_") else{return false}
++                        return g.start+origin<=span.e && g.end+origin>=span.e && span.s>=g.start+origin-2
++                    }),let label=covering.gloss,
++                    let next=supports.first(where:{$0.0.s>span.e && seconds($0.0.s)-seconds(span.e)<=0.400001 && LiveMYTransitionRepair.distinctTouch(completionFeatures,start:seconds(span.s),end:seconds(span.e),nextStart:seconds($0.0.s),nextEnd:seconds($0.0.e))}) else{continue}
++                guard !segs.contains(where:{$0.gloss=="MY" && $0.start+origin<=span.e && $0.end+origin>=span.s}) else{continue}
++                floors[key]=LiveMYTransitionRepair.onsetFloor
++
++            }
++            if !floors.isEmpty {segs=LiveSegmental.decode(sub,spans:localSpans,records:local,labels:labels,config:config,boundaryFloors:floors)}
++        }
++        if mode != .letters && LiveMYTransitionRepair.successorFloor<1 {
++            let myEnds=segs.filter{$0.gloss=="MY"}.map{seconds($0.end+origin)}+[lastMyEnd]
++            for index in segs.indices {
++                let g=segs[index],start=g.start+origin,end=g.end+origin
++                guard let old=g.gloss,!["MY","LIKE"].contains(old),!old.hasPrefix("FS_"),
++                    myEnds.contains(where:{seconds(start)>$0 && seconds(start)-$0<=LiveMYTransitionRepair.successorGap+1e-6}),
++                    let adapted=repairScores[SpanKey(start,end)] else{continue}
++                let p=LiveSegmental.logSoftmax(adapted).map{exp($0)},top=adapted.indices.max(by:{adapted[$0]<adapted[$1]})!
++                let label=recognizer.labels[top]
++                guard label != "LIKE",p[top]>=LiveMYTransitionRepair.successorFloor,label != old else{continue}
++                if label=="MY" {
++                    guard p[top]>=0.95,seconds(end)-seconds(start)<=0.350001,
++                        myEnds.contains(where:{seconds(start)>$0 && seconds(start)-$0<=0.200001}) else{continue}
++                }
++                segs[index].gloss=label
++
++            }
+         }
+         let horizon = final ? known : known - config.lag
+         var committed: [LiveWord] = []
+@@ -778,6 +883,7 @@
+                 continue
+             }
+             if let gloss = g.gloss {
++                if gloss=="MY" {lastMyEnd=max(lastMyEnd,seconds(end))}
+                 let sameGap = gloss.hasPrefix("FS_") ? config.letterGap : gap
+                 if let last, last.gloss == gloss, start - last.endFrame <= sameGap {
+                     last.endFrame = max(last.endFrame, end)
+@@ -830,7 +936,7 @@
+ 
+     func reset() {
+         words.reset(); letters.reset()
+-        shared.values = [:]
++        shared.values = [:]; shared.repairValues = [:]
+         committed = []
+     }
+ 
+@@ -855,6 +961,7 @@
+         committed = Array(committed.suffix(32))
+         let oldest = min(words.origin, letters.origin)
+         shared.values = shared.values.filter { $0.key.s >= oldest }
++        shared.repairValues = shared.repairValues.filter { $0.key.s >= oldest }
+         return kept
+     }
+ 
+@@ -1086,7 +1193,7 @@
+ 
+ import Foundation
+ 
+-/// Original timestamps and same-hand ordered motion; unknown never means MY.
++/// Original timestamps and same-hand ordered closure; unknown never means MY.
+ enum LiveMyLikeMotion {
+     struct Row {
+         var t: Double, slot: Int, pinch: Double, straight: Double, size: Double, px: Double, py: Double
+@@ -1149,3 +1256,70 @@
+         return !hands.isEmpty && hands.allSatisfy{$0=="MY"} ? ("MY","observed_flat_contact_without_pinch") : ("unknown","insufficient_or_ambiguous_motion")
+     }
+ }
++
++import Foundation
++// Frozen settings of the 2026-10-12 phone-verified transition repair.
++enum LiveMYTransitionRepair {
++    static let pre = 0.1, post = 0.1
++    static let support=0.5, nextGap=0.4
++    static let agreementFloor=0.9
++    static let onsetFloor:Float=0.4
++    static let contactRows=2, contactSeconds=0.03, followHorizon=0.35
++    static let touchLimit=0.06, maxContact=0.35
++    static func stableTouch(_ features:[LiveMyLikeMotion.Row],start:Double,end:Double)->Bool {
++        let rows=features.filter{$0.t>=start-0.05 && $0.t<=end && $0.flatValid && $0.straight>=0.97 && $0.pinch>=0.8 && abs($0.px)<=0.6 && $0.py>=(-0.15) && $0.py<=1.0}
++        return (0..<2).contains {slot in
++            let rr=rows.filter{$0.slot==slot}
++            guard rr.count>=contactRows,rr.last!.t-rr.first!.t>=contactSeconds-1e-6 else{return false}
++            let dx=rr.map(\.px).max()!-rr.map(\.px).min()!,dy=rr.map(\.py).max()!-rr.map(\.py).min()!
++            guard sqrt(dx*dx+dy*dy)<=touchLimit else{return false}
++            let px=rr.map(\.px).reduce(0,+)/Double(rr.count),py=rr.map(\.py).reduce(0,+)/Double(rr.count)
++            let all=features.filter{$0.slot==slot}
++            guard var lo=all.firstIndex(where:{$0.t==rr.first!.t}),var hi=all.firstIndex(where:{$0.t==rr.last!.t}) else{return false}
++            func near(_ r:LiveMyLikeMotion.Row)->Bool {
++                r.flatValid && r.straight>=0.97 && r.pinch>=0.8 && hypot(r.px-px,r.py-py)<=touchLimit
++            }
++            while lo>0 && all[lo].t-all[lo-1].t<=0.175001 && near(all[lo-1]) {lo-=1}
++            while hi+1<all.count && all[hi+1].t-all[hi].t<=0.175001 && near(all[hi+1]) {hi+=1}
++            return all[hi].t-all[lo].t<=maxContact+1e-6
++        }
++    }
++    static func distinctTouch(_ features:[LiveMyLikeMotion.Row],start:Double,end:Double,nextStart:Double,nextEnd:Double)->Bool {
++        (0..<2).contains {slot in
++            let hand=features.filter{$0.slot==slot}
++            guard stableTouch(hand,start:start,end:end) else{return false}
++            let following=hand.filter{$0.t>=nextStart && $0.t<=nextStart+followHorizon}
++            let changed=following.filter{($0.flatValid && $0.straight<0.94) || $0.pinch<0.75}
++            return changed.count>=2 && changed.last!.t-changed.first!.t>=0.05 && Double(changed.count)/Double(max(1,following.count))>=0.6
++        }
++    }
++    static let contextScoreFloor=0.995
++    static let successorFloor=0.85, successorGap=0.6
++    static let pairFloor=0.0
++    static let maxDuration=0.35, floor=0.5
++    static func refine(_ base:[Float], adapted:[Float], labels:[String])->[Float]? {
++        guard let my=labels.firstIndex(of:"MY"),let like=labels.firstIndex(of:"LIKE") else {return nil}
++        let q=LiveSegmental.logSoftmax(base).map {exp($0)},p=LiveSegmental.logSoftmax(adapted).map {exp($0)}
++        let top=q.indices.max(by:{q[$0]<q[$1]})!
++        guard p.indices.max(by:{p[$0]<p[$1]})==my,p[my]>=floor,q[my]+q[like]>=pairFloor else{return nil}
++        let order=q.indices.sorted {q[$0]>q[$1]}
++        // Already-MY spans need either MY/LIKE ambiguity or strong independent MY confirmation.
++        guard top != my || order.prefix(3).contains(like) || p[my]>=agreementFloor else{return nil}
++        let target=min(max(p[my],top==like ? q[like] : 0),0.999999)
++        guard target>q[my] else{return nil}
++        let lp=LiveSegmental.logSoftmax(base)
++        let mass=Double(base[my])-lp[my],adjustment=log((1-target)/max(1-q[my],1e-9))
++        return base.enumerated().map {index,value in index==my ? Float(mass+log(target)) : value+Float(adjustment)}
++    }
++    static func plausibleMY(_ features:[LiveMyLikeMotion.Row],start:Double,end:Double)->Bool {
++        let rows=features.filter { $0.t>=start-0.1 && $0.t<=end && $0.flatValid }
++        if rows.count<2 {return true} // Missing landmarks cannot establish a bent-hand veto.
++        return rows.contains { $0.straight>=0.97 && $0.pinch>=0.8 && abs($0.px)<=0.6 && $0.py>=(-0.15) && $0.py<=1.0 }
++    }
++    static func eligible(_ features:[LiveMyLikeMotion.Row],start:Double,end:Double)->Bool {
++        guard end-start<=maxDuration+1e-6 else {return false}
++        if !plausibleMY(features,start:start,end:end) {return false}
++        return true
++
++    }
++}

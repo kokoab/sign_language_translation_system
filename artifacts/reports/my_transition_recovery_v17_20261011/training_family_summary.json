@@ -1,0 +1,274 @@
+[
+  {
+    "family": "Actual MY/LIKE output-row adaptation",
+    "arms": 8,
+    "evidence": "actual_training_results.json",
+    "conclusion": "8 arms; all nonzero checkpoints rejected by retention gates.",
+    "selected": {
+      "epoch": 0,
+      "arm": "baseline",
+      "eligible": true,
+      "dev_correct": 12,
+      "dev_n": 53,
+      "dev_loss": 3.2466347217559814,
+      "dev_events": {
+        "MY_FRIEND_2": 1,
+        "MY_FRIEND_3": 0,
+        "MY_FRIEND_4": 0,
+        "MY_NAME_2": 11,
+        "MY_NAME_3": 0
+      },
+      "train_correct": 12,
+      "train_n": 36,
+      "retention": {
+        "citizen_val": {
+          "correct": 364,
+          "n": 378,
+          "regressed_classes": []
+        },
+        "semlex_val": {
+          "correct": 846,
+          "n": 953,
+          "regressed_classes": []
+        },
+        "local_val": {
+          "correct": 2569,
+          "n": 2626,
+          "regressed_classes": []
+        }
+      }
+    }
+  },
+  {
+    "family": "Balanced MY actual-window head",
+    "arms": 12,
+    "evidence": "balanced_training_results.json",
+    "conclusion": "12 arms; fits89/89 actual MY windows, but full replacement swallows NAME and hurts genuine LIKE/streaming controls.",
+    "selected": {
+      "epoch": 9,
+      "arm": "s27931_lr0.0001_p0.2",
+      "eligible": true,
+      "dev_correct": 53,
+      "dev_n": 53,
+      "dev_loss": 0.015436987392604351,
+      "dev_events": {
+        "MY_FRIEND_2": 2,
+        "MY_FRIEND_3": 5,
+        "MY_FRIEND_4": 10,
+        "MY_NAME_2": 12,
+        "MY_NAME_3": 24
+      },
+      "train_correct": 36,
+      "train_n": 36,
+      "retention": {
+        "citizen_val": {
+          "correct": 364,
+          "n": 378,
+          "regressed_classes": []
+        },
+        "semlex_val": {
+          "correct": 847,
+          "n": 953,
+          "regressed_classes": []
+        },
+        "local_val": {
+          "correct": 2571,
+          "n": 2626,
+          "regressed_classes": []
+        }
+      }
+    }
+  },
+  {
+    "family": "Restore historical MY NAME supervision",
+    "arms": 6,
+    "evidence": "restored_training_results.json",
+    "conclusion": "6 arms; best diagnostic changes actual MY windows24/89 to25/89 only, with retention losses. Restoration alone insufficient.",
+    "selected": {
+      "epoch": 0,
+      "arm": "baseline",
+      "eligible": true,
+      "dev_correct": 24,
+      "dev_n": 89,
+      "dev_loss": 2.735532522201538,
+      "dev_events": {
+        "MY_EAT": 10,
+        "MY_FRIEND_1": 2,
+        "MY_FRIEND_2": 1,
+        "MY_FRIEND_3": 0,
+        "MY_FRIEND_4": 0,
+        "MY_NAME_1": 0,
+        "MY_NAME_2": 11,
+        "MY_NAME_3": 0
+      },
+      "train_correct": 142,
+      "train_n": 148,
+      "retention": {
+        "citizen_val": {
+          "correct": 364,
+          "n": 378,
+          "regressed_classes": []
+        },
+        "semlex_val": {
+          "correct": 846,
+          "n": 953,
+          "regressed_classes": []
+        },
+        "local_val": {
+          "correct": 2569,
+          "n": 2626,
+          "regressed_classes": []
+        }
+      }
+    }
+  },
+  {
+    "family": "Paired MY plus successor windows",
+    "arms": 12,
+    "evidence": "paired_training_results.json",
+    "conclusion": "12 arms; selected220/220 windows; full head still causes streaming regressions. One-way calibrated use is substantially safer.",
+    "selected": {
+      "epoch": 7,
+      "arm": "s27931_lr0.0001_p0.1",
+      "eligible": true,
+      "head_drift": 0.0007367046200670302,
+      "dev_correct": 133,
+      "dev_n": 133,
+      "dev_loss": 0.05233098939061165,
+      "dev_events": {
+        "FRIEND_2": 17,
+        "FRIEND_3": 12,
+        "FRIEND_4": 12,
+        "MY_FRIEND_2": 2,
+        "MY_FRIEND_3": 5,
+        "MY_FRIEND_4": 10,
+        "MY_NAME_2": 12,
+        "MY_NAME_3": 24,
+        "NAME_2": 22,
+        "NAME_3": 17
+      },
+      "train_correct": 87,
+      "train_n": 87,
+      "retention": {
+        "citizen_val": {
+          "correct": 364,
+          "n": 378,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        },
+        "semlex_val": {
+          "correct": 847,
+          "n": 953,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        },
+        "local_val": {
+          "correct": 2571,
+          "n": 2626,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        }
+      }
+    }
+  },
+  {
+    "family": "Capture-offset temporal augmentation",
+    "arms": 12,
+    "evidence": "jitter_training_results.json",
+    "conclusion": "12 arms; selected597/598 windows; initial native policy only172/192 strict pairs despite perfect development top1.",
+    "selected": {
+      "epoch": 5,
+      "arm": "s27931_lr0.0001_p0.1",
+      "eligible": true,
+      "worst_dev_fraction": 1.0,
+      "head_drift": 0.0005181294400244951,
+      "dev_correct": 375,
+      "dev_n": 375,
+      "dev_loss": 0.0696767121553421,
+      "dev_events": {
+        "FRIEND_2": 45,
+        "FRIEND_3": 36,
+        "FRIEND_4": 43,
+        "MY_FRIEND_2": 15,
+        "MY_FRIEND_3": 13,
+        "MY_FRIEND_4": 21,
+        "MY_NAME_2": 34,
+        "MY_NAME_3": 57,
+        "NAME_2": 60,
+        "NAME_3": 51
+      },
+      "train_correct": 222,
+      "train_n": 223,
+      "retention": {
+        "citizen_val": {
+          "correct": 364,
+          "n": 378,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        },
+        "semlex_val": {
+          "correct": 846,
+          "n": 953,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        },
+        "local_val": {
+          "correct": 2572,
+          "n": 2626,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        }
+      }
+    }
+  },
+  {
+    "family": "Confidence-aware selection",
+    "arms": 12,
+    "evidence": "confidence_training_results.json",
+    "conclusion": "12 arms; selected598/598 windows and zero formerly correct isolated losses. Original head retained alongside adapted head for scoped runtime repair.",
+    "selected": {
+      "epoch": 10,
+      "arm": "s27931_lr0.0001_p0.2",
+      "eligible": true,
+      "worst_dev_fraction": 1.0,
+      "head_drift": 0.0035480011720210314,
+      "dev_correct": 375,
+      "dev_n": 375,
+      "dev_loss": 0.015544626861810684,
+      "dev_events": {
+        "FRIEND_2": 45,
+        "FRIEND_3": 36,
+        "FRIEND_4": 43,
+        "MY_FRIEND_2": 15,
+        "MY_FRIEND_3": 13,
+        "MY_FRIEND_4": 21,
+        "MY_NAME_2": 34,
+        "MY_NAME_3": 57,
+        "NAME_2": 60,
+        "NAME_3": 51
+      },
+      "train_correct": 223,
+      "train_n": 223,
+      "retention": {
+        "citizen_val": {
+          "correct": 365,
+          "n": 378,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        },
+        "semlex_val": {
+          "correct": 847,
+          "n": 953,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        },
+        "local_val": {
+          "correct": 2572,
+          "n": 2626,
+          "regressed_classes": [],
+          "previously_correct_lost": 0
+        }
+      }
+    }
+  }
+]

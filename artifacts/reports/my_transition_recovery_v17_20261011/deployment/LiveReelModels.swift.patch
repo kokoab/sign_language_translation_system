@@ -1,0 +1,50 @@
+--- a/LiveReelModels.swift
++++ b/LiveReelModels.swift
+@@ -269,16 +269,17 @@
+     let labels: [String]
+     let letterClasses: [String]
+     let letterThreshold: Float
++    var lastAdapted: [[Float]] = []
+     private let model: MLModel
+     private let wordOutput: String
+     private let letterOutput: String
+     private let landmarks, embeddings, valid, boxes: MLMultiArray
+ 
+-    init(name: String = "SpanRecognizerV17FragmentRejectLettersB8FP16", labels: [String], letterThreshold: Float = 0.5,
++    init(name: String = "SpanRecognizerV17ConfidenceDualB8FP16", labels: [String], letterThreshold: Float = 0.5,
+          units: MLComputeUnits = .cpuAndGPU) throws {
+         model = try LiveModelLocator.load(name, units: units)
+         let outputs = model.modelDescription.outputDescriptionsByName
+-        guard outputs["word_logits"] != nil, let letters = outputs.keys.first(where: { $0 != "word_logits" }) else {
++        guard outputs["word_logits"] != nil, let letters = outputs.keys.first(where: { $0 != "word_logits" && $0 != "original_word_logits" }) else {
+             throw LiveReelError.model("Span recognizer needs word and letter outputs")
+         }
+         wordOutput = "word_logits"; letterOutput = letters
+@@ -308,7 +309,8 @@
+     }
+ 
+     /// [N][127]: 100 word logits then 27 letter logits, in batches of 8 (short batches padded).
+-    func logits(_ batch: [LiveSpanInput]) throws -> [[Float]] {
++    func logits(_ batch: [LiveSpanInput], repairEligible:[Bool]? = nil) throws -> [[Float]] {
++        lastAdapted=[]
+         var out: [[Float]] = []
+         var i = 0
+         while i < batch.count {
+@@ -328,8 +330,16 @@
+             ]))
+             let words = result.featureValue(for: wordOutput)!.multiArrayValue!.floats()
+             let letters = result.featureValue(for: letterOutput)!.multiArrayValue!.floats()
++            let original = result.featureValue(for: "original_word_logits")?.multiArrayValue?.floats()
+             for slot in 0..<chunk.count {
+-                out.append(Array(words[slot * 100 ..< slot * 100 + 100]) + Array(letters[slot * 27 ..< slot * 27 + 27]))
++                var chosen=Array(words[slot*100..<slot*100+100])
++                if let original {
++                    let base=Array(original[slot*100..<slot*100+100])
++                    let adapted=chosen;lastAdapted.append(adapted); chosen=base
++                    if repairEligible?[i+slot] == true, let refined=LiveMYTransitionRepair.refine(base,adapted:adapted,labels:labels) {chosen=refined}
++
++                }
++                out.append(chosen + Array(letters[slot * 27 ..< slot * 27 + 27]))
+             }
+             i += chunk.count
+         }
