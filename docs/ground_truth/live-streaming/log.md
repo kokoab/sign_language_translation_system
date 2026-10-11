@@ -1,4 +1,22 @@
-# live-streaming — log
+## 2026-10-12 — First fresh post-install phone session retains MY phrase pairs; user confirms improvement
+
+Read-only pull of newest saved session20261012_074454 (07:44:54Asia/Manila),34.20s partial snapshot complete=false.19committed words include MY NAME and two MY FRIEND pairs, six LIKE outputs and one HAVE. Three short MY spans0.233/0.200/0.200s survive into the following sign; commits2.733/4.967/27.467s. User reports it now works. This is fresh post-install evidence; without reviewed video labels no accuracy percentage or per-guard causal attribution is claimed. Stage3 lock output is recorded separately and not validated. No runtime/model/data changes this turn. Files: my_transition_live_followup_v17_20261012/{session_inventory.json,20261012_074454.json,summary.json,REPORT.txt}; raw-session hash pinned. Next: retain installed candidate and monitor further natural signing; broader generalization, sustained thermals and existing HAVE omissions remain open.
+
+## 2026-10-12 — MY transition candidate installed as normal signed Release
+
+User-authorized installation completed on iPhone13, bundle com.kokoab.sltMobileApp, running process55579 verified. Installed build /Users/frnzlo/slt_my_transition_release_build; prior175msbuild retained for rollback. Production LiveReelDecoder.swift and LiveReelModels.swift now use frozen scoped repair and bundled ConfidenceDual; model package and four project references added. No diagnostic switches/trace arrays, Documents override or XCTest bundle shipped; RunnerTests unchanged. Nine cleanup parity cases exact including word/frame/time/score fields;14/14release checks pass; candidate compiled weights match tested source, all15previous weights unchanged. Deployment source/model/executable hashes, patches and backups recorded in my_transition_recovery_v17_20261011/deployment. Main report/manifest and GT updated to installed; original phone-comparison verification preserved separately. Existing HAVE omissions remain and fresh signing/sustained thermals remain untested. Next: naturally sign MY FRIEND/NAME/EAT and genuine LIKE phrases plus HAVE/ANGRY/TIRED controls on this installed build.
+
+## 2026-10-12 — Normal Release built; nine cleanup parity checks pass
+
+Two additional non-silent genuine LIKE controls retain exact words/times/scores, giving9/9 focused cleanup parity checks. Signed normal Release builds and its candidate compiled weight hash equals the tested source; all15previous compiled model payloads remain unchanged, with no XCTest bundle shipped. First packaging verifier flagged one whitespace-only line in the generated decoder and treated git diff --no-index's ordinary differences exit1 as failure; removed that whitespace and corrected the check to require no diagnostics with status0/1. Incremental final build underway. No recognition logic changed or installation attempted yet.
+
+## 2026-10-12 — Production candidate promoted after exact cleanup parity; Release build started
+
+Seven focused replays match the tested candidate word-for-word, including all word frame/time/score fields (compute time excluded). Production LiveReelDecoder.swift now contains frozen LiveMYTransitionRepair settings and the scoped repair without experiment switches/trace buffers; LiveReelModels.swift defaults to the bundled ConfidenceDual model and preserves original word/letter paths. Added the exact selected mlpackage and its four Xcode project references. Previous production files backed up under deployment/before; prior signed175msapp remains available for rollback. RunnerTests unchanged and no diagnostic model-folder override deployed. Normal signed Release building at /Users/frnzlo/slt_my_transition_release_build. Two additional recognized-LIKE cleanup checks underway because the first two LIKE fixtures were silent in the unchanged baseline. Next: verify package/signature and install/launch after those checks pass.
+
+## 2026-10-12 — User authorizes MY candidate installation; production packaging underway
+
+Prepared deployment/prepare.py under my_transition_recovery_v17_20261011. It verifies all selected source/model/result hashes and current production source backups, freezes the phone-tested parameters, and removes experiment switches and unbounded diagnostic arrays. Seven focused native parity cases cover current MY schedules, historical MY/HAVE and genuine LIKE before source promotion. Phone is unlocked. No production edit or installation yet; next: parity, signed normal Release build, bundled-model verification, install and launch.
 
 ## 2026-10-12 — Physical iPhone13 MY comparison passed; normal release restored
 
