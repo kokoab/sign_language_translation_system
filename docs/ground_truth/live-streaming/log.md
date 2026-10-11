@@ -1,5 +1,15 @@
 # live-streaming — log
 
+## 2026-10-12 — Physical iPhone13 MY comparison passed; normal release restored
+
+After user unlock, run_phone_comparison.py completed successfully; XCTest testMyTransitionRecoveryComparison passed (130.206s). ABBA candidate runs both reproduce the complete16-token MY FRIEND/NAME/EAT reference; baseline runs each have6errors. Aggregate: full sequences0/2→2/2, MY4/16→16/16, token errors12→0. Pooled compute median30.37→31.14ms, mean33.26→34.12ms, p9556.46→57.85ms; sampled peak260.49→261.67MiB. English ready and thermal nominal before/after all four passes. Frame schedules vary under latest-frame handling; source1280x720, about27s per pass. Known development video, not independent fresh signing. These compute measurements exclude loading and publication delay; short passes do not establish sustained thermals.
+
+Changed report-local files: analyze_phone_comparison.py, four raw ABBA results, phone_comparison_summary.json, phone_test_status.json, candidate_source_manifest.json with result hashes, write_report.py/REPORT.txt, verify_final.py/final_verification.json, and restoration logs. Desktop-only report/verification snapshots preserved. Normal signed175msrelease installation and launch verified; all three production source hashes unchanged. Candidate is not the installed normal release. No training/data/model-source changes or protected test access this turn. Next safe action: fresh MY FRIEND/NAME/EAT and genuine LIKE phrase signing, plus HAVE/ANGRY/TIRED controls; retain the scoped candidate and reject broad alternatives. Existing HAVE omissions remain. Final verification36/36checks pass and task-scoped git diff --check passes; artifact size index regenerated.
+
+## 2026-10-12 — User unlocked phone; final MY candidate ABBA comparison launched
+
+User confirmed unlock. Prepared run_phone_comparison.py passed its explicit lock-state guard and launched the signed diagnostic via test-without-building. It compares baseline/candidate/candidate/baseline on the retained22:07video through the normal app engine with resident English and paced/latest-frame processing. Results pending; runner restores the normal175msrelease in finally. No new training, source changes or protected test access.
+
 ## 2026-10-12 — MY recovery desktop experiments complete; final candidate and remaining phone gate
 
 All62training configurations and sequential runtime families complete. Final merge_native + SpanRecognizerV17ConfidenceDualB8FP16:24/24original and12/12additional full16-token sequences exact (baseline0/24and0/12; nominal152→0andstress85→0token errors). All570cached sequences unchanged across100Citizen classes,59genuineMY/LIKE unchanged,66syntheticLIKE+next and24syntheticMY+next+WRITE unchanged. Historical72complete: September24/24retained, reviewedOctoberfirstMY22→24/24, HAVE26/168unchanged; HAVE hypotheses identical onall24schedules. No universal accuracy claim: same known signer/video, threephysicaltrainingpairs/fivedevelopmentpairs, correlated schedules. Strictcore191/192and94/96discrepancies are boundary-overlap cases, not missing words.
