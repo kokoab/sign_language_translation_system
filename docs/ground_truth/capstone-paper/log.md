@@ -7,6 +7,31 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-13 — Bare unittest discovery imports standalone benchmarks
+
+User ran python3 -m unittest and saw four CoreML processes launch before interrupting.
+The exact banner is in scripts/test_coreml_multiproc.py:89. Its module-level code
+enumerates videos, writes worker/chunk files and launches subprocesses when imported.
+Default discovery traverses the scripts package; the test directory has no __init__.py,
+so bare root discovery is not the intended suite entry point. Its timing printout is
+benchmark output, not a unit-test result; worker stderr and return codes are not checked
+by that script. No matching benchmark worker remained during the process check.
+Confirmed make -n test still expands to scoped test/test_*.py unittest discovery with
+venv/bin/python. Recorded the entry-point distinction in PROJECT_GROUND_TRUTH.md.
+No benchmark, full suite, extraction or protected evaluation was launched here.
+Next safe action: run make test and diagnose any actual unittest traceback separately.
+
+## 2026-10-13 — Single-command Python test shortcut added
+
+User requested a shortcut like php artisan test. Added a root Makefile with a phony
+test target invoking the existing venv/bin/python unittest discovery command for
+test/test_*.py. Use make test from the repository root; no venv activation or new
+dependency is needed. PROJECT_GROUND_TRUTH.md environment section records the shortcut.
+Validation: make -n test expands to the exact existing command; whitespace checks pass.
+The full suite was not rerun for this wrapper-only change. Legacy standalone evaluation
+scripts are outside unittest discovery. Next safe action: use make test when the full
+discoverable unittest suite is desired.
+
 ## 2026-10-13 — Dated main commit series published on user request
 
 User authorized pushing the completed October8–13 series. Normal fast-forward push

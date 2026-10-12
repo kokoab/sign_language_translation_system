@@ -1,3 +1,18 @@
+## 2026-10-13 — Five ATLAS/source/test commits prepared for publication
+
+User approved the proposed five commits and push to main. Source relocation,
+mobile project import, test relocation, quiet output/removal, and the Makefile/
+discovery notes are separated. Author and committer: kokoab
+<batiancelafrancis747@gmail.com>; both dates are the logged October13Manila day.
+00:25–00:29timestamps order the commits, not measured action times. Existing
+244/244quiet suite result and120layout links verified; focused extractor17/17,
+synthetic failure visibility/output restoration and whitespace checks pass.
+Model packages/TFLite weights remain ignored, so a fresh checkout needs those
+local model assets. macOS metadata, personal files and unrelated experiment
+outputs are excluded. Alternate index preserves unrelated worktree changes.
+Next safe action: push the five commits normally and verify remote main; record
+publication after the remote confirms success. No training or deployment.
+
 ## 2026-10-13 — Quiet ATLAS discovery; failing naturalizer suite removed
 
 User requested permanent suppression of library noise in the scoped ATLAS tests

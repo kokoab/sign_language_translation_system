@@ -1771,6 +1771,10 @@ image side.
 ## Environment
 
 - Host: macOS on Apple Silicon. Project Python: **`venv/bin/python`** (3.9).
+- Run the discoverable unittest suite from the repository root with **`make test`**;
+  the Makefile uses the project venv automatically. Legacy standalone scripts are separate.
+  Bare `python3 -m unittest` also discovers the scripts package and can execute
+  standalone benchmarks during import; use the scoped Makefile target.
 - System Python lacks the PyObjC Vision/Quartz bridge — real extraction and tests must
   run through `venv/bin/python`.
 - Isolated research envs: `artifacts/generated/mobileclip2_env`,
