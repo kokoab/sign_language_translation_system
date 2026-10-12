@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 4/22: ios: route native help into the Flutter manual
+
+Live/Practice help closes like Back and selects the corresponding manual section.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 3/22: mobile: integrate manual navigation and gloss links
 
 Shell supports manual sections, linked gloss details and section-aware native return.

@@ -1,6 +1,6 @@
 // LIVE and PRACTICE (landscape, full-screen camera) of the ATLAS app. Both modes share one layout;
 // panels are iOS 26 Liquid Glass (a dark blur before iOS 26) over the camera, buttons are gradients:
-//   top bar      back · mode + status (dot while running) · Letters (blue = on) · PRACTICE score · gear
+//   top bar      back · mode + status (dot while running) · Letters (blue = on) · PRACTICE score · ? · gear
 //   under bar    LIVE: committed-word pills (newest last, amber "WORD?" preview) on the right,
 //                the finished sentence on the left (its dot turns green while it is spoken)
 //                PRACTICE: the round + sign to perform (top centre), the reference clip (top right)
@@ -9,6 +9,7 @@
 //   bottom-right round ↺ then the big button: LIVE Start → Finish (Finish ends the run and speaks the
 //                sentence; Back leaves and stops the camera), PRACTICE Skip → Next (the round starts from
 //                the set chosen on the setup page)
+//   ?            leaves like Back, opening the manual (LIVE: reading the screen, PRACTICE: practice)
 //   gear         diagnostics panel (FPS, frame time, hands, frames)
 // LIVE processes nothing until Start. PRACTICE runs as soon as the round opens.
 // ↺ LIVE clears the signs so far; PRACTICE retries the current sign. Long-press it for a hint.
@@ -280,6 +281,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private let lettersButton = UIButton(type: .custom)
     private let lettersFill = UIView()
     private let scoreChipLabel = UILabel()
+    private let helpButton = UIButton(type: .system)
     private let gearButton = UIButton(type: .system)
     private let railStack = UIStackView()
     private var railChipKey: [String]?
@@ -713,14 +715,20 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         close(navigate: isPractice ? "PRACTICE" : "HOME")
     }
 
+    /// ?: leave (saving like Back) for the manual section about this screen.
+    @objc private func helpPressed() {
+        close(navigate: "MANUAL", section: isPractice ? "practice" : "screen")
+    }
+
     @objc private func gearPressed() {
         statsPanel.isHidden.toggle()
         render()
     }
 
-    private func close(navigate page: String) {
+    private func close(navigate page: String, section: String? = nil) {
         guard presentingViewController != nil, !isBeingDismissed else { return }
         closeResult = ["navigate": page]
+        if let section { closeResult["section"] = section }
         if isPractice {
             closeResult.merge([
                 "score": practiceScore, "attempts": practiceAttempts, "total": targets.count,
@@ -1207,8 +1215,9 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private func buildInterface() {
         let guide = view.safeAreaLayoutGuide
 
-        // Top bar: back · mode/status · Letters switch · (Practice) score · gear.
+        // Top bar: back · mode/status · Letters switch · (Practice) score · ? · gear.
         let back = glassIcon(backButton, "chevron.left", "Back", #selector(backPressed))
+        let help = glassIcon(helpButton, "questionmark", "How to use ATLAS", #selector(helpPressed))
         let gear = glassIcon(gearButton, "gearshape", "Diagnostics", #selector(gearPressed))
         liveDot.layer.cornerRadius = 4
         liveDot.isHidden = isPractice
@@ -1238,7 +1247,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         let spacer = UIView()
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         modeStack.setContentHuggingPriority(.required, for: .horizontal)
-        let topBar = UIStackView(arrangedSubviews: [back, modeStack, spacer, chip] + (isPractice ? [scoreChip] : []) + [gear])
+        let topBar = UIStackView(arrangedSubviews: [back, modeStack, spacer, chip] + (isPractice ? [scoreChip] : []) + [help, gear])
         topBar.spacing = 14
         topBar.alignment = .center
 
