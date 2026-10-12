@@ -7,6 +7,21 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-13 — Flat Transformer checkpoint adapter verified for commit
+
+The available family-adapter source supplies the same strict state-dict keys and logits
+as the benchmark Transformer, plus its attention-pooled embedding for downstream fusion.
+Stage-1 fine-tuning, orientation evaluation, unified loading/export and SemLex audit
+loaders dispatch from the explicit checkpoint architecture. Four focused adapter tests
+pass, including empty activity, embedding shape/fusion compatibility and legacy rejection.
+These are compatibility checks, not new trained-model accuracy or a promotion. Existing
+training work is not restarted or modified. Changed paths: active/v17/model_stage1_family_v17.py,
+train_stage_1_v17.py, evaluate_orientation_robustness_v17.py,
+export_unified_multimodal_coreml_v17.py, train_unified_multimodal_student_v17.py,
+scripts/evaluate_semlex_citizen100_train_audit.py and test/test_v17_family_transformer_adapter.py.
+Next safe action: retain this as a separate source/compatibility commit; report any
+training outcome only from its own reviewed recipe and completed evidence.
+
 ## 2026-10-09 — Partial-read sweep fix: short fragments + "not a sign" pieces (not installed; report first)
 
 Sweep of all 100 classes (go_split_root_cause_v17_20261009/sweep): confident wrong reads of 30/50% prefix,

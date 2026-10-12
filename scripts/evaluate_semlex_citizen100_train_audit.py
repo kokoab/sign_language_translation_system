@@ -17,6 +17,7 @@ if __package__ in (None, ""):
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
 
+from active.v17.model_stage1_family_v17 import build_stage1_landmark_model
 from active.v17.model_v17 import SLTStage1V17, Stage1V17Config
 from active.v17.schema_v17 import V17Config, schema_fingerprint
 from scripts.evaluate_rit_citizen100_variant_audit import load_features, sha256_file
@@ -135,7 +136,7 @@ def main() -> None:
     if len(files) != len(metadata_by_stem):
         raise ValueError(f"feature/provenance count mismatch: {len(files)} != {len(metadata_by_stem)}")
 
-    model = SLTStage1V17(Stage1V17Config(**checkpoint["model_config"]))
+    model = build_stage1_landmark_model(checkpoint["model_config"])
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
     with torch.inference_mode():

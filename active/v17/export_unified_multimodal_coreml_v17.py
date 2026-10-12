@@ -32,6 +32,7 @@ from active.v17.model_unified_multimodal_v17 import (
     UnifiedMultimodalStage1V17,
     UnifiedMultimodalV17Config,
 )
+from active.v17.model_stage1_family_v17 import build_stage1_landmark_model
 from active.v17.model_v17 import SLTStage1V17, Stage1V17Config
 
 
@@ -61,7 +62,7 @@ def load_model(checkpoint_path: Path) -> tuple[UnifiedMultimodalStage1V17, dict[
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     if checkpoint.get("format") != "slt_stage1_unified_multimodal_v17":
         raise ValueError("not a unified v17 checkpoint")
-    landmark = SLTStage1V17(Stage1V17Config(**checkpoint["landmark_model_config"]))
+    landmark = build_stage1_landmark_model(checkpoint["landmark_model_config"])
     landmark.load_state_dict(checkpoint["landmark_model_state_dict"], strict=True)
     hand = HandMobileCLIP2Stage1V17(
         HandMobileCLIP2Stage1Config(**checkpoint["hand_model_config"])

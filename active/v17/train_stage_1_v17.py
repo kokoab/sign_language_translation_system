@@ -34,6 +34,12 @@ if __package__ in (None, ""):
         Stage1V17Config,
         make_stage1_checkpoint,
     )
+    from active.v17.model_stage1_family_v17 import (
+        FLAT_TRANSFORMER,
+        FlatTransformerStage1Config,
+        build_stage1_landmark_model,
+        stage1_architecture,
+    )
     from active.v17.schema_mediapipe_v17 import (
         MediaPipeV17Config,
         schema_fingerprint as mediapipe_schema_fingerprint,
@@ -49,6 +55,12 @@ if __package__ in (None, ""):
     )
 else:
     from .model_v17 import SLTStage1V17, Stage1V17Config, make_stage1_checkpoint
+    from .model_stage1_family_v17 import (
+        FLAT_TRANSFORMER,
+        FlatTransformerStage1Config,
+        build_stage1_landmark_model,
+        stage1_architecture,
+    )
     from .schema_mediapipe_v17 import (
         MediaPipeV17Config,
         schema_fingerprint as mediapipe_schema_fingerprint,
@@ -260,7 +272,10 @@ def initialize_exact_stage1_finetune(
         raise ValueError("fine-tune checkpoint extractor schema mismatch")
     if checkpoint.get("label_to_index") != label_to_index:
         raise ValueError("fine-tune checkpoint label mapping mismatch")
-    source_config = Stage1V17Config(**checkpoint["model_config"])
+    if stage1_architecture(checkpoint["model_config"]) == FLAT_TRANSFORMER:
+        source_config = FlatTransformerStage1Config(**checkpoint["model_config"])
+    else:
+        source_config = Stage1V17Config(**checkpoint["model_config"])
     source_config.validate()
     if source_config.to_dict() != model.config.to_dict():
         raise ValueError("fine-tune checkpoint model config mismatch")
@@ -1598,7 +1613,18 @@ def train(args: argparse.Namespace) -> dict[str, object]:
         use_part_auxiliary=args.part_auxiliary_weight > 0.0,
         phonology_head_sizes=(phonology["head_sizes"] if phonology is not None else ()),
     )
-    model = SLTStage1V17(config).to(device)
+    fine_tune_config = (
+        torch.load(args.fine_tune_from, map_location="cpu", weights_only=False)["model_config"]
+        if args.fine_tune_from is not None
+        else {}
+    )
+    if stage1_architecture(fine_tune_config) == FLAT_TRANSFORMER:
+        # Explicit family Transformer replay: the architecture comes from the checkpoint,
+        # not from the Squeezeformer CLI options, which are recorded but unused.
+        model = build_stage1_landmark_model(fine_tune_config).to(device)
+        training_data_provenance["architecture"] = FLAT_TRANSFORMER
+    else:
+        model = SLTStage1V17(config).to(device)
     initialization_info: dict[str, object] | None = None
     initial_metrics: dict[str, float] | None = None
     initial_local_validation_metrics: dict[str, float] | None = None

@@ -21,6 +21,7 @@ if __package__ in {None, ""}:
     repo_root = Path(__file__).resolve().parents[2]
     sys.path.insert(0, str(repo_root))
 
+from active.v17.model_stage1_family_v17 import build_stage1_landmark_model
 from active.v17.model_v17 import SLTStage1V17, Stage1V17Config
 from active.v17.train_stage_1_v17 import (
     Citizen100V17Dataset,
@@ -89,7 +90,7 @@ def evaluate(args: argparse.Namespace) -> dict[str, object]:
     model_config = dict(checkpoint["model_config"])
     if args.force_canonicalize_camera_roll:
         model_config["canonicalize_camera_roll"] = True
-    model = SLTStage1V17(Stage1V17Config(**model_config))
+    model = build_stage1_landmark_model(model_config)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.to(device).eval()
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
@@ -137,7 +138,7 @@ def evaluate(args: argparse.Namespace) -> dict[str, object]:
         ),
         "checkpoint": str(args.checkpoint),
         "checkpoint_sha256": sha256_file(args.checkpoint),
-        "camera_roll_canonicalization": bool(model.config.canonicalize_camera_roll),
+        "camera_roll_canonicalization": bool(getattr(model.config, "canonicalize_camera_roll", False)),
         "model_inference_accessed": True,
         "citizen_test_accessed": False,
         "semlex_test_accessed": False,

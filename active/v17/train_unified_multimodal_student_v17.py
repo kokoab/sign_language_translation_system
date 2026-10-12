@@ -40,6 +40,7 @@ from active.v17.model_unified_multimodal_v17 import (
     UnifiedMultimodalV17Config,
     per_sample_zscore,
 )
+from active.v17.model_stage1_family_v17 import build_stage1_landmark_model
 from active.v17.model_v17 import SLTStage1V17, Stage1V17Config
 from active.v17.model_visual_speech_v17 import (
     VisualSpeechTeacherV17,
@@ -182,7 +183,7 @@ def load_landmark_model(path: Path) -> tuple[SLTStage1V17, dict[str, object]]:
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
     if checkpoint.get("format") != "slt_stage1_v17":
         raise ValueError(f"not a v17 landmark checkpoint: {path}")
-    model = SLTStage1V17(Stage1V17Config(**checkpoint["model_config"]))
+    model = build_stage1_landmark_model(checkpoint["model_config"])
     model.load_state_dict(checkpoint["model_state_dict"], strict=True)
     return model.eval(), checkpoint
 
