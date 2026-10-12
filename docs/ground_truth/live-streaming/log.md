@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 7/22: data: require eligible training membership for gloss previews
+
+Local previews require current train admission, canonical label and SHA256 membership; training gates unchanged.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-12 — First fresh post-install phone session retains MY phrase pairs; user confirms improvement
 
 Read-only pull of newest saved session20261012_074454 (07:44:54Asia/Manila),34.20s partial snapshot complete=false.19committed words include MY NAME and two MY FRIEND pairs, six LIKE outputs and one HAVE. Three short MY spans0.233/0.200/0.200s survive into the following sign; commits2.733/4.967/27.467s. User reports it now works. This is fresh post-install evidence; without reviewed video labels no accuracy percentage or per-guard causal attribution is claimed. Stage3 lock output is recorded separately and not validated. No runtime/model/data changes this turn. Files: my_transition_live_followup_v17_20261012/{session_inventory.json,20261012_074454.json,summary.json,REPORT.txt}; raw-session hash pinned. Next: retain installed candidate and monitor further natural signing; broader generalization, sustained thermals and existing HAVE omissions remain open.

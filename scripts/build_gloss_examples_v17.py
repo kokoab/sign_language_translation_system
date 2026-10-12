@@ -4,7 +4,8 @@
 Project-owned local recordings are preferred.  The eligible pool is the exact-variant
 audit shortlist, which is already free of scraped third-party clips and restricted to
 classes whose canonical label and pinned raw gloss agree — the safeguard against showing
-the wrong articulation for a word.  It reaches 77 of the 100 classes.
+the wrong articulation for a word. Each local clip must also match the label and
+content hash of an eligible training input in the current Citizen-variant recipe.
 
 The remaining classes fall back to ASL Citizen.  Only its *train* split is eligible:
 validation is reserved and the official test gate has been consumed once already, so
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
@@ -41,6 +43,7 @@ LOCAL_AUDIT = (
     REPO / "data/local/local_citizen100_quality_audit_q82_cap14_exact"
     / "candidate_selection.json"
 )
+LOCAL_TRAIN = REPO / "data/local/web_variant_supplement_v17_20261008/local_train_citizen_variant_v2.json"
 DEFAULT_OUTPUT = REPO / "artifacts/app_assets/gloss_examples"
 
 # A clip is shown to a person, so the weights favour a legible articulation over a
@@ -91,6 +94,11 @@ def local_candidates() -> dict[str, list[Candidate]]:
     """
     try:
         rows = json.loads(LOCAL_AUDIT.read_text())["videos"]
+        admitted = {
+            (row["canonical_label"], row["raw_sha256"])
+            for row in json.loads(LOCAL_TRAIN.read_text())["videos"]
+            if row.get("training_eligible", False) and row.get("local_split") == "train"
+        }
     except (OSError, ValueError, KeyError):
         return {}
     grouped: dict[str, list[Candidate]] = {}
@@ -98,10 +106,14 @@ def local_candidates() -> dict[str, list[Candidate]]:
         video = REPO / row["raw_path"]
         if not video.is_file():
             continue
+        digest = hashlib.sha256(video.read_bytes()).hexdigest()
+        if (row["canonical_label"], digest) not in admitted:
+            continue
         seconds = float(row.get("duration_seconds") or 0.0)
         quality = float(row.get("quality_score") or 0.0)
         candidate = Candidate(
             label=row["canonical_label"], video=video, source="local",
+            sha256=digest,
             seconds=seconds,
             components={"quality": round(quality, 4), "duration": duration_fit(seconds)},
         )
@@ -284,7 +296,7 @@ def build(args: argparse.Namespace) -> dict:
             "participant": best.participant,
             "source_video": str(best.video.relative_to(REPO)),
             "source_sha256": best.sha256,
-            "split": "train" if best.source == "citizen" else None,
+            "split": "train",
             "seconds": round(best.seconds, 3),
             "score": round(best.score, 4),
             "components": {k: round(v, 4) for k, v in best.components.items()},
@@ -299,7 +311,7 @@ def build(args: argparse.Namespace) -> dict:
         "format": "slt_v17_app_gloss_examples",
         "version": 1,
         "manifest": str(MANIFEST.relative_to(REPO)),
-        "preference": "project-owned local exact-variant pool, then ASL Citizen train",
+        "preference": "current training-admitted local exact-variant pool, then ASL Citizen train",
         "source_split": "train",
         "val_accessed": False,
         "test_accessed": False,
@@ -315,6 +327,7 @@ def build(args: argparse.Namespace) -> dict:
         "classes_from_local": counts["local"],
         "classes_from_citizen": counts["citizen"],
         "local_pool": str(LOCAL_AUDIT.relative_to(REPO)),
+        "local_training_manifest": str(LOCAL_TRAIN.relative_to(REPO)),
         "classes_missing": missing,
         "classes_with_edge_notes": flagged,
         "examples": catalog,
