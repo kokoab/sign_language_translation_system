@@ -1,3 +1,18 @@
+## 2026-10-13 — Gloss previews must follow current visual variants and training admissions
+
+Quality-audit membership is not training admission. Localpreview sources must match
+canonical label and sourceSHA256 in the current eligible training recipe; validation
+previews and excluded variants are barred from a train-only catalog. Citizen fallback
+uses its locked raw-gloss/ASL-LEX identity and train split only. Preserve source/media/
+model hashes and replay actual rendered files and originals through current native
+settings before bundling; quality scores or a single prior pass cannot prove recognition.
+Current verified project set63local/37Citizen has100/100preview and100/100original
+Macnative exact hypotheses. This is reference selection on knowninputs; do not report
+it as generalization accuracy, physicalphone confirmation or independentvalidation.
+480pxANGRY rendering produced extraCOLD; verified640pxsourcewidth retained. Model/
+runtime/training gates unchanged. Installedphone remains priorbuild untilreinstall.
+Evidence:mobile_preview_audit_v17_20261013/REPORT.md; priorassetsunderbefore/.
+
 ## 2026-10-12 — Installed normal release is the scoped MY transition candidate
 
 Supersedes the earlier not-deployed status. User-authorized signed Release installed/launched on iPhone13, build /Users/frnzlo/slt_my_transition_release_build. Selected ConfidenceDual plus frozen scoped decoder passes9exact cleanup cases and14release checks; candidate weights match tested package and15previous model weights remain unchanged. No diagnostic/test code shipped. Prior175msrelease remains rollback only. Deployment evidence: my_transition_recovery_v17_20261011/deployment/REPORT.txt. Fresh natural signing and sustained thermals are still separate gates; existing HAVE omissions are not fixed by this installation.

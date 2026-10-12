@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 12/22: live-streaming: record native replay and delivery verification
+
+Recorded native Mac replay100/100previews and100/100originals, bundle hashes and delivery evidence. Not physical-phone/generalization accuracy.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 11/22: live-streaming: preserve preview provenance and selection tools
 
 Preserves source/model hashes, catalogs before changes, selection tools and admitted-source audit evidence; executable harness excluded.
@@ -32,6 +39,62 @@ Local previews require current train admission, canonical label and SHA256 membe
 Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
 October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
 Next safe action: complete the remaining approved commits; no push requested.
+
+## 2026-10-13 — Preview repair delivered to project bundles; native reference checks complete
+
+Current catalog63local/37Citizen training references;46sourcechoices differ fromoriginal
+77/23catalog. Explicit excluded localBIG/SIGN/COME/CHILD variants replaced; all7oldlocal
+validation and20nonadmitted sources replaced with admitted train content. ANGRY preview
+retains its640pxsourcewidth (sameframes/source):4focused passes, then100/100complete
+preview pass. Final100originaltrainingvideosalso100/100exact. `.all`recognizer/encoder,
+currentConfidenceDual/decoder,MacnativeVision/crops/streaming+EOFflush;finishgestureoff.
+These are selected knowntrainingreferences, notheldoutgeneralization/phoneaccuracy.
+Changed builder requires same canonical label+sourcehash in eligible v2localtrainmanifest;
+localhash/split/manifest recorded.15focused tests pass aftersync. Deliverygate verifies
+all100sourcepins,exactrawgloss/LEX/index,model/sourcehashes and200mediahashes perbundle;
+Flutter/native/desktop catalogs/media synchronized. Priorchangedbytes underbefore/;
+source/model/delivery/iteration/provenance evidence in mobile_preview_audit_v17_20261013.
+Native cadence persists acrossreset; initial78→85diagnostics(cpuAndGPU) and later96/99
+`.all`passes are retained; no causal/generalaccuracycurve claimed.132initialalternatives,
+144paired repeats,24extraLEARN,44latecandidate and4ANGRYchecks preserved. Source/render
+resolution and schedule can affect output; no runtime/threshold/weights changed tofitthese
+examples. No protectedtest,training,download orphoneinstall. Unrelatedworktree preserved.
+Finalrepositorygitdiffcheckclean;artifactLARGE_FILES index regenerated afterdelivery.
+Nextsafeaction: rebuild/reinstall updatedassets andcheckfreshphysical-phone signing.
+Futurepreviewregeneration/modelchanges require renewed exactnative referencechecks.
+
+## 2026-10-13 — mobile gloss preview provenance audit and selection repair (recognition pending)
+
+User requested preview/training mismatch verification and actual recognition checks.
+Flutter/native catalogs match:100 previews,77local/23Citizen train. Current v2 local
+recipe admits50 of77 local sources;7are validation and20absent. BIG/SIGN are
+explicitly filtered variants; COME/CHILD local classes excluded. No cross-label mismatch
+among57train/val matches. Quality-audit pool is not training admission. Changed
+`scripts/build_gloss_examples_v17.py` to require same canonical label + source SHA256
+in current eligible train manifest; local hashes/split and manifest now recorded.
+Rebuilt report-local catalog:73local/27Citizen,27changed sources,100covered. Added
+one regression check rejecting val/ineligible/wrong-label/wrong-hash candidates;
+15focused tests pass. Current Swift/CoreML FP16 preview replay in progress; harness
+uses explicit FP16 encoder matching LiveReelApp (harness defaultsFP32 and initial
+load failed because that package is outside its resource directory). No protected
+test/training/model changes or install. Evidence:mobile_preview_audit_v17_20261013.
+Native diagnostic replays (FP16 image encoder, cpuAndGPU recognizer):original78/100,
+training-membership repair85/100.132admitted alternatives tested onphone-matched all
+compute settings;all25problem labels have at leastoneexact reference. Assembled69local/
+31Citizen set;final rendered and source replays each96/100 butdifferent failures.
+Rendered:OUR extraGIVE,WHY silent,LEARN→SCHOOL,EAT extraHOT. Originals:THEY extraHE,
+YES silent,READY extraANSWER,MAN silent. Fullbundle consistency passes200mediahashes,
+no duplicate loops,all100labels/modelindices aligned.100sourcehashes andlocal train
+label/hash membership pass. Native Vision keeps8framebody/facecadence acrossreset;
+thus prior single-candidate success is not stable-clip proof.144repeated candidate
+source/preview checks underway forunion8labels. Fullgitdiffcheck currentlyclean.
+144candidate source/preview repeats plus24additionalLEARN replays found4/4exact
+alternatives forunion8labels;highestminimumcommit-score choices selected. Nextcomplete
+set99/100previews(WOMANextraHOSPITAL),98/100originals(GIVE/COMEsilent).44moretraining-only
+candidate replays found4/4exact replacements;currentcandidate63local/37Citizen.
+Additionalfull100preview+100sourcechecks underway. No model/runtime edits orphoneinstall;
+sourcequality/admissionrepair only. Everyreported percentage hereisreference selection
+onknowntraininginputs,notindependentrecognition accuracy. Next:strictdeliverygate.
 
 ## 2026-10-12 — First fresh post-install phone session retains MY phrase pairs; user confirms improvement
 
