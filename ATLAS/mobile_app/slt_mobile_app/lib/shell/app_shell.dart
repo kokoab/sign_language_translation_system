@@ -1,7 +1,8 @@
 // The ATLAS mobile app shell (Figma "02 · Mobile Screens"). Portrait pages drawn here:
-//   SPLASH → HOME → GLOSSES (→ gloss detail), PRACTICE (setup / result), HISTORY (→ session detail)
+//   SPLASH → HOME → GLOSSES (→ gloss detail), PRACTICE (setup / result), HISTORY (→ session detail),
+//   MANUAL (→ section → gloss clip)
 // Live and the practice round are the native landscape camera screen (LiveReelViewController);
-// it returns {"navigate": page, practice results...} when it closes.
+// it returns {"navigate": page, "section": manual section, practice results...} when it closes.
 // The Reel models warm at launch; "Start translating" and practice wait until they are ready.
 import 'dart:async';
 import 'dart:io';
@@ -14,10 +15,11 @@ import '../services/slt_inference_service.dart';
 import 'glosses_page.dart';
 import 'history_page.dart';
 import 'home_page.dart';
+import 'manual_page.dart';
 import 'practice_page.dart';
 import 'style.dart';
 
-const shellPages = ['HOME', 'GLOSSES', 'PRACTICE', 'HISTORY'];
+const shellPages = ['HOME', 'GLOSSES', 'PRACTICE', 'HISTORY', 'MANUAL'];
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key, this.splash = const Duration(milliseconds: 1400)});
@@ -35,6 +37,7 @@ class _AppShellState extends State<AppShell> {
   String _page = 'SPLASH';
   GlossExample? _selected;
   Map<String, dynamic>? _session;
+  ManualSection? _manualSection;
   PracticeResult? _practiceResult;
   List<String> _lastRound = const [];
   List<GlossExample> _catalog = const [];
@@ -90,7 +93,8 @@ class _AppShellState extends State<AppShell> {
     } catch (_) {}
   }
 
-  void _go(String page) {
+  /// [section] opens MANUAL at that section instead of its hub.
+  void _go(String page, {String? section}) {
     if (_nativeOpen) return;
     if (page == 'LIVE') {
       _openLive();
@@ -100,14 +104,23 @@ class _AppShellState extends State<AppShell> {
       _page = page;
       _selected = null;
       _session = null;
+      _manualSection = page == 'MANUAL' ? manualSection(section) : null;
       if (page != 'PRACTICE') _practiceResult = null;
     });
     if (page == 'HISTORY') _refreshSessions();
   }
 
   /// Where the native screen asked to go; anything unknown lands on Home.
-  void _arrive(Object? navigate) =>
-      _go(navigate is String && shellPages.contains(navigate) ? navigate : 'HOME');
+  void _arrive(Object? navigate, Object? section) => _go(
+    navigate is String && shellPages.contains(navigate) ? navigate : 'HOME',
+    section: section is String ? section : null,
+  );
+
+  /// The manual's "Watch NAME in Glosses": the gloss clip, opened over the manual.
+  void _watchGloss(String label) {
+    final item = _catalog.where((g) => g.label == label).firstOrNull;
+    if (item != null) setState(() => _selected = item);
+  }
 
   Future<void> _openLive() async {
     if (!_ready) return;
@@ -119,7 +132,7 @@ class _AppShellState extends State<AppShell> {
       _nativeOpen = false;
     }
     await _refreshSessions();
-    _arrive(result['navigate']);
+    _arrive(result['navigate'], result['section']);
   }
 
   Future<void> _startRound(List<String> glosses) async {
@@ -148,7 +161,7 @@ class _AppShellState extends State<AppShell> {
             )
           : null);
     } else {
-      _arrive(navigate);
+      _arrive(navigate, result['section']);
     }
   }
 
@@ -208,6 +221,28 @@ class _AppShellState extends State<AppShell> {
           onSelect: (item) => setState(() => _selected = item),
           onBack: () => _go('HOME'),
         );
+      case 'MANUAL':
+        final selected = _selected, section = _manualSection;
+        if (selected != null) {
+          return GlossDetailPage(
+            key: ValueKey(selected.label),
+            item: selected,
+            onBack: () => setState(() => _selected = null),
+            onPractice: () => _startRound([selected.label]),
+          );
+        }
+        if (section != null) {
+          return ManualSectionPage(
+            section: section,
+            onOpen: (id) => setState(() => _manualSection = manualSection(id)),
+            onWatch: _watchGloss,
+            onBack: () => setState(() => _manualSection = null),
+          );
+        }
+        return ManualPage(
+          onSelect: (id) => setState(() => _manualSection = manualSection(id)),
+          onBack: () => _go('HOME'),
+        );
       case 'HISTORY':
         final session = _session;
         if (session != null) {
@@ -254,6 +289,8 @@ class _AppShellState extends State<AppShell> {
         setState(() => _selected = null);
       } else if (_session != null) {
         setState(() => _session = null);
+      } else if (_manualSection != null) {
+        setState(() => _manualSection = null);
       } else if (_page != 'SPLASH') {
         _go('HOME');
       }
@@ -263,7 +300,7 @@ class _AppShellState extends State<AppShell> {
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 180),
         child: KeyedSubtree(
-          key: ValueKey('$_page/${_selected?.label}/${_session?['stamp']}/${_practiceResult != null}'),
+          key: ValueKey('$_page/${_selected?.label}/${_session?['stamp']}/${_manualSection?.id}/${_practiceResult != null}'),
           child: _content(),
         ),
       ),
