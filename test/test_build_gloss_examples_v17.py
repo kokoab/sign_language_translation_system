@@ -1,9 +1,11 @@
 """Selection rules for the app's gloss examples.  Scoring only, no media written."""
 
 import json
+import hashlib
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -111,6 +113,25 @@ class SplitGuardTest(unittest.TestCase):
         source = Path(builder.__file__).read_text()
         for forbidden in ("raw/val", "raw/test", "landmarks/val", "landmarks/test"):
             self.assertNotIn(forbidden, source)
+
+    def test_local_quality_does_not_bypass_training_membership(self) -> None:
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            video = root / "clip.mp4"
+            video.write_bytes(b"reviewed source")
+            digest = hashlib.sha256(video.read_bytes()).hexdigest()
+            audit, train = root / "audit.json", root / "train.json"
+            audit.write_text(json.dumps({"videos": [{"raw_path": str(video), "canonical_label": "SIGN"}]}))
+            row = {"canonical_label": "SIGN", "raw_sha256": digest,
+                   "training_eligible": True, "local_split": "train"}
+            with patch.object(builder, "LOCAL_AUDIT", audit), patch.object(builder, "LOCAL_TRAIN", train):
+                for overrides in ({"local_split": "val"}, {"training_eligible": False},
+                                  {"canonical_label": "BIG"}, {"raw_sha256": "wrong"}):
+                    train.write_text(json.dumps({"videos": [dict(row, **overrides)]}))
+                    self.assertEqual(builder.local_candidates(), {})
+                train.write_text(json.dumps({"videos": [row]}))
+                self.assertEqual(builder.local_candidates()["SIGN"][0].sha256, digest)
 
 
 class CatalogTest(unittest.TestCase):
