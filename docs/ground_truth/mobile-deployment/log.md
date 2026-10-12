@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 18/22: test: cover explicit MediaPipe job dispatch
+
+Regression forbids fallback inventory expansion. Focused Python16/16 and full canonical245/245pass; updates suite inventory.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 17/22: extraction: honor explicit MediaPipe jobs and guard output schema
 
 Coordinator uses --jobs-file independently of --shard and always guards the output schema; no extraction launched for commit preparation.

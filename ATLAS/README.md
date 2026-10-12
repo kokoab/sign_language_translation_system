@@ -21,7 +21,7 @@ imports, input contracts and development tools still use them.
 | `python/data/` | Training corpus/cache preparation |
 | `python/evaluation/` | Existing component evaluators and offline segmental lab |
 | `python/runtime/` | Shared recognition/runtime helpers |
-| `python/tests/` | 23 focused test files for canonical ATLAS components |
+| `python/tests/` | 24 focused test files for canonical ATLAS components |
 | `mobile_app/slt_mobile_app/` | Complete Flutter project, native Swift/Kotlin pipelines and bundled models |
 
 `source_manifest.json` lists every relocated file and its former path. Supporting
@@ -31,7 +31,7 @@ their existing paths. This layout is part of the SLT workspace, not a standalone
 training distribution: datasets, checkpoints, caches, reports, vendor code and
 the Python environment remain under the existing repository locations.
 
-The focused Python suite lives in `python/tests/` (244 defined test methods).
+The focused Python suite lives in `python/tests/` (245 defined test methods).
 Former `test/test_*.py` paths for these 23 files are compatibility symlinks;
 the remaining 125 test files stay in the root `test/` directory. Existing
 `test.<module>` invocations remain supported. Keep the test compatibility links.
