@@ -21,6 +21,7 @@ imports, input contracts and development tools still use them.
 | `python/data/` | Training corpus/cache preparation |
 | `python/evaluation/` | Existing component evaluators and offline segmental lab |
 | `python/runtime/` | Shared recognition/runtime helpers |
+| `python/tests/` | 24 focused test files for canonical ATLAS components |
 | `mobile_app/slt_mobile_app/` | Complete Flutter project, native Swift/Kotlin pipelines and bundled models |
 
 `source_manifest.json` lists every relocated file and its former path. Supporting
@@ -29,6 +30,11 @@ presence is not a deployment endorsement. Optional desktop/UI helpers remain at
 their existing paths. This layout is part of the SLT workspace, not a standalone
 training distribution: datasets, checkpoints, caches, reports, vendor code and
 the Python environment remain under the existing repository locations.
+
+The focused Python suite lives in `python/tests/` (252 defined test methods).
+Former `test/test_*.py` paths for these 24 files are compatibility symlinks;
+the remaining 125 test files stay in the root `test/` directory. Existing
+`test.<module>` invocations remain supported. Keep the test compatibility links.
 
 ## Current mobile pipeline
 
@@ -89,6 +95,19 @@ venv/bin/python ATLAS/python/extraction/extract_v17.py --help
 venv/bin/python ATLAS/python/training/train_span_recognizer_v17.py --help
 venv/bin/python ATLAS/verify_layout.py
 ```
+
+Run the focused ATLAS Python suite from the SLT root:
+
+```sh
+venv/bin/python -m unittest discover -s ATLAS/python/tests -t . -p 'test_*.py'
+```
+
+The original root discovery command still finds these files through their
+compatibility links, together with the other repository tests.
+
+Relocated discovery runs 244 tests with the same pre-existing naturalizer
+class-setup recognizer/Stage-2 hash mismatch, blocking eight additional methods.
+The relocation does not bypass that runtime check.
 
 Build the mobile app from the new project directory:
 

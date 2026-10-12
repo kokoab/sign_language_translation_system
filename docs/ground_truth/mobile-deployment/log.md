@@ -1,3 +1,40 @@
+## 2026-10-13 — Focused ATLAS tests moved with compatibility preserved
+
+User approved the discussed24-file scope. Moved the tests to ATLAS/python/tests/
+and added its __init__.py for qualified unittest discovery. The original test/ paths
+are relative compatibility symlinks;125other test files remain regular files in place.
+22moved files are byte-identical; only test_segmental_runtime_v17.py and
+test_stage3_asl_corpus_v17.py change their test-only repository-root anchor from
+parents[1] to parents[3]. Existing active.v17/scripts source imports are preserved.
+ATLAS/source_manifest.json records24old/new mappings and before/after hashes.
+ATLAS/README.md, AGENTS.md and PROJECT_GROUND_TRUTH.md document the canonical tests
+and the full scoped command. No source model, data, checkpoint or training gate changed.
+
+Baseline and relocated suites each run244tests (15.400s/15.490s) with one identical
+pre-existing setUpClass error in Stage3MobileNaturalizerV17Tests: recognizer hash differs
+from the Stage2contract. Those8defined methods are blocked; no skip or contract bypass
+was added. All other244tests pass. Both root-adjusted files pass55tests when invoked
+through their old test.<module> names. All121source/resource links verify;24test
+symlinks,252defined methods and the125untouched file locations are checked. Whitespace
+checks pass. No protected test-set evaluation, training or deployment was launched.
+Next safe action: use venv/bin/python -m unittest discover -s ATLAS/python/tests
+-t . -p 'test_*.py' -v; diagnose the existing Stage3contract mismatch separately before
+claiming the entire suite is green.
+
+## 2026-10-13 — Relocated ATLAS sources and test entry point checked
+
+User pointed to the moved ATLAS/python layout. Read the current AGENTS.md and
+ATLAS/README.md: selected Python sources are canonical under ATLAS/python/<purpose>,
+with active.v17/scripts compatibility imports retained; the mobile app is now under
+ATLAS/mobile_app/slt_mobile_app. Tests were not moved:149test_*.py files remain in
+the root test directory, and none are under ATLAS/python. The project venv stays at
+the SLT root. Full unittest discovery therefore retains its existing root command.
+Validation: ATLAS/verify_layout.py passes all90source/resource links; segmental runtime
+and Transformer adapter suites pass27tests after relocation. No full-suite run, model
+update, training or deployment. Only this log records the check; canonical current state
+already describes the move. Next safe action: run venv/bin/python -m unittest discover
+-s test -p 'test_*.py' -v from /Volumes/secret/SLT/SLT for the discoverable suite.
+
 ## 2026-10-13 — Canonical ATLAS migration complete; mobile builds pass
 
 Final inventory81Python sources +16byte-identical recipe/configuration files inATLAS/python purpose folders; added selected recipe/command receipts and tiny-T5 ancestor/composition trainers after final dependency review. ATLAS/source_manifest.json maps97old paths to relative compatibility links. Complete mobile app canonical atATLAS/mobile_app/slt_mobile_app; old sibling path links there. All582inventoried mobile source/assets remain byte-identical. Twointentional build-config edits: Flutter Debug/Release xcconfigs explicitly inherit flags and linkFlutter; generated application/package paths regenerated toATLAS. Renamed temporal-repair helper has a canonical-package import/bootstrap. No model/data/installed-app changes or training/test inference.

@@ -12,6 +12,11 @@ historical checkpoints/reports and frozen training gates remain in place. Source
 snapshots and verification: `artifacts/reports/atlas_canonical_source_20261013/`.
 Read `ATLAS/README.md` before changing path plumbing or removing compatibility links.
 
+The 24 focused ATLAS test files live in `ATLAS/python/tests/`; their former root
+`test/` paths remain compatibility symlinks. Run the suite from the repository root:
+`venv/bin/python -m unittest discover -s ATLAS/python/tests -t . -p 'test_*.py'`.
+Other repository test files remain in `test/`.
+
 ## Canonical repaired phrase dataset (2026-09-21)
 
 Before any new v17 phrase training, read

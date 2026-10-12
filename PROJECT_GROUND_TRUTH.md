@@ -221,6 +221,12 @@ and provenance in `docs/capstone_papers/ATLAS_MEASUREMENT_NOTES.md`; never relab
 
 ## Pipeline state
 
+**2026-10-13 focused test relocation:**24ATLAS component test files (252defined
+methods) now live in `ATLAS/python/tests/`; former test paths are compatibility
+symlinks. Two test-only repository-root anchors were adjusted. Before/after suites
+both run244tests with the same existing naturalizer class-setup hash mismatch
+blocking8methods. All121manifest links verify;55old-path compatibility tests pass.
+
 **2026-10-13 canonical source relocation:** selected mobile pipeline source is now
 `ATLAS/python/` (81 Python files, grouped by purpose; 16 unchanged recipe/configuration
 files) and `ATLAS/mobile_app/slt_mobile_app/`. Edit these canonical files. Former
