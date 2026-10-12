@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 21/22: stage3-translation: document streaming English research
+
+Records research, limitations and a proposed experimental phase; no deployed policy or training change.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 # stage3-translation — log
 
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
@@ -6,6 +13,75 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 12 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-10-13 — Research review: automatic streaming English as a separate experimental phase
+
+User requested extensive research/opinion before implementation: remove the need to
+press Finish, considering gloss-free translation, Thomas's gloves, and greeting versus
+past-experience ambiguity. Research only; no runtime/model/data/training changes or
+new accuracy/latency measurements. This log is the only file changed by this review;
+PROJECT_GROUND_TRUTH.md remains unchanged because no production decision was adopted.
+
+Canonical iOS source inspected: LiveReelStage3.swift:223–295 and
+LiveReelViewController.swift:750–830. Incremental rendering already runs on committed
+words. Locks require repeated first-sentence agreement, counted-output coverage and
+isolated-prefix verification; locked words leave the active context. The caller logs
+stage3_lock but does not publish its English to the UI or speech. finishUtterance
+flushes recognition, renders the remaining buffer, publishes/speaks and resets.
+Thus background incremental computation is not currently user-visible streaming English.
+Existing October11 diagnostics remain relevant: 57/323 full/incremental outputs differ
+(not 57 proven errors); examples lose referents, DOCTOR or SLEEP/negation meaning.
+No rerun was needed. Prior September16 Uni-Sign and September17 direct-feature pilot
+failed to establish useful local direct translation; these do not reject the whole method.
+
+Primary sources reviewed:
+- SimulSLT (2021): https://arxiv.org/abs/2112.04228 — masked encoder, boundary
+  predictor and wait-k; PHOENIX weather benchmark, not evidence of phone ASL quality.
+- Online CSLR/SLT (EMNLP2024): https://arxiv.org/html/2401.05336v2 — sliding-window
+  recognition plus wait-k gloss-to-text; streaming does not require removing glosses.
+- Adaptive confident translation length (LREC-COLING2024):
+  https://aclanthology.org/2024.lrec-main.34/ — learned wait/write policy and prefix
+  adaptation, evaluated on PHOENIX2014T/CSL-Daily; constrained-domain limitations.
+- Re-translation versus Streaming (IWSLT2020):
+  https://aclanthology.org/2020.iwslt-1.27/ — revision/quality/latency tradeoff and
+  normalized erasure; spoken-language text experiments, an engineering analogy for ATLAS.
+- GloFE: https://aclanthology.org/2023.acl-long.722/ — direct video/text learning
+  without gloss annotation does not itself establish causal streaming or phone readiness.
+- Uni-Sign official demo:
+  https://github.com/ZechengLi19/Uni-Sign/blob/main/demo/online_inference.py — inspected
+  version reads video frames until EOF before pose extraction and generation; its
+  online label is not proof of continuous, prefix-only live captions.
+- SignAloud (Thomas Pryor/Navid Azodi):
+  https://lemelson.mit.edu/sites/default/files/2020-09/SignAloud_Fact_Sheet.pdf and
+  https://faculty.washington.edu/ebender/papers/SignAloudOpenLetter.pdf — gloves
+  demonstrate gesture-triggered output; linguists identify missing nonmanual grammar.
+- ASL language structure: https://www.nidcd.nih.gov/health/american-sign-language.
+- Evaluation: https://arxiv.org/abs/2510.25434 (preprint) and
+  https://aclanthology.org/2025.findings-emnlp.997/ — semantic metric weaknesses and
+  signer/sentence overlap respectively. Do not equate fluent English with faithful ASL.
+- TLAS repository: https://github.com/imics-lab/tlas-gloss2text — temporal pause plus
+  linguistic readiness is relevant; synthetic discourse/text evaluation is not live
+  camera evidence. Its OpenReview PDF later returned a browser verification challenge;
+  no acceptance status or unverified numerical result is relied on.
+
+Recommendation, not an adopted deployment decision: begin with current recognizer and
+revisable live English, separately evaluate automatic clause finalization, and speak
+only stable units. Preserve previous source context after display commitment; repeated
+text agreement is not semantic proof. Distinguish genuine rest from incomplete signs,
+tracking dropout and fingerspelling. Timeout must not invent a completed sentence.
+The morning examples require evidence of participant/time/discourse intent; grammatical
+English words may be generated without one-to-one signs, but missing meaning cannot
+be uniquely recovered from identical gloss/confidence input. Natural question versus
+statement cues must survive the visual-to-language interface to be usable.
+
+Proposed next safe action: compare Finish, pause-only, revisable-prefix and adaptive
+commitment policies on identical development replays, first with reviewed gloss input
+then recognized input. Annotate prefix ambiguity and acceptable alternatives; score
+role/time/negation preservation, unsupported additions, premature boundaries, caption
+revision and recognition-to-display/speech latency including compute. Reserve independent
+signers and sentence compositions for final assessment. Review dataset reconciliation
+before changing any recipe; existing supplemental sources are not all equivalent
+sentence-translation supervision. No acquisition, training or protected-test access.
 
 ## 2026-10-11 — Full-vocabulary shared-meaning experiment complete; production unchanged
 
