@@ -1,5 +1,6 @@
 // SPLASH and HOME (Figma 01 / SPLASH, 02 / HOME). Home keeps the four entry points: Live
-// ("Start translating" waits until the Reel models are warm), Practice, Glosses and History.
+// ("Start translating" waits until the Reel models are warm), Practice, Glosses and History,
+// then the "How to use ATLAS" row into the manual.
 import 'package:flutter/material.dart';
 
 import 'style.dart';
@@ -167,6 +168,8 @@ class HomePage extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  _GuideRow(onTap: () => onAction('MANUAL')),
                   const Spacer(),
                   const SizedBox(height: 16),
                   const ShieldNote('All processing stays on your device.'),
@@ -178,6 +181,50 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Row / Home guide: the way into the manual.
+class _GuideRow extends StatelessWidget {
+  const _GuideRow({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Atlas.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+      side: const BorderSide(color: Atlas.line),
+    ),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: SizedBox(
+        height: 72,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              const Icon(Icons.help_outline_rounded, size: 24, color: Atlas.blue),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('How to use ATLAS', style: Atlas.button(), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text('A guide to every screen and sign', style: Atlas.caption(), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Icon(Icons.chevron_right_rounded, size: 24, color: Atlas.ink),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /// Card / Home action.
