@@ -93,7 +93,9 @@ object LiveSegmental {
         return spans
     }
 
-    fun bothSpans(bio: List<FloatArray>): List<SpanKey> = (candidateSpans(bio).toSet() + denseSpans(bio)).sorted()
+    fun bothSpans(bio: List<FloatArray>, minLen: Int = 3, maxInnerO: Int = 3): List<SpanKey> =
+        (candidateSpans(bio, minLen = minLen, maxInnerO = maxInnerO).toSet() +
+            denseSpans(bio, minLen = minLen, maxInnerO = maxInnerO)).sorted()
 
     class Segment(val start: Int, val end: Int, val gloss: String?, val logQ: Double)
 
@@ -269,7 +271,7 @@ class LiveSegmentalRuntime(
         if (known < origin || bio.isEmpty()) return emptyList()
         val origin = this.origin
         val sub = bio.subList(origin - bioOff, known - bioOff + 1).toList()
-        val spans = LiveSegmental.bothSpans(sub).map { SpanKey(it.s + origin, it.e + origin) }
+        val spans = LiveSegmental.bothSpans(sub, config.minSpanFrames, config.maxInnerO).map { SpanKey(it.s + origin, it.e + origin) }
             .filter { final || it.e + config.contextFrames <= T }
         val missing = spans.filter { !scores.containsKey(it) }
         if (missing.isNotEmpty()) score(missing)

@@ -38,6 +38,7 @@ class LiveEngine(context: Context, val handImages: Boolean, useGpu: Boolean = tr
                 lag = s.getInt("lag"), contextFrames = s.getInt("context_frames"), earlyK = s.getInt("early_k"),
                 earlyQ = s.getDouble("early_q"), softExtra = s.getInt("soft_extra"),
                 earlyUnsafe = (0 until unsafe.length()).map { unsafe.getString(it) }.toSet(),
+                minSpanFrames = s.optInt("min_span_frames", 3), maxInnerO = s.optInt("max_inner_o", 3),
             )
         }
 
