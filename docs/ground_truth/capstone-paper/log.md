@@ -44,6 +44,88 @@ No training/test/deployment/manuscript edits. User's seven-minute request scoped
 Screenshot component numbers can first be updated via cached validation, no automatic
 retraining. Next: discuss evidence and choose component-evaluation scope.
 
+## 2026-10-13 — Five-stage WER proposal added; training comparison cancelled
+
+Author requested the five-stage story in README_PLATFORM_NEUTRAL_REVIEW.md and stopped
+our training-recording comparison. Terminated evaluator PID77766 and watcher PID78191;
+verified both absent. Preserved caches/partial outputs and marked results/status cancelled.
+No other experiment stopped. Added R-05/W-01–W-05 with checkboxes, exact prose, data
+scope, review notes and a two-panel figure proposal. Values37.61/31.42/17.70/15.49/12.83
+are scoped by procedure; transition fine-tuning retained12.83 rather than causing it.
+89-video decoder selection overlaps scoped validation by36;53outside;none training.
+Scoped phrase recipe179train/139validation; separate streaming test72, not one partition.
+Reconciled review register/summary; preserved author note. Manuscript/slides unchanged.
+Next: author reviews wording; no new training-set evaluation authorized after cancellation.
+
+## 2026-10-13 — Training-WER cache audit and corrected evaluation
+
+First scoring attempt failed on local:MY_NAME:02a79892 because its span memo was
+empty. A full candidate-coverage check found missing decoder-required windows in all
+179 training caches: existing files hold training-selected windows, not complete
+fixed-decoder candidates. The partial result is invalid for whole-recording WER and
+preserved as training_set_wer_v17_20261013/incomplete_cache_attempt.json.
+Corrected evaluate.py prepares missing windows into report-local complete_spans caches,
+asserts complete candidate coverage, and scores six saved checkpoints with one decoder.
+Two added controls are the transition refinement's starting and fine-tuned recognizers;
+this does not implement the deployed selective transition policy. No paper/model changes.
+Preparation also found scored windows rejected before recognition inputs exist.
+These are explicitly marked input_unavailable and contribute no emission; their
+recordings remain in the denominator. Corrected retry log: evaluate_complete_retry.log.
+Next: verify completion, counts, and independent edit-distance totals before presenting
+any training-set score. verify_results.py independently recomputes edit distances.
+Corrected run PID77766/session50831; watcher session96870 verifies after completion
+and writes REPORT.md/completion.json, then notifies locally. RUN_STATUS.json records
+launch metadata only; check results state before claiming completion.
+
+## 2026-10-13 — Authorized training-recording WER evaluation started
+
+User asked to run on training examples for a clear comparison. Verified179approved
+train recordings/495referenceglosses with allDGS/memoinputs available; tune/test excluded.
+Started fresh fixed-decoder scoring of saved beforeinterval/afterinterval/v2/partialsign
+models in artifacts/reports/training_set_wer_v17_20261013/evaluate.py. No retraining,
+protectedtest inference, runtime/model deployment or paper edits. Results are explicitly
+training-set WER, not replacement validation evidence. State/log inreportdir. Do not
+confuse this four-checkpoint evaluator with the parallel Transformerdownstreamexperiment.
+Next: verify complete counts and model/input hashes, report actualresultsevenifnonmonotonic.
+
+## 2026-10-13 — WER recording inventory and timeline clarified
+
+Inspected boundary_local_calibration_v17_20260922/manifest.json and lab tune loader:
+89localphrases=59calibration+30confirmation,3familiar signers,6templates/15glosses,
+226referenceglosses. Exacttemplatecounts18/18/18/17/12/6 recorded in metric-lineage
+verification.json. Latertrainer combinesboth phases for selection despite original
+confirmation-never-tunes policy; neithercombinedWER nor30clipgroup is independent
+confirmation oflaterselection. No manuscript/signerscope edits. Addeddata inventory
+onlyto metric-lineagereport; no experiments. Next: discuss restrictedphrase coverage
+and separate trainingevaluation from runtimeevaluation in proposedpaper narrative.
+
+## 2026-10-13 — WER development story independently traced; no paper edits
+
+User requested each number's evidence and development explanation, and simpler head
+wording. Verified six runtime records by independent edit distance and identical89
+identity/reference membership:40/42/35/36/34/29errors over226glosses =17.70/18.58/
+15.49/15.93/15.04/12.83%. Dip-bridging increased WER despite helping observed fragmentation;
+short-fragment/rejection alone yielded15.93, not15.04. Final5errors removed by two
+NAME MY→MY NAME corrections and one duplicatedHELP removal. Correct prior overbroad
+attribution of these gains to training/MYrepair. Same run_v2 checkpoint scored29.65 in
+training evaluator vs17.70 in runtime baseline, but evaluators differ in boundarymodel,
+span construction, scoring and commitment; individual effect sizes remainunverified.
+Report/evidence: artifacts/reports/paper_metric_lineage_v17_20261013/.
+No README/manuscript edits; user discussionfirst. Simple “recognizer fine-tuned on
+transition examples” wording available; false one-head implementation claim not adopted.
+Next: discuss measured lineage; controlledcross-evaluator ablation needed forcausalclaims.
+
+## 2026-10-13 — Author selects training-experiment WER for paper
+
+User approved reporting31.42% from the interval-recognizer training experiment instead
+of later12.83% decoder-development WER and asked to log it in the review MD. Recorded
+a checked decision plus revised R-01/R-05, reporting table, S-01 and figure-scope notes.
+Explicitly distinguish development validation during selection from training-set error.
+Current95.50% head validation, earlier31.42% experiment and current device timings are
+not one matched checkpoint/configuration. Raw measurements and12.83% evidence retained.
+No manuscript, slides, model, dataset or chart-asset changes; no new experiments.
+Next: author reviews remaining prose/figure choices before manuscript implementation.
+
 ## 2026-10-13 — Current deployment evidence verified; review checklist refreshed
 
 User authorized verification followed by updating only the review MD for approval.
