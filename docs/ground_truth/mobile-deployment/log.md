@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 19/22: android: record disabled alignment recipe and input preparation
+
+Includes ignored canonical preparation source explicitly, recipe and compact reconciliation/cache receipts. recipe_training_ready remains false; no training or input caches committed.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 18/22: test: cover explicit MediaPipe job dispatch
 
 Regression forbids fallback inventory expansion. Focused Python16/16 and full canonical245/245pass; updates suite inventory.
@@ -82,7 +89,27 @@ Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>
 October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
 Next safe action: complete the remaining approved commits; no push requested.
 
-## 2026-10-13 — Five ATLAS/source/test commits published
+## 2026-10-13 — ## 2026-10-13 — Android input preparation verified; current connected phone is iPhone 11
+
+Android explicit 147-job extraction completed: 37 local training inputs succeeded; 94 training and all16 validation inputs had no detected hands. New embeddings and six membership-filtered raw caches completed (train14906, validation3937; desired15003/3957). Missing validation inputs must remain errors in full-denominator reporting. Existing outputs preserved. Fixed extraction coordinator to honor --jobs-file without --shard and guard output schema; the initial misrouted invocation expanded the default train/validation inventory and produced94 outcomes before exiting120. None of those incidental outputs enters the new explicit cache. No protected-test inference or training. Python explicit-job regression1/1 and Kotlin decoder regressions2/2 pass; Android Debug rebuild succeeds20s. Android recipe remains disabled and alignment incomplete.
+
+Latest user asks installation on currently connected phone. ADB now has no devices; devicectl identifies wired, paired dwight ramos/iPhone11, iOS18.0, UDID00008030-0016706234DA202E. Developer Mode disabled; user reports toggle missing. Initiated target-specific signed Release build and Xcode system-component preparation/pairing so the setting can appear. Installation and launch not yet completed. Evidence: atlas_dwight_install_20261013/device_before.json and device_build.log; android_alignment_v17_20261013 extraction/cache/test/install_build logs. Next: enable Developer Mode on physical phone, complete signed build/install, then verify launch; preserve pending Android alignment scope.
+
+## 2026-10-13 — Scoped Android alignment approved; admission reconciliation/extraction started
+
+Userapproved scopedfrozenencoder approach afterreviewingplan. Reconciliation finds1475Citizentrain/378val (1474cachedtrain),1388SemLextrain/953admittedval (1386/949cached),12140localtrain/2626val (12009/2610cached). Applied25SemLexval exclusions; oldMPcache has1275localtrain/270localval outsidecurrentmembership.147local missinginputjobs (131train+16val) pinned rawvideo/orientationmetadata hashes; extractingnewGPU/MetalMP archives indata/local/mediapipe_alignment_v17_20261013, preservingoldinputs. No acquisition/protectedtestinference.
+
+Addedcanonicalprepare_android_alignment_v17.py withID/target/role guards, newoutputrefusal andsourcehash checks. Ported Kotlin configured minSpanFrames/maxInnerO/innerFloor support andmonotonicwordendpoint/latestwordstate bookkeeping; existingconfigurationdefaults remainunchanged pendingmatchingmodels. Added twoJVMregressionchecks +JUnit4.13.2 test-only dependency; testsbuilding. Trainingrecipe remainsdisabled untilcompleteinputpins/baselinefloorsverified. New scopeapproval doesnot enablecanonicalphrasegate orauthorizeencoderupdates. Evidence:android_alignment_v17_20261013/{isolated_reconciliation.json,extra_jobs.json,prepare.log,extra_extract.log,kotlin_tests.log}. Next:finishextract/embed/newcaches,bindingMPspan/letter/transitioninputs,baselineandready scopedcontract,thenreviewedfrozenhead jobs andphonegatesbeforeinstall.
+
+## 2026-10-13 — Samsung alignment audit; install deferred until models/runtime align
+
+User asked Androidinstallation andnoted iOS/Androidmismatches, then explicitlychose alignAndroidfirst. USBinitiallyvisiblewithoutADB; guided SamsungDeveloperOptions/USBdebugging andMacauthorization. Device nowADBauthorized:R5CT90Z97MM,SM-A236E,Android14,platformholi,MemTotal5576400kB. No olderAPKinstalled.
+
+Audit confirms olderMP local_a100word output versuscurrentiOSFragmentReject/ConfidenceDual100word+27letter+originalword outputs; Kotlinwordruntime lackscurrentdip/lag/floor settings andscopedtransition/letter paths. Englishmetadata aligns:identical declaredmultisentencetinycheckpoint,wordids,pieces,countedoutput. FivebundledTFLiteweightsbyte-equalapprovedOct4exports. ExistinglettertrainerreadsAppleletterarchives/negativecaches; cannotfeedthemintoMP. Existingphraseexceptionisfrozenencodersonly,butiOSfragmentcommandomitsfreeze_encoders andtrainerotherwiseupdatesencoders; do notreplayblindly. Canonical494phraseverifierpasses,training_readyfalse.
+
+Prepared disabledscopedcontract ATLAS/python/recipes/android_alignment_recipe_20261013.json and artifacts/reports/android_alignment_v17_20261013/{PLAN.md,audit.json,recipe_draft.json}. Sources/parent/schema hashespinned; exactnewMPinputmembership,label/eventcontracts andsame-membershipbaselinefloorsmustbereviewedbeforetraining. Proposedbounded8epoch frozenwordhead adaptation plusseparatelycontractedletter/transitionjobs, Kotlinport/export/devparity/Samsungperformancegatesbeforeinstall. No runtime/model/datachanges,acquisition,training,protectedinference oriOSinstallationchange. Next:userreviewscopedcontract,finishinputreconciliation,thenenableonlyreviewedAndroidjobs; preservealloldmodelsandtestseals.
+
+Five ATLAS/source/test commits published
 
 User authorized commit and push. Five dated commits advanced origin/main from
 026d5cad to 0bc6dc13 by normal fast-forward push: canonical Python relocation,

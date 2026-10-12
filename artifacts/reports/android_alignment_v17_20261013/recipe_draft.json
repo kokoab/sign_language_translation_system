@@ -1,0 +1,78 @@
+{
+  "format": "slt_android_alignment_work_contract_v1",
+  "created_date": "2026-10-13",
+  "recipe_training_ready": false,
+  "review_status": "pending input-contract and user review",
+  "authorization": "User chose align Android first, then install; no installation of old APK",
+  "canonical_training_ready": false,
+  "protected_test_access": false,
+  "extractor": "mediapipe_full",
+  "landmark_fingerprint": "d17b7cd2ecc5614f",
+  "roots_to_preserve": [
+    "data/local/mediapipe_full_v17_20261003",
+    "data/local/approved_phrases_v17_20260921_v2"
+  ],
+  "scope": [
+    "MediaPipe word fragment/rejection adaptation for both modes",
+    "MediaPipe letter and letter-boundary adaptation",
+    "MediaPipe transition/confidence head adaptation",
+    "Kotlin current output contract and decoder/state port",
+    "TFLite export, development parity, Samsung validation and install"
+  ],
+  "initial_source_and_parent_pins": {
+    "ATLAS/python/recipes/approved_phrase_manifest_20260921_v2.json": "a821cae8d443e1bf3bc6649deb82dbea7a3e03d217b163360bffda6168390d1c",
+    "ATLAS/python/recipes/phrase_segment_recipe_manifest_20261007.json": "cb9a91b0fc1845d901dfa0fa0a7bca435a9a053c3c6b62f4f28c93dcf04728c7",
+    "ATLAS/python/training/train_span_recognizer_v17.py": "2502f4e1dd45f2dc9f548294041ebc11bc184c7cb30174860f00e4c4bb141e8d",
+    "ATLAS/python/training/train_letter_head_v17.py": "7990d9b33cbeadd6a4e54ece9fa20f5cec3f62ff5f780669243e890e5146fc36",
+    "ATLAS/python/training/train_confidence.py": "ce2ff7d494d06f7a62caa37c2f5842cfde3cee58fbb8c01cb9039287425b28d6",
+    "ATLAS/python/export/export_tflite_mediapipe_v17.py": "9c1f283667e9020bba538963f0fef91e8f6b892b8c2d28ebcd5e988a4510b396",
+    "data/local/mediapipe_full_v17_20261003/_schema_mediapipe_full_v17.json": "f50a6966c3d76853d99311530522e93fa29b1a68c8733995a1c5432ee4605f45",
+    "artifacts/models/mp_span_recognizer_v17_local_a_20261004/best_model.pth": "a9340d6ef7359604891c8d41d49afbcf90fbdaf1ed21af8e2a6f3135aa700c48",
+    "artifacts/models/mp_span_recognizer_v17_local_a_landmark_only_20261004/best_model.pth": "3fc8e9d879078776f7c61360053682e726d3e6e78974cd0c447bbf8815c30a2c",
+    "ATLAS/mobile_app/slt_mobile_app/android/app/src/main/assets/live_config_hand_images.json": "f927fc7bb4303eb8ba6d07fa265982b2232490a2af7ff7875124952f6c1f6e61",
+    "ATLAS/mobile_app/slt_mobile_app/android/app/src/main/assets/live_config_landmark_only.json": "3cd5040a57bedd49e636330e44548c7d24d28cf409e689de86026532d91482be",
+    "ATLAS/mobile_app/slt_mobile_app/android/app/src/main/assets/stage3_tokens.json": "46b210c2ee80a3ab37745014892bd17b06e9ddc87f2ed5d574dd51c278051937",
+    "ATLAS/mobile_app/slt_mobile_app/android/app/src/main/assets/live_reel_labels.json": "8e8892593de08b9553c6b7f16b3b599dfbe684b0f0e65b81b82b4713a54ec9b9",
+    "ATLAS/mobile_app/slt_mobile_app/android/app/src/main/kotlin/com/example/slt_mobile_app/live/LiveModels.kt": "c98b68cfde6af369f32aa4f24c774a65303d3e6b2d0a70cba15a649841871c23",
+    "ATLAS/mobile_app/slt_mobile_app/android/app/src/main/kotlin/com/example/slt_mobile_app/live/LiveDecoder.kt": "de3e43961f76861717e24e8566cfdf1842db2597d609e5ff8eb4559f080e03fb",
+    "ATLAS/mobile_app/slt_mobile_app/android/app/src/main/kotlin/com/example/slt_mobile_app/live/LiveTypes.kt": "574927109d93365cc42f4d2013f4efa3e4366739c8d65fd62ee543d0445d51f8",
+    "ATLAS/mobile_app/slt_mobile_app/android/app/src/main/kotlin/com/example/slt_mobile_app/live/LiveEngine.kt": "0e40bf61364afee9786a6f737f6611b2b30e34a82749cf58bee54d6d3581a751",
+    "ATLAS/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelModels.swift": "e39fcd8be4e68ad7260d63b77a95a84b125bd042ad31683ea2a78acd7f1ff07e",
+    "ATLAS/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelDecoder.swift": "9b14b3501c02098dd41dd9fb6346c90aba53158a4fb36c753de878fe122bf8db",
+    "ATLAS/mobile_app/slt_mobile_app/ios/Runner/LiveReel/LiveReelEngine.swift": "4a2c413c9eb050121787332642c75e2cdf06be6ce5d15f619b1d3336d61c6928"
+  },
+  "training_contract": {
+    "word_epochs": 8,
+    "word_seed": 27927,
+    "fragment_probability": 0.3,
+    "fragment_low": 0.25,
+    "fragment_high": 0.85,
+    "reject_probability": 0.15,
+    "reject_range": [
+      0.1,
+      0.25
+    ],
+    "reject_weight": 0.5,
+    "freeze_encoders": true,
+    "new_outputs_only": true,
+    "no_acquisition": true,
+    "no_test_selection": true,
+    "selection": "Development sequences plus pinned isolated validation retention; never protected pools"
+  },
+  "required_before_training": [
+    "Pin exact MediaPipe train/validation membership with current identity exclusions; reconcile old caches with current recipe",
+    "Pin every derived phrase span, label, letter input and native-transition event; no Apple landmark input",
+    "Review any requested encoder updates separately; existing exception admits frozen encoders only",
+    "Set per-domain/class retention gates from measured same-membership Android baseline",
+    "Finalize reviewed letter/transition recipes and budget; this draft does not enable those trainers"
+  ],
+  "promotion_gates": [
+    "No regressions against measured admitted validation floors",
+    "Fragment/rejection and repeat/rest/ordering controls pass",
+    "Export matches PyTorch on identical MediaPipe inputs",
+    "Kotlin matches reference on development fixtures",
+    "Both mode graphs and all output names/shapes validated",
+    "Measure signed-input latency/memory on connected Samsung; choose mode from that measurement",
+    "Build current APK, preserve user data, install and verify launch only after alignment gates pass"
+  ]
+}
