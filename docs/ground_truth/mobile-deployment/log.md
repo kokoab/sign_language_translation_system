@@ -1,3 +1,18 @@
+## 2026-10-13 — Five ATLAS/source/test commits published
+
+User authorized commit and push. Five dated commits advanced origin/main from
+026d5cad to 0bc6dc13 by normal fast-forward push: canonical Python relocation,
+mobile app import, test relocation, quiet output/naturalizer test removal, and
+Makefile/scoped-discovery notes. Live remote main matches the work tip. All five
+use kokoab <batiancelafrancis747@gmail.com> for author and committer with October13
+Manila dates; ordering timestamps are documented in the preparation entry.
+Verified547selected changed paths, all committed snapshots, clean staged tree,
+whitespace and120layout links. Latest quiet suite result:244/244passed. Models remain
+ignored/local; metadata, personal files and unrelated experiment outputs preserved.
+This publication receipt is a separate follow-up commit; no published history is
+rewritten. Next safe action: verify remote synchronization after pushing the receipt.
+No training, protected evaluation or phone deployment.
+
 ## 2026-10-13 — Five ATLAS/source/test commits prepared for publication
 
 User approved the proposed five commits and push to main. Source relocation,
