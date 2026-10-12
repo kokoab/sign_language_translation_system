@@ -205,10 +205,10 @@ def finished(job: dict[str, str]) -> bool:
 def run_isolated(args) -> None:
     """Shards run as independent OS processes: a multiprocessing pool deadlocks MediaPipe's GPU."""
     config = MediaPipeFullV17Config(pose_model=args.pose_model)
-    if args.shard is not None:
+    guard_root(args.output, config)
+    if args.jobs_file is not None:
         jobs = json.loads(Path(args.jobs_file).read_text())
     else:
-        guard_root(args.output, config)
         jobs = isolated_jobs(args.output, tuple(args.sources))
         if args.limit:
             jobs = jobs[::max(1, len(jobs) // args.limit)][:args.limit]
