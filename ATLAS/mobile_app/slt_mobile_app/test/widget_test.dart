@@ -11,6 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:slt_mobile_app/main.dart';
 import 'package:slt_mobile_app/services/slt_inference_service.dart';
 import 'package:slt_mobile_app/shell/history_page.dart';
+import 'package:slt_mobile_app/shell/manual_page.dart';
+
+/// A 390 × 844 portrait phone.
+void _phone(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1170, 2532);
+  tester.view.devicePixelRatio = 3;
+  addTearDown(tester.view.reset);
+}
 
 void main() {
   testWidgets('ATLAS shell shows the splash, then Home with its four entry points', (WidgetTester tester) async {
@@ -48,6 +56,32 @@ void main() {
     await tester.tap(find.text('Glosses'));
     await tester.pumpAndSettle();
     expect(find.textContaining('signs to explore.'), findsOneWidget);
+  });
+
+  testWidgets('Home opens the manual; a section leads to the next and back returns Home', (WidgetTester tester) async {
+    _phone(tester);
+    await tester.pumpWidget(const SignLanguageTranslationApp(splash: Duration(milliseconds: 1)));
+    await tester.pump(const Duration(milliseconds: 10));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('How to use ATLAS'));
+    await tester.pumpAndSettle();
+    expect(find.text('Your guide\nto ATLAS.'), findsOneWidget);
+
+    await tester.tap(find.text('Gestures and special signs'));
+    await tester.pumpAndSettle();
+    expect(find.text('Finish pose'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Next: Practice'), 300);
+    await tester.tap(find.text('Next: Practice'));
+    await tester.pumpAndSettle();
+    expect(find.text('Learn signs with instant feedback.'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('Your guide\nto ATLAS.'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hello.'), findsOneWidget);
   });
 
   testWidgets('session detail lists recognized signs and the timeline', (WidgetTester tester) async {
