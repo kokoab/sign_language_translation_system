@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 9/22: mobile: update Flutter gloss preview catalog
+
+Records verified63local/37Citizen training references. Ignored media remains local; this catalog commit does not publish video payloads.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 8/22: test: reject incorrect preview labels, hashes and splits
 
 Admitted-source regression covers val membership, disabled admission, wrong labels and wrong hashes. Focused Python16/16pass.
