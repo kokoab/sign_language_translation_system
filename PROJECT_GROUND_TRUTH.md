@@ -221,11 +221,17 @@ and provenance in `docs/capstone_papers/ATLAS_MEASUREMENT_NOTES.md`; never relab
 
 ## Pipeline state
 
-**2026-10-13 focused test relocation:**24ATLAS component test files (252defined
-methods) now live in `ATLAS/python/tests/`; former test paths are compatibility
-symlinks. Two test-only repository-root anchors were adjusted. Before/after suites
-both run244tests with the same existing naturalizer class-setup hash mismatch
-blocking8methods. All121manifest links verify;55old-path compatibility tests pass.
+**2026-10-13 focused ATLAS tests:**23component test files (244defined methods)
+live in `ATLAS/python/tests/`; their former `test/` filenames are compatibility
+symlinks, with125other test files unchanged. Canonical discovery suppresses library
+output during imports/runs, including native logs, while retaining unittest progress,
+failures and summary; output descriptors are restored afterward. Use the scoped
+command in `ATLAS/README.md`. At user request, removed the mobile-naturalizer test
+file and its old-path link (8methods previously blocked by a class-setup recognizer/
+Stage2hash mismatch). The runtime contract check remains unchanged; that test
+coverage is removed. Source/import namespaces and training/evaluation gates remain
+unchanged. Quiet canonical discovery passes244/244tests in18.481s; all120remaining
+manifest links verify.
 
 **2026-10-13 canonical source relocation:** selected mobile pipeline source is now
 `ATLAS/python/` (81 Python files, grouped by purpose; 16 unchanged recipe/configuration

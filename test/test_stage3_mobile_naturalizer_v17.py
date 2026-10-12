@@ -1,1 +1,0 @@
-../ATLAS/python/tests/test_stage3_mobile_naturalizer_v17.py

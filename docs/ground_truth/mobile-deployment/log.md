@@ -1,3 +1,37 @@
+## 2026-10-13 — Quiet ATLAS discovery; failing naturalizer suite removed
+
+User requested permanent suppression of library noise in the scoped ATLAS tests
+and removal of the failing test. Added a unittest load_tests hook and suite wrapper
+in ATLAS/python/tests/__init__.py. Discovery and execution temporarily redirect
+stdout/stderr file descriptors to /dev/null, suppressing Python/library output and
+native Vision/MediaPipe logs. The runner uses a preserved output descriptor, so
+dots, failures, tracebacks and final summary remain visible. Descriptors and runner
+stream are restored in finally blocks. This applies to canonical package discovery;
+direct old-path module invocations do not invoke the package hook.
+
+Removed ATLAS/python/tests/test_stage3_mobile_naturalizer_v17.py and its root test/
+compatibility link, plus its source_manifest.json mapping. That file contained eight
+tests blocked by the existing recognizer/Stage-2 hash mismatch in setUpClass; removal
+reduces declared coverage from252to244methods (24to23files). The mismatch itself is
+not repaired or bypassed: runtime checks, model contracts and training gates remain
+unchanged. Updated ATLAS/README.md, AGENTS.md and PROJECT_GROUND_TRUTH.md.
+
+Validation: focused extractor discovery17/17passed (5.771s), full canonical discovery
+244/244passed (18.481s), output limited to dots and unittest summary. A synthetic noisy
+failure check confirms Python warnings/native stdout/stderr are hidden, failure
+tracebacks remain visible, and stdout/stderr are restored. Layout verifies120remaining
+source/resource links and the mobile project. Next safe action: run the documented
+canonical discovery command; restore naturalizer coverage only with a reviewed valid
+fixture/contract. No commit or push requested.
+
+## 2026-10-13 — Canonical ATLAS migration complete; mobile builds pass
+
+Final inventory81Python sources +16byte-identical recipe/configuration files inATLAS/python purpose folders; added selected recipe/command receipts and tiny-T5 ancestor/composition trainers after final dependency review. ATLAS/source_manifest.json maps97old paths to relative compatibility links. Complete mobile app canonical atATLAS/mobile_app/slt_mobile_app; old sibling path links there. All582inventoried mobile source/assets remain byte-identical. Twointentional build-config edits: Flutter Debug/Release xcconfigs explicitly inherit flags and linkFlutter; generated application/package paths regenerated toATLAS. Renamed temporal-repair helper has a canonical-package import/bootstrap. No model/data/installed-app changes or training/test inference.
+
+Validation complete:81source parses,97file links +mobile link,15imports/root anchors;44extractor/family/segmental tests +8Englishcomposition tests =52pass. Currentprimary deterministic2-input logits bit-identical before/after. Approvedphrase verifier494archives,manifesthashunchanged,training_ready=false. iOSRelease unsignedbuild succeeds46.5s;11compiledCoreMLweightpayloads equal sourcepackages. AndroidDebug offlinebuild succeeds3m46s;APKZIP CRCs allpass andrequiredmodels present. Initial missingJAVA_HOME resolved usingexistingprojectJDK17; staleFlutterdebug-outputdeletion retry passed. Initial iOSundefinedFluttersymbols resolved via explicitlinkflags; no dependency upgrades. Repositorydiffcheck +68changed-source whitespace checks pass. Artifacts index regenerated.
+
+Evidence:artifacts/reports/atlas_canonical_source_20261013/REPORT.md,verification.json,migration.json,mobile_before.json,mobile_post_build_hashes.json andbuild/testlogs; originalsourcecopies inbefore_sources. Documentationupdated:ATLAS/README.md,README.md,AGENTS.md,CURRENT_PIPELINE.md,PROJECT_GROUND_TRUTH.md. Frozenhistoricalsourcepins unchanged; futuretrainingrequiringchangedpins mustuseareviewednewrecipe. Nextsafeaction:editcanonicalATLASsources,retaincompatibilitylinks,andrequestsignedbuild/installseparatelyifneeded. No freshdeviceaccuracy/latency/thermalclaim.
+
 ## 2026-10-13 — Focused ATLAS tests moved with compatibility preserved
 
 User approved the discussed24-file scope. Moved the tests to ATLAS/python/tests/
@@ -34,14 +68,6 @@ and Transformer adapter suites pass27tests after relocation. No full-suite run, 
 update, training or deployment. Only this log records the check; canonical current state
 already describes the move. Next safe action: run venv/bin/python -m unittest discover
 -s test -p 'test_*.py' -v from /Volumes/secret/SLT/SLT for the discoverable suite.
-
-## 2026-10-13 — Canonical ATLAS migration complete; mobile builds pass
-
-Final inventory81Python sources +16byte-identical recipe/configuration files inATLAS/python purpose folders; added selected recipe/command receipts and tiny-T5 ancestor/composition trainers after final dependency review. ATLAS/source_manifest.json maps97old paths to relative compatibility links. Complete mobile app canonical atATLAS/mobile_app/slt_mobile_app; old sibling path links there. All582inventoried mobile source/assets remain byte-identical. Twointentional build-config edits: Flutter Debug/Release xcconfigs explicitly inherit flags and linkFlutter; generated application/package paths regenerated toATLAS. Renamed temporal-repair helper has a canonical-package import/bootstrap. No model/data/installed-app changes or training/test inference.
-
-Validation complete:81source parses,97file links +mobile link,15imports/root anchors;44extractor/family/segmental tests +8Englishcomposition tests =52pass. Currentprimary deterministic2-input logits bit-identical before/after. Approvedphrase verifier494archives,manifesthashunchanged,training_ready=false. iOSRelease unsignedbuild succeeds46.5s;11compiledCoreMLweightpayloads equal sourcepackages. AndroidDebug offlinebuild succeeds3m46s;APKZIP CRCs allpass andrequiredmodels present. Initial missingJAVA_HOME resolved usingexistingprojectJDK17; staleFlutterdebug-outputdeletion retry passed. Initial iOSundefinedFluttersymbols resolved via explicitlinkflags; no dependency upgrades. Repositorydiffcheck +68changed-source whitespace checks pass. Artifacts index regenerated.
-
-Evidence:artifacts/reports/atlas_canonical_source_20261013/REPORT.md,verification.json,migration.json,mobile_before.json,mobile_post_build_hashes.json andbuild/testlogs; originalsourcecopies inbefore_sources. Documentationupdated:ATLAS/README.md,README.md,AGENTS.md,CURRENT_PIPELINE.md,PROJECT_GROUND_TRUTH.md. Frozenhistoricalsourcepins unchanged; futuretrainingrequiringchangedpins mustuseareviewednewrecipe. Nextsafeaction:editcanonicalATLASsources,retaincompatibilitylinks,andrequestsignedbuild/installseparatelyifneeded. No freshdeviceaccuracy/latency/thermalclaim.
 
 ## 2026-10-13 — ATLAS becomes canonical source (relocation and Python validation)
 
