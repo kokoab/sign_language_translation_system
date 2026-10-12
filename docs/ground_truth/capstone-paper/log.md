@@ -1,3 +1,29 @@
+## 2026-10-13 — Approved 22-commit follow-up series completed locally
+
+Created all22user-approved granular commits on main after2bf2adca. Dates for both
+author and committer are October13Manila; kokoab <batiancelafrancis747@gmail.com>.
+00:31–00:52are ordering placeholders. Work covers manual/navigation/tests, preview
+admission/catalogs/evidence, Android decoder/tests, explicit extraction dispatch,
+disabled alignment preparation, installation summaries, research and Chapter4draft.
+All98selected final snapshots verified byte-exact; staged tree matchesHEAD.
+Fresh validation:245ATLAS tests (26.243s),16focused Python tests,7Flutter tests,
+2Android JVMtests; layout120links and full-series whitespace pass. Initial invalid
+Android Studio JAVA_HOME corrected to existing project JDK17; Gradle passes1m7s.
+Broad data/ignore hides the new canonical preparation source; explicitly included
+source only. No raw datasets, model/media payloads, executable harness, raw device/
+profile inventories, metadata or unrelated outputs committed. Compact installation
+summaries preserve verification without device identifiers. Artifacts index regenerated.
+No push requested or performed; main has22local commits ahead oforigin/main.
+Next safe action: review or push this completed series when authorized. No training,
+protected evaluation or device installation performed during commit preparation.
+
+## 2026-10-13 — Commit 22/22: capstone-paper: add Chapter 4 draft and preservation map
+
+Preserves current material and maps prototype/implementation/results to the template. Draft only; GoogleDocs unchanged. Validation: Python245/245, focused16/16, Flutter7/7; Android JVM2/2pass. First JDK attempt used an unavailable Android Studio path; retry with the existing project JDK17 succeeded (1m7s). No push requested; verify22commits/identity/dates/snapshots before handoff.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 # capstone-paper — log
 
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
@@ -6,6 +32,29 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 4 entries, newest first. Archived from `PROJECT_GROUND_TRUTH.md` 2026-09-10.
 
 ---
+
+## 2026-10-13 — Preservation and placement map added to Chapter 4 draft
+
+Updated CHAPTER_4_TEMPLATE_ALIGNED_DRAFT.md with existing-item destinations and notes
+at every proposed section. Re-read Page Check headings for actual SDLC/activity list,
+GANTT/PERT/design/requirements/protection blocks. Explicitly preserve those blocks,
+move adjusted model/results material with its figures/tables/citations, and prohibit
+replacement or duplicate insertion. Existing test/security/maintenance plans are
+conditional on presence, not asserted to exist. Participant distinction moves intact
+to4.5.5. GoogleDocs unchanged. Next: author reviews placement map before application.
+
+## 2026-10-13 — Template-aligned Chapter 4 manuscript draft
+
+Created docs/capstone_papers/CHAPTER_4_TEMPLATE_ALIGNED_DRAFT.md with full proposed
+manuscript wording for4.3Prototype,4.4ImplementationPlan,4.5ImplementationResults,
+and development-method passages to relocate into existing4.2. Read current PageCheck
+for preparation, hardware, English results, objectives and quality-evaluation provisions.
+Retained verified recognition/WER/device data and embedded existing scientific charts.
+Clearly marked unverified durations, names, budget, screenshots and functional-test
+outcomes as author fields rather than fabricated results. Kept existing4.1/4.2 plans,
+schedules, diagrams, participant safeguards and references. No GoogleDocs changes.
+Validated heading scope and image links. Next: author reviews exact wording and supplies
+marked implementation/test records before manuscript application.
 
 ## 2026-10-13 — Bare unittest discovery imports standalone benchmarks
 

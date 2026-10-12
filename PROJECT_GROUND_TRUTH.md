@@ -28,6 +28,14 @@ The old seven-person dataset is not acceptable evidence of generalization.
 
 ## Capstone paper authoring
 
+**2026-10-13 template restructuring draft:** Full proposed wording is in
+`docs/capstone_papers/CHAPTER_4_TEMPLATE_ALIGNED_DRAFT.md`:4.3Prototype,4.4ImplementationPlan,
+4.5ImplementationResults; training methods relocate within4.2. Schedule/budget and missing
+software-testing outcomes remain explicit author fields. Draft now includes item-by-item
+placement notes: retain SDLC, activity list, GANTT, PERT, diagrams and safeguards; move
+adjusted blocks and insert agreed additions without replacing existing material. GoogleDocs
+unchanged by this draft.
+
 **2026-10-13 applied manuscript:** Updated Page Check tab `t.8u4bn2h16og9` with agreed
 development narrative and4.3.5FinalSystemConfiguration. Five-stage WER uses current lineage
 35.84→29.65 then runtime17.70→15.49→12.83retained, with procedure boundary explicit.
@@ -221,7 +229,30 @@ and provenance in `docs/capstone_papers/ATLAS_MEASUREMENT_NOTES.md`; never relab
 
 ## Pipeline state
 
-**2026-10-13 focused ATLAS tests:**23component test files (244defined methods)
+**2026-10-13 installed on dwight ramos iPhone11:** canonical signedRelease installation
+succeeds afterDeveloperMode enabled; targetprofile andsignature verified. Usertrusted
+developerprofile; launch andrunningprocess666 verified. Evidence:artifacts/reports/atlas_dwight_install_20261013/.
+No newmodels orphoneperformanceclaims.
+
+**2026-10-13 installed on jaz iPhone16:** user-requested signedRelease from canonical
+ATLAS source installed and launched; devicectl receipt and runningprocess589verified.
+ASLTranslator1.0.0/build1, incumbentConfidenceDual pipeline plus latest100preview
+updates. DeveloperMode anddeveloperprofile trust confirmed; provisioningadmitsjaz,
+expiresOctober20,13:39PHT. Prior iPhone13 install untouched. No newmodel/training/
+accuracy/latency claim. Evidence:artifacts/reports/atlas_phone_install_20261013/.
+
+**2026-10-13 mobile previews repaired:** bundled catalogs now63local/37Citizen training
+references; all100rendered previews and100selected original videos give exact expected
+glosses in current native Swift/CoreML FP16 Mac replay (`.all`). Known localBIG/SIGN/
+COME/CHILD variant mismatches replaced;7validation and20nonadmitted original local
+previews removed/replaced. Builder now requires current eligible local train label+SHA256
+membership;100sourcepins/mediahashes verified acrossFlutter/native/desktop. ANGRY keeps
+640pxsourcewidth after480pxextraCOLD.46sourcechoices changed; priorassetsbackedup.
+Reference-selection checks, not unseen-signer/physical-phone accuracy. Model/runtime/
+training gates unchanged; installedphone appunchanged untilrebuild/reinstall. Report:
+`artifacts/reports/mobile_preview_audit_v17_20261013/REPORT.md`.
+
+**2026-10-13 focused ATLAS tests:**24component test files (245defined methods)
 live in `ATLAS/python/tests/`; their former `test/` filenames are compatibility
 symlinks, with125other test files unchanged. Canonical discovery suppresses library
 output during imports/runs, including native logs, while retaining unittest progress,
@@ -230,7 +261,7 @@ command in `ATLAS/README.md`. At user request, removed the mobile-naturalizer te
 file and its old-path link (8methods previously blocked by a class-setup recognizer/
 Stage2hash mismatch). The runtime contract check remains unchanged; that test
 coverage is removed. Source/import namespaces and training/evaluation gates remain
-unchanged. Quiet canonical discovery passes244/244tests in18.481s; all120remaining
+unchanged. Quiet canonical discovery passes245/245tests in26.243s; all120remaining
 manifest links verify.
 
 **2026-10-13 canonical source relocation:** selected mobile pipeline source is now
