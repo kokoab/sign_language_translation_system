@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 1/22: mobile: add ATLAS manual content and section pages
+
+Adds the reviewed guide content, section pages and linked-sign controls.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Five ATLAS/source/test commits published
 
 User authorized commit and push. Five dated commits advanced origin/main from
