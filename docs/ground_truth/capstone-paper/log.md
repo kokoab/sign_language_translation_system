@@ -7,6 +7,72 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-13 — HELLO HOW YOU figure completed with verified signer frames
+
+Matched development case022d8f1f67a525ad4ea7 to local:HELLO_HOW_YOU:00424e11 in
+calibration manifest. Source video SHA256781d1f7b5728b8c0836acb990fd6bc632bf164cb8c5810c47e9ea08a9d512c02
+verified. Extracted original unmodified frames40/76/116 at1.33/2.53/3.87s for saved
+intervals0.87–1.80/2.07–3.00/3.17–4.57s. Generated PNG/SVG with boundary+decoder
+interval row, recognizer+decoder gloss row, and matching signer frames.
+Updated reviewMD F-05, source provenance, and Page Check Figure2 plus adjacent text.
+Rendered PDF page42 checked; downstream page numbers unchanged. No inference, new
+training, protected-test access or production changes. Other manuscript tabs untouched.
+Assets: docs/capstone_papers/review_assets/20261013_hello_source/.
+Also corrected the stale optional MD summary to current-lineage35.84→29.65WER.
+Next: author reviews completed Figure2 in Page Check.
+
+## 2026-10-13 — User-authorized dated commit series completed and checked
+
+User authorized all 24 proposed date/topic commits for the October8–13 work, with
+separate commits where a day contains distinct outcomes. Author/committer identity is
+kokoab <batiancelafrancis747@gmail.com>; both calendar dates follow the logged Manila
+day. Date-only entries use bookkeeping ordering times, not claimed event timestamps.
+Files spanning days use available final source snapshots in the latest relevant group;
+missing intermediate versions are not fabricated. Scope is this SLT repository: source,
+tests, documentation and compact reproducible evidence. The sibling native app has no
+Git repository and is not initialized or moved by this task; saved native experiment
+sources in the eligible reports remain evidence, not a complete app repository.
+Datasets, weights, caches, large outputs, old untracked leftovers, personal files and
+incidental executable-bit changes stay local. Git automatic maintenance is disabled
+per commit to avoid the prior abandoned-pack/disk-exhaustion problem.
+Per-recording trace caches and native input fixtures are excluded even when an
+individual JSON is below1MB; compact summaries, contracts and reproduction sources
+provide the committed evidence without publishing duplicated cached observations.
+Removed the accidental trailing-space-only line in scripts/app_shell_v17.py, restoring
+its previously committed text. Focused runtime, adapter, legacy fine-tune, app integration
+and unified-model checks:35tests pass; no training or protected test access.
+Completed all24commits on main. Final audit verifies each author/committer identity,
+matching logged calendar dates in+08:00, commit subjects and2288selected file snapshots.
+No mode changes, local datasets, weights or AppleDouble files entered the series;
+all selected working files matched the committed snapshots and the full-series
+whitespace check passed. The selected payload is70.08MiB before Git compression.
+A concurrent IDE index-stat refresh triggered the byte-equality guard; its tree still
+matched the original base exactly, so only selected index entries were reconciled,
+preserving unrelated cached stats. No concurrent staged content was replaced.
+Next safe action: review the local main series; no push is included in this request.
+
+## 2026-10-13 — Agreed narrative and final configuration applied to Page Check
+
+Updated README_PLATFORM_NEUTRAL_REVIEW.md and Google Doc Page Check tab t.8u4bn2h16og9.
+Established usage-motivated ±12° augmentation, parallel interval variants, boundary student,
+recognizer, MobileCLIP2-S0, T5-efficient-tiny and runtime decoder. Five-stage WER now uses
+current-lineage35.84/29.65 then17.70/15.49/12.83retained. Retained procedure distinctions.
+Applied native tables/current accuracy, conversion/storage/phone metrics and three charts;
+removed interval combined-loss and obsolete precision figures. Figures/tables renumbered,
+navigation refreshed, PDF rendered and layout repaired. All other tab bodies unchanged.
+No training/test/deployment changes. Main local snapshot unchanged; Figure2 separate pending
+source-still review. Report: artifacts/reports/paper_page_check_update_20261013/REPORT.md.
+Next: author reviews Page Check; do not restore older WER branch or linearize parallel runs.
+
+## 2026-10-13 — Three-part recognition narrative condensed
+
+Simplified review MD around architecture selection, mild-orientation adaptation,
+and component/connected-sign development. Added explicit proposed reading order;
+expanded concise stage-purpose prose, shortened repeated technical/audit notes and
+linked preserved reports. Retained different-validation-scope and WER-procedure
+qualifications. Historical before passages, author checkboxes, data artifacts and
+charts preserved. No manuscript or model changes. Next: author reviews proposals.
+
 ## 2026-10-13 — Original base-study comparison restored by author request
 
 Updated review MD R-04 and numerical register to reproduced base-study results:
@@ -17,6 +83,17 @@ Kept adaptation narrative and curves, explicitly distinguishing original validat
 membership from the current component evaluation: 96.83 to 95.27 is not a matched
 rotation or fine-tuning loss. No training, manuscript or chart asset changes.
 Next: author reviews the restored table and proposed wording.
+
+## 2026-10-13 — Isolated-development narrative simplified for review
+
+Updated R-03a with the agreed 96.83% base-study / 76.70% shared-validation narrative,
+75.87% minimum sampled original rotation score, and adapted 95.27% / 94.87% minimum.
+Retained the complete-fine-tuning qualification and retrospective landmark-test scope.
+Kept R-03b augmentation table and existing component table; removed the duplicated
+rotation passage/per-angle table from the review MD, preserving the linked report.
+Marked R-04 deferred in the review itself, consistent with the existing author decision;
+its reference content remains visible. Author notes and other checkboxes preserved.
+No main manuscript, training or deployment changes. Next: author reviews wording.
 
 ## 2026-10-13 — Mild-roll settings and ±12° sensitivity verified
 
@@ -51,6 +128,21 @@ transcriptions and CPU timingclaims in R-04. Retainedhistoricalaccuracies asBefo
 explicitly labeled; originalbasecurve scope unchanged. R-04 reopened; otherauthorchecks
 preserved. No training/test/deployment/mainmanuscript change. Results and pins in
 base_architecture_shared_validation_v17_20261013. Next:authorreview.
+
+## 2026-10-13 — Current-lineage numbers and review charts refreshed
+
+Author requested updated review MD, training curves and embedded charts, omitting separate
+transition-output accuracy. Updated R-01/R-02/R-02a/R-03 register/table/discussion to
+95.27/67.20/95.40/95.22/95.20/95.50; corrected ancestry note. Removed separate transition
+output percentages from review-only evidence too (source reports preserved). Historical
+Before excerpts remain visible/unmodified. Changed previously approved items reopened;
+unrelated author checks preserved. Four PNG/SVG figures generated and visually checked:
+matched components, actual130epochbasehistory, current8epochtrainingobjective, and
+approvedfive-stageWER in two procedure-separated panels. Source scripts/JSON under
+review_assets/20261013_current_lineage. Basecurve originalmembership remains explicit;
+no fabricated matched epochaccuracycurve. Currenttrainingselectedepoch4; no crossstage
+splicing. Main manuscript/slides/production unchanged. Links/images and diff whitespace
+checked. Next: author reviews proposals and captions.
 
 ## 2026-10-13 — Current-lineage component evaluation completed
 
@@ -88,6 +180,21 @@ These are historical chain diagnostics, not newerchain or paperWER replacements.
 No training/test/deployment/manuscript edits. User's seven-minute request scoped this audit.
 Screenshot component numbers can first be updated via cached validation, no automatic
 retraining. Next: discuss evidence and choose component-evaluation scope.
+
+## 2026-10-13 — Review content fully expanded
+
+At the author's request, removed all 23 details/summary dropdown wrappers from
+README_PLATFORM_NEUTRAL_REVIEW.md. Historical text is visible inline; summary labels
+remain bold. Preserved all historical passages, proposals, notes and checkboxes.
+Updated the introduction to match. No manuscript or experiment changes.
+
+## 2026-10-13 — Development-evaluation terminology approved
+
+Updated review MD R-05 to use “evaluation during system development,” Table15
+“Recognition Performance Across Development Stages,” and “WER (%)”. Simplified to
+stage/metric columns, retaining the procedure distinction in the table note and review
+evidence. No relabeling as training-set results, metric changes, manuscript edits or
+restarted experiments. Preserved checkboxes and author notes. Next: author review.
 
 ## 2026-10-13 — Five-stage WER proposal added; training comparison cancelled
 
@@ -159,6 +266,20 @@ Report/evidence: artifacts/reports/paper_metric_lineage_v17_20261013/.
 No README/manuscript edits; user discussionfirst. Simple “recognizer fine-tuned on
 transition examples” wording available; false one-head implementation claim not adopted.
 Next: discuss measured lineage; controlledcross-evaluator ablation needed forcausalclaims.
+
+## 2026-10-13 — Numeric review clarified; interval-adaptation trade-off explained
+
+User asked why interval accuracy fell and to update outdated review numbers. Added
+one numerical reference table and R-02a explanation. Preserved exact before quotes
+inside collapsed historical blocks rather than fabricating updated measurements in
+old AppleVision/MediaPipe tables. Current replacement values remain95.50%,31.42%
+training-experiment WER,31.14ms/frame,26.56MB; component comparisons stay separately
+scoped. No current matched MediaPipe/FP32 timing or size results were invented.
+Verified chain phase arithmetic95.8137→95.6961→95.5315 and training-historyWER
+37.6106→31.4159 at epoch4. Consistent with different training/evaluation objectives,
+not causal proof of each error. No manuscript/model/data changes or new experiments.
+Prior review snapshot preserved in review_assets/20261013_verification/
+README_before_numeric_cleanup.md. Next: author reviews scoped replacements.
 
 ## 2026-10-13 — Author selects training-experiment WER for paper
 

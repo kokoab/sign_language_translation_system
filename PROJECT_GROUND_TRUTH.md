@@ -1,6 +1,6 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-10-07 PHT (+0800, Asia/Manila)
+**Last updated:** 2026-10-13 PHT (+0800, Asia/Manila)
 
 This file is the current state of the project, and it is the only file you must read
 before changing the pipeline. It states what is true and what binds you now.
@@ -28,13 +28,116 @@ The old seven-person dataset is not acceptable evidence of generalization.
 
 ## Capstone paper authoring
 
-**2026-10-08 review delivery:** README_PLATFORM_NEUTRAL_REVIEW.md now contains exact
-before/after wording, table proposals,20checkboxes and nativebefore/proposedtraining
-chart previews. Oldauthornotes archived beside previewassets. Userrequests95.53%
-“validationaccuracy,” one31.42%developmentWER, no“pooled”/three-dataset wording,
-preserveexisting signer-disjoint discussion. Complete-dataset FP16parity andHELLOtrace
-remainpending. No manuscript writes; reviewcheckboxes are not yet approved.
+**2026-10-13 applied manuscript:** Updated Page Check tab `t.8u4bn2h16og9` with agreed
+development narrative and4.3.5FinalSystemConfiguration. Five-stage WER uses current lineage
+35.84→29.65 then runtime17.70→15.49→12.83retained, with procedure boundary explicit.
+Updated native results tables/charts and device/conversion figures; removed combined-loss
+chart from main text. Reviewed rendered PDF; other tabs unchanged. ReviewMD records applied
+scope. Source:paper_page_check_update_20261013. F-05 now applied with source-hash-verified midpoint signer frames and two processing rows.
+Earlier entries saying manuscript unchanged or Figure2 pending predate this authorized application.
 
+**2026-10-13 concise review:** Review MD now follows architecture selection → mild
+orientation adaptation → recognition stages and WER, with short scope notes and linked
+evidence. Historical passages and charts preserved; main manuscript unchanged.
+
+**2026-10-13 narrative review:** R-03a now uses the agreed isolated-recognition story,
+with the complete-fine-tuning qualification and retrospective landmark-rotation scope.
+R-03b retains augmentations; detailed rotation table is in linked evidence only.
+R-04 now restores the original base-study comparison (95.50/95.77/96.83%) at the
+author’s request, with its evaluation scope separate from adapted 95.27%. Main manuscript unchanged.
+
+**2026-10-13 mild-roll check:** freshadaptedlandmarkvalidation at−12/−6/0/+6/+12:
+95.10/95.32/95.27/95.05/94.87%;maxuprightdecline.40pp. Softwarelandmarks, not camera
+pixels or causalaugmentationablation. R-03a/b narrative/augmentationtable added toreview;
+source:current_mild_roll_v17_20261013. Manuscriptunchanged.
+
+**2026-10-13 comparison-scope correction:** author rejected base-stage74/75/77table
+as replacement for locally adapted models. Do not apply that R-04 proposal. Current
+adaptedpartwise95.27 verified; no completed matchingflatTransformer/flatSqueezeformer
+found. OtherchatTransformer adaptation is active on a differentrecipe; no newtraining
+started here. Inventory:adapted_comparator_inventory_v17_20261013.
+
+**2026-10-13 base comparison updated:** same3957admitted validation inputs yields
+Transformer74.02%,flatSqueeze74.96%,partwise/global76.70% beforelocaladaptation.
+R-04/register updated; CPUcolumns removed. OldCitizen-only95.50/95.77/96.83 remain
+historical/basecurve scope. Finalprimary95.50% unchanged. Report:
+base_architecture_shared_validation_v17_20261013. No training or manuscript edits.
+
+**2026-10-13 review refreshed:** current-lineage component percentages/table and four
+embedded PNG/SVG charts now in README_PLATFORM_NEUTRAL_REVIEW.md; separate transition
+output accuracy omitted per author. Base training and current interval objective curves
+use actual histories with separate scopes. Changed review items reopened. Historical
+Before content visible; manuscript/slides unchanged. Await author review.
+
+**2026-10-13 current-lineage component validation complete:** same3957admitted examples,
+landmark95.27%,hand67.20%,fusion95.40%,phrase95.22%,interval95.20%,currentprimary95.50%,
+transitionoutput95.63% (PyTorch; not conditionalruntime). Existing25SemLex exclusions
+applied identically; currentprimary/adapted counts reproduced. Report:
+current_lineage_components_v17_20261013. Paper unchanged; discuss before replacement.
+
+**2026-10-13 ancestry correction:** current primary99a18801 (95.50% across3957validation)
+descendsfrom96.83%partwise5c40b133 via run_v2, not fullrolla7490409/oldfusion96.30%.
+CurrentCitizen-only is96.30%, a numerical coincidence witholdfusion; oldlandmark95.50%
+is another distinct measurement. Mildroll12/fullroll0 inrun_v2adaptation. Verified in
+paper_checkpoint_lineage_v17_20261013; do not transfer oldfullroll robustness claims.
+
+**2026-10-13 historical extractor diagnostic:** Apple Citizen363→360 (4lost/1gained);
+MediaPipe357→357 (3lost/3gained). Equal MediaPipe percentage hides errors. Apple selector
+kept epoch4 despite epoch6 equalWER/higherCitizen because it required strictly lowerWER.
+Evidence: apple_mediapipe_interval_diagnostic_v17_20261013. No checkpoint promotion.
+
+**Review format:** keep all historical text and proposals visible inline; no dropdowns
+or hidden content in README_PLATFORM_NEUTRAL_REVIEW.md (author, 2026-10-13).
+
+**2026-10-13 approved wording:** use “evaluation during system development” for the
+five-stage account, table “Recognition Performance Across Development Stages,” and
+“WER (%)”. Review MD updated; retain procedure distinctions without calling these
+training-set results.
+
+**2026-10-13 latest author decision:** Five-stage WER development proposal now in review
+MD R-05:37.61→31.42 training-experiment decoder;17.70 runtime baseline;15.49 partial-sign
+configuration;12.83 retained after transition-example refinement. Supersedes earlier
+31.42-only reporting decision below. Procedures differ; no single causal curve. User
+cancelled training-recording comparison; evaluator/watcher stopped and partial outputs
+preserved as cancelled. Manuscript/slides unchanged; exact wording remains for review.
+
+**2026-10-13 WER data scope verified:**89localphrases,6templates/15glosses,226references,
+3familiar signers. Laterlab tune loader combines59calibration+30confirmation for
+modelselection; do notcallcombinedresults independentconfirmation or100-sign
+conversationalWER. Data inventory in paper_metric_lineage_v17_20261013; paperunchanged.
+
+**2026-10-13 WER lineage audit:**31.42→12.83 is not one controlled improvementcurve.
+Samev2 checkpoint29.65 training-selector vs17.70 runtimebaseline uses different
+boundary/candidate/scoring/commitment pipelines. Runtime progression independently
+rescored17.70→18.58→15.49→15.93→15.04→12.83; all89referencesmatch. Final5errors:
+twoNAME MY order corrections plusoneextraHELP removed. MYtransitionrepair retained
+12.83 ratherthan causing it. No newpaperwording applied. Evidence:
+artifacts/reports/paper_metric_lineage_v17_20261013/. Causal cross-evaluator ablationpending.
+
+**2026-10-13 numeric-review clarification:** Review MD now has a single replacement
+number register and collapsed historical before excerpts. R-02a explains interval
+adaptation versus isolated accuracy using verified training-chain evidence; does not
+mix later current-head validation into that chain. Unmeasured current matched
+MediaPipe/FP32 comparisons stay omitted/pending. Manuscript unchanged.
+
+**2026-10-13 author WER decision (supersedes review reporting recommendation):** Use
+31.42% development WER from the selected interval-recognizer training experiment,
+explicitly under that experiment’s decoder. It is not training-set error or current
+production WER. Keep95.50% current primary-head validation and device measurements
+separate; they are not one matched checkpoint/configuration. Verified12.83% stays in
+internal evidence, not proposed paper results. Review MD updated; manuscript untouched.
+
+**2026-10-13 review verification:** README_PLATFORM_NEUTRAL_REVIEW.md refreshed for
+October12 deployed configuration;22unchecked proposals/gaps, exactbefore/after and
+newHELLOdevelopmenttimeline. Manuscript/slides unchanged; beforesnapshot remainsOct8.
+Fresh primaryhead validation3779/3957=95.50% inPyTorch andcurrentFP16; only3956/3957
+predictionagreement. Auxiliaryhead3784→3782correct (95.63→95.58%) afterFP16;
+do notclaim everyprediction preserved or call eitherhead overallconditionalruntimeaccuracy.
+Saved native developmentWER29/226=12.83%; rawphone median31.14ms/processedframe,
+p9557.85ms; currentFP16package26.56MB. Source/modelhashesmatchOct12release.
+Proposal usesonecomponentaccuracy plusone developmentWER; noold/newpapercomparison.
+Currentall-FP32phonebenchmark/package remainspending. Evidenceandnotes in
+review_assets/20261013_verification and capstone-paper/log.md. Authorreviewpending.
 
 **Latest author direction (2026-10-07):** one final ATLAS result, no August/current
 comparison or five-phase results ladder. Proposal under discussion:95.53% pooled
@@ -118,6 +221,17 @@ and provenance in `docs/capstone_papers/ATLAS_MEASUREMENT_NOTES.md`; never relab
 
 ## Pipeline state
 
+**2026-10-11 lineage/runtime investigation complete; no repair deployed.** Recovered actual
+September30 MY FRIEND video: all4old/new model/runtime combinations exact8/8phases.
+Newer MY NAME firstcontact:LocalA6/8,current0/8 under either runtime; no universal rollback.
+84native Mac replays separate model/runtime effects onHAVE; noNAME/uniformconfig ablations fail.
+Old clean-split interval recognizer retains exactMY(.693) and30/62diagnosticwindows vs
+current6/62; fullphone/matchedletterhead validation pending. Earlier candidate (superseded by October12experimentsbelow):oldcleanlineage,
+reviewed real shortsign/transition+phase supervision, stable wordstate and full-mode tracing,
+perclass/phrase/schedule gates then loaded-phone confirmation. No training/protectedtest access.
+Evidence:artifacts/reports/lineage_runtime_investigation_v17_20261011/REPORT.txt.
+
+
 **2026-10-07 paper claims independently checked:** fresh inference reproduces all five
 new-chain phases on all three domains and the clean August recognizer. CoreML FP32/FP16
 rerun retains all top1 decisions. See canonical_recognition_comparison_v17_20261007/
@@ -163,6 +277,184 @@ unadapted 96.83: Citizen366/SemLex862/local2447 (not gate-eligible). Phrase/inte
 blocked (training_ready=false). Those local/fusion results are CONFOUNDED: recipe imposed full roll .35 on a parent trained without it (the parents' only provenance difference). 96.83 chain COMPLETE through recognizer (validation, Citizen/SemLex/local): local 97.35/87.32/98.17; fusion 97.62/88.04/98.20; phrase 97.62/88.04/98.03; recognizer 97.09/88.34/97.76, tune WER 31.42%; Core ML FP32=FP16=PyTorch 367/378; iPhone13 FP16 23.69 vs August 24.25 ms (equivalent). Recipe-scoped phrase manifest active/v17/phrase_segment_recipe_manifest_20261007.json (user review pending). LEAK: shipped reel_v2/local_a trained on 51/72 lab test + 73/89 tune clips via parent head — their streaming WERs are not held out. Reports: chain_9683_floor361_mildroll/, downstream_recipe/. Paper/manuscript unchanged pending discussion. Preserve orientation-robust intermediate inolddeployedlineage;
 it is not directlyinitialized from the96.83checkpoint based onavailablemetadata.
 
+
+**Live app 2026-10-09 (iPhone 13, user signs Citizen forms):** recognizer SpanRecognizerV17FragmentRejectLettersB8FP16 (run_v2 recipe + fragments 25–85% + "not a sign" pieces; word-mode theta 0.4; installed 2026-10-10), word-mode letter gate 0.95, finish gesture = right hand open + left fist above shoulders 1 s, word decoders bridge mid-sign boundary dips (max_inner_o 8, inner_floor 0.5, lag 6; installed — fixes BIG/LANGUAGE→GO splits; 6-frame min span rejected, tuning WER 27.4%). v4 warm start rejected. Logs: live-streaming, stage1-architecture.
+
+**2026-10-11 user authorizes historical phrase split reuse for recovery.** MY inphrasesis
+required. Earlierrestrictiononreusing8MYNAMEhistoricaltrainingvideosissupersededforthis
+scopedrecovery;pinaseparaterecipeandusefreshreservedphonephrasesforevaluation. Scoped recovery training/validation is underway below. Existing canonical manifest unchanged; official Citizen test stays sealed.
+
+**2026-10-12 MY transition repair INSTALLED on user request.**
+62 frozen-head training configurations plus runtime/geometry/timing sweeps completed.
+Selected confidence head + scoped MY contact/boundary repair + narrow whole-gesture merge
+reproduces the complete16-token MY FRIEND/NAME/EAT recording on24/24original schedules
+and12/12additional offset/frame-drop schedules (baseline0/24and0/12). These are correlated
+DEVELOPMENT replays of one known video: three physical pairs train, five develop.
+All570cached recognized sequences unchanged (all100Citizen classes),59genuineMY/LIKE
+unchanged,66syntheticLIKE+next and24syntheticMY+next+WRITE unchanged. Historical72:
+SeptemberMYFRIEND24/24retained, reviewedOctoberfirstMY22→24/24, HAVE26/168unchanged;
+existingHAVEomissionsremain. Strict narrow-core metrics191/192and94/96have boundary
+overlap discrepancies despite every full text sequence being correct.
+Original word AND letter FP16 outputs bit-exact378/378; selected isolated head loses no
+formerly correct378/953/2626examples. All57recipe/input hashes pass. Canonical manifest
+unchanged/training_ready=false; protected test sealed; no acquisition. Restoring8oldMYNAME
+sources alone failed the bounded control; the selected head does not use those sources.
+Final source:my_transition_recovery_v17_20261011/merge_native; model:ConfidenceDualB8FP16.
+Broad successor boosting and broad boundary insertion are rejected, not fallback releases.
+Diagnostic iPhone13 Release build succeeds; production sources restored byte-exact.
+Physical iPhone13 ABBA comparison PASSED after user unlock: candidate2/2 full sequences
+exact vs baseline0/2; MY16/16 vs4/16 and token errors0 vs12 across two passes per arm.
+Pooled frame compute median31.14ms vs30.37ms, p9557.85ms vs56.46ms; sampled peak
+261.67MiB vs260.49MiB. Nominal thermals and resident English ready on all four short runs.
+Known-video paced replay, not fresh signing; latest-frame schedules vary, compute excludes
+loading/publication latency, and sustained thermals remain untested.
+Normal signed candidate Release installed/launched on iPhone13; process55579 verified.
+Production decoder/model loader now use the tested scoped repair and bundled ConfidenceDual.
+Nine cleanup parity cases preserve exact words/times/scores;14/14release checks pass;
+compiled candidate weights match tested source and all15previous weight payloads unchanged.
+No diagnostic switches/trace arrays, model-folder override or XCTest bundle shipped.
+Installed:/Users/frnzlo/slt_my_transition_release_build/Build/Products/Release-iphoneos/Runner.app
+Its current free provisioning profile covers one device and expires2026-10-14 11:13:29Asia/Manila; another iPhone needs provisioning/re-signing, independent of its iCloud account.
+Rollback:/Users/frnzlo/slt_ordered_my_like_gap175_build/Build/Products/Release-iphoneos/Runner.app
+First fresh post-install session07:44:54 retains MY NAME and two MY FRIEND pairs, sixLIKE
+outputs and oneHAVE; user confirms it works. Saved34.20s snapshot is incomplete and lacks
+reviewed intent labels, so no accuracy percentage or complete HAVE fix is claimed.
+Evidence:artifacts/reports/my_transition_live_followup_v17_20261012/REPORT.txt.
+Next: retain installed release and review further natural signing; broader generalization
+and sustained thermals remain unverified.
+Deployment:artifacts/reports/my_transition_recovery_v17_20261011/deployment/REPORT.txt.
+Full experiments:artifacts/reports/my_transition_recovery_v17_20261011/REPORT.txt.
+
+**2026-10-11 fresh signing + September-model port experiment COMPLETE; no new install.**
+Session20261011_220739stillcommitsLIKEbeforeFRIEND/NAMEafterMYpreviews. LocalA+currentfixes
+recoversfirstfreshMYFRIEND8/8vs0/8current,butlaterpairsfail;Citizen284/378vs302current,
+27classesworse,trueLIKE17/37vs21. Earlierwordsettingsalsofailwhole-replacementgates.
+Report-localconfidence-preservingHAVEguardonolderbaselineimproves49/56→53/56reviewed
+contacts;570cached+59genuine+8freshoutputsunchanged. MYnotfixed,3HAVEomissionsremain.
+MYphraseinputsDIDchange308spans/32videos→224/24:8MYNAMEvideosalreadyapprovedasvalidationwereexcludedfromnewtraining;isolated
+MYrowsunchangeddoesnotmeanunchangedphrasesupervision. Historicalsplitreuseisauthorizedabove.
+All22checks pass;initialthreshold-mismatchresultsquarantined. No productionedit/training/
+protectedtestinference;175msrelease remainsactive. Report:sept30_fix_port_v17_20261011/REPORT.txt.
+
+**2026-10-11 ordered MY/LIKE175ms rule INSTALLED on user request.** Normal signedRelease
+installed/launched on iPhone13; onlyLiveReelDecoder.swift changed, diagnostic hooks removed.
+Model/HAVEguards unchanged;15compiledweightpayloads equalpriorrelease. Cleanproduction
+code matchesfivefocused replays exactly, includingwordtimes/scores;noXCTestbundleshipped.
+Priorphonecomparison:175msMY NAME2/2vsLIKE NAME2/2controls,~28ms/frame,thermalnominal.
+150msrulefailedbecause166.7msreliable-landmarkgaps;175mstoleranceistestedcandidate.
+570cached/59genuineoutputs unchanged;72nativephases:OctoberMY22/24,SeptemberMYFRIEND
+24/24,HAVEoutputsand26/168contacts unchanged. Ninecuefixturespass. Two samplingfailures
+remain;temporaryMYcues intrueLIKEstillprohibitblanketearlycommit. Freshsigningfailedabove.
+User'sexplicitinstallrequestsupersedesearliersuggestedfresh-capture-before-promotionorder.
+Release:/Users/frnzlo/slt_ordered_my_like_gap175_build;rollback:slt_my_have_guarded_rollback_build.
+Report:artifacts/reports/ordered_my_like_v17_20261011/deployment/REPORT.txt.
+
+**2026-10-11 full temporal repair experiment COMPLETE; no model installed.**
+Four frozen-encoder head runs,432native phase/model/runtime replays,1710cached streaming
+replays and177genuineMY/LIKEcontrols complete. Everymodel/runtime preservesSeptember30
+sentence24/24 but firstOctoberMY remains0/24. Strongdiagnostic+contact recovers166/168
+reviewedHAVE→BIGcontacts (22/24runs getall7), versusincumbent26control/143contact;
+strongmodel emitsfalseHAVEin10/25ANGRY,5/36TIRED,6/38HAPPY, versuszero baseline.
+Selectedisolated-retention model losesCitizenstreaming302→298/378;strongdiagnostic297.
+Pair exact58→58/47; tune66→67/64. BothcandidatesgenuineMY18/22,LIKE21/37unchanged,
+butfalseMYonLIKE2→3/37. No safejointfix. ActualFP16letterlogits378/378exactlypreserved;
+bothencodersandproductionPython/Swiftunchanged. Freshphoneevaluationnotperformed.
+
+Full144event/138parentaudit:trainMY28/HAVE59/LIKE48,valHAVE4/LIKE5(noMY);10176/10368
+eligibleviews,192shortMYviews excluded,alleventsretained. ExactsourcePTS supersedesold
+720/720piloteligibility:624/720 and240/288recoveredMY. StaleSemLex978-rowcache corrected
+tofinalized1388train/953val byexcluding25duplicatevalvideos;sourcecachesunchanged.
+Canonical/originaldrafttrainingflagsremainfalse;dedicatedpinnedv2recipecompleted.
+TrainingMYalready98.5%mean-viewcorrectbefore→100%strongmodel, yetphoneMYunchanged;
+context-onlychangesflipMY/LIKEin7/24schedules. Next:reviewactualtransition/window
+supervision,preserve streamingrejection,andfreshreservedphoneevaluation. Do notrepeat
+core-onlyheadrecipe,installthesecheckpoints,orclaimboundary-onlyfixalreadyproved.
+Report:artifacts/reports/temporal_repair_training_v17_20261011/REPORT.txt.
+
+**2026-10-11 clean-lineage recovery completed; all candidates rejected for deployment.**
+Five arms ×17native phase cases complete: clean model, continuous word state through NAME,
+HAVE contact preservation, class-independent temporal averaging, and six-epoch frozen-encoder
+head continuation. All preserve September30 phrase8/8 but firstOctober11MY remains6/8
+(twoLIKE), versus prior installed-model0/8. Contact improves take11HAVE count7→11,
+not an accuracy denominator. Clean replacement's570cached validation loses Citizen exact
+302→282/378;15classes improve/30regress/55tie. Tune remains29/226errors. Adaptation selects
+epoch1, only one training-selector error better (68→67/226); no phase improvement.
+Approved179video/3370span recipe has MY224spans/24videos but zero native HAVE/LIKE spans;
+isolated replay still includes them. No general-data scarcity inference. New matched exports
+both agree with PyTorch378/378; full-mode trace/chronological-merge checks pass report-locally.
+Phone and production sources unchanged. No protected evaluation. Next repair requires reviewed
+short-core/transition and sampling-phase inputs with independent phone validation; do not
+repeat this recipe or promote an older model based only on isolated accuracy. Results:
+artifacts/reports/clean_lineage_recovery_v17_20261011/REPORT.txt and verification.json.
+
+**2026-10-11 phone tests complete; guarded HAVE rollback installed and launched.**
+The joint MY/HAVE candidate failed normal shared-app paced recognition, so the user's
+conditional rollback was applied. Phone now uses pre-contact HAVE policy with existing
+one-way hand-shape/roll guards, retaining chronological publication/latest-word/end-time
+bookkeeping repairs. No new ensemble, capture rule, feature-clock reset, model weights,
+or Python runtime change. All570cached native hypotheses unchanged (all100Citizenclasses;
+tune29/226errors12.83%);59pairedphoneMY/LIKE controls unchanged for the rejected candidate.
+RollbackHAVE5/8/4 versus contactbuild10/9/9. **MY remains unresolved:** exactfirstMY and
+shared-appMY9.2stillLIKE. Normalshared-appmedian25.10ms,p9045.76ms;fairthermals.
+Confirmed: auxiliary counter carries across resets; actual33msframe-selection differences
+nearNAME can change mode timing and MY. Reset/grid experiments do not establish robust
+recognition and were not deployed. Only iOSdecoder intentionally changed; all diagnostic
+hooks/startup edits removed. Report/install/source provenance:
+artifacts/reports/my_have_phone_v17_20261011/REPORT.md. September30 session152243 confirms
+successful HELLO MY FRIEND I FEEL EXCITED (MY0.9866). The installed rollback is NOT a
+September30 restoration: it retains the newer recognizer. Model/runtime reconstruction and
+84native replays subsequently completed; both model and runtime contribute separately.
+Historical runtime is reconstructed, not an immutable September30binary. Evidence:
+artifacts/reports/lineage_runtime_investigation_v17_20261011/REPORT.txt. October8–10
+replacement audit verified: v1 excluded1425localtrain/293val; v2 restoredASK and added37webclips;
+MY/LIKE/HAVE manifest rows unchanged. First replacement also changed parent lineage and
+phrase split282/6254videos/spans→179/3370; later fragment/reject models reuse v2phrase parent.
+Rationale audit complete; subsequent authorized recovery results are recorded above.
+
+**2026-10-11 MY/HAVE joint experiment complete; not installed.** The HAVE global early-order
+guard changes NAME identity/mode timing and causes a laterMY→LIKE with the model fixed.
+Separate older bugs: same-word endFrame grew without endSeconds; an earlier closure could
+replace the latest early word in duplicate tracking. Experimental V2 separates identity from
+ordered publication, keeps endpoints/last-word state consistent, and uses a narrowly gated
+LocalA MY vote plus static-palm/motion checks for the remaining model-sensitive MY miss.
+Both diagnosedMY cases recovered; currentHAVE10/9/9 on take11/09:55/10:06 retained.
+Installed-source vs jointV2 Swift/CoreML: identical hypotheses on all570cached cases
+(pair103 + Citizen378/all100classes + tune89/226refs; overlapping pools), tune29errors12.83%.
+All59localMY/LIKE fullvideo hypotheses also unchanged. Exactfirst phone trace Python/CoreML
+andSwiftV2 words/frames/scores match.23tests + focused state checks + final verifier pass.
+14400 direct geometry variants and older-model rollbacks tested; neither alone is safe.
+Exact pre-contact rollback with bent/claw+roll cues prepared: retains only5/8/4HAVEs and
+still misses firstMY. Firsttake11ANGRY remains; deliberateLIKE timing unknown. No training,
+protected test, production edit or install. Extra model cold-start/residency requires prewarm
+and measurediPhone latency/memory before deployment; publication timestamps need explicit
+logging. Report/source/rollback: artifacts/reports/my_have_joint_experiment_v17_20261011/REPORT.md.
+Prior complete change ledger remains in my_like_regression_v17_20261011/rollback_review/.
+
+**2026-10-11 MY→LIKE regression diagnosed; correction pending:** phone10:26 session
+exact-input firstMY→NAME run: oldLocalA HELLO MY NAME (MY.791), Oct8CitizenVariant
+and all later deployed recognizers HELLO LIKE NAME (currentLIKE.862, MY.014).
+Before-HAVE decoder with current model gives sameLIKE; Stage3 not involved. Weakness is
+already present in newer landmark/fusion stages, including pre-filter chain; do not blame
+MY data removal. Current early contact isMY.934, later transition window flipsLIKE.
+IsolatedMY30/31 in both old/new models missed it. Old model also fails later reviewedMY,
+so wholesale rollback is not validated. No model/source/deployment change or new training.
+Trace omits NAME-mode frames/reset markers: use contiguous word-mode runs, not whole-session
+exactness claims. Evidence:artifacts/reports/my_like_regression_v17_20261011/REPORT.md.
+
+**2026-10-10 HAVE omission fix (superseded by the October11 rollback):** matched PTS/FP16 take11
+HAVE5→10; all five measured omissions recovered with following BIG. First-HAVE→ANGRY remains.
+Exact10:06 trace retains I HAVE BIG;09:55 actual-PTS replay8→9HAVEs. Root: accepted short
+contact evidence was lost to growing windows/next-sign BIG; early commits could pass pending
+prior words. Guarded contact closure and evidence-preserving TIRED rescue implemented in
+Python/Swift using the original models. No new phrase training or protected test.
+Pair103 and Citizen378 per-clip hypotheses unchanged; no newfalseHAVEs. Tune89/226 errors
+34→29,15.04→12.83% developmentWER. Exact-input Python CoreML and Swift words/frame boundaries
+match on all3sessions (max score delta1.28e-5).23tests and unsignediOSRelease build pass.
+Python config: artifacts/reports/have_root_fix_v17_20261010/config_fixed.json; Swift v3Words
+enables the fix. REPORT.md and final_results.json in that directory contain reproducible
+checks and limits. Signed Release installed and device inventory verified 2026-10-10; automatic launch blocked by
+locked phone. Next: unlock/open ASL Translator, then new live traces. Preserve legacy cue-model/
+rotation pairing; corrected-rotation LR experiment is not deployed. No future-HAVE guarantee.
 
 **Matched iPhone precision benchmark 2026-10-07 — defaults unchanged:** physical
 iPhone13,226recorded-input example frames/configuration,2reversed-order runs:
@@ -250,6 +542,19 @@ hands stay on the signer (largest face at pick, re-picked after 2 s unseen). One
 previous selection exactly: 238-clip full-engine replay gives identical words. Two-person composites:
 wrong-person hands 50% -> 5%, faces/bodies nearly eliminated; iPhone cost +1 ms only with two people.
 Desktop app unchanged. Report: `artifacts/reports/signer_lock_v17_20260929/REPORT.md`.
+
+**Stage3 shared-meaning audit 2026-10-11 — full vocabulary, no production change:**
+1,188native cases using phone-matching current packages:865diagnostic/phone cases covering
+all100labels +323historical locking controls. Current52,961-row corpus has0food targets;
+EAT whitelist rejectsfood, MY EAT WHERE→“Where is my eat?”. Existing bag-of-words evaluator
+accepts120/120deliberately corrupted roles/owners/tense/negation scopes. Explicit role forms
+118/120 retained;36/36ordinary owners retained;8/32past/future paired cases misrender scope.
+Counts are diagnostics, not held-outASLaccuracy(213/865current-train exact overlaps).
+Historical323full/incremental outputs and lock counts reproduce;180activate locks,57differ
+full-vs-incremental, including lost referent context(them→her) and droppedDOCTOR/SLEEP.
+No training, visual test, API spending or deployment. Next: semantic contracts/evaluation,
+bounded data repair and context-preserving incremental experiments before any model promotion.
+Full report and all100classCSV: artifacts/reports/stage3_shared_meanings_v17_20261011/.
 
 **Stage3 multi-sentence tiny model 2026-09-29 — installed on iPhone 13 with incremental translation:**
 same 15.6M T5 size, continued from v2 on a new 54K-row English-first DeepSeek corpus with "N: sentence"
