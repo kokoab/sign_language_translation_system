@@ -110,7 +110,7 @@ object LiveSegmental {
         val logb = FloatArray(n)
         for (t in 0 until n) {
             val pU = exp(bio[t][UNK]); val pO = exp(bio[t][O]); val pB = exp(bio[t][B]); val pI = exp(bio[t][I])
-            act[t] = ln(min(max(pB + pI, 1e-6f), 1f))
+            act[t] = ln(min(max(pB + pI, config.innerFloor ?: 1e-6f), 1f))
             rest[t] = ln(min(max(pO + pU, 1e-6f), 1f))
             logb[t] = ln(min(max(pB, 1e-6f), 1f))
         }

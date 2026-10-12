@@ -63,7 +63,7 @@ class LiveDecoderConfig(
     val lag: Int = 1, val contextFrames: Int = 2, val earlyK: Int = 3, val earlyQ: Double = 0.9,
     val softExtra: Int = 2, val hard: Float = 0.5f, val earlyMin: Int = 4,
     val earlyUnsafe: Set<String> = emptySet(),
-    val minSpanFrames: Int = 3, val maxInnerO: Int = 3,
+    val minSpanFrames: Int = 3, val maxInnerO: Int = 3, val innerFloor: Float? = null,
 )
 
 object LiveNodes {

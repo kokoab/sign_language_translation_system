@@ -39,6 +39,7 @@ class LiveEngine(context: Context, val handImages: Boolean, useGpu: Boolean = tr
                 earlyQ = s.getDouble("early_q"), softExtra = s.getInt("soft_extra"),
                 earlyUnsafe = (0 until unsafe.length()).map { unsafe.getString(it) }.toSet(),
                 minSpanFrames = s.optInt("min_span_frames", 3), maxInnerO = s.optInt("max_inner_o", 3),
+                innerFloor = if (d.has("inner_floor")) d.getDouble("inner_floor").toFloat() else null,
             )
         }
 
