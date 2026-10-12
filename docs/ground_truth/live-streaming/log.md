@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 11/22: live-streaming: preserve preview provenance and selection tools
+
+Preserves source/model hashes, catalogs before changes, selection tools and admitted-source audit evidence; executable harness excluded.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 10/22: ios: synchronize native gloss preview catalog
 
 Native and Flutter catalogs use the same verified sources. Reference selection is not independent accuracy.
