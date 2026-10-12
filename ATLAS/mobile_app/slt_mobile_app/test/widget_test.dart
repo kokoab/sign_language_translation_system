@@ -84,6 +84,32 @@ void main() {
     expect(find.text('Hello.'), findsOneWidget);
   });
 
+  testWidgets('every manual section lays out on a phone', (WidgetTester tester) async {
+    _phone(tester);
+    for (final section in manualSections) {
+      await tester.pumpWidget(MaterialApp(
+        home: ManualSectionPage(
+          key: ValueKey(section.id),
+          section: section,
+          onOpen: (_) {},
+          onWatch: (_) {},
+          onBack: () {},
+        ),
+      ));
+      // Build every block, not only the first screenful.
+      final list = find.byType(Scrollable).first;
+      for (var i = 0; i < 40; i++) {
+        await tester.drag(list, const Offset(0, -400));
+        await tester.pump();
+      }
+      expect(tester.takeException(), isNull, reason: section.id);
+      expect(find.textContaining(manualSections.last == section ? 'Back to the guide' : 'Next: '), findsOneWidget,
+          reason: section.id);
+    }
+    expect(manualSection('screen')?.title, 'Reading the screen');
+    expect(manualSection('practice')?.title, 'Practice');
+  });
+
   testWidgets('session detail lists recognized signs and the timeline', (WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
       home: SessionDetailPage(

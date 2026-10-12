@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 6/22: test: verify manual sections fit phone layouts
+
+Scrolls every manual section at390×844logical pixels and checks Flutter layout exceptions. Flutter7/7pass.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 5/22: test: cover manual navigation
 
 Navigation regression opens sections, advances to Practice and returns Home. Final Flutter suite:7/7pass.
