@@ -7,6 +7,80 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-13 — Current-lineage component evaluation completed
+
+User authorized five-minute cached evaluation. Fresh seven-output PyTorch inference,
+then same existing25SemLex exclusions for all:3957validation examples. Overall:
+landmark3770=95.27%;hand2659=67.20%;fusion3775=95.40%;phrase3768=95.22%;
+interval3767=95.20%;currentprimary3779=95.50%;transitionoutput3784=95.63%.
+Primary/adapted counts exactly reproduce prior verification. Standalone parent hashes
+and tensor identity checked. Saved all-cache predictions separately; reporting applies
+existing isolated_role_check.json, not a newly selected exclusion. Inference42.2seconds.
+Report:current_lineage_components_v17_20261013/REPORT.md. No training, protectedtest,
+phone/FP16evaluation, manuscript or deployment changes. Transitionoutput is not conditional
+runtimeaccuracy. Next: discuss replacement table before editing review MD.
+
+## 2026-10-13 — Corrected current recognizer ancestry
+
+User requested verification before choosing consistent evaluation lineage. Checkpoint
+metadata/recipe shows current primary99a18801 descends from96.83%partwise5c40b133 via
+run_v2 localreplay/fusion/phrase, not historical fullrolla7490409→96.30%fusion1caeadf4.
+Current95.50%=3779/3957; oldlandmark95.50%=361/378; currentCitizen364/378=96.30 is
+also coincidentally equal to historicalfusion364/378. These are distinct model/scopes.
+Four targeted hash checks pass. Localadaptation usesfullroll0,mildroll12degrees.
+Assistant's prior assumption that currentdeployment descendsfromfullroll was incorrect.
+Report:paper_checkpoint_lineage_v17_20261013. No paper/production/training changes.
+Next: discuss selectedlineage and pincommonvalidation before component evaluation.
+
+## 2026-10-13 — Historical Apple/MediaPipe interval loss diagnosed
+
+Fresh Citizen inference reproduces Apple363→360 (4lost/1gained),MP357→357
+(3lost/3gained). MP unchanged percentage hides changed predictions. Both encoder and
+head weights changed; checkpoint swaps in apple_mediapipe_interval_diagnostic_v17_20261013.
+Strict WER-only improvement selector retained Appleepoch4 despiteepoch6 sameWER and
+higherCitizen95.77vs95.24; no isolated tie-break. MPepoch6 higherCitizen had worseWER.
+These are historical chain diagnostics, not newerchain or paperWER replacements.
+No training/test/deployment/manuscript edits. User's seven-minute request scoped this audit.
+Screenshot component numbers can first be updated via cached validation, no automatic
+retraining. Next: discuss evidence and choose component-evaluation scope.
+
+## 2026-10-13 — Current deployment evidence verified; review checklist refreshed
+
+User authorized verification followed by updating only the review MD for approval.
+Updated docs/capstone_papers/README_PLATFORM_NEUTRAL_REVIEW.md (22 unchecked proposals/gaps),
+archived its prior version, and added review_assets/20261013_verification/verification.json,
+hello_trace.json and PNG/SVG timeline. Manuscript and slides untouched; before quotes remain
+October8 snapshots, explicitly not a fresh live Doc read.
+
+Fresh CPU frozen-feature head inference reproduced primary3779/3957=95.50164% and
+auxiliary3784/3957=95.62800% under existing identity exclusions. Fresh current CoreMLFP16
+validation retained primary3779correct with3956/3957labelagreement; auxiliary3782correct
+(95.57746%) with3955/3957agreement. Thus aggregate primaryaccuracy preserved but not every
+prediction; prior378-only parity cannot support full prediction preservation. These are
+head/component measurements, not an overall score for selective runtime rescoring.
+Validation feature/role pins match. No training or protected-test inference.
+
+Saved native development hypotheses independently recompute29/226=12.83186%WER on89
+cached cases with final flush. This is decoder-development WER, not phone/live/testWER.
+Raw two candidatephonepasses recompute1041frames median31.13806ms,p9557.85108ms;
+no newphonebenchmark. Current completeFP16package26557148bytes=26.557148MB.
+All22candidatepins and fourproduction sourcehashesmatch; bundledpackage files match.
+Deployment evidence remains October12installation; no newdeviceinventory assertion.
+
+Proposed mainpaper values:95.50%primaryhead validation,12.83%developmentWER,
+31.14ms/processedframe oniPhone13,26.56MBFP16package. Original95.53/31.42/23.69
+proposals superseded, no historicalcomparison proposed. Current all-FP32phone/package
+comparison remainsunmeasured. Retainbase-classifier curve explicitly scoped; epoch100
+history verified96.8254%. ReplacementHELLOdevelopmentcase022d8f1f67a525ad4ea7 uses
+saved native intervals0.8667–1.8,2.0667–3.0,3.1667–4.5667s; differentfromoldff187c3f,
+no oldstills reused. Preview visuallychecked. Allreviewlinks resolve; focused diffcheckpass.
+
+Initial shell launch failed while repository path was unavailable; explicitbash/root checks
+resolved driveaccess without filesystem changes. Prior broad gitstat output was truncated;
+subsequent validation scoped to changed documentation. Existing unrelated changes preserved.
+Next: author reviews checkbox decisions; rereadliveDoc before applying; ifrequested,
+runmatched currentFP32phonecomparison and/or defined wholeconditionalruntime accuracy.
+
 ## 2026-10-08 — User-authorized main publication completed
 
 User authorized pushing main after the read-only publication checks. Normal fast-forward

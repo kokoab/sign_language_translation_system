@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-13",
+  "scope": "Fresh frozen-feature head inference; saved native prediction arithmetic, raw phone timing, package size and deployment hash verification. No training, protected-test inference, new phone run or complete runtime isolated-accuracy measurement. Fresh full admitted validation FP16-vs-PyTorch head comparison; no FP32 Core ML export created.",
+  "pins": {
+    "merge_native/LiveReelCore.swift": true,
+    "merge_native/LiveReelModels.swift": true,
+    "merge_native/LiveReelDecoder.swift": true,
+    "merge_native/LiveReelEngine.swift": true,
+    "merge_native/main.swift": true,
+    "merge_native/LiveMyLikeMotion.swift": true,
+    "merge_native/Experiment.swift": true,
+    "joint_validation/main.swift": true,
+    "stress_video/main.swift": true,
+    "confidence_selected.pth": true,
+    "confidence_training_recipe.json": true,
+    "build_phone_comparison.py": true,
+    "run_phone_comparison.py": true,
+    "SpanRecognizerV17ConfidenceDualB8FP16.mlpackage/Manifest.json": true,
+    "SpanRecognizerV17ConfidenceDualB8FP16.mlpackage/Data/com.apple.CoreML/model.mlmodel": true,
+    "SpanRecognizerV17ConfidenceDualB8FP16.mlpackage/Data/com.apple.CoreML/weights/weight.bin": true,
+    "analyze_phone_comparison.py": true,
+    "phone_comparison_summary.json": true,
+    "my_transition_baseline_0.json": true,
+    "my_transition_candidate_1.json": true,
+    "my_transition_candidate_2.json": true,
+    "my_transition_baseline_3.json": true
+  },
+  "production_hashes": {
+    "Runner/LiveReel/LiveReelDecoder.swift": true,
+    "Runner/LiveReel/LiveReelModels.swift": true,
+    "RunnerTests/RunnerTests.swift": true,
+    "Runner.xcodeproj/project.pbxproj": true
+  },
+  "heads": {
+    "original": {
+      "checkpoint_sha256": "99a1880143a17c1ab0a67bacb9e6fac0bac7dc1f61cc5044fcfb5dfd7e104037",
+      "domains": {
+        "citizen_val": {
+          "correct": 364,
+          "n": 378
+        },
+        "semlex_val": {
+          "correct": 846,
+          "n": 953
+        },
+        "local_val": {
+          "correct": 2569,
+          "n": 2626
+        }
+      },
+      "correct": 3779,
+      "n": 3957,
+      "accuracy_percent": 95.50164265857973
+    },
+    "adapted": {
+      "checkpoint_sha256": "cd900f59bcefcc530e578170a85c2353f2b38ace3fd1211854c2f3551de6a32c",
+      "domains": {
+        "citizen_val": {
+          "correct": 365,
+          "n": 378
+        },
+        "semlex_val": {
+          "correct": 847,
+          "n": 953
+        },
+        "local_val": {
+          "correct": 2572,
+          "n": 2626
+        }
+      },
+      "correct": 3784,
+      "n": 3957,
+      "accuracy_percent": 95.62800101086683
+    }
+  },
+  "development_wer": {
+    "cases": 89,
+    "errors": 29,
+    "reference_glosses": 226,
+    "wer_percent": 12.831858407079647,
+    "protocol": "cached observation/hand-feature native word-decoder replay, end-of-recording flush; development selection pool, not camera/English/test WER"
+  },
+  "phone": {
+    "n": 1041,
+    "median_ms": 31.138062477111816,
+    "p95_ms": 57.85107612609863,
+    "sampled_peak_mib": 261.67295837402344,
+    "passes": 2,
+    "fresh_run": false
+  },
+  "package": {
+    "bytes": 26557148,
+    "files": {
+      "Manifest.json": "155ad57b53a23be8fd36e5294143478a4fd1d6de5526914c727e1f518138d01a",
+      "Data/com.apple.CoreML/model.mlmodel": "e3a1876cb3af66cc24fb89321d17bb817efbee5f2db39dde4bbbd4da3c04f0e3",
+      "Data/com.apple.CoreML/weights/weight.bin": "f5357e40df308310677728a68c3fdbb220995b1ac201a6eeb5db6e388f6e14d6"
+    }
+  },
+  "bundled_package_paths": [
+    "../mobile_app/slt_mobile_app/ios/Runner/LiveReel/Models/SpanRecognizerV17ConfidenceDualB8FP16.mlpackage"
+  ],
+  "bundled_package_matches": {
+    "../mobile_app/slt_mobile_app/ios/Runner/LiveReel/Models/SpanRecognizerV17ConfidenceDualB8FP16.mlpackage": true
+  },
+  "conversion_record": {
+    "checkpoint_sha256": "cd900f59bcefcc530e578170a85c2353f2b38ace3fd1211854c2f3551de6a32c",
+    "samples": 378,
+    "pytorch_correct": 365,
+    "coreml_correct": 365,
+    "word_top1_agreement": 378
+  },
+  "source_hashes": {
+    "merge_validation.json": "90faeffaf1d0c0a7678e9baccbc0acb080cdf7fc497cce09d5ac15b84566164d",
+    "joint_validation_cases.json": "9c4aba33c6d0e62a421dffaafbbe7d7014c293ee6ac37bc8bc6717fba031cfa7",
+    "confidence_training_results.json": "a7ec5e0aa9922051204bb8ffae03aa9d33c75983a89fb430a135329eba71501c",
+    "confidence_dual_export.json": "b4c478d47b884d2ab3c9360dae1a2bd8c4b85ad9162cb0c43b1c08587c5f7738",
+    "phone_comparison_summary.json": "d165de74662f349efb14c35264268471993d45d23bb911758742e242f970d8f8",
+    "deployment/verification.json": "41c7e0e4c4b3f58f5391089c44bae01a81d0fedab6ff381f9648ea1b5b264f93"
+  },
+  "fresh_fp16_conversion": {
+    "citizen_val": {
+      "original_word_logits": {
+        "correct": 364,
+        "n": 378,
+        "agreement": 378
+      },
+      "word_logits": {
+        "correct": 365,
+        "n": 378,
+        "agreement": 378
+      }
+    },
+    "semlex_val": {
+      "original_word_logits": {
+        "correct": 846,
+        "n": 953,
+        "agreement": 952
+      },
+      "word_logits": {
+        "correct": 847,
+        "n": 953,
+        "agreement": 953
+      }
+    },
+    "local_val": {
+      "original_word_logits": {
+        "correct": 2569,
+        "n": 2626,
+        "agreement": 2626
+      },
+      "word_logits": {
+        "correct": 2570,
+        "n": 2626,
+        "agreement": 2624
+      }
+    }
+  },
+  "validation_input_hashes": {
+    "/Volumes/secret/SLT/SLT/artifacts/reports/temporal_repair_training_v17_20261011/features/citizen_val.npz": true,
+    "/Volumes/secret/SLT/SLT/artifacts/reports/temporal_repair_training_v17_20261011/features/semlex_val.npz": true,
+    "/Volumes/secret/SLT/SLT/artifacts/reports/temporal_repair_training_v17_20261011/features/local_val.npz": true,
+    "/Volumes/secret/SLT/SLT/artifacts/reports/temporal_repair_training_v17_20261011/isolated_role_check.json": true
+  },
+  "base_curve_epoch100": {
+    "epoch": 100.0,
+    "top1": 96.82539682539682,
+    "top5": 99.2063492063492
+  }
+}
