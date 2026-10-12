@@ -43,6 +43,14 @@ class LiveWord(
     var closed = false
     var computeSeconds = 0.0
 
+    /** Closing an earlier segment must not rewind an already extended word. */
+    fun extendTo(frame: Int, seconds: Double) {
+        if (frame >= endFrame) {
+            endFrame = frame
+            endSeconds = maxOf(endSeconds, seconds)
+        }
+    }
+
     fun toMap(): Map<String, Any> = mapOf(
         "gloss" to gloss, "start_frame" to startFrame, "end_frame" to endFrame, "commit_frame" to commitFrame,
         "start_seconds" to startSeconds, "end_seconds" to endSeconds, "commit_seconds" to commitSeconds,

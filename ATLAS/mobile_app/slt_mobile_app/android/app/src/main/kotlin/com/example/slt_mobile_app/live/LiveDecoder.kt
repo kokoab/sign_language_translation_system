@@ -335,8 +335,7 @@ class LiveSegmentalRuntime(
             val start = g.start + origin
             val shown = shownEarly.firstOrNull { abs(start - it.first) <= 2 }?.second
             if (shown != null) {
-                shown.endFrame = max(shown.endFrame, end)
-                shown.endSeconds = seconds(end)
+                shown.extendTo(end, seconds(end))
                 shown.closed = true
                 newOrigin = end + 1
                 continue
@@ -345,10 +344,10 @@ class LiveSegmentalRuntime(
             if (gloss != null) {
                 val l = last
                 if (l != null && l.gloss == gloss && start - l.endFrame <= gap) {
-                    l.endFrame = end
+                    l.extendTo(end, seconds(end))
                 } else {
                     val w = word(gloss, start, end, T, g.logQ)
-                    last = w
+                    if (last == null || w.startFrame >= last!!.startFrame) last = w
                     committed.add(w)
                 }
             }
