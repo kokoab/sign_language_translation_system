@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 20/22: mobile-deployment: record verified installations on both iPhones
+
+Retains installation chronology and compact summaries for both requested phones; raw provisioning/device JSON stays local. No installation run during commit preparation.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 19/22: android: record disabled alignment recipe and input preparation
 
 Includes ignored canonical preparation source explicitly, recipe and compact reconciliation/cache receipts. recipe_training_ready remains false; no training or input caches committed.
@@ -89,7 +96,19 @@ Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>
 October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
 Next safe action: complete the remaining approved commits; no push requested.
 
-## 2026-10-13 — ## 2026-10-13 — Android input preparation verified; current connected phone is iPhone 11
+## 2026-10-13 — ATLAS launched and verified on dwight ramos iPhone11
+
+Userconfirmeddeveloperprofiletrusted/unlocked. devicectl launch succeeds forcom.kokoab.sltMobileApp; independentprocessinventory verifiesRunner.app/Runner PID666. Requestedcurrent-phone installationcomplete:canonical signedRelease/currentiOSpipeline on iPhone11. No training/newmodels oraccuracy/latencyclaim. Evidence:atlas_dwight_install_20261013/{REPORT.md,launch_verified.json,processes.json}. Earlieruntrustedlaunch retained. Priorphoneinstalls preserved; Androidalignment remainsunfinished. Next:user canuseASLTranslator; resume boundedAndroidalignment underitsdisabledcontract afterinput/baselinegates.
+
+## 2026-10-13 — ATLAS installed on dwight ramos iPhone11; developer trust pending
+
+DeveloperMode enabled after Xcode pairing. Target-specific signedRelease build succeeds; profile6c25c4ed includes newiPhone11 andprior2phones, expiresOctober20 14:37:23PHT. Deepstrictsignature verifies. devicectl installation succeeds bundlecom.kokoab.sltMobileApp. Initial launch denied bySpringBoardsecurity; asked user to trust developerprofile underVPN&DeviceManagement andunlock. Launchnotyetverified. Canonicalsource/currentiOSmodels retained; no modeltraining/deviceaccuracyclaim. Evidence:atlas_dwight_install_20261013/{REPORT.md,target_build_ready.log,profile.json,install.json,launch.json}. Next:afterphysicalprofiletrust,retrylaunch andverifyrunningprocess.
+
+## 2026-10-13 — iPhone 11 signed generic build passes; Developer Mode blocks target install
+
+Generic signed Release build succeeds from canonical ATLAS source; codesign deep/strict verifies. Target-specific build times out because Developer Mode remains disabled. Existing two-device profile excludes new dwight ramos/iPhone11, so generic app is not install-ready for this UDID. Xcode system components installed and Device Hub opened on paired phone; it explicitly requests Developer Mode. Asked user to reopen Settings/Privacy & Security. No app installed or launched yet. Evidence: atlas_dwight_install_20261013/REPORT.md, generic_build.log, device_build.log, device_before.json. Next: physical Developer Mode enable/restart/confirm/unlock, then target provisioning/build/install/launch verification.
+
+## 2026-10-13 — Android input preparation verified; current connected phone is iPhone 11
 
 Android explicit 147-job extraction completed: 37 local training inputs succeeded; 94 training and all16 validation inputs had no detected hands. New embeddings and six membership-filtered raw caches completed (train14906, validation3937; desired15003/3957). Missing validation inputs must remain errors in full-denominator reporting. Existing outputs preserved. Fixed extraction coordinator to honor --jobs-file without --shard and guard output schema; the initial misrouted invocation expanded the default train/validation inventory and produced94 outcomes before exiting120. None of those incidental outputs enters the new explicit cache. No protected-test inference or training. Python explicit-job regression1/1 and Kotlin decoder regressions2/2 pass; Android Debug rebuild succeeds20s. Android recipe remains disabled and alignment incomplete.
 
@@ -109,7 +128,23 @@ Audit confirms olderMP local_a100word output versuscurrentiOSFragmentReject/Conf
 
 Prepared disabledscopedcontract ATLAS/python/recipes/android_alignment_recipe_20261013.json and artifacts/reports/android_alignment_v17_20261013/{PLAN.md,audit.json,recipe_draft.json}. Sources/parent/schema hashespinned; exactnewMPinputmembership,label/eventcontracts andsame-membershipbaselinefloorsmustbereviewedbeforetraining. Proposedbounded8epoch frozenwordhead adaptation plusseparatelycontractedletter/transitionjobs, Kotlinport/export/devparity/Samsungperformancegatesbeforeinstall. No runtime/model/datachanges,acquisition,training,protectedinference oriOSinstallationchange. Next:userreviewscopedcontract,finishinputreconciliation,thenenableonlyreviewedAndroidjobs; preservealloldmodelsandtestseals.
 
-Five ATLAS/source/test commits published
+## 2026-10-13 — ATLAS installed and launched on jaz iPhone16
+
+User confirmed developerprofile trusted and phoneunlocked. Retrydevicectl launch succeeds; process589/Runner.app/Runner independently present indeviceprocess inventory. Currentcanonical signedRelease ASLTranslator1.0.0/build1 (bundlecom.kokoab.sltMobileApp) is installed onjaz/iPhone16,including latest100preview updates and incumbentConfidenceDual model/runtime. DeveloperMode verifiedEnabled; targetprofile includesjaz; localdeepstrictsignature check passes. NewprofileexpiresOctober20,13:39PHT. ExistingiPhone13 install untouched; no newtraining/model/accuracy/latency claims.
+
+Receipt:artifacts/reports/atlas_phone_install_20261013/{install.json,launch.json,processes.json,status.json,REPORT.md}; initialuntrustedlaunch preserved separately. Build:/Users/frnzlo/slt_atlas_jaz_release_build/Build/Products/Release-iphoneos/Runner.app. No source/signing-project edits,uninstall,userdata deletion,training orprotectedinference. Nextsafeaction:user canopenASLTranslator andsign naturally; record any subsequent independentdevice observations with their actualscope. Requestedinstallation complete.
+
+## 2026-10-13 — Signed ATLAS Release installed on jaz; developer trust pending
+
+User confirmed DeveloperMode enabled; deviceinfo verifies Enabled on connectedjaz/iPhone16. Target-specific signedRelease build succeeds from canonicalATLASsources with existingteam2BJ6GHCUJ2 and bundlecom.kokoab.sltMobileApp. Profile999ea5d0-8d8d-4e76-adc5-95f50d87ac4a nowadmitsjaz andprioriPhone13 (2devices), expires2026-10-20T05:39:00UTC (13:39PHT). codesign --verify --deep --strict passes. devicectl installation succeeds: bundlecom.kokoab.sltMobileApp,displayASLTranslator,version1.0.0/build1; installreceiptinstall.json. Currentpreviewupdates included; model/runtime/settings unchanged.
+
+Firstlaunch rejected bySpringBoard security: invalidsignature/inadequateentitlements/profile notexplicitlytrusted. Local signature andprofilemembership verified, so requested the phone'sdeveloper-profiletrust underSettings/General/VPN&DeviceManagement, thenunlock. Launch notyetverified; do notclaimworkingapp until retryreceipt. Build:/Users/frnzlo/slt_atlas_jaz_release_build/Build/Products/Release-iphoneos/Runner.app. Evidence:artifacts/reports/atlas_phone_install_20261013/{device_build.log,profile_device.json,install.json,launch.json,status.json}. No acquisition,training,protectedinference,phoneaccuracy claim orsourceedits. Next:afterusertrustsdeveloperprofile,retrylaunch andverifyrunningprocess.
+
+## 2026-10-13 — User requests installation on connected jaz iPhone16
+
+User explicitly authorized installing the current canonical mobile application. Device inventory finds jaz/iPhone16 (UDID00008140-0004381C3610401C), paired over USB; prioriPhone13 unavailable, noAndroiddevice connected. DeveloperMode disabled at initial read. Asked user to enable it, restart/confirm and unlock; no settings changed remotely. Preparing signedRelease from canonical ATLAS/mobile_app/slt_mobile_app/ios with existingteam2BJ6GHCUJ2 and bundlecom.kokoab.sltMobileApp, deriveddata/Users/frnzlo/slt_atlas_jaz_release_build. Latest100preview updates are included; no model/runtime/source edits. Generic-device build prepares artifacts while phone restarts; target-specific provisioning/install/launch remain pending. Initial log-redirection failed before building because the report directory was created relative to ios; removed only those newly created empty directories and restarted with absolute report path. Evidence/status:artifacts/reports/atlas_phone_install_20261013/. Next:finish signedbuild,confirm DeveloperMode and target-profile membership,install andlaunch onjaz; do notclaiminstallation before receipt.
+
+## 2026-10-13 — Five ATLAS/source/test commits published
 
 User authorized commit and push. Five dated commits advanced origin/main from
 026d5cad to 0bc6dc13 by normal fast-forward push: canonical Python relocation,
