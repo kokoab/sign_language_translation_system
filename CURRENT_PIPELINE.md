@@ -1,5 +1,12 @@
 # Current SLT Pipeline
 
+**Canonical mobile source (2026-10-13):** use [`ATLAS/python/`](ATLAS/README.md)
+and `ATLAS/mobile_app/slt_mobile_app/`. Former selected v17 Python paths and the
+former sibling mobile-project directory are compatibility links. See
+`ATLAS/source_manifest.json` for the complete mapping and `PROJECT_GROUND_TRUTH.md`
+for current deployed models. The v16 transition/reference material below remains
+historical context; it does not describe the current mobile recognizer.
+
 ## Summary
 
 The project is in a controlled v16-to-v17 transition:

@@ -1,10 +1,10 @@
 # SLT - Sign Language Translator
 
-This repo is now organized around the **v16 Squeezeformer pipeline** for ASL landmark recognition and continuous gloss decoding.
+The current **ATLAS v17 mobile AI/ML source** is canonical under [`ATLAS/`](ATLAS/README.md): Python source grouped by purpose and the complete mobile application with its bundled models.
 
-The older DS-GCN/MediaPipe code is still preserved because some tests, scripts, and historical experiments depend on it, but new work should start from the v16 paths below.
+Start current mobile work in `ATLAS/python/` and `ATLAS/mobile_app/slt_mobile_app/`. Former Python paths and the sibling mobile-project path remain compatibility links. Read `PROJECT_GROUND_TRUTH.md` for current model state and training/evaluation gates. The older v16 and DS-GCN pipelines remain preserved for historical callers.
 
-## Current Pipeline
+## Historical v16 Pipeline
 
 | Stage | Current path | Purpose |
 | --- | --- | --- |

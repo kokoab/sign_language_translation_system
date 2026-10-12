@@ -1,0 +1,72 @@
+usage: train_span_recognizer_v17.py [-h] --output-dir OUTPUT_DIR [--base BASE]
+                                    [--epochs EPOCHS] [--samples SAMPLES]
+                                    [--batch BATCH] [--encoder-lr ENCODER_LR]
+                                    [--head-lr HEAD_LR]
+                                    [--span-share SPAN_SHARE]
+                                    [--freeze-encoders] [--sets SETS]
+                                    [--span-split SPAN_SPLIT] [--seed SEED]
+                                    [--extractor {apple,mediapipe_full}]
+                                    [--mediapipe-root MEDIAPIPE_ROOT]
+                                    [--raw-cache RAW_CACHE] [--landmark-only]
+                                    [--exclude-prefix-spans]
+                                    [--recipe-manifest RECIPE_MANIFEST]
+                                    [--floors FLOORS]
+                                    [--fragment-prob FRAGMENT_PROB]
+                                    [--fragment-low FRAGMENT_LOW]
+                                    [--reject-prob REJECT_PROB]
+                                    [--reject-range REJECT_RANGE]
+                                    [--reject-weight REJECT_WEIGHT]
+                                    [--boost-classes BOOST_CLASSES]
+                                    [--boost-factor BOOST_FACTOR]
+                                    [--boost-context BOOST_CONTEXT]
+                                    [--context-prob CONTEXT_PROB] [--cfg CFG]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --output-dir OUTPUT_DIR
+  --base BASE
+  --epochs EPOCHS
+  --samples SAMPLES
+  --batch BATCH
+  --encoder-lr ENCODER_LR
+  --head-lr HEAD_LR
+  --span-share SPAN_SHARE
+  --freeze-encoders
+  --sets SETS
+  --span-split SPAN_SPLIT
+                        relative shares of each span set, e.g. 0.6,0.4
+  --seed SEED
+  --extractor {apple,mediapipe_full}
+  --mediapipe-root MEDIAPIPE_ROOT
+  --raw-cache RAW_CACHE
+  --landmark-only       --base is a v17 landmark checkpoint; train without
+                        hand images (Android low-end mode)
+  --exclude-prefix-spans
+                        train on the local_a span set (no prefix spans)
+  --recipe-manifest RECIPE_MANIFEST
+                        restrict training videos to this phrase-segment recipe
+                        manifest's train split
+  --floors FLOORS       JSON isolated floors; default the Apple 2026-09-25
+                        floors
+  --fragment-prob FRAGMENT_PROB
+                        share of isolated replay samples replaced by a 50-85%
+                        partial view with the parent label
+  --fragment-low FRAGMENT_LOW
+                        shortest partial view kept with the parent label
+  --reject-prob REJECT_PROB
+                        share of replay samples replaced by a tiny piece
+  --reject-range REJECT_RANGE
+                        piece length range for --reject-prob
+  --reject-weight REJECT_WEIGHT
+                        weight of the flat (no sign) target on tiny pieces
+  --boost-classes BOOST_CLASSES
+                        comma-separated glosses sampled --boost-factor times
+                        more often
+  --boost-factor BOOST_FACTOR
+  --boost-context BOOST_CONTEXT
+                        in_context probability for boosted-class replay
+                        samples
+  --context-prob CONTEXT_PROB
+                        share of isolated replay samples placed between
+                        neighbouring clips (in_context)
+  --cfg CFG

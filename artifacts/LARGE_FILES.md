@@ -1,6 +1,6 @@
 # Large artifact files — read this, not them
 
-Every file under `artifacts/` at or above 1 MB — 360 files, largest first. Smaller-but-still-costly files (200 KB–1 MB) are not listed; find them with:
+Every file under `artifacts/` at or above 1 MB — 362 files, largest first. Smaller-but-still-costly files (200 KB–1 MB) are not listed; find them with:
 
 ```sh
 find artifacts -size +200k \( -name '*.json' -o -name '*.csv' \) | xargs ls -S
@@ -299,6 +299,7 @@ Regenerate: `venv/bin/python scripts/index_large_artifacts_v17.py`
 | `artifacts/reports/signwriting_gloss_bank_v17_v4/report.json` | 1.4 | `format`=slt_avatar_gloss_bank_v17; `symbol_motion`=true; `manifest_sha256`=3a665bda8d2b916c504406be815e601eeb55badfe62afcec42c7869885ea…; `lexicon_sha256`=1cdb86846dc0f3cba595864fb00ec0a2ccc5068caf13f59b8a69e97d2f6d…; `dictionary_sha256`=6583d313fc71ad278af88… |
 | `artifacts/reports/signwriting_gloss_bank_v17_v3/report.json` | 1.4 | `format`=slt_avatar_gloss_bank_v17; `symbol_motion`=true; `manifest_sha256`=3a665bda8d2b916c504406be815e601eeb55badfe62afcec42c7869885ea…; `lexicon_sha256`=1cdb86846dc0f3cba595864fb00ec0a2ccc5068caf13f59b8a69e97d2f6d…; `dictionary_sha256`=6583d313fc71ad278af88… |
 | `artifacts/reports/supplement_finalization_v17_20260922/citizen.json` | 1.4 | `format`=finalized_supervised_supplement_v17; `source`=citizen; `signer_policy`=preserve existing roles; overlap does not disqualify — nested: `counts`, `records`, `evidence_sha256`, `exclusions` |
+| `artifacts/reports/atlas_canonical_source_20261013/before_sources/active/v17/temporal_boundary_manifest_20260922.json` | 1.4 | `format`=slt_temporal_boundary_v17; `training_entrypoint`=scripts/train_temporal_boundary_v17.py; `training_ready`=true; `scope`=boundary edges only; no lexical targets, background or phras…; `supervision`=start/end positives; negatives only inside accepted in… |
 | `artifacts/reports/my_transition_recovery_v17_20261011/gated_pair_new.json` | 1.4 | nested: `compute_ms`, `records` |
 | `artifacts/reports/asl_temporal_boundary_v17_20260922/recipe_before_final_review.json` | 1.4 | `format`=slt_temporal_boundary_v17; `training_entrypoint`=scripts/train_temporal_boundary_v17.py; `training_ready`=true; `scope`=boundary edges only; no lexical targets, background or phras…; `supervision`=start/end positives; negatives only inside accepted in… |
 | `artifacts/reports/asl_temporal_boundary_v17_20260922/recipe_before_review.json` | 1.4 | `format`=slt_temporal_boundary_v17; `training_entrypoint`=scripts/train_temporal_boundary_v17.py; `training_ready`=true; `scope`=boundary edges only; no lexical targets, background or phras…; `supervision`=start/end positives; negatives only inside accepted in… |
@@ -371,6 +372,7 @@ Regenerate: `venv/bin/python scripts/index_large_artifacts_v17.py`
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/tune__da05efb9120efb89ab29.json` | 1.1 | nested: `frames` |
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/citizen_val__MAYBE__03356585888825525-MAYBE.json` | 1.0 | nested: `frames` |
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/tune__d7e301b2b67fa4546722.json` | 1.0 | nested: `frames` |
+| `artifacts/reports/atlas_canonical_source_20261013/before_sources/active/v17/approved_phrase_manifest_20260921_v2.json` | 1.0 | `format`=approved_phrase_data_v17; `version`=2; `training_ready`=false; `scope`=Phrase admission only; no certification of isolated, RGB, bl…; `policy`=Exclude entire ambiguous/clipped/overlapping sequences; neve…; `salvage_policy`=Gap-free complete establishe… |
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/citizen_val__WORK__4328643376522927-WORK.json` | 1.0 | nested: `frames` |
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/citizen_val__NOW__8203203237125376-NOW.json` | 1.0 | nested: `frames` |
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/citizen_val__HOSPITAL__5851960225980641-HOSPITAL.json` | 1.0 | nested: `frames` |

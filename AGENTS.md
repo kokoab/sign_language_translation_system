@@ -1,5 +1,17 @@
 # SLT working guide
 
+## Canonical ATLAS source (2026-10-13)
+
+The selected v17 mobile pipeline source now lives under `ATLAS/python/`, grouped by
+purpose; the mobile project is `ATLAS/mobile_app/slt_mobile_app/`. Edit those files.
+`ATLAS/source_manifest.json` maps the old Python paths to canonical files. Old
+`active/v17/`, `scripts/` and selected report-source filenames remain compatibility
+symlinks, and Python import namespaces are preserved. The former sibling mobile
+project path also links to the canonical project. Keep these links. Datasets,
+historical checkpoints/reports and frozen training gates remain in place. Source
+snapshots and verification: `artifacts/reports/atlas_canonical_source_20261013/`.
+Read `ATLAS/README.md` before changing path plumbing or removing compatibility links.
+
 ## Canonical repaired phrase dataset (2026-09-21)
 
 Before any new v17 phrase training, read

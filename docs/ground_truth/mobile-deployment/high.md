@@ -7,6 +7,24 @@ stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
 ---
 
+## 2026-10-13 — User chooses ATLAS as canonical mobile source
+
+User explicitly chose canonical relocation with compatibility preserved. Physical
+source is now ATLAS/python (81 files by purpose;16recipe/config files) and the
+complete ATLAS/mobile_app/slt_mobile_app project. Former97Python/resource paths
+and the sibling mobile-project path are relative symlinks; stable public imports
+remain active.v17/scripts. Edit canonical files and keep compatibility links.
+Datasets/checkpoints/reports stay put; frozen hash contracts are not rewritten.
+Original source snapshots and all verification receipts are preserved in
+artifacts/reports/atlas_canonical_source_20261013/. Training gates remain intact.
+
+52focused tests pass; both unsignediOSRelease andofflineAndroidDebug builds pass
+fromATLAS. All582inventoried mobile source/assets are byte-identical;11compiled
+CoreMLweights match source. Flutter Debug/Release xcconfigs explicitlylinkFlutter
+for regenerated build configuration. No model, signing or installed-app update.
+See ATLAS/README.md and source_manifest.json before changing path plumbing.
+
+
 ## 2026-10-04 — MediaPipe (Android) words-only chain established
 
 The MediaPipe family exists and passes every predeclared stage gate; it is the Android model set to

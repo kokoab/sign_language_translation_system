@@ -1,0 +1,53 @@
+{
+  "format": "unfrozen_phrase_adapt_v17",
+  "version": 1,
+  "purpose": "Controlled frozen-vs-unfrozen encoder phrase adaptation; does unfreezing raise the held-out ASLLRP oracle-interval ceiling (shipped verifier 66.7%) without isolated regression.",
+  "authorized": "user 2026-09-25: \"okay run it ... does not degrade the isolated ... not go below 90\"",
+  "training_entrypoint": "active/v17/train_unfrozen_phrase_adapt_v17.py",
+  "training_ready": true,
+  "scope_note": "Stage-1 segment classifier only. No CTC objective, no blank/rest supervision, no NCSLGR/OTHER/Flores sources, so the v2 manifest blockers (CTC recipe metrics, blank/rest inputs) do not apply; the generic v2 training_ready flag is NOT changed.",
+  "base": "artifacts/models/stage1_v17_unified_multimodal_student_v1/best_model.pth",
+  "base_sha256": "1caeadf4b3ca620aa9fef00b35c012b39d7c093f67da1ee2f6987d2c2297906b",
+  "reference": "artifacts/models/stage1_v17_unified_phrase_activity_adapt_reel_v2/best_model.pth",
+  "reference_sha256": "278a9933df25508aa83823cf6a8e050fbf4ba729eb39b1c790c97e55032a6558",
+  "approved_manifest": "active/v17/approved_phrase_manifest_20260921_v2.json",
+  "approved_manifest_sha256": "a821cae8d443e1bf3bc6649deb82dbea7a3e03d217b163360bffda6168390d1c",
+  "phrase_sources_train": [
+    "local_phrases",
+    "asllrp_contiguous"
+  ],
+  "phrase_sources_selection": [
+    "local_phrases"
+  ],
+  "phrase_rgb": "data/local/stage2_v17_multimodal",
+  "phrase_hand": "data/local/stage2_v17_hand_mobileclip2",
+  "raw_cache_dir": "artifacts/generated/unfrozen_phrase_adapt_v17",
+  "oracle_inputs": "artifacts/reports/unfrozen_phrase_adapt_v17_20260925/oracle_inputs/oracle_inputs",
+  "isolated_tolerance": {
+    "citizen": 0.5,
+    "semlex": 0.0,
+    "local": 0.5
+  },
+  "guard_rule": "every isolated validation domain >= shipped reference top1 - tolerance; SemLex is already 89.16 (<90) so it gets zero tolerance",
+  "seed": 25925,
+  "epochs": 30,
+  "samples_per_epoch": 12000,
+  "batch_size": 256,
+  "head_lr": 2e-05,
+  "encoder_lr": 1e-05,
+  "weight_decay": 0.001,
+  "distill_weight": 1.0,
+  "parameter_anchor": 0.01,
+  "pair_loss_weight": 2.0,
+  "pair_sampling_multiplier": 4.0,
+  "source_shares": [
+    0.3,
+    0.2,
+    0.25,
+    0.25
+  ],
+  "arms": [
+    "frozen",
+    "unfrozen"
+  ]
+}

@@ -221,6 +221,23 @@ and provenance in `docs/capstone_papers/ATLAS_MEASUREMENT_NOTES.md`; never relab
 
 ## Pipeline state
 
+**2026-10-13 canonical source relocation:** selected mobile pipeline source is now
+`ATLAS/python/` (81 Python files, grouped by purpose; 16 unchanged recipe/configuration
+files) and `ATLAS/mobile_app/slt_mobile_app/`. Edit these canonical files. Former
+Python paths and `/Volumes/secret/SLT/mobile_app/slt_mobile_app` are compatibility
+symlinks; public `active.v17`/`scripts` import namespaces remain supported. Repository
+root anchors and cross-purpose imports were updated. Mobile source/assets: 582
+inventoried hashes preserved during relocation. No model weights, data, training
+flags or installed phone application changed. Historical source-hash contracts are
+not rewritten; pre-edit source snapshots are preserved. Layout/provenance map:
+`ATLAS/source_manifest.json`; verification/build evidence:
+`artifacts/reports/atlas_canonical_source_20261013/`. Verification complete:97file
+links,81source parses,15imports,52focused tests; current primary smoke logits
+bit-identical. iOSRelease(unsigned) andAndroidDebug(offline) build fromATLAS;
+11compiledCoreMLweightpayloadsmatchsources,APKCRCpasses. TwoFlutterxcconfigs now
+explicitlylinkFlutter afterregeneratedPodsinitiallyfailed. Generatedapplication/
+packagepaths pointtoATLAS. No signing or inference behavior change.
+
 **2026-10-11 lineage/runtime investigation complete; no repair deployed.** Recovered actual
 September30 MY FRIEND video: all4old/new model/runtime combinations exact8/8phases.
 Newer MY NAME firstcontact:LocalA6/8,current0/8 under either runtime; no universal rollback.
