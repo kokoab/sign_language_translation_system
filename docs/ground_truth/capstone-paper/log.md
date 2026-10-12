@@ -7,6 +7,51 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-13 — Original base-study comparison restored by author request
+
+Updated review MD R-04 and numerical register to reproduced base-study results:
+Transformer 95.50%, flat Squeezeformer 95.77%, part-wise/global 96.83%.
+Removed the deferred status and shared-input 74/75/77 replacement proposal; its
+verification report remains preserved and linked. CPU timings remain excluded.
+Kept adaptation narrative and curves, explicitly distinguishing original validation
+membership from the current component evaluation: 96.83 to 95.27 is not a matched
+rotation or fine-tuning loss. No training, manuscript or chart asset changes.
+Next: author reviews the restored table and proposed wording.
+
+## 2026-10-13 — Mild-roll settings and ±12° sensitivity verified
+
+User requested augmentation narrative/table without “incorporated local signing examples”
+or “broader validation dataset,” plus verificationof±12° effect. Relatedhistoricalchecks
+useotherangles/checkpoints; ranfresh base/adaptedlandmarkvalidation at−12/−6/0/+6/+12
+on3957admittedexamples. Adaptedcorrect3763/3772/3770/3761/3754,accuracy95.10/95.32/
+95.27/95.05/94.87%;maxdrop.40pp. Uprightreproducesprior. Softwarelandmarks only, no
+rotatedpixel/extractor/phoneclaim or causalaugmentationclaim. Added R-03a/b proposals,
+sevenverifiedaugmentationentries and results toreviewMD. Recipefullroll0,mild12.
+Reports/current_mild_roll_v17_20261013. No training/protectedtest/manuscript changes.
+Next:authorreview, do notrepresentthisasrecordedhistoricalphoneexperiment.
+
+## 2026-10-13 — Adapted comparator inventory; no retraining started
+
+Checked223targeted metadatafiles afterauthorrejected base-stage comparison. No completed
+matching flatTransformer/flatSqueezeformer found for currentrun_v2 reviseddata/mildroll
+recipe. OtherchatTransformer localadaptation activeepoch10/80, differentoldlocalmanifest
+andfullroll.35; interimcheckpoint not a faircurrent95.27 comparator. Olderlocalcandidate
+models mostlypartwise_global; tiera10usesdifferentdata. Didnot interferewithotherjob.
+Report:adapted_comparator_inventory_v17_20261013. No newtraining/eval/paperchanges.
+Base74/75/77table remainsmeasured but rejectedasintendedadaptedcomparison; do not apply
+thatproposal. Next: discuss matched adaptation scope before starting missingarms.
+
+## 2026-10-13 — Base comparison refreshed on shared validation
+
+Within authorfive-minute request, evaluated three pinned base checkpoints on identical
+3957admitted validation inputs:Transformer2929=74.02%,flatSqueeze2966=74.96%,partwise3035=76.70%.
+Citizen-only361/362/366 reproduced. These are beforelocaladaptation; not finalprimary95.50%.
+Updated R-04 table/register/discussion; removed CPU timingcolumns frombothhistorical
+transcriptions and CPU timingclaims in R-04. Retainedhistoricalaccuracies asBefore text,
+explicitly labeled; originalbasecurve scope unchanged. R-04 reopened; otherauthorchecks
+preserved. No training/test/deployment/mainmanuscript change. Results and pins in
+base_architecture_shared_validation_v17_20261013. Next:authorreview.
+
 ## 2026-10-13 — Current-lineage component evaluation completed
 
 User authorized five-minute cached evaluation. Fresh seven-output PyTorch inference,
