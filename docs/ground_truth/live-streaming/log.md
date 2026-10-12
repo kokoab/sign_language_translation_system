@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 10/22: ios: synchronize native gloss preview catalog
+
+Native and Flutter catalogs use the same verified sources. Reference selection is not independent accuracy.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 9/22: mobile: update Flutter gloss preview catalog
 
 Records verified63local/37Citizen training references. Ignored media remains local; this catalog commit does not publish video payloads.
