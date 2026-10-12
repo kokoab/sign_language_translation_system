@@ -1,3 +1,10 @@
+## 2026-10-13 — Commit 16/22: test: add Android decoder regression coverage
+
+JUnit tests cover delayed closure endpoints and configured boundary dips. Test-only JUnit4.13.2 dependency; fresh Android testDebugUnitTest succeeds (1m7s); two JVM checks pass.
+Split approved by user; author/committer kokoab <batiancelafrancis747@gmail.com>.
+October13 dates follow the logs; 00:31–00:52 are ordering placeholders.
+Next safe action: complete the remaining approved commits; no push requested.
+
 ## 2026-10-13 — Commit 15/22: android: preserve word timing and chronological tracking
 
 Monotonic endpoint extension prevents delayed closure from rewinding timestamps; latest-word state follows chronological starts.

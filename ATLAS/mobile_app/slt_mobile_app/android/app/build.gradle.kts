@@ -51,6 +51,7 @@ flutter {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     // Live Reel (Android MediaPipe family): MediaPipe pinned to the desktop parity version; LiteRT 2.2 CompiledModel (CPU/XNNPACK, explicit threads).
     implementation("com.google.mediapipe:tasks-vision:0.10.14")
     implementation("com.google.ai.edge.litert:litert:2.2.0")
