@@ -1,8 +1,13 @@
 # Chapter 4 — Template-Aligned Manuscript Draft
 
-**Prepared: October 13, 2026. Not applied to Google Docs.**
+**Applied: October 13, 2026, to the Manuscript tab.**
 
-Source manuscript: [Page Check](https://docs.google.com/document/d/1sC2JZ23mSpnLWeEEFDm5ce2x_As0XTS7ayMGvk5uuD4/edit?tab=t.8u4bn2h16og9). Structure follows the supplied LNU capstone template. The prose below is proposed manuscript wording, rather than an outline of topics to write later.
+Working manuscript: [Manuscript](https://docs.google.com/document/d/1sC2JZ23mSpnLWeEEFDm5ce2x_As0XTS7ayMGvk5uuD4/edit?tab=t.d1buvx4fb1j1). Structure follows the supplied LNU capstone template. The prose below is proposed manuscript wording, rather than an outline of topics to write later.
+
+
+**Application record:** The approved reorganization is now in Manuscript: development methods follow the preserved design material in 4.2; 4.3 describes the prototype; 4.4 contains the deployment plan; 4.5 groups the results. Existing 4.1 and the original 4.2 blocks were verified unchanged, including SDLC, Activity List, GANTT, PERT and design diagrams. Participant provisions were moved intact. Page Check and every other tab remain unchanged.
+
+Existing source blocks took precedence over duplicate draft wording. Hardware inventories are referenced instead of duplicated. The implementation matrix is split into activities/resources and responsibilities/resource records for page width. Budget and unconfirmed assignments remain explicitly pending; missing screenshots and software-quality findings were not invented. Existing Table 10 already contains the verified augmentation detail, so no duplicate augmentation table was added. Tables and figures were renumbered by their new order; numerical results were retained. The following placement map keeps the original identifiers for traceability.
 
 **Editing rule — not manuscript text:** This is a reorganization-and-insertion draft, not a replacement chapter. Retain the existing SDLC model and discussion, activity list, GANTT and PERT charts, design diagrams, requirements and participant provisions. Move complete relevant blocks—including their tables, figures, citations and explanations—to the destinations below. Insert our already adjusted discussions where indicated. Use only brief transitions and necessary numbering/reference changes; do not rewrite or regenerate preserved material. When this draft repeats existing text, use the existing block once rather than inserting a second copy. Bracketed fields require records before insertion and are not completed findings.
 
