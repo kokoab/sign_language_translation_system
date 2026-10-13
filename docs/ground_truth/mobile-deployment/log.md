@@ -1,3 +1,164 @@
+## 2026-10-13 — Software tests executed; results applied to Manuscript
+
+User authorized execution, fixes and GoogleDocs insertion. Python245/245 andFlutter7/7
+pass. Selected native simulator initial8/9; obsolete Letters-button expectation failed
+against documented toolbar removal. Updated assertion to require removed controls absent
+and retained controls visible; corrected portrait-first expectation before initial run.
+Two-case native retest passes;9unique native cases finallypass. JVM2/2freshforcedrun
+passes after narrowing Gradle fromthird-partyplugin tests toapp; preserved failed/cached
+attempts. Paper subset47cases (29Python+9native+7Flutter+2JVM):38internal+9interface,
+allpassing finalresults,0skips. Exact mapping/hashes/logs inpaper_software_testing_20261013.
+Inserted Tables20–21, scopedresults, correctionhistory andAppendixA intoManuscript4.5.5.
+Existing participant provisions/modelmetrics retained; other tabs verified unchanged.
+ReviewMD nowcontains appliedresults above retainedhistoricalproposal. No training,
+protected evaluation, productionbehavior change orphysicaldeviceinstallation.
+Next: user reviews appliedtestingsection; participant/deviceclaims remain separate.
+
+## 2026-10-13 — Single-row toolbar and removed toggles installed
+
+Final signed Release build passed and installed in place on angelo iPhone13
+(00008110-00111D1A0130A01E); devicectl launch succeeded. Live has one top row for Back,
+LIVE/status, landmarks, flip and Help. Live/Practice have no Settings or Letters button.
+The manual Letters override is false in both modes and no saved preference can re-enable it;
+existing sign-triggered spelling behavior remains. App data was not reset. Updated help
+text/diagrams shipped. Evidence: topbar_signed_build_final.log, topbar_install.json and
+topbar_launch.json in artifacts/reports/mobile_camera_controls_20261013/.
+Next safe action: verify updated toolbar and Practice behavior on the connected real phone.
+
+## 2026-10-13 — Single-row Live toolbar checks passed
+
+Focused native layout and capture-rotation checks pass 2/2 (1.874s total), covering portrait
+320×568/390×844 and landscape844×390. Assertions verify Live buttons share Back row and both
+screens lack Diagnostics/Letters controls. Narrow portrait screenshot reviewed; all visible
+buttons retain44pt touch targets. Flutter tests pass7/7 and repository diff check passes.
+Updated remaining obsolete Gear help text after initial signed build; final signed build is
+in progress before installation. Evidence: topbar_test_retry.log, topbar_flutter_test.log,
+topbar_diff_check.log and topbar_screenshots in mobile_camera_controls_20261013 report directory.
+
+## 2026-10-13 — Single Live top row; Settings/Letters removal in progress
+
+User requested Live toolbar alongside Back/LIVE and removal of Settings and Letters in both
+camera modes. Canonical controller removes both buttons and saved manual Letters preference;
+startStream explicitly sets lettersAlways=false, preserving the existing off-mode sign-triggered
+FINGERSPELL/NAME behavior. Practice top tools retain landmarks/help; Live adds camera flip.
+Flutter manual diagrams/settings copy updated to remove obsolete toggle/gear instructions.
+Initial automated edit matched glassChip instead of the buildInterface chip and removed a
+helper/render block; compile caught it. Restored that block and preview-layer landmark mapping
+before rerunning focused layout and rotation tests. No failed build was installed.
+Next action: simulator snapshot review, Flutter checks, signed build and updated installation.
+
+## 2026-10-13 — Updated camera controls and portrait layout installed on angelo iPhone 13
+
+User explicitly requested installation. Signed canonical Release build succeeded with the
+existing development team. First install failed with CoreDevice 3002 / IXRemoteErrorDomain 6
+(connection invalid); retry succeeded in place on 00008110-00111D1A0130A01E. devicectl then
+successfully launched com.kokoab.sltMobileApp. No app removal/data reset was performed.
+Evidence: artifacts/reports/mobile_camera_controls_20261013/iphone_signed_build.log,
+iphone_install.json (failed attempt), iphone_install_retry.json and iphone_launch.json.
+Current camera/portrait/reference changes are now installed on angelo iPhone 13; installation
+and launch do not establish camera alignment or resolution of intermittent reference playback.
+Next safe action: user checks portrait positions, rotation/landmark alignment, front/back
+switching, remembered visibility, reference playback and enlargement on this physical phone.
+
+## 2026-10-13 — User authorized updated mobile installation
+
+User requested installation after portrait follow-up completion. Device discovery finds
+angelo iPhone 13 (00008110-00111D1A0130A01E) as the only available physical iPhone;
+other paired phones are unavailable. Building signed Release from canonical mobile workspace
+using existing team/signing configuration and verified Release derived data. Next action:
+install in place and confirm launch; preserve app data. Camera/playback behavior still needs
+physical user verification after installation.
+
+## 2026-10-13 — Portrait placement verified; not installed
+
+Practice reference is top-center; round/sign card is bottom-center 12pt above centered
+Skip, with retry to its left. Live portrait toolbar and bottom controls are centered as
+groups. Landscape keeps its previous positions. Canonical controller and existing
+RunnerTests layout check changed. Focused native test passes (1/1, 1.957s) across
+320×568, 390×844 and 844×390; no Auto Layout conflict logged. Reviewed narrow Practice
+and standard Live screenshots. Unsigned iPhone Release rebuild succeeds. Repository-wide
+`git diff --check` passes. Evidence: mobile_camera_controls_20261013/portrait_layout_test.log,
+portrait_iphone_build.log and portrait_followup_screenshots/. Layer snapshots exclude
+composited camera/video and glass; no physical-iPhone installation or verification occurred.
+Next safe action: check this layout and existing camera/playback changes on the real iPhone.
+
+## 2026-10-13 — Portrait placement follow-up implemented; validation in progress
+
+User requested Practice reference at top center, round/sign banner at bottom center above
+centered Skip, and centered Live buttons in portrait. Updated canonical
+`ios/Runner/LiveReel/LiveReelViewController.swift`: center Skip itself (retry stays left),
+center Live bottom group and portrait toolbars, move Practice feedback above its bottom
+banner. Landscape constraints retain their prior placement. Extended existing native layout
+check with center/alignment and reference/banner separation assertions at both portrait sizes.
+Next safe action: focused simulator layout test and snapshot review; physical iPhone remains
+unverified; this update has not been installed.
+
+## 2026-10-13 — Mobile controls and H264 preview compatibility changes verified; not installed
+
+Final native controller, preview builder/media, Flutter help and regression tests are complete.
+Unsigned iPhone Release build succeeds at
+/Users/frnzlo/slt_mobile_controls_device/Build/Products/Release-iphoneos/Runner.app;
+all100bundled preview hashes match and noXCTest bundle is included. Simulator3/3methods pass
+(34.835s assertions; Xcode exit0 / TEST SUCCEEDED), covering100H264 clips playing/looping,
+allfour inverse capture rotations, Live-only flip, shared on-default landmark preference,
+320×568/390×844/844×390controls, reference enlargement andbothdismissals. Visual snapshot
+review caught/fixed narrow Practice caption truncation. Layer snapshots omit composited
+video/camera; real camera capture/alignment remains untested. Optional simctl diagnostic
+collection stalled after all tests passed; stopped only that child process, then Xcode
+finished successfully and its structured result summary was exported.
+
+H264CRF8 previews pass100/100native macOS full decodes. Selected source/label/hash, dimensions,
+frame counts andduration(<1ms tolerance) preserved; originals backed up. All100decoded-frame
+SSIM>.99, min.993861/mean.997013. InitialGIVE quality failure was a checker timebase mismatch,
+fixed by normalizing both streams before frame comparison; no lowered quality threshold.
+Flutter7/7 andpreviewbuilder16/16pass. Repository-wide diff--check passes; artifactindex
+regenerated. Catalogs explicitly scope prior100/100recognition tooriginalMPEG4pixels:
+H264previews notrescored. No models/decoders/training gates changed; no phone installed.
+Evidence:artifacts/reports/mobile_camera_controls_20261013/REPORT.md.
+Next safe action: test portrait/landscape alignment, front/back switching, remembered points,
+andreference playback/enlargement on theaffectedreal iPhone before closing its reportedbug.
+
+## 2026-10-13 — Mobile controls implementation and playback investigation
+
+Active LiveReelViewController now supports portrait-first/landscape layouts, sensor-coordinate
+landmark projection through AVCaptureVideoPreviewLayer, Live-only front/back switching,
+front-only Practice, shared persisted landmark visibility (on by default), and an enlarged
+same-player reference overlay with X/outside dismissal. Reference asset loading now awaits
+playability/duration, cancels obsolete loads, reports failures and cleans up loop queues.
+Rotation/switching splits Live recordings rather than silently dropping changed-size frames.
+Flutter manual/setup copy updated; initial widget expectation for old rotation wording failed,
+updated expectation now passes7/7. Preview builder now exports H264 Main/yuv420p via existing
+ffmpeg; focused builder suite16/16 passes, including synthetic frame-count/aspect export check.
+
+All100 original MPEG4 references decode on macOS AND play/loop in iOS26.3 simulator; reported
+real-iPhone intermittent failure remains unreplicated.20original clips exceed the older
+MPEG4 Simple Profile 30fps/2.5Mbps envelope; compatibility is a hypothesis, not proven cause.
+Staged H264 conversion keeps existing selections, dimensions, frames and duration; all100
+CRF14 previews decode but ANGRY SSIM .987780 misses the declared >.99 quality check.
+Raised encoding quality toCRF8 (ANGRY .995259); complete quality check pending before publish.
+Originals preserved under artifacts/reports/mobile_camera_controls_20261013/before/media.
+Do not transfer the old exact-recognition result to newly encoded pixels without replay.
+
+Native simulator compilation and2focused tests pass. Two earlier builds under /tmp failed
+CoreML output sandbox permissions; a fresh /Users/frnzlo/slt_mobile_controls_build succeeds
+without changing permissions or models. Layout/persistence/overlay check is running next.
+No phone installation or new recognition accuracy claims. Next: finish media quality,
+verify final bundle playback/layout, then physical-camera alignment/switch verification.
+
+## 2026-10-13 — Mobile camera/practice controls: authorized scope and initial findings
+
+User requests front-default camera flip in Live only (Practice front-only), portrait-first
+Live/Practice with landscape recommendation, aligned portrait landmarks, repaired intermittent
+Practice reference playback, enlarged reference video dismissed by X/outside tap, and one
+remembered landmark-visibility choice defaulting on across both modes. Active iPhone route:
+Flutter AppDelegate -> LiveReelViewController; old AppShell/ReelCamera is not the active route.
+Current controller forces landscape and manually assumes mirrored, same-orientation preview.
+All100 bundled references exist, use MPEG4 Part2 Simple Profile/yuv420p, and pass full-frame
+AVFoundation decode on macOS. Failing gloss identities are unknown; real-iPhone symptom is not
+yet reproduced. Do not claim the codec is proven causal or that desktop decode verifies iPhone.
+Working edits are scoped to active native controller, its tests and relevant Flutter help text;
+no model/training changes. Next: iOS loop-playback checks, layout/rotation tests and build.
+
 ## 2026-10-13 — Commit 20/22: mobile-deployment: record verified installations on both iPhones
 
 Retains installation chronology and compact summaries for both requested phones; raw provisioning/device JSON stays local. No installation run during commit preparation.

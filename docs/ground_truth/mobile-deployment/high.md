@@ -7,6 +7,20 @@ stated in `PROJECT_GROUND_TRUTH.md`; these are the receipts behind them.
 
 ---
 
+## 2026-10-13 — User-approved mobile camera and reference behavior
+
+Live and Practice open in portrait and support landscape with a recommendation, never force
+landscape. Live defaults to front camera and exposes front/back switching; Practice stays
+front-only. Landmark visibility is one shared preference across both modes, defaults on,
+and survives relaunch. Tapping Practice reference enlarges the same video, with only X and
+outside-tap dismissal. Rotation/mirroring/cropping must be shared by the image and landmarks.
+Portrait Practice places reference top-center and the round/sign target bottom-center above
+centered Skip; Live bottom controls are centered. Live top tools share the Back/LIVE row.
+Settings and Letters buttons are removed from both camera modes. The manual Letters override
+is always false, ignoring old stored values; existing sign-triggered spelling remains available.
+The reported intermittent reference playback failure is on a real iPhone, specific glosses
+unknown. Simulator success does not close that physical-device verification requirement.
+
 ## 2026-10-13 — User chooses ATLAS as canonical mobile source
 
 User explicitly chose canonical relocation with compatibility preserved. Physical
