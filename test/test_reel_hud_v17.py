@@ -92,6 +92,17 @@ class ReelHudTest(unittest.TestCase):
         self.draw(glosses=[], latest_result=None)
         self.assertIsNone(self.hud._committed)
 
+    def test_live_caption_shows_newest_lines_and_ignores_speech_text(self) -> None:
+        from unittest import mock
+        caption = " ".join(f"Sentence number {i} is here." for i in range(30))
+        with mock.patch("scripts.reel_hud_v17._shadowed") as shadowed:
+            self.draw(sentence=caption, speech_text="Spoken part.", caption_tail=True)
+        rows = [c.args[2] for c in shadowed.call_args_list if isinstance(c.args[2], str)]
+        caption_rows = [r for r in rows if "Sentence number" in r or "here." in r]
+        self.assertLessEqual(len(caption_rows), 3)
+        self.assertTrue(caption_rows[-1].endswith("Sentence number 29 is here."))
+        self.assertNotIn("Spoken part.", rows)
+
     def test_odd_frame_sizes_keep_controls_inside_the_frame(self) -> None:
         for width, height in [(640, 360), (1280, 720), (1920, 1080)]:
             rects = reel_control_button_rects(width, height)

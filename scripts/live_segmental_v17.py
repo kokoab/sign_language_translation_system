@@ -5,10 +5,13 @@ Default live mode of the app shell (`scripts/app_shell_v17.py`; the older Reel r
 clip.mp4 --no-display --no-speech`.
 
 Screen: Apple Vision skeleton, the in-progress guess as amber "WORD?" with top-3 chips, committed
-words in white on the rail, and the English sentence after Finish. Voice: each committed word is
-spoken as it is shown; Finish (button, F, Space, or both open palms held up for one second)
-flushes the last sign, renders the English
-sentence with the configured Stage 3 naturalizer and speaks it. R / Reset clears, Q quits.
+words in white on the rail, and live English captions while signing (`scripts/live_captions_v17.py`):
+each sign's English appears as it is committed, a clause is corrected once when it closes, and the
+tail settles after a 3.5 s pause, so Finish is optional. Voice: each settled English sentence is
+spoken. Finish (button, F, Space, or both open palms held up for one second) flushes the last sign
+and finalizes the caption. `--no-live-captions` restores the previous behavior: glosses spoken as
+shown and the English sentence rendered by the Stage 3 naturalizer only at Finish.
+R / Reset clears, Q quits.
 """
 from __future__ import annotations
 
@@ -99,19 +102,26 @@ class SegmentalRecognizer:
                                      image_encoder=args.image_encoder,
                                      fingerspelling=not getattr(args, 'no_fingerspelling', False))
         self.speaker = None if args.no_speech else make_speaker(args)
+        self.captions = None
+        if not getattr(args, 'no_live_captions', False):
+            from scripts.live_captions_v17 import CaptionModels
+            self.captions = CaptionModels()
         stage3 = self.runtime.config.get('stage3_checkpoint')
         if stage3:
             # The segmental Reel renders spelled words through slot tokens (FS0, FS1, ...).
             args.stage3_checkpoint = ROOT / stage3
         stage3_coreml = self.runtime.config.get('stage3_coreml')
-        if (args.naturalizer == 'tiny' and self.runtime.recognizer.device == 'coreml' and stage3_coreml
+        if self.captions is not None:
+            self.naturalizer = None   # live captions replace the Finish-time Stage 3 sentence
+        elif (args.naturalizer == 'tiny' and self.runtime.recognizer.device == 'coreml' and stage3_coreml
                 and not getattr(args, 'stage3_torch', False)):
             # Core ML pipeline: the same T5 graphs the phone runs (no transformers / PyTorch model).
             from active.v17.stage3_coreml_v17 import CoreMLStage3Naturalizer
             self.naturalizer = CoreMLStage3Naturalizer(ROOT / stage3_coreml)
         else:
             self.naturalizer = make_naturalizer(args)
-        self.naturalizer_warmup = self.naturalizer.warm()
+        self.naturalizer_warmup = (self.naturalizer.warm() if self.naturalizer is not None
+                                   else {'skipped': 'live captions'})
         config = self.runtime.config
         self.metadata = dict(mode='segmental_stream_v17', promoted_as_app_default=True, config=str(CONFIG),
                              config_sha256=digest(CONFIG),
@@ -119,7 +129,9 @@ class SegmentalRecognizer:
                              recognizer=config['recognizer'], recognizer_sha256=digest(ROOT / config['recognizer']),
                              lookahead_frames=self.runtime.lookahead, decoder=config['decoder'], stream=config['stream'],
                              device=self.runtime.recognizer.device, naturalizer=args.naturalizer,
-                             stage3_backend=type(self.naturalizer).__name__,
+                             stage3_backend=type(self.naturalizer).__name__ if self.naturalizer else None,
+                             live_captions=(self.captions.manifest['name'] if self.captions else None),
+                             live_captions_sha256=(self.captions.manifest['sha256'] if self.captions else None),
                              stage3_checkpoint=str(args.stage3_checkpoint), letters=self.runtime.letters,
                              speech=self.speaker is not None)
 
@@ -138,6 +150,15 @@ def run(args, shell=None, model=None):
     from active.v17.segmental_runtime_v17 import SpellingBuffer
     model = model or SegmentalRecognizer(args)
     runtime, speaker, naturalizer = model.runtime, model.speaker, model.naturalizer
+    middle_finger = None
+    if not getattr(args, 'no_middle_finger', False):
+        from scripts.gesture_extras_v17 import MIDDLE_FINGER_GLOSS, MIDDLE_FINGER_TEXT, MiddleFingerGesture
+        middle_finger = MiddleFingerGesture()
+    captions = None
+    if getattr(model, 'captions', None) is not None:
+        from scripts.live_captions_v17 import LiveCaptions
+        captions = LiveCaptions(model.captions, end_seconds=getattr(args, 'caption_end_seconds', 1.5),
+                                freeze_seconds=getattr(args, 'caption_freeze_seconds', 3.5))
     # The moving-letter (J/Z) merge is paused until validated; the config switch keeps it off.
     merge = runtime.config['stream'].get('moving_merge', False)
     speller = SpellingBuffer(rescore=getattr(runtime, 'score_letters', None) if merge else None)
@@ -196,6 +217,17 @@ def run(args, shell=None, model=None):
             shown += speller.push(w)
         emit(shown, spent)
 
+    def show_caption(update):
+        """Live caption: display it, speak what just settled, keep it in the history."""
+        nonlocal sentence
+        if update is None:
+            return
+        sentence = update.text
+        recorder.add_event({'type': 'live_caption', 'kind': update.kind, 'seconds': seconds,
+                            'text': update.text, 'spoken': update.speak})
+        if update.speak:
+            speak(update.speak, 'caption', len(recorder.data['segmental_words']) - 1)
+
     def emit(words, spent):
         nonlocal latest_result
         for w in words:
@@ -205,8 +237,11 @@ def run(args, shell=None, model=None):
             glosses.append(w['gloss'])
             scores.append(w['score'])
             timed.append(w)
-            speak(spelled_text(w['gloss']) if w['gloss'].startswith('fs-') else w['gloss'], 'gloss',
-                  len(recorder.data['segmental_words']) - 1)
+            if captions is not None:
+                show_caption(captions.push(w['gloss'], w['score'], seconds))
+            else:
+                speak(spelled_text(w['gloss']) if w['gloss'].startswith('fs-') else w['gloss'], 'gloss',
+                      len(recorder.data['segmental_words']) - 1)
             latest_result = dict(gloss=w['gloss'], candidate_gloss=w['gloss'], committed_gloss=w['gloss'],
                                  accepted=True, model_score=w['score'], full_verifier={'commit_score': w['score']},
                                  top3=(latest_result or {}).get('top3') or [], latency_ms={'total': 1000 * spent})
@@ -243,6 +278,19 @@ def run(args, shell=None, model=None):
         if not words:
             sentence = 'No recognized signs to finish.'
             recorder.add_event({'type': 'finish_empty', 'seconds': seconds})
+            if captions is not None:
+                captions.reset()
+            return
+        if captions is not None:
+            started_at = time.perf_counter()
+            update = captions.finish()
+            show_caption(update)
+            recorder.add_utterance(dict(
+                utterance_id=f'segmental-{len(recorder.data["utterances"]) + 1:04d}', glosses=words,
+                gloss_scores=word_scores, sentence=update.text, rendering_mode='live_captions',
+                live_captions=model.captions.manifest['name'], displayed_and_spoken=True,
+                finish_total_ms=1000 * (time.perf_counter() - started_at)))
+            captions.reset()
             return
         finishing = words
         context = dict(utterance_id=f'segmental-{len(recorder.data["utterances"]) + 1:04d}', glosses=words,
@@ -274,6 +322,8 @@ def run(args, shell=None, model=None):
         glosses.clear(); scores.clear(); timed.clear(); finishing = []
         sentence = ''
         naturalizing = None
+        if captions is not None:
+            captions.reset()
         latest_result = None
         wrists = {'left': None, 'right': None}
         if speaker:
@@ -338,9 +388,12 @@ def run(args, shell=None, model=None):
                 triggered = finish_gesture.update(
                     latest.assigned if allow_gesture else {'left': None, 'right': None}, seconds,
                     latest.detection.body_xy, latest.detection.body_confidence)
+                flipped = middle_finger is not None and middle_finger.update(latest.assigned, seconds)
                 # The control pose must never enter the word/letter decoder. Keep its
                 # pre-gesture tail available for Finish, or resume if the hold is cancelled.
-                words = [] if finish_gesture.active else runtime.observe(latest)
+                # The same holds for the middle-finger gesture.
+                held = finish_gesture.active or (middle_finger is not None and middle_finger.active)
+                words = [] if held else runtime.observe(latest)
                 spent = time.perf_counter() - tick
                 compute.append(spent)
                 if words:
@@ -356,6 +409,19 @@ def run(args, shell=None, model=None):
                                             score=(latest_result or {}).get('model_score', 0.)))
                     last_preview_key, last_preview_seconds = preview_key, seconds
                 emit(speller.tick(seconds, active_hands=any(h is not None for h in latest.assigned.values())), spent)
+                if flipped:
+                    recorder.add_event({'type': 'middle_finger_gesture', 'seconds': seconds})
+                    glosses.append(MIDDLE_FINGER_GLOSS); scores.append(1.0)
+                    latest_result = dict(gloss=MIDDLE_FINGER_GLOSS, candidate_gloss=MIDDLE_FINGER_GLOSS,
+                                         committed_gloss=MIDDLE_FINGER_GLOSS, accepted=True, model_score=1.0,
+                                         full_verifier={'commit_score': 1.0}, top3=[], latency_ms={'total': 0.})
+                    if captions is not None:
+                        show_caption(captions.interject(MIDDLE_FINGER_TEXT))
+                    else:
+                        sentence = MIDDLE_FINGER_TEXT
+                        speak(MIDDLE_FINGER_TEXT, 'gesture', len(recorder.data['segmental_words']) - 1)
+                if captions is not None and not held:
+                    show_caption(captions.tick(seconds))
                 if finish_gesture.active:
                     latest_result = None
                 if triggered:
@@ -377,7 +443,8 @@ def run(args, shell=None, model=None):
                     naturalizing is not None,
                     None if speaker is None else speaker.current_text,
                     None, {'dropped': dropped, 'observations': processed},
-                    top_inset=shell.top_inset, minimal=getattr(shell, 'minimal_hud', False))
+                    top_inset=shell.top_inset, minimal=getattr(shell, 'minimal_hud', False),
+                    caption_tail=captions is not None)
                 key = shell.present(shown, glosses)
                 if key in (ord('q'), 27):
                     break

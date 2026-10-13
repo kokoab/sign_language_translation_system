@@ -638,8 +638,23 @@ def parser() -> argparse.ArgumentParser:
     candidates.add_argument("--boundary-checkpoint", type=Path, help="opt-in ASL temporal boundary candidate with Reel recognition")
     candidates.add_argument("--renz-buffered", action="store_true", help="experimental 4-second buffered Renz boundaries with Reel classification")
     candidates.add_argument("--familiar-ctc-checkpoint", type=Path, help="opt-in reviewed familiar continuous CTC candidate")
-    value.add_argument("--no-fingerspelling", action="store_true",
-                       help="segmental Reel: recognise the 100 signs only (no letter head, letter boundary or spelled words)")
+    # Fingerspelling is off by default (user request 2026-10-14): the 100 signs only, with no
+    # letter head, letter boundary or spelled words. --fingerspelling turns letters back on.
+    value.add_argument("--fingerspelling", dest="no_fingerspelling", action="store_false",
+                       help="segmental Reel: also recognise fingerspelled letters and spelled words")
+    value.add_argument("--no-fingerspelling", dest="no_fingerspelling", action="store_true",
+                       help="segmental Reel: the 100 signs only (the default; kept for explicit launches)")
+    value.set_defaults(no_fingerspelling=True)
+    value.add_argument("--no-live-captions", action="store_true",
+                       help="segmental Reel: speak glosses and render English only at Finish (previous behavior)")
+    # 1.5 s (was 3.5 s, user request 2026-10-14: speak without waiting for Finish). Chosen from a
+    # sweep on phone traces and desktop sessions: erasure 0.25 vs 0.22, fewer split phrases than 1.0 s.
+    value.add_argument("--caption-end-seconds", type=float, default=1.5,
+                       help="live captions: seconds without a new sign before the sentence settles and is spoken")
+    value.add_argument("--caption-freeze-seconds", type=float, default=3.5,
+                       help="live captions: after this long a pause, the next sign starts a new sentence")
+    value.add_argument("--no-middle-finger", action="store_true",
+                       help="segmental Reel: turn off the middle-finger novelty gesture")
     value.add_argument("--stage3-torch", action="store_true",
                        help="render sentences with the PyTorch T5 instead of its Core ML export")
     value.add_argument("--gallery-columns", type=int, default=5)

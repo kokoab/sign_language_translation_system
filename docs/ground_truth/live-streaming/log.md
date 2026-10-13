@@ -1,3 +1,32 @@
+## 2026-10-14 — Desktop: speech without Finish (1.5 s), long-pause sentence freeze, middle-finger gesture
+
+User tried the desktop app: speech waited for the 3.5 s settle (session 20261014_014607: HELLO HOW
+YOU committed by 8.0 s, spoken 11.5 s). Recognition commits 0.1–0.8 s after preview (tuning replay
+already 96.5% <0.5 s after sign end; boundary lookahead 6 frames is model-intrinsic), so recognizer
+settings were not changed. Settle sweep on 20 phone traces + 13 desktop sessions
+(experiments/streaming_translation/caption_tagger/speech_policy.json): erasure 0.22 (3.5 s) →
+0.25 (1.5 s); mid-thought spoken chunks 0 → 77. App default --caption-end-seconds 1.5.
+New --caption-freeze-seconds 3.5: after that long a pause the settled tail is final and the next sign
+starts a new sentence (fixes a replayed bug where a 10 s-later sign rewrote an already-spoken sentence
+and speech skipped "I"). Speech now resumes from the first difference between spoken and shown text.
+Middle-finger novelty gesture (personal use): scripts/gesture_extras_v17.py, landmark geometry like the
+Finish pose, 0.6 s hold, frames kept out of the decoder while held; caption "Fuck you!" interjected and
+spoken; --no-middle-finger disables. scripts/evaluate_middle_finger_v17.py →
+artifacts/reports/middle_finger_gesture_v17_20261014/result.json: 0 pose frames / 0 triggers over
+43,197 frames (100 gloss clips + 42 desktop sessions); 97.0% of 3,320 real open-palm frames detected
+after synthetic folding (not a recording of the gesture). 205 tests pass. No ATLAS/phone change.
+Next safe action: user tries the gesture and earlier speech live.
+
+## 2026-10-14 — Desktop app: fingerspelling off by default (user request)
+
+User: "remove the fingerspelling, I don't need it". scripts/app_shell_v17.py now defaults
+no_fingerspelling=True: the segmental runtime is built with fingerspelling=False (word decoder over
+the 100 signs only; no letter head, letter boundary or spelled words). `--fingerspelling` re-enables
+letters; `--no-fingerspelling` still accepted. Letter code/models are kept, not deleted; ATLAS and the
+phone apps are unchanged (iOS/Android still spell). 171 app/caption/HUD/integration tests pass;
+headless replay of session 20260928_095748_940053 commits 53 words, none spelled, captions render.
+Next safe action: user checks the desktop app live without letters.
+
 ## 2026-10-13 — Commit 12/22: live-streaming: record native replay and delivery verification
 
 Recorded native Mac replay100/100previews and100/100originals, bundle hashes and delivery evidence. Not physical-phone/generalization accuracy.

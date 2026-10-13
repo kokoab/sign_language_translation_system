@@ -416,6 +416,7 @@ class ReelHud:
         revisable_transcript: bool = False,
         top_inset: int = 0,
         minimal: bool = False,
+        caption_tail: bool = False,
     ) -> np.ndarray:
         if not glosses and not finishing_glosses:
             self._committed = None
@@ -479,6 +480,7 @@ class ReelHud:
             self._sentence(
                 image, draw, margin, int(80 * scale) + top_inset, width, scale,
                 sentence, speech_text, finish_pending, revisable_transcript,
+                caption_tail=caption_tail,
             )
         if minimal:
             # A running hypothesis is buffer too, wherever it is drawn.
@@ -544,19 +546,26 @@ class ReelHud:
     def _sentence(
         self, image: Image.Image, draw: ImageDraw.ImageDraw, margin: int, top: int,
         width: int, scale: float, sentence: str, speech_text: str | None,
-        finish_pending: bool, revisable_transcript: bool,
+        finish_pending: bool, revisable_transcript: bool, caption_tail: bool = False,
     ) -> None:
         waiting = finish_pending and not speech_text
         text = (
             "Final visual transcription..." if revisable_transcript else
             "Finishing..." if self.provisional else "Naturalizing..."
         ) if waiting else (speech_text or sentence)
+        if caption_tail:
+            # Live captions: the running caption stays on screen while it is spoken,
+            # and the newest three lines are shown (older lines scroll away).
+            text = sentence
         if not text:
             return
         style = Type(int(34 * scale), "Semibold")
         radius = max(9, int(13 * scale))
         left = margin + 2 * radius + int(14 * scale)
-        rows = _wrap(text, style, int(width * 0.80) - left, 3)
+        rows = (
+            _wrap(text, style, int(width * 0.80) - left, 10_000)[-3:] if caption_tail
+            else _wrap(text, style, int(width * 0.80) - left, 3)
+        )
         step = int(42 * scale)
         _dot(
             draw, (margin + radius, top + int(17 * scale)), radius,
