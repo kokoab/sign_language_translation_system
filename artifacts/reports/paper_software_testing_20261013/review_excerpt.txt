@@ -1,0 +1,1696 @@
+                      Figure 13. Isolated-Sign Validation Accuracy
+
+        Figure 13 compares input branches and trained recognition configurations.
+
+The hand-image branch is a complementary input, while the interval configurations
+
+are variants adapted from the phrase model. These percentages describe isolated-sign
+
+classification, not end-to-end communication accuracy.
+
+        The current primary recognizer underwent eight planned epochs of interval
+
+fine-tuning with partial-sign and rejection examples. Epoch 4 was selected because it
+
+first achieved the lowest development WER while meeting isolated-recognition
+
+accuracy requirements; later epochs matched that WER. Checkpoint selection
+
+therefore used sequence performance and recognition retention rather than training
+
+loss alone.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 100
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+4.5.2 Connected-Sign Recognition Performance
+
+        Individual-sign accuracy does not fully describe connected signing, which also
+
+requires locating sign boundaries and accepting signs in the correct order. Evaluation
+
+during system development compared predicted gloss sequences with reference
+
+sequences using word error rate (WER), which counts substitutions, deletions and
+
+insertions. Table 17 summarizes five development stages on the same phrase
+
+recordings.
+
+              Table 17. Recognition Performance Across Development Stages
+
+
+         Development stage                                           WER (%)
+
+         1. Before interval adaptation                               35.84
+
+         2. After interval adaptation                                29.65
+
+         3. Runtime baseline                                         17.70
+
+         4. Partial-sign training                                    15.49
+
+         5. Transition and runtime refinement                        12.83 (retained)
+
+        Stages 1–2 use the same training-experiment evaluation procedure. Stages 3–5
+
+use runtime processing with the boundary detector, candidate-interval selection and
+
+gloss-acceptance rules. The results document system development rather than a
+
+controlled attribution of every reduction to recognizer training. These recordings were
+
+used for development and model selection, not as an independent final test.
+
+        Before interval adaptation, the phrase-adapted recognizer recorded a
+
+development WER of 35.84%. Fine-tuning on candidate sign intervals reduced WER
+
+to 29.65% under the same evaluation procedure.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.          | 101
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+        The runtime baseline integrated the trained recognizer with the distilled
+
+boundary detector and segmental decoder, recording 17.70% WER after review of
+
+training inputs and model refinements. The change in evaluation procedure means that
+
+the difference from 29.65% cannot be attributed to fine-tuning alone.
+
+        Partial-sign training addressed incomplete gestures encountered during
+
+connected signing. With the accompanying runtime settings, this configuration
+
+recorded 15.49% WER. Under those same settings, the configuration without
+
+partial-sign training recorded 18.58%.
+
+        Further development addressed sign ordering and acceptance, reaching
+
+12.83% WER. Transition-example fine-tuning subsequently retained this result while
+
+addressing the evaluated transition cases. Intermediate variants did not improve
+
+uniformly; the shorter-fragment and rejection variant recorded 15.93% before further
+
+runtime refinements.
+
+
+
+
+           Figure 14. Recognition Performance Across Development Stages
+
+        The panels distinguish the training-experiment evaluation from runtime
+
+development. The boundary detector and decoder contribute to connected-sign
+
+processing; transition-example refinement retained the final measured WER.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 102
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+4.5.3 English-Generation Performance
+
+        English-output     assessment      used     generated    gloss-to-English   sessions
+
+containing two to four sentences. DeepSeek supplied reference sentences and
+
+automatic judgments under a rubric that distinguishes fully correct, mostly correct and
+
+incorrect output. Fully correct output preserves the reference meaning, grammatical
+
+English and important content; mostly correct output retains the main meaning with a
+
+minor error; incorrect output changes, omits or invents important meaning. Research
+
+on language-model evaluation supports the use of explicit criteria, while the ratings
+
+here come from the study's own evaluator (Liu et al., 2023).
+
+                          Table 18. English-Output Comparison
+
+
+         Configuration                    Judged       Judged        BLEU        NO
+                                          fully        wrong                     retained
+                                          correct
+
+         T5-efficient-tiny:               60%          6%            75          100%
+         whole-sequence generation
+
+         T5-efficient-tiny: incremental   60%          8%            74          100%
+         generation
+
+        Both configurations used the same fine-tuned model with approximately 15.6
+
+million parameters and received a 60% fully correct automatic rating. Incorrect
+
+ratings were 6% for whole-sequence generation and 8% for incremental generation.
+
+Neither configuration dropped NO in the evaluated examples containing that gloss.
+
+This measure concerns NO specifically; it does not cover every form of negation in
+
+ASL. BLEU measures overlap with reference wording, complementing the
+
+meaning-oriented rubric (Papineni et al., 2002). These are automatic judgments of
+
+generated text, with the same model family providing references and ratings; they
+
+describe English generation rather than human-assessed signing accuracy.
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.          | 103
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+                          Figure 15. English-Model Fine-Tuning
+
+        Figure 15 presents the saved English-model training observations through
+
+optimizer step 4,539, where the recorded validation loss was 0.2515. Lower loss
+
+indicates closer agreement with the reference training objective. The separate
+
+English-output assessment in Table 18 examines the generated sentences themselves,
+
+connecting model fitting with the meaning and wording produced for the application.
+
+
+4.5.4 Mobile Implementation and On-Device Performance
+
+        Combined operation of the deployed system. Camera frames supply landmark
+
+and hand-image information. Boundary estimates guide candidate-interval selection,
+
+and the recognizer scores those intervals using both visual inputs. The segmental
+
+decoder selects the accepted sequence, Gloss Management preserves its order, and
+
+T5-efficient-tiny prepares English as that sequence grows. Finish finalizes the
+
+remaining text for display and local speech. The models therefore cooperate within
+
+one workflow, while each retains a specific input, output and responsibility.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 104
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+        The FP16 recognizer export was evaluated using the same prepared landmark
+
+and hand-image inputs as the trained model. The primary recognition output retained
+
+95.50% validation accuracy after conversion, although one predicted label changed.
+
+Equal aggregate accuracy therefore did not imply identical predictions for every input.
+
+               Table 19. Primary Recognizer Accuracy After Conversion
+
+
+         Component                                    Trained model        Deployment
+                                                      (FP32)               export (FP16)
+
+         Primary recognition validation accuracy      95.50%               95.50%
+
+        The comparison concerns the trained model and its FP16 export, not two
+
+complete mobile precision configurations.
+
+        The FP16 recognizer deployment package occupies 26.56 MB. This measures
+
+the complete recognizer package in decimal megabytes, rather than working memory
+
+or the size of the complete application.
+
+        On iPhone 13, the evaluated configuration recorded a median processing time
+
+of 31.14 ms per processed frame during two camera-paced replays of a development
+
+recording. Timing covered frame preparation, landmark and hand-image processing,
+
+and recognition. Camera capture, model loading, interface presentation, English
+
+generation and speech output were outside the timed work. This measurement
+
+describes frame computation rather than the delay before a gloss is displayed.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.         | 105
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+4.5.5 Functional Testing and Software Quality Evaluation
+
+
+Distinction Between Technical System Testing and Human Participant
+Evaluation
+        The evaluation of ATLAS shall consist of two distinct components: (1)
+
+technical system evaluation and (2) human participant evaluation. These components
+
+shall be treated separately to distinguish system performance measurements from
+
+information obtained directly from research participants.
+
+        Technical system evaluation refers to the assessment of the technical and
+
+functional performance of the developed system. This evaluation does not require
+
+human participants and shall be conducted using prepared datasets, sign-sequence
+
+data, gloss-to-English pairs, trained and exported models, controlled system inputs,
+
+and other development or testing resources. Technical evaluation shall include
+
+appropriate measures of system performance, such as Top-1 accuracy, Top-5 accuracy,
+
+Word Error Rate (WER), English-output performance, processing time, and model
+
+size, as applicable to the developed system.
+
+        Human participant evaluation, on the other hand, refers to information
+
+obtained directly from eligible research participants during the evaluation of the
+
+system. Participant-provided information may include their responses to the
+
+evaluation procedures, observations, comments, suggestions, and other feedback
+
+collected through the approved research process.
+
+        The technical performance results generated from datasets and system testing
+
+shall not be treated as participant data. Conversely, information directly provided by
+
+research participants shall be treated as research data and shall be handled in
+
+accordance with the informed consent process, data protection safeguards, and the
+
+approved research protocol.
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 106
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+Software Testing Results and Discussion
+
+         Automated software testing examined the internal processing logic and
+
+application behavior of ATLAS. The reported application subset comprised 47 distinct
+
+cases: 38 internal-logic cases and nine interface and integration cases. All 47 passed
+
+in their final recorded executions, with no failed or skipped cases remaining in the
+
+reported subset. Results were recorded on October 13, 2026, and grouped by
+
+component rather than programming language.
+
+         The subset was drawn from checks of the documented processing and
+
+application functions. The broader Python regression run also passed all 245 tests, but
+
+its additional experimental-model, data-preparation and development checks are not
+
+included in the 47-case application summary. Each reported case has one primary
+
+group; shared coverage and retests do not increase the case count. Appendix A
+
+provides the case register and execution conditions.
+
+
+White-Box Testing
+
+         White-box testing exercised internal functions, decision conditions and state
+
+changes using controlled inputs and defined expected outcomes. The 38 cases
+
+checked input preparation, frame handling, recognition interfaces, boundary
+
+processing, sign acceptance, the Finish gesture, English-generation integration and
+
+application data handling.
+
+                    Table 20. White-Box Testing of Internal Processing
+
+
+
+ ID        Component and checks                                Cases   Pass      Fail   Skip
+
+ WB-01     Input preparation                                   8       8         0      0
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.              | 107
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+ ID        Component and checks                                      Cases   Pass   Fail   Skip
+
+           Coordinate rotation, missing landmarks, sampling and
+           input-format checks
+
+ WB-02     Frame processing                                          1       1      0      0
+           Replacement of stale frames and invalidation of
+           stopped work
+
+ WB-03     Recognition integration                                   4       4      0      0
+           Model input structure, anatomical processing and
+           hand-image slot handling
+
+ WB-04     Boundary detection and decoding                           16      16     0      0
+           Candidate intervals, confidence rejection, repetition
+           handling and temporal ordering
+
+ WB-05     Finish and state management                               1       1      0      0
+           Control-gesture conditions, activation timing and state
+           reset
+
+ WB-06     English-generation integration                            6       6      0      0
+           Gloss delivery, model routing, excessive-input
+           rejection and name restoration
+
+ WB-07     Application data handling                                 2       2      0      0
+           Recognition-result parsing and saved-session
+           formatting
+
+ Total                                                               38      38     0      0
+
+
+
+         All 38 internal-logic cases passed. Input checks verified the expected
+
+treatment of coordinates, missing observations and input structures. Frame-processing
+
+checks verified that queued stale frames were replaced and stopped work was
+
+invalidated. Boundary and decoder checks exercised candidate construction,
+
+low-confidence rejection, repeated-sign handling and ordering. The Finish checks
+
+covered valid and invalid control conditions, activation timing and reset behavior.
+
+         English-integration checks examined gloss delivery, routing through the model
+
+interface, rejection of excessive input and restoration of name placeholders. Some
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                 | 108
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+cases used controlled substitutes for model outputs to isolate application logic. These
+
+results establish the behavior of the tested interfaces and processing rules; they are not
+
+additional measurements of language quality or sign-recognition accuracy.
+
+
+Automated Interface and Integration Testing
+
+         Nine automated cases examined navigation, layouts, controls, preferences,
+
+reference playback and session presentation. Five cases exercised the application
+
+interface through widget tests, while four exercised native layouts, controls or media
+
+integration. The combined preference/reference case also checked layouts; it is
+
+counted once under its primary responsibility.
+
+                  Table 21. Automated Interface and Integration Testing
+
+
+
+ ID        Component and checks                                 Cases   Pass     Fail   Skip
+
+ AI-01     Navigation                                           3       3        0      0
+           Application entry, page navigation and user-manual
+           navigation
+
+ AI-02     Layout and controls                                  3       3        0      0
+           Manual layout, orientation support and the current
+           camera toolbar
+
+ AI-03     Preferences and reference display                    1       1        0      0
+           Landmark preference persistence and reference
+           enlargement/dismissal
+
+ AI-04     Practice media                                       1       1        0      0
+           Playback and looping of all 100 reference videos
+
+ AI-05     Session presentation                                 1       1        0      0
+           Recognized signs, timeline and unfinished-session
+           display
+
+ Total                                                          9       9        0      0
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.              | 109
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+        All nine interface and integration cases passed in their final recorded
+
+executions. The playback case checked all 100 bundled reference videos for playback
+
+and looping. These assets are multiple inputs within one test method, rather than 100
+
+independent test cases. The reported interface checks used controlled test
+
+environments, including a mobile simulator, and do not establish physical-camera or
+
+sustained-device performance.
+
+
+Test Corrections and Interpretation
+
+        Review of the native tests identified an obsolete landscape-only expectation,
+
+which was updated to reflect the application's portrait and landscape support while
+
+retaining the landscape layout checks. The initial native execution also found a test
+
+that still expected a manual Letters control removed from the current interface. The
+
+test was aligned with the documented interface requirements to verify the absence of
+
+removed controls and the visibility of the remaining controls. The corrected toolbar
+
+and orientation cases passed on re-execution. These were corrections to outdated test
+
+expectations; the application behavior was not changed to obtain a passing result.
+
+        Passing cases support the functions and conditions exercised by those tests.
+
+They do not establish complete code-path coverage or guarantee correct recognition
+
+of every sign. Recognition accuracy, word error rate, English-output quality and
+
+on-device processing time remain separate measurements. Software test execution
+
+times were not used as substitutes for inference or application-processing times.
+
+        These    technical    testing    results   do   not    constitute participant-based
+
+software-quality findings. Participant evaluation remains subject to the approved
+
+instruments and research procedures.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.        | 110
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+                                       REFERENCES
+
+Amiruzzaman, S., Batchu, R. M., Amiruzzaman, M., Ngo, L., & Dewan, M. A. A.
+
+        (2026).    ASL     recognition    and    game-based       interaction:     A    machine
+
+        learning–driven, gamified and accessible vocabulary learning system for Deaf
+
+        learners. Computers, 15(5), 299. https://doi.org/10.3390/computers15050299
+
+Apple. (2021). Detect people, faces, and poses using Vision [Video]. Apple
+
+        Developer. https://developer.apple.com/videos/play/wwdc2021/10040/
+
+Boháček, M., & Hrúz, M. (2022). Sign pose-based transformer for word-level sign
+
+        language recognition. In Proceedings of the IEEE/CVF Winter Conference on
+
+        Applications      of     Computer       Vision     Workshops       (pp.        182–191).
+
+        https://openaccess.thecvf.com/content/WACV2022W/HADCV/papers/Bohace
+
+        k_Sign_Pose-Based_Transformer_for_Word-Level_Sign_Language_Recogniti
+
+        on_WACVW_2022_paper.pdf
+
+Camgoz, N. C., Koller, O., Hadfield, S., & Bowden, R. (2020). Sign Language
+
+        Transformers: Joint end-to-end sign language recognition and translation. In
+
+        Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+
+        Recognition                             (pp.                             10023–10033).
+
+        https://openaccess.thecvf.com/content_CVPR_2020/html/Camgoz_Sign_Lang
+
+        uage_Transformers_Joint_End-to-End_Sign_Language_Recognition_and_Tra
+
+        nslation_CVPR_2020_paper.html
+
+Chen, Y., Zuo, R., Wei, F., Wu, Y., Liu, S., & Mak, B. (2022). Two-Stream Network
+
+        for sign language recognition and translation. Advances in Neural Information
+
+        Processing                 Systems,                 35,                  17043–17056.
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.              | 111
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+        https://proceedings.neurips.cc/paper_files/paper/2022/hash/6cd3ac24cdb789be
+
+        eaa9f7145670fcae-Abstract-Conference.html
+
+Chung, H. W., Hou, L., Longpre, S., Zoph, B., Tay, Y., Fedus, W., Li, Y., Wang, X.,
+
+        Dehghani, M., Brahma, S., Webson, A., Gu, S. S., Dai, Z., Suzgun, M., Chen,
+
+        X., Chowdhery, A., Castro-Ros, A., Pellat, M., Robinson, K., … Wei, J.
+
+        (2024). Scaling instruction-finetuned language models. Journal of Machine
+
+        Learning Research, 25(70), 1–53. https://jmlr.org/papers/v25/23-0870.html
+
+DeGrace, P., & Stahl, L. H. (1990). Wicked problems, righteous solutions: A
+
+        catalogue of modern software engineering paradigms. Yourdon Press.
+
+        https://archive.org/details/wickedproblemsri0000degr
+
+Deng, J., Guo, J., Xue, N., & Zafeiriou, S. (2019). ArcFace: Additive angular margin
+
+        loss for deep face recognition. In Proceedings of the IEEE/CVF Conference on
+
+        Computer       Vision      and     Pattern     Recognition      (pp.     4690–4699).
+
+        https://openaccess.thecvf.com/content_CVPR_2019/html/Deng_ArcFace_Add
+
+        itive_Angular_Margin_Loss_for_Deep_Face_Recognition_CVPR_2019_pape
+
+        r.html
+
+Desai, A., Berger, L., Minakov, F. O., Milan, V., Singh, C., Pumphrey, K., Ladner, R.
+
+        E., Daumé III, H., Lu, A. X., Caselli, N., & Bragg, D. (2023). ASL Citizen: A
+
+        community-sourced dataset for advancing isolated sign language recognition.
+
+        arXiv. https://arxiv.org/abs/2304.05934
+
+Eunice, J., Andrew, J., Sei, Y., & Hemanth, D. J. (2023). Sign2Pose: A pose-based
+
+        approach for gloss prediction using a transformer model. Sensors, 23(5), 2853.
+
+        https://doi.org/10.3390/s23052853
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.          | 112
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+Faghri, F., Anasosalu Vasu, P. K., Koc, C., Shankar, V., Toshev, A., Tuzel, O., &
+
+        Pouransari, H. (2025). MobileCLIP2: Improving multi-modal reinforced
+
+        training.      Transactions           on     Machine         Learning         Research.
+
+        https://openreview.net/forum?id=WeF9zolng8
+
+Graves, A., Fernández, S., Gomez, F., & Schmidhuber, J. (2006). Connectionist
+
+        temporal classification: Labelling unsegmented sequence data with recurrent
+
+        neural networks. In Proceedings of the 23rd International Conference on
+
+        Machine                    Learning                   (pp.                   369–376).
+
+        https://www.cs.toronto.edu/~graves/icml_2006.pdf
+
+Gulati, A., Qin, J., Chiu, C.-C., Parmar, N., Zhang, Y., Yu, J., Han, W., Wang, S.,
+
+        Zhang, Z., Wu, Y., & Pang, R. (2020). Conformer: Convolution-augmented
+
+        Transformer for speech recognition. Proceedings of Interspeech 2020,
+
+        5036–5040. https://doi.org/10.21437/Interspeech.2020-3015
+
+Hugging             Face.           (n.d.).          Transformers                documentation.
+
+        https://huggingface.co/docs/transformers/index
+
+International Organization for Standardization. (2023). ISO/IEC 25010:2023: Systems
+
+        and software engineering — Systems and software Quality Requirements and
+
+        Evaluation          (SQuaRE)           —        Product         quality         model.
+
+        https://www.iso.org/standard/78176.html
+
+Kim, S., Gholami, A., Shaw, A., Lee, N., Mangalam, K., Malik, J., Mahoney, M. W.,
+
+        & Keutzer, K. (2022). Squeezeformer: An efficient Transformer for automatic
+
+        speech recognition. In Advances in Neural Information Processing Systems,
+
+        35.
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 113
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+        https://proceedings.neurips.cc/paper_files/paper/2022/hash/3ccf6da39eeb8fefc
+
+        8bbb1b0124adbd1-Abstract-Conference.html
+
+Lee, T., Oh, Y., & Lee, K. M. (2023). Human part-wise 3D motion context learning
+
+        for sign language recognition. In Proceedings of the IEEE/CVF International
+
+        Conference         on       Computer          Vision       (pp.          20740–20750).
+
+        https://openaccess.thecvf.com/content/ICCV2023/html/Lee_Human_Part-wise
+
+        _3D_Motion_Context_Learning_for_Sign_Language_Recognition_ICCV_20
+
+        23_paper.html
+
+Li, D., Rodriguez, C., Yu, X., & Li, H. (2020). Word-level deep sign language
+
+        recognition from video: A new large-scale dataset and methods comparison. In
+
+        Proceedings of the IEEE/CVF Winter Conference on Applications of
+
+        Computer Vision (pp. 1459–1469). https://dxli94.github.io/WLASL/
+
+Lin, K., Wang, X., Zhu, L., Sun, K., Zhang, B., & Yang, Y. (2023). Gloss-free
+
+        end-to-end sign language translation. In Proceedings of the 61st Annual
+
+        Meeting of the Association for Computational Linguistics (Volume 1: Long
+
+        Papers) (pp. 12904–12916). Association for Computational Linguistics.
+
+        https://doi.org/10.18653/v1/2023.acl-long.722
+
+Müller, M., Jiang, Z., Moryossef, A., Rios, A., & Ebling, S. (2023). Considerations
+
+        for meaningful sign language machine translation based on glosses. In
+
+        Proceedings of the 61st Annual Meeting of the Association for Computational
+
+        Linguistics (Volume 2: Short Papers) (pp. 682–693). Association for
+
+        Computational Linguistics. https://doi.org/10.18653/v1/2023.acl-short.60
+
+Moryossef, A., Yin, K., Neubig, G., & Goldberg, Y. (2021). Data augmentation for
+
+        sign language gloss translation. In Proceedings of the 1st International
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 114
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+        Workshop on Automatic Translation for Signed and Spoken Languages (pp.
+
+        1–11).    Association          for   Machine     Translation    in   the     Americas.
+
+        https://aclanthology.org/2021.mtsummit-at4ssl.1/
+
+NVIDIA.       (n.d.).      CUDA         Toolkit    documentation.      NVIDIA        Developer.
+
+        https://docs.nvidia.com/cuda/
+
+OpenCV. (n.d.). OpenCV documentation. https://docs.opencv.org/
+
+Python Software Foundation. (n.d.). Python documentation. https://docs.python.org/
+
+PyTorch.                     (n.d.).                 PyTorch                     documentation.
+
+        https://docs.pytorch.org/docs/stable/index.html
+
+Raffel, C., Shazeer, N., Roberts, A., Lee, K., Narang, S., Matena, M., Zhou, Y., Li,
+
+        W., & Liu, P. J. (2020). Exploring the limits of transfer learning with a unified
+
+        text-to-text Transformer. Journal of Machine Learning Research, 21(140),
+
+        1–67. https://jmlr.org/papers/v21/20-074.html
+
+Rastgoo, R., Kiani, K., & Escalera, S. (2021). Sign language recognition: A deep
+
+        survey.         Expert     Systems        with    Applications,      164,      113794.
+
+        https://doi.org/10.1016/j.eswa.2020.113794
+
+Renjith, S., Varghese, A., & Poorna, S. S. (2026). An efficient real-time
+
+        spatio-temporal adaptive motion pattern framework for isolated sign language
+
+        recognition (RT-STAMP-SLR). Discover Artificial Intelligence, 6, 713.
+
+        https://doi.org/10.1007/s44163-026-01429-3
+
+Renjith, S., Varghese, A., Rashmi, M., & Poorna, S. S. (2026). Transformer-based
+
+        motion-visual integrated fusion for isolated sign language recognition.
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.             | 115
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+        Computers           and      Electrical       Engineering,         130,        110902.
+
+        https://doi.org/10.1016/j.compeleceng.2025.110902
+
+Samaan, G. H., Wadie, A. R., Attia, A. K., Asaad, A. M., Kamel, A. E., Slim, S. O.,
+
+        Abdallah, M. S., & Cho, Y.-I. (2022). MediaPipe’s landmarks with RNN for
+
+        dynamic      sign     language     recognition.     Electronics,     11(19),     3228.
+
+        https://doi.org/10.3390/electronics11193228
+
+Syulistyo, A. R., Tanaka, Y., Pramanta, D., Fuengfusin, N., & Tamukoh, H. (2025).
+
+        Low-cost computation for isolated sign language video recognition with
+
+        multiple     reservoir     computing.       PLOS       ONE,      20(7),   e0322717.
+
+        https://doi.org/10.1371/journal.pone.0322717
+
+Szegedy, C., Vanhoucke, V., Ioffe, S., Shlens, J., & Wojna, Z. (2016). Rethinking the
+
+        Inception architecture for computer vision. In Proceedings of the IEEE
+
+        Conference on Computer Vision and Pattern Recognition (pp. 2818–2826).
+
+        https://doi.org/10.1109/CVPR.2016.308
+
+Violet, I. M. M., & Leena Sri, R. (2025). A comprehensive survey on recent advances
+
+        and challenges in sign language recognition systems. Discover Artificial
+
+        Intelligence, 5, 419. https://doi.org/10.1007/s44163-025-00629-7
+
+Woods, L. T., & Rana, Z. A. (2023). Modelling sign language with encoder-only
+
+        transformers and human pose estimation keypoint data. Mathematics, 11(9),
+
+        2129. https://doi.org/10.3390/math11092129
+
+World Health Organization. (2026, March 3). Deafness and hearing loss.
+
+        https://www.who.int/news-room/fact-sheets/detail/deafness-and-hearing-loss
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 116
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+Yin, K., Moryossef, A., Hochgesang, J., Goldberg, Y., & Alikhani, M. (2021).
+
+        Including signed languages in natural language processing. In Proceedings of
+
+        the 59th Annual Meeting of the Association for Computational Linguistics and
+
+        the 11th International Joint Conference on Natural Language Processing
+
+        (Volume 1: Long Papers) (pp. 7347–7360). Association for Computational
+
+        Linguistics. https://doi.org/10.18653/v1/2021.acl-long.570
+
+Zhang, F., Bazarevsky, V., Vakunov, A., Tkachenka, A., Sung, G., Chang, C.-L., &
+
+        Grundmann, M. (2020). MediaPipe Hands: On-device real-time hand tracking.
+
+        arXiv. https://arxiv.org/abs/2006.10214
+
+Zhang, H., Cissé, M., Dauphin, Y. N., & Lopez-Paz, D. (2018). mixup: Beyond
+
+        empirical    risk   minimization.      International    Conference       on   Learning
+
+        Representations. https://openreview.net/forum?id=r1Ddp1-Rb
+
+Zheng, Z., Wang, Q., Yang, D., Wang, Q., et al. (2022). L-Sign: Large-vocabulary
+
+        sign gestures recognition system. IEEE Transactions on Human-Machine
+
+        Systems, 52(2), 290–301. https://doi.org/10.1109/THMS.2022.3146787
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            | 117
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+                                       APPENDIX A
+
+
+Automated Software Test Case Register
+
+         This register lists the 47 distinct application cases summarized in Tables
+
+20–21. PY identifies Python unittest cases, SW identifies native XCTest methods, FL
+
+identifies Flutter Test cases and KT identifies JVM/JUnit cases. All entries show the
+
+latest recorded result for the case; repeated runs and multiple inputs within a case are
+
+not additional cases.
+
+         The Python run passed 245 tests in 21.550 seconds; 29 relevant cases are listed
+
+here. The Flutter run passed seven cases, comprising five widget cases and two
+
+data-handling cases. The initial selected native run passed eight of nine methods; an
+
+outdated toolbar expectation failed. After correction, the toolbar case and the updated
+
+orientation case both passed. Nine distinct native methods therefore have passing final
+
+results. The two JVM cases were explicitly re-executed and passed. There were no
+
+skips among the 47 reported cases.
+
+         Python, Flutter and JVM checks ran on the development computer. The native
+
+checks ran in the iOS 26.3 iPhone 17 Pro simulator; this identifies a simulated
+
+environment rather than physical-phone testing. The source baseline was revision
+
+8d29385239fd1eeef3fcd0a2d1697e796ffd9ac8 with the recorded working-tree test
+
+corrections. The execution record retains source hashes, method identifiers, initial
+
+failures and retest outcomes.
+
+
+
+ Case      Group    Check                                                        Result
+
+ PY-01     WB-01    Normalization keeps missing nodes exactly zero               Passed
+
+ PY-02     WB-01    Resampling preserves binary presence                         Passed
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.        | 118
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+ Case     Group     Check                                                               Result
+
+ PY-03    WB-01     Isotropic coordinates match portrait and landscape                  Passed
+
+ PY-04    WB-01     Gap interpolation fills every joint without partial zero bug        Passed
+
+ PY-05    WB-01     Rotation and unmirror are exactly reversible                        Passed
+
+ PY-06    WB-01     Image limit preserves aspect and never upscales                     Passed
+
+ PY-07    WB-01     Result round trip enforces schema                                   Passed
+
+ PY-08    WB-03     Partwise global model is finite and mobile sized                    Passed
+
+ PY-09    WB-03     Partwise temporal projection is feature isolated                    Passed
+
+ PY-10    WB-03     Small unified model has four runtime inputs                         Passed
+
+ PY-11    WB-03     Right hand and union keep their slots and rest skips encoder        Passed
+
+ PY-12    WB-04     Stream plus flush equals clip                                       Passed
+
+ PY-13    WB-04     Two signs separated by rest                                         Passed
+
+ PY-14    WB-04     Repeated movement collapses                                         Passed
+
+ PY-15    WB-04     Low confidence is not emitted                                       Passed
+
+ PY-16    WB-04     Contact requires new evidence and rejects a lowering tail           Passed
+
+ PY-17    WB-04     Completed contact survives angry exit and big crossing span         Passed
+
+ PY-18    WB-04     Early big cannot jump a pending have                                Passed
+
+ PY-19    WB-04     Whole sign span needs max inner o                                   Passed
+
+ PY-20    WB-04     Inner floor prefers the whole sign                                  Passed
+
+ PY-21    WB-04     Adjacent repeats hold reset and no fabricated eof                   Passed
+
+ PY-22    WB-04     Repeated start without end does not create a completed sign         Passed
+
+ PY-23    WB-04     Stream probabilities match complete prefix without future leakage   Passed
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.               | 119
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+ Case     Group     Check                                                              Result
+
+ PY-24    WB-06     Model receives how you together across long pause                  Passed
+
+ PY-25    WB-06     Torch contract uses model even for old reviewed phrase             Passed
+
+ PY-26    WB-06     Coreml contract uses model even for old reviewed phrase            Passed
+
+ PY-27    WB-06     Coreml overlong input falls back without silent truncation         Passed
+
+ PY-28    WB-06     Slots are restored exactly                                         Passed
+
+ PY-29    WB-06     Dropped slot falls back to literal                                 Passed
+
+ SW-01    WB-01     Camera-coordinate rotation                                         Passed
+
+ SW-02    AI-04     Playback and looping of all 100 reference videos                   Passed
+
+ SW-03    AI-03     Preference persistence and reference display controls; secondary   Passed
+                    layout checks
+
+ SW-04    WB-02     Frame backlog handling and cancellation of stopped work            Passed
+
+ SW-05    WB-05     Finish gesture conditions, activation timing and state reset       Passed
+
+ SW-06    WB-04     Whole-sign candidate across a short boundary dip                   Passed
+
+ SW-07    WB-04     Native recognition correction agrees with reference calculations   Passed
+
+ SW-08    AI-02     Current toolbar controls remain visible; removed controls remain   Passed
+                    absent
+
+ SW-09    AI-02     Portrait support and landscape control layout                      Passed
+
+ FL-01    AI-01     ATLAS shell shows the splash, then Home with its four entry        Passed
+                    points
+
+ FL-02    AI-01     Home opens Practice setup, Glosses and History, and back returns   Passed
+                    Home
+
+ FL-03    AI-01     Home opens the manual; a section leads to the next and back        Passed
+                    returns Home
+
+ FL-04    AI-02     every manual section lays out on a phone                           Passed
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.              | 120
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+ Case       Group   Check                                                              Result
+
+ FL-05      AI-05   session detail lists recognized signs and the timeline             Passed
+
+ FL-06      WB-07   history rows are described like the desktop shell                  Passed
+
+ FL-07      WB-07   native inference result contract parses single and phrase output   Passed
+
+ KT-01      WB-04   configuredBoundaryDipKeepsWholeGestureCandidate                    Passed
+
+ KT-02      WB-04   delayedClosureDoesNotRewindWordEndpoints                           Passed
+
+
+
+         The register excludes the empty desktop test scaffold, standalone performance
+
+profiles, saved-recording replay routines and unexecuted model-dependent native
+
+methods. The broader repository inventory is not treated as a single application test
+
+suite. Controlled interface checks do not establish model accuracy or complete branch
+
+coverage.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.              | 121
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+ATLAS: A Squeezeformer-Based System for Sign Language Recognition
+                 and English Translation
+
+
+
+
+            ________________________________
+
+
+
+
+          A Capstone Project Presented to the Faculty
+            of the IT and Computer Education Unit
+                    Leyte Normal University
+                         Tacloban City
+
+
+
+
+            ________________________________
+
+
+
+
+                      In Fulfillment of the
+                  Requirements for the Degree
+         Bachelor of Science in Information Technology
+
+
+
+
+            ________________________________
+
+
+
+
+                             by:
+
+                 Francis Angelo C. Batiancela
+                    Rica Sheen G. Cabidog
+                     Kyle Grant G. Lapid
+                        Jazcel A. Esio
+
+
+
+
+                        October 2026
+                                                   Table of Content
+Table of Contents..........................................................................................................ii
+List of Figures.............................................................................................................. iv
+List of Tables................................................................................................................. v
+CHAPTER 1................................................................................................................. 1
+   Introduction.............................................................................................................. 1
+   1.2 Purpose and Description.....................................................................................4
+   1.3 Objective of the Study........................................................................................7
+   1.4 Scope and Limitations........................................................................................ 7
+CHAPTER 2............................................................................................................... 12
+   2.1 Related Literature............................................................................................. 12
+        2.1.1 Sign Language Recognition and Translation.......................................... 12
+        2.1.2 Landmark-Based Visual Representation for Sign Language Recognition...17
+        2.1.3 Temporal and Sequence Modeling for Sign Language Recognition.......19
+        2.1.4 Squeezeformer as an Efficient Temporal Architecture........................... 21
+        2.1.5 RGB Hand-Crop Features and Efficient Visual Encoders...................... 23
+        2.1.6 Multimodal Fusion for Sign Language Recognition...............................25
+   2.2 Related Systems............................................................................................... 26
+        2.2.1 Vision-Based Sign Language Recognition Systems............................... 26
+        2.2.2 Landmark-Based and Keypoint-Based Recognition Systems.................28
+        2.2.3 Deep Learning-Based Sequential Sign Recognition Systems.................29
+        2.2.4 Gloss-Based or Intermediate Representation Translation Systems.........30
+        2.2.5 Streaming and Application-Oriented Sign Language Systems............... 31
+        2.2.6 Recent 100-Gloss Word-Level ASL Recognition Systems.....................33
+CHAPTER 3............................................................................................................... 36
+   3.1 Current System................................................................................................. 36
+   3.2 Proposed System.............................................................................................. 37
+        Software Requirements.................................................................................... 43
+        Hardware Requirements................................................................................... 45
+        Peopleware....................................................................................................... 47
+        Research Participants and Sampling Procedure............................................... 47
+        Recruitment Safeguards................................................................................... 49
+        Data Retention and Disposal............................................................................ 49
+CHAPTER 4............................................................................................................... 51
+   4.1 Requirements Analysis.....................................................................................51
+        Functional Requirements..................................................................................51
+        Performance Requirements.............................................................................. 53
+        Software and Hardware Requirements.............................................................55
+        Safety Requirements........................................................................................ 56
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                                            | ii
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+      Security Requirements..................................................................................... 57
+      Software Quality Evaluation Framework.........................................................58
+  4.2 Design of Software, Systems, Product, and/or Processes................................ 60
+      Systems Development Life Cycle.................................................................... 60
+      Planning and Requirement Analysis................................................................ 61
+      Activity List......................................................................................................62
+      Gantt Chart....................................................................................................... 65
+      PERT Chart...................................................................................................... 71
+      Design...............................................................................................................73
+      Context Diagram.............................................................................................. 73
+      Data Flow Diagram.......................................................................................... 74
+      Use-case........................................................................................................... 75
+      Flowchart..........................................................................................................76
+  4.3 Data Preparation and Model Development...................................................... 78
+      4.3.1 Preparation, Annotation and Data Separation......................................... 78
+      4.3.2 Input Preparation and Training Controls.................................................79
+      4.3.3 Recognition and Streaming Integration...................................................83
+      4.3.4 English Generation and Mobile Application Integration........................ 86
+  4.3.5 Final System Configuration.......................................................................... 87
+  4.4 Results and Discussion.....................................................................................89
+      4.4.1 Recognition Architecture and Model Selection...................................... 90
+      4.4.2 Orientation Adaptation and Recognition Components........................... 91
+      4.4.3 Streaming Recognition............................................................................ 93
+      Distinction Between Technical System Testing and Human Participant
+      Evaluation.........................................................................................................93
+      4.4.4 English-Output Quality........................................................................... 97
+      4.4.5 From Trained Models to Mobile Application Execution........................ 98
+      4.4.6 Recognition Performance and On-Device Execution........................... 103
+      4.4.7 Training Behavior..................................................................................104
+REFERENCES......................................................................................................... 104
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                                        | iii
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+                                             List of Figures
+Figure 1: ATLAS Live Recognition and English-Output Flow................................... 41
+Figure 2: HELLO HOW YOU Recognition Timeline................................................. 42
+Figure 3: SDLC Modified Waterfall (Sashimi) Model................................................ 61
+Figure 4: PERT Chart of the Proposed System............................................................ 72
+Figure 5: Context Diagram of the Proposed System....................................................74
+Figure 6: Data Flow Diagram of the Proposed System................................................75
+Figure 7: Proposed System Use-Case Diagram........................................................... 76
+Figure 8: Proposed System Flowchart......................................................................... 77
+Figure 9: Streaming Recognition Decisions.................................................................85
+Figure 10: Model and Deployment Selection.............................................................. 87
+Figure 11: Isolated-Sign Validation Accuracy............................................................. 93
+Figure 12: Recognition Performance Across Development Stages............................. 95
+Figure 13: Model Export and Mobile Application Integration.................................. 102
+Figure 14: Base Landmark Classifier Training.......................................................... 104
+Figure 15: English-Model Fine-Tuning......................................................................105
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                           | iv
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+                                                   List of Tables
+Table 1: Software and Descriptions..............................................................................43
+Table 2: Hardware Components and Descriptions....................................................... 45
+Table 3: Functional Requirements................................................................................51
+Table 4: Performance Requirements............................................................................ 53
+Table 5: Software and Hardware Requirements...........................................................55
+Table 6: Safety Requirements.......................................................................................56
+Table 7: Security Requirements................................................................................... 57
+Table 8: Activity List....................................................................................................62
+Table 9: GANTT Chart.................................................................................................66
+Table 10: Data Preparation and Training Methods.......................................................80
+Table 11: Base Landmark Classifier Comparison........................................................ 90
+Table 12: Isolated-Sign Validation Accuracy...............................................................91
+Table 13: Recognition Performance Across Development Stages...............................94
+Table 14: English-Output Comparison.........................................................................97
+Table 15: Neural Models and Their Deployment Exports........................................... 99
+Table 16: Primary Recognizer Accuracy After Conversion.......................................103
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.                                       |v
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+                                    CHAPTER 1
+
+       This chapter presents the background of the study on the development of
+
+ATLAS, a Squeezeformer-based system for sign language recognition and English
+
+translation on mobile devices. It discusses developments in artificial intelligence and
+
+deep learning, their application to sign language processing, and the challenges
+
+involved in bringing these approaches into practical communication settings. The
+
+chapter also outlines the purpose, objectives, scope, and limitations of the study,
+
+highlighting the need for accessible communication support within an academic
+
+environment.
+
+
+                                    Introduction
+
+       Communication is a fundamental human need and a key driver of educational
+
+and social inclusion. However, communication barriers persist between sign language
+
+users and individuals who do not understand sign language. Hearing loss affects a
+
+substantial portion of the global population, and inadequate communication support
+
+can limit access to education, employment, healthcare, and everyday social
+
+participation (World Health Organization, 2026). In academic settings such as Leyte
+
+Normal University (LNU), interactions between Deaf or hard-of-hearing students and
+
+non-signing faculty or peers may rely on written notes, typed text exchanges, or
+
+improvised gestures. Although these approaches provide ways to exchange
+
+information, repeatedly shifting between signing and writing can interrupt
+
+conversational flow and require additional effort from both participants. The need for
+
+communication support therefore extends beyond making information available to
+
+helping people convey and understand a message during an interaction.
+        Recent advances in artificial intelligence, computer vision, and natural
+
+language processing offer promising avenues for automated sign language recognition
+
+and translation. One approach is the use of landmark-based skeletal representations,
+
+which describe signing through selected coordinate points on the hands, face, and
+
+upper body. By tracking these points across frames, landmark extraction captures
+
+movement and spatial relationships in a compact form that sequence models can
+
+process. Frameworks such as Apple Vision and MediaPipe provide tools for obtaining
+
+these landmarks from camera images (Apple, n.d.-a; Zhang et al., 2020). These
+
+representations allow recognition to focus on the signer's movement while reducing
+
+the amount of visual information passed to the temporal model.
+
+        However, landmark coordinates alone may omit subtle handshape details
+
+during fast motion, hand occlusion, or complex articulation. A representation of joint
+
+positions may describe where a hand moves without preserving all of the visual
+
+details needed to distinguish it from a similar sign. Cropped hand images provide
+
+complementary evidence by retaining the appearance of the signing hands.
+
+Combining landmark tracks with features extracted from these images allows a
+
+multimodal recognition model to consider both movement and handshape. This
+
+combination is particularly relevant when the system must distinguish signs using
+
+information that neither input captures fully on its own.
+
+        Recognizing signs is only the first step in bridging the communication gap.
+
+Signed languages possess grammatical structures, spatial relationships, and
+
+non-manual signals that do not map word-for-word to spoken or written English
+
+(Camgoz et al., 2020; Müller et al., 2023). A sequence of glosses, or written labels
+
+representing recognized signs, provides an intermediate representation of the visual
+
+input. However, displaying that sequence alone does not perform the language
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   |2
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+processing needed to express it in English. A recognition-and-generation approach
+
+therefore connects the identification of signs across time with a language component
+
+that produces English from the recognized sequence.
+
+         To address sequence modeling, hybrid architectures combine self-attention
+
+with convolution so that a model can relate information across frames while also
+
+capturing local patterns. Squeezeformer brings these mechanisms together in an
+
+architecture developed for efficient temporal processing (Kim et al., 2022). For target
+
+language generation, the Text-to-Text Transfer Transformer (T5) offers a unified
+
+sequence-to-sequence framework in which an input sequence is mapped to generated
+
+text (Raffel et al., 2020; Chung et al., 2024). These approaches provide
+
+complementary foundations for a system that must first interpret visual changes
+
+during signing and then express its recognized input in English.
+
+         Despite technological progress, practical deployment presents challenges
+
+beyond recognizing signs in isolated, pre-segmented video clips. A live application
+
+must process incoming frames within the device's computational capacity, locate
+
+candidate sign intervals, and determine when a prediction is ready to be accepted. It
+
+must also connect recognized glosses with English generation, since gloss sequences
+
+do not fully represent the grammar and meaning of a signed message (Müller et al.,
+
+2023).    To    address    these    challenges,    this   study     develops     ATLAS:        A
+
+Squeezeformer-Based System for Sign Language Recognition and English
+
+Translation. The application integrates landmark features, MobileCLIP2 hand-image
+
+features, a Squeezeformer-based recognizer combining landmark motion and
+
+hand-image features, and Streaming Sign Recognition through boundary detection
+
+and segmental decoding. A fine-tuned T5-efficient-tiny model generates English from
+
+the accepted gloss sequence, with message completion controls and local
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.            |3
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+text-to-speech output supporting the interaction. Through this architecture, the study
+
+aims to contribute an assistive communication tool that brings sign recognition and
+
+English output together in a mobile application for use in academic environments
+
+such as LNU.
+
+
+
+
+1.2 Purpose and Description
+
+        The primary purpose of this study is to design, implement, and empirically
+
+evaluate ATLAS: A Squeezeformer-Based System for Sign Language Recognition
+
+and English Translation. The proposed system is intended to assist non-sign language
+
+users in understanding signed communication by translating sign language input into
+
+English text and spoken audio. The study will involve eligible members of the Leyte
+
+Normal University (LNU) community as research participants, including selected
+
+students, faculty members, and staff. Participants will be recruited for the study’s
+
+system evaluation and signing-related activities, including live signing and
+
+model-testing activities. The specific participant eligibility requirements, quota
+
+allocation, recruitment procedures, and participant activities are described in Chapter
+
+4.
+
+
+        The intended users of ATLAS and the research participants represent related
+
+but distinct concepts. The system is designed to support non-sign language users in
+
+academic and other campus communication settings, while the research participants
+
+consist of eligible LNU students, faculty members, and staff selected according to the
+
+study’s defined participant quotas.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    |4
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+        ATLAS operates with a 100-sign ASL prototype vocabulary containing
+
+foundational signs and organizes its processing into four cooperating functional
+
+components. First, Visual Extraction obtains hand, face, and upper-body landmarks
+
+through a landmark extractor and extracts features from cropped hand images through
+
+MobileCLIP2. These inputs represent different aspects of the same signing activity:
+
+the landmarks describe positions and movement, while the hand images contribute
+
+appearance information. Streaming Sign Recognition then brings these inputs together
+
+with temporal boundary estimates to evaluate candidate sign intervals.
+
+        Within Streaming Sign Recognition, the boundary model estimates where
+
+candidate signs occur, the Squeezeformer-based recognizer evaluates their content,
+
+and the segmental decoder selects a sequence of accepted signs. Gloss Management
+
+maintains those outputs in a visible gloss buffer, preserving the recognized order as
+
+signing continues. English Generation and Speech Output uses the accumulated
+
+glosses to prepare English text through T5-efficient-tiny. This division of
+
+responsibilities allows the visual, temporal, and language components to work
+
+together while keeping their roles clear within the application.
+
+        For sequence recognition, ATLAS adopts Squeezeformer as its temporal
+
+architecture. Its combination of attention and convolution provides a basis for
+
+processing both local changes and relationships across frames (Kim et al., 2022). In
+
+the application, this processing is applied to candidate sign intervals rather than
+
+treating each camera frame as a complete sign. Combined landmark and hand-image
+
+evidence is used to identify the interval's content, while the boundary model and
+
+decoder manage how that prediction becomes part of the recognized sequence.
+
+        For the English generation, ATLAS uses a fine-tuned T5-efficient-tiny model.
+
+The text-to-text approach supplies a framework for learning the relationship between
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   |5
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+an input sequence and its English rendering (Raffel et al., 2020; Chung et al., 2024).
+
+In ATLAS, the input is the gloss sequence maintained by the recognition components.
+
+As this sequence grows, the language model prepares English updates, connecting the
+
+recognition output with text that can be presented to the non-signing recipient.
+
+        During Live use, the signer performs signs within the camera view while the
+
+system evaluates candidate intervals and appends accepted glosses to the buffer.
+
+When the message is complete, the signer selects the Finish button or holds both open
+
+palms for one second. The system then finalizes the remaining English text and
+
+provides local speech output. On-device inference executes the exported models
+
+locally, allowing recognition and English generation to take place within the mobile
+
+application. The Glosses reference, Practice activities, and History complement Live
+
+recognition by allowing users to inspect the vocabulary, practice supported signs, and
+
+review saved sessions within the same application.
+
+        To    evaluate    ATLAS,      isolated-sign     data,   sign-sequence    data,   and
+
+gloss-to-English pairs serve the respective recognition and language tasks. Technical
+
+assessment considers recognition accuracy, errors in the recognized sequence,
+
+English-output quality, and processing time, so that the contribution of each part can
+
+be examined within its intended role. The ISO/IEC 25010:2023 quality framework
+
+provides criteria for assessing application behavior and quality. Together, these
+
+assessments connect model performance with the operation of the application as a
+
+communication support tool.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.           |6
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+1.3 Objective of the Study
+
+        The primary objective of this study is to design, implement, and evaluate
+
+ATLAS: A Squeezeformer-Based System for Sign Language Recognition and
+
+English Translation, a mobile application that recognizes a 100-sign ASL
+
+prototype vocabulary and generates English text and local speech from the
+
+recognized sequence.
+
+        Specifically, this study aims to:
+
+●​ Develop a multimodal recognition and translation pipeline combining landmark
+
+    extraction, MobileCLIP2 hand-image features, Squeezeformer-based temporal
+
+    recognition, and a fine-tuned T5-efficient-tiny language generation model.
+
+●​ Evaluate the performance of the recognition and English-generation components
+
+    using technical metrics, including Top-1 accuracy, Top-5 accuracy, word error
+
+    rate, and BLEU across their respective evaluation data.
+
+●​ Implement the trained models in a mobile application with Streaming Sign
+
+    Recognition, gloss management, incremental English generation, message
+
+    completion through the Finish button or one-second held-open-palms gesture,
+
+    and local text-to-speech output.
+
+●​ Validate the developed system using the ISO/IEC 25010:2023 quality framework
+
+    and appropriate software evaluation procedures, including black-box testing for
+
+    functional behavior and white-box testing for internal logic and processing flow.
+
+
+
+
+1.4 Scope and Limitations
+
+        In terms of research participation, the study will involve 50 selected
+
+eligible members of the Leyte Normal University (LNU) community, specifically
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.    |7
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+students, faculty members, and staff. The approximate population considered for
+
+the study is 7,500 individuals. The 50 participants will be recruited through
+
+quota sampling based on the predefined participant categories and quotas
+
+described in Chapter 4. This number is intended for the testing and evaluation of
+
+the ATLAS application and is not intended to represent the entire LNU
+
+population. Consequently, the findings will be limited to the responses and
+
+evaluation results of the selected participants and will not be generalized to the
+
+entire university population. Participants must be at least 18 years old. Prior
+
+knowledge of American Sign Language (ASL) or previous signing experience is
+
+not required. The selected participants will take part in the system evaluation,
+
+signing activities, and model-testing activities of ATLAS.
+
+
+        The study shall use stratified quota sampling to select participants from
+
+the eligible student population. The population shall first be divided into relevant
+
+strata based on the participant characteristics established for the study, and a
+
+predetermined quota shall be assigned to each applicable stratum. Eligible
+
+participants shall then be recruited until the required quota for each stratum is
+
+reached. Only individuals who satisfy the approved eligibility requirements and
+
+voluntarily provide informed consent shall be included in the study.
+
+
+        Recruitment shall be conducted in a manner that minimizes actual or
+
+perceived pressure arising from academic, administrative, supervisory, or other
+
+authority relationships. Potential participants shall receive an invitation
+
+explaining the purpose of the study, the eligibility requirements, the procedures
+
+involved, the voluntary nature of participation, and their rights as research
+
+participants. No individual shall be required or pressured to participate because
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   |8
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+of their status as a student or member of the university community. In particular,
+
+the researchers shall avoid directly soliciting participation from students whom
+
+they currently teach, grade, assess, supervise, or otherwise have direct academic
+
+authority over whenever an alternative recruitment approach is reasonably
+
+available.
+
+
+        Participation shall not be a requirement for academic completion,
+
+grading, employment, performance evaluation, access to university services, or
+
+any other university-related benefit. Individuals who decline to participate or
+
+subsequently withdraw within the permitted withdrawal period shall not incur
+
+any academic, employment-related, administrative, or other penalty.
+
+
+        The application brings together Visual Extraction, Streaming Sign
+
+Recognition, Gloss Management, and English Generation and Speech Output.
+
+These components cover the processing of camera input, the identification and
+
+acceptance of signs, and the generation of English text and local speech from the
+
+recognized sequence.
+
+
+        The language scope of ATLAS is specifically limited to American Sign
+
+Language (ASL) within the selected 100-sign vocabulary used for the
+
+development and evaluation of the prototype. The system is designed to
+
+recognize the selected ASL signs and provide corresponding English output.
+
+ATLAS does not support Filipino Sign Language (FSL), Waray Sign Language,
+
+or other regional or local sign languages used in the Philippines. The use of an
+
+ASL-based dataset and vocabulary means that the results of the study should not
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   |9
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+

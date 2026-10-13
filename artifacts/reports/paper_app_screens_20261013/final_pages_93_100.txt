@@ -1,0 +1,233 @@
+Application startup and home screen
+
+
+
+
+               Figure 10. ATLAS splash screen (left) and home screen (right).
+        The splash screen presents the ATLAS name and application identity during
+
+startup. The home screen provides access to live translation through Start translating
+
+and to the Practice, Glosses and History functions. It also provides access to the
+
+application guide. These entry points organize the application's main functions in a
+
+common navigation screen.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 88
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+Live sign recognition
+
+
+
+
+     Figure 11. Live sign recognition: ready state (top) and active recognition (bottom).
+        The Live interface displays the device camera preview together with
+
+recognition feedback, accepted glosses and generated English. Camera frames provide
+
+landmark and hand-image inputs for on-device inference. The boundary detector and
+
+recognizer support the identification of candidate sign intervals, while the decoder
+
+determines which glosses are accepted into the sequence. The visible output allows
+
+users to inspect the recognized message during the interaction. Camera and
+
+landmark-display controls support the capture and viewing of signing input.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.              | 89
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+Message completion and output
+
+
+
+
+        Figure 12. Recorded signs and retained English output from a saved session.
+        The Finish control indicates that the user has completed the message. The
+
+application finalizes the remaining text and provides speech output for the completed
+
+English message. Displaying the accepted glosses and generated English allows the
+
+user to inspect both the recognized sign sequence and its English rendering. Figure 12
+
+shows how the application retains the recognized signs and English output for
+
+subsequent review.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.        | 90
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+Practice
+
+
+
+
+               Figure 13. Practice selection (left) and signing interface (right).
+        The Practice function allows users to select a set of supported signs and
+
+attempt them using the device camera. Reference demonstrations provide a visual
+
+example of the requested sign, while the interface presents feedback during the
+
+practice activity. Users can proceed through the selected set and review the practice
+
+summary afterward. The feedback reflects the recognizer's response to the captured
+
+input and should not be interpreted as an independent assessment of signing
+
+proficiency.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.       | 91
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+Vocabulary browsing
+
+
+
+
+        Figure 14. Glosses vocabulary browser (left) and sign demonstration (right).
+        The Glosses function provides access to the application's supported
+
+vocabulary. Users can browse or search for a sign and open its detail screen to view a
+
+demonstration. Playback controls support closer examination of the example before
+
+attempting the sign. This function makes the available vocabulary visible and
+
+provides a reference for interaction with the recognition component.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.         | 92
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+Session history
+
+
+
+
+                                   Figure 15. Session history.
+        The History function lists previous sessions for review. Opening a session
+
+displays its recorded signs and available English output, together with a sign timeline.
+
+The detail screen also identifies sessions that ended before Finish. These records
+
+allow users to revisit earlier interactions and inspect the output retained by the
+
+application.
+
+        Together, these screens connect sign capture, recognition feedback, English
+
+output, vocabulary reference and session review within the mobile application.
+
+Recognition remains limited to the supported vocabulary and depends on the quality
+
+and   completeness      of   the    captured     input.   Quantitative    performance   and
+
+software-testing results are reported in Section 4.5.
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.          | 93
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+4.4 Implementation Plan (Infrastructure/Deployment)
+
+
+4.4.1 Implementation Overview
+
+
+          The implementation plan concerns ATLAS: A Squeezeformer-Based System
+
+for Sign Language Recognition and English Translation. Its purpose is to integrate the
+
+selected recognition and English-generation components into a mobile application
+
+that captures signing, maintains accepted glosses and presents English text and local
+
+speech.
+
+          Implementation covers model preparation, application integration, device
+
+deployment and evaluation. Its objectives are to preserve recognition behavior after
+
+conversion, connect the processing components correctly, provide the intended
+
+application functions and document performance under the stated evaluation
+
+conditions. The implementation schedule follows the activities identified in the
+
+project GANTT and PERT charts.
+
+
+4.4.2 Model and Application Deployment
+
+          The trained neural components are exported for on-device inference. FP32
+
+uses 32-bit floating-point values, while FP16 uses 16-bit values. The selected
+
+configuration uses FP16 visual and recognition components and retains FP32 for
+
+English generation. The deployment evaluation examines recognition performance,
+
+model storage, and processing time. Figure 16 summarizes how the component
+
+comparisons inform these engineering choices.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 94
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+                        Figure 16. Model and Deployment Selection
+
+        ATLAS brings together four neural components with different responsibilities:
+
+the temporal boundary model, the Squeezeformer-based recognizer, the MobileCLIP2
+
+image encoder and T5-efficient-tiny. The boundary model estimates candidate sign
+
+timing, while the recognizer determines which signs those intervals contain.
+
+MobileCLIP2 supplies hand-appearance features that complement landmark motion,
+
+and T5-efficient-tiny turns the accepted gloss sequence into English. These
+
+components connect visual recognition with sentence generation, but they are not a
+
+single trained model.
+
+
+
+
+___________________________________________________________________________
+
+Batiancela, F. C., Cabidog, R. G., Lapid, K. G., Esio, J. A., & Funcion, D. D.   | 95
+LNU-REC SOP VERSION 2​ ​                  VERSION DATE: 10/7/2026
+

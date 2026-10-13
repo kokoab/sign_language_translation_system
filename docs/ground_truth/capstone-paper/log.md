@@ -1,3 +1,143 @@
+## 2026-10-13 — Application walkthrough inserted into Manuscript
+
+At explicit user authorization, replaced only the brief 4.3.3 feature discussion
+with the approved walkthrough and ten images grouped into Figures10–15. Native
+inline images preserve aspect ratio: portrait125–160pt wide, Live325pt wide,
+Practice landscape250pt wide. Six figure groups occupy printed pages88–93 with
+captions and descriptions; no single image occupies a full page. Initial Practice
+pair wrapped; reduced landscape width and verified side-by-side PDF rendering.
+Matched manuscript Times New Roman and double-spaced prose, compact figure spacing.
+Former Figures10–15 became16–21; downstream cross-references, figure/table lists
+and affected contents page references updated. Other12tab bodies and image metadata
+(excluding refreshed fetch URLs) compare unchanged. SDLC, PERT, GANTT and existing
+models/results preserved. Local reviewMD records application and retained source notes.
+
+Live/Practice remain prepared interface illustrations from actual phone layouts
+and source signer frames; active HELLO99% is backed by the fresh native-code Mac
+replay. Do not describe these as unmodified screenshots of a phone replay. No new
+performance claim, production change, or invented session output was inserted.
+PDF/readback evidence: artifacts/reports/paper_app_screens_20261013/.
+Pre-existing AppendixA list entry has no matching body heading in the current tab;
+left that unrelated state untouched rather than inventing its page number.
+Next safe action: user review of Manuscript4.3.3.
+
+## 2026-10-13 — Application images prepared; supplied session replay verified
+
+Updated APPLICATION_SCREENSHOTS_REVIEW.md with ten embedded images covering startup,
+Live ready/recognized, recorded output, Practice, local-only Glosses, and History.
+Captured iPhone13 screens directly and through Mirroring; black direct captures while
+mirrored were replaced with real mirroring captures. Final Live/Practice are landscape
+image-generated interface illustrations with signer frames from the user-supplied
+Downloads/20260930_134459_04.mp4. No burned-in disclaimer per user instruction; editing
+and evidence notes remain in reviewMD. ANG search shows only local ANGRY/LANGUAGE;
+ANSWER detail and FRIEND Practice reference also local. No GoogleDocs upload.
+
+At user's request, compiled current canonical native Core/Models/Decoder/Engine into
+an isolated Mac video harness, using bundled FP16 models and FINISH=1. Supplied5.12s
+video gives HELLO GOOD MORNING HOW YOU; HELLO score .99329798 and identity commit .78s.
+YOU is emitted on EOF flush. Active figure shows HELLO99% with the0.8s video frame.
+This is Mac replay evidence, not a newly captured phone-recognition result. Supplied
+video differs from same-named phone copy; hash and result JSON retained in
+artifacts/reports/paper_app_screens_20261013/. No production source/model changes.
+Verified all10image links and inspected landscape outputs. Next: user reviews local
+Markdown images before any GoogleDocs insertion.
+
+## 2026-10-13 — Application screenshot walkthrough drafted for review
+
+Created docs/capstone_papers/APPLICATION_SCREENSHOTS_REVIEW.md with proposed
+4.3.3 wording, six figure groups, captions, review checkboxes and source register.
+User requested Markdown first after authorizing iPhone13 and past-session imagery.
+Verified screen functions against current shell sources and mobile state notes.
+Actual captures and session selection remain pending; composites must be identified
+and recorded outputs preserved. GoogleDocs and existing manuscript unchanged.
+Next: user reviews wording, then capture current device screens and select session frames.
+
+## 2026-10-13 — Software tests executed; results applied to Manuscript
+
+User authorized execution, fixes and GoogleDocs insertion. Python245/245 andFlutter7/7
+pass. Selected native simulator initial8/9; obsolete Letters-button expectation failed
+against documented toolbar removal. Updated assertion to require removed controls absent
+and retained controls visible; corrected portrait-first expectation before initial run.
+Two-case native retest passes;9unique native cases finallypass. JVM2/2freshforcedrun
+passes after narrowing Gradle fromthird-partyplugin tests toapp; preserved failed/cached
+attempts. Paper subset47cases (29Python+9native+7Flutter+2JVM):38internal+9interface,
+allpassing finalresults,0skips. Exact mapping/hashes/logs inpaper_software_testing_20261013.
+Inserted Tables20–21, scopedresults, correctionhistory andAppendixA intoManuscript4.5.5.
+Existing participant provisions/modelmetrics retained; other tabs verified unchanged.
+ReviewMD nowcontains appliedresults above retainedhistoricalproposal. No training,
+protected evaluation, productionbehavior change orphysicaldeviceinstallation.
+Next: user reviews appliedtestingsection; participant/deviceclaims remain separate.
+
+## 2026-10-13 — Testing draft placement corrected to results and discussion
+
+User specified results-and-discussion placement. Updated WHITE_BOX_TESTING_REVIEW.md
+so all main-paper testing prose and tables belong under4.5.5 within4.5Implementation
+Results. Removed proposed4.2insertion and reframed opening as results discussion.
+Appendix retains detailed evidence. GoogleDocs unchanged; no tests executed.
+Next: user reviews the revised draft and unresolved result cells.
+
+## 2026-10-13 — Manuscript-ready testing review draft saved
+
+User requested Markdown first. Created docs/capstone_papers/WHITE_BOX_TESTING_REVIEW.md
+with checkbox review items, exact4.2method prose,4.5.5white-box/interface discussions,
+two grouped result tables, interpretation and appendix register. Editorial notes
+separate recorded7/7Flutter and3/3native results from unresolved consolidated counts;
+parameterized assets and overlapping retests are not double-counted. Includes source
+inventory/method mapping, staleportrait assertion and reference-paper access limits.
+No GoogleDocs, test-source or application edits; no tests executed. Checked Markdown
+structure and whitespace. Next: user reviews draft, then authorize scope/test alignment
+and execution before filling unresolved table counts.
+
+## 2026-10-13 — Swift and Flutter testing included in white-box proposal
+
+Read native RunnerTests, Flutter widget_test.dart, Swift speed-check harness and
+Android alignment tests. Inventory:22iOS XCTest methods,7Flutter cases (5widget,
+2unit),2Android JVM cases; macOS testExample is an empty scaffold and excluded.
+Native methods mix internal assertions, integration checks and replay/profiling;
+not22pure unit tests. Recorded mobile-controls results support7/7Flutter and3/3
+focused native simulator tests, plus a later1/1layout retest; overlapping runs must
+not be added as independent cases. No fresh execution this turn.
+Found stale testLiveAndPracticeKeepLandscapeLayout rejects portrait while current
+controller supports portrait and newlayout test asserts portrait-first behavior.
+Resolve stale assertion before a complete-suite success claim; not changed here.
+Proposal revised to group cross-language evidence by application component, separate
+internal white-box checks from widget/functional checks and benchmarks, and retain
+framework/method IDs in an appendix. Main paper remains platform-neutral. No
+manuscript, application or test-source edits. Next: agree reporting scope, align
+stale test with current requirements and execute a versioned bounded suite.
+
+## 2026-10-13 — White-box testing reference review and proposal
+
+Read both accessible DIRTX PDFs in the user-supplied Drive folder. Their white-box
+section groups tests by nine application modules (WB-01–WB-09), with functions,
+time and pass remarks; manuscript printed pages39–40. Black-box evaluation is
+reported separately. Denver shortcut fetch returns403 and Paula folder listing
+fails/returns no accessible items; those papers were not reviewed.
+Static AST inventory finds245 test methods across24 canonical ATLAS Python test
+files; this is not a fresh execution or coverage result. Inspected extractor,
+window runtime, segmental runtime, boundary, English-contract and mobile widget
+checks. Proposed main-paper summary by processing component, representative
+internal cases, and appendix mapping to exact test IDs/results; separate UI/widget
+checks and research-only/alternative-model tests from selected-runtime logic.
+Omit unit-test timing as a substitute for application inference timing. Do not
+claim100%code coverage from test count or passing assertions. No manuscript edit
+and no test/training run. Next: agree scope, map relevant cases, run that bounded
+suite and report pass/fail/skip counts with source revision.
+
+## 2026-10-13 — Chapter 4 reorganization applied to Manuscript
+
+User authorized application to Manuscript (`t.d1buvx4fb1j1`). Reorganized development
+methods into4.2, prototype into4.3, deployment plan into4.4 and results into4.5.
+Original4.1/4.2 blocks verified identical except shifted indexes: SDLC, ActivityList,
+GANTT, PERT, diagrams and requirements preserved. Participant provisions moved verbatim.
+Other tab bodies, including PageCheck, unchanged. Existing native tables and seven
+figure assets carried over; captions/references/contents lists updated. Added resource
+and risk matrices; pending budgets, assignments and software-quality evidence remain
+explicit. No new model results or experiments. Draft application record updated.
+Read-back and PDF layout QA completed; caption breaks and table wrapping corrected.
+Report: artifacts/reports/manuscript_ch4_reorganization_20261013/REPORT.md.
+Next safe action: user reviews Manuscript and supplies remaining resource/evaluation records.
+
 ## 2026-10-13 — Granular 22-commit follow-up series published
 
 User authorized push. Normal fast-forward advanced origin/main from2bf2adca to
