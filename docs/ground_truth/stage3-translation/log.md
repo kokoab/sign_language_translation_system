@@ -1,3 +1,25 @@
+## 2026-10-14 — Live captions wired into the desktop Live screen (default)
+
+User: "put it into the desktop interface first". scripts/live_captions_v17.py (self-contained
+runtime) + artifacts/models/live_captions_v17_20261014/ (5 state dicts, vocab.json, manifest
+SHA-256). scripts/live_segmental_v17.py: captions fill the sentence panel while signing (newest
+3 lines; scripts/reel_hud_v17.py caption_tail), settled English sentences spoken instead of
+glosses, Finish optional (finalizes + records utterance rendering_mode=live_captions; T5 not
+loaded), live_caption history events, provenance hashes. app_shell flags --no-live-captions
+(old path) and --caption-end-seconds (3.5). No ATLAS or phone change.
+Context for the live tagger set to 0 (open clause only), chosen on corpus validation: sentence
+agreement 75.0% vs 70.3% (ctx16), chrF++ equal. Frozen evals ctx0 vs ctx16: held-out thought
+there 697 vs 706, BLEU 67.6 vs 67.2; stress unchanged (3,200 signs kept, 0 invented, NO 539);
+phone NE 0.16 both; compute p50 2.1 vs 4.7 ms, flat with length. Not re-tuned on held-out.
+test/test_live_captions_v17.py: 9 tests incl. exact parity with the evaluated engine on 46
+recorded/diagnostic + 60 random streams (orphan punctuation hidden in the app). 195 tests pass
+across caption/HUD/shell/pages/integration/live suites. Headless desktop run on recorded 58-sign
+session 20260928_095748_940053: recognition identical with captions off (53 words), frame compute
+23.4 vs 24.4 ms median; old T5 fell back to literal glosses (context limit). Fixed during
+integration: spoken fingerspelled names misaligned, end-of-turn float tolerance.
+Not done: interactive camera session by the user; iPhone/Android untouched.
+Next safe action: user tries the desktop app live; collect live_caption histories for review.
+
 ## 2026-10-13 — v2 live caption engine: meaning parity with Finish-time T5, live
 
 User: "fix it", meaning over word-for-word, good and fast UX. experiments/streaming_translation/
