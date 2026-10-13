@@ -7,6 +7,22 @@ Measured results, rejected approaches, and progress snapshots. Not read start-to
 
 ---
 
+## 2026-10-13 — Dated main commit series published on user request
+
+User authorized pushing the completed October8–13 series. Normal fast-forward push
+advanced origin/main from f69286f5 to392738ee, publishing24dated work commits.
+Live ls-remote confirms remote main matches that work tip. All24commits use
+kokoab <batiancelafrancis747@gmail.com> for author and committer, with both dates
+matching the logged Manila day. Prior focused checks:35tests pass; full-series
+whitespace, identity, dates, modes and2288selected snapshots verified.
+Source, tests, documentation and compact evidence are published; local datasets,
+weights, caches, incidental permissions and the unversioned sibling app remain local.
+This required publication record is committed separately without rewriting published
+history. Newer uncommitted HELLO-figure work is preserved and is not included by
+staging the working log wholesale. No training, protected test or phone deployment.
+Next safe action: verify main/origin/main synchronization and review subsequent work
+under its own commit scope.
+
 ## 2026-10-13 — HELLO HOW YOU figure completed with verified signer frames
 
 Matched development case022d8f1f67a525ad4ea7 to local:HELLO_HOW_YOU:00424e11 in
