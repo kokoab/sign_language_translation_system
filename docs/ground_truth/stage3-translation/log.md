@@ -1,3 +1,91 @@
+## 2026-10-13 — v2 live caption engine: meaning parity with Finish-time T5, live
+
+User: "fix it", meaning over word-for-word, good and fast UX. experiments/streaming_translation/
+caption_tagger/REPORT_V2.md, live_caption.py. No ATLAS writes (0 files changed since start of
+round), no API spend. Training total 1,592s of the 30-min allowance (mover 175s, labeler 135s,
+boundary-retrained live k1 123s added). Learned clause finalizer: mover (≤1 sign moved, covers
+97% of corpus sentences) + bidirectional labeler (91.6% exact per-sign tags). Live k1 = average of
+phase-2 model and boundary-retrained one (validation boundary 93.0→93.8%, joint 82.6%).
+Held-out 784 sentences, "thought there" (negation/question/tense/WH/all signs agree with ref):
+v2 706, T5 at Finish 708, first tagger 665; WH 67/75, negation 24/29 (T5 24). Stress 3,200
+all-class combos: every sign 3,200/3,200, 0 invented sign words, NO 539/539, pronoun inserts
+74 (T5 445), scoped tense conflicts 5/192 (T5 1). Phone traces (tuning data): NE 0.16 (phase-1
+0.91), first text immediate, median settle 0.003s after last sign, 15/20 no rewrite.
+Policy chosen on phone traces: draft without guessed punctuation, rewrite only for meaning
+(moved WH/NO, lost negation, tense contradicting governing time sign), end of turn 3.5s,
+no tail period. Fixed in passing: early sentence close before WH, split fingerspelling,
+pause during fingerspelling, 48-sign limit (frozen clauses + 16-sign context).
+Speed 1 CPU thread: p50 4.7 / p95 8.1 / max 15.8 ms per update (T5 38 ms/request); loaded
+machine p50 14–19 ms. Not iPhone-measured. Open: YOU vs YOUR ("What are you name?"),
+multi-verb NO scope, awkward rare inputs. Next safe action: Swift/Core ML port and on-device
+timing only with the user's go-ahead; independent signer review of captions.
+
+## 2026-10-13 — Phase 2 subtitle captions: learned monotone tagger; no promotion
+
+User direction: English should behave like live subtitles — the exact sign plus a
+limited insertion set (I GO HOSPITAL TOMORROW MORNING); account for all 100 classes
+and their combinations. experiments/streaming_translation/caption_tagger/ (REPORT,
+RESEARCH, PLAN). No ATLAS writes, app change, API spend or protected data.
+Corpus (train,105,578 sentences): 80.2% renderable in sign order with insertions only;
+moved WH 8.3%, NO 2.9%, time 2.7% (stylistic), other 5.9%. 72 inserted word types;
+top20 cover92.7%, 170 phrases cover99.2%; 64% of glosses need no insertion.
+Learned 1.58M causal tagger (insertion/form/punctuation, lookahead k); 1,160s of the
+30-min allowance used. Held-out 300 sessions: k1 BLEU63.4/chrF++78.8, all signs present
+and ordered 300/300, NO 42/42; installed tiny T5 at Finish 75.1/85.1 but drops signs in
+10/300. Gap concentrated in WH-final (chrF 54.9 vs 90.6) and late NO.
+Phone traces: commit-k1 NE0 (phase-1 revisable T5 0.91), median sign→final 1.04s;
+k0 draft+k1 commit NE0.10, first text immediately. 100-class stress (3,200 new combos,
+every class ≥47×): tagger all signs 99.3%, 0 invented sign words, NO 539/539;
+T5 84.2% (55.5% on random orders), 70 invented, 97/101 classes dropped at least once.
+Training covers 74.7% of sign pairs, 5.8% of triples. Failures: late time sign
+(k1 tense conflicts 10/49 when time follows the verb; k2 1/49), WH-final echo forms,
+ambiguous late NO, inserted pronouns 7%, learned EAT drop 7.1%. T5 sentence-end rewrite
+scores close to T5 but flips meaning (NO I TIRED→not tired); not adopted.
+Unrelated: ~302 ATLAS/mobile_app files changed ~20:45 by another process (Flutter
+build/test outputs and lib/shell); not touched or reverted here.
+Next safe action: learned bounded clause revision (late tense, WH-fronting, negation
+placement) within the closed inventory; fresh all-class evaluation with independent review.
+
+## 2026-10-13 — Separate streaming-English replay complete; no promotion
+
+User answered scope questions: recorded comparison first, local pretrained models,
+eventual offline iPhone goal, optional translator adaptation capped at30minutes;
+new directory and no ATLAS writes. Created experiments/streaming_translation/ with
+frozen PLAN, source-pinned inputs, standalone Python model/policy replay and evidence.
+No production imports at runtime, no training, no protected test or sign-data acquisition.
+
+Prepared26phone utterances from6historical sessions;20have complete original word
+events. SixFinish-only spelling tails excluded from timing, retained for full-input
+checks. Added24declared text diagnostics and2synthetic continuation-gap stress cases.
+Exact native whole-input output parity26/26 for tiny checkpoint; saved native
+incremental results equal full26/26 with0locks. No new raw-video inference.
+
+Four policies: oracle-end Finish proxy,1.5s no-commit timeout, full-context revisable
+captions, consecutive-prefix sentence agreement retaining source context. Tiny phone
+timeout differs from full in12/20; reviewed failures include HOW YOU→How. You.
+Conservative agreement finalizes3/20 phone tails;2/24declared diagnostic cases have
+frozen-text conflicts. Fast draft availability is not semantic correctness. Native
+Finish timestamps missing; no measured user-wait reduction. I→Is it here? and
+I GIVE→I give it to him. remain unsupported partial-input completions.
+
+FLAN-base zero-shot copies glosses/drops negation; fixed four-example prompting also
+has critical semantic failures. No T5 replacement or live-demo promotion justified.
+Additional Qwen0.5B-Instruct local check completed with few-shot and direct-system
+prompts. Direct prompt reverses both declared GIVE participant pairs, changes
+yesterday→today in morning probe and drops late NO. Fiveconditions,52full-input
+cases each,46timed cases×4policies each,615unique model requests total. No pretrained
+replacement or live-demo promotion. Qwen direct commits3/20phone tails; median
+desktopCPU generation315.46ms/max2473.40ms; not iPhone latency. Restricted diagnostic
+reference matches tiny11/18,FLAN5/18,fewshotFLAN8/18,Qwen2/18,directQwen7/18;
+these are not semantic accuracy. Rawoutputs/CSV/report preserve all prompt conditions.
+Download library stalled; only this task's download workers stopped; direct HTTP
+completed988097824bytes in288.77s, expectedweight SHA256 verified.
+Selfcheck passes causal-prefix independence, timeout order, revision and known stable
+wrong-output counterexample. Final source-hash/causal/evidence verification and scoped
+whitespace checks recorded in experiment validation.log. Next safe work is separately
+reviewed partial-input/boundary supervision and a frozen independent evaluation before
+using any30-minute adaptation allowance. No training ran; ATLAS files remain untouched.
+
 ## 2026-10-13 — Commit 21/22: stage3-translation: document streaming English research
 
 Records research, limitations and a proposed experimental phase; no deployed policy or training change.
