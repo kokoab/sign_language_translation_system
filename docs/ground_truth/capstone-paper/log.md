@@ -1,3 +1,55 @@
+## 2026-10-14 — Chapter 4 whitespace repair verified
+
+User identified excessive blank space after condensation. FullChapter4PDFcontact sweep
+confirmed forcedbreaks atTable13 and riskintro (leaving4.4.4heading alone), overlarge
+portraitscreens, orphanedtableheaders andanextrablankGanttpage. Clearedforcedbreaks
+outsideprotectedpositionedGantt/PERT layout, resetbodykeep-whole-paragraph, normalized
+88emptyspacers, reducedportraitscreens to100ptandlandscapeto260pt. Retainedall10images.
+Restored originalpageboundaries/spacers forpositionedscheduleimages; removedextraexplicit
+Ganttbreak and usedcaptionpage-break-before. Failedinitialformatrequestwasatomic:
+DocsrejectspageBreakBeforeintableparagraphs; removedunsupportedfieldandappliedsuccessfully.
+Verified all 49 rendered pages from Chapter 4 through the References opening in
+spacing_verified.pdf. Screenshots now occupy three pages; tables repeat headers
+and avoid split rows. Figure captions no longer pull following sections forward.
+Updated page references. User instructed leaving Gantt pages alone: reverted the
+subsequent trial grouping of Gantt/PERT introductions. Readback confirmed the same
+schedule text, 52 paragraphs and all six original image anchors. No metric deletions.
+
+## 2026-10-14 — Approved condensation and diagram updates applied
+
+Applied in Manuscript only: condensed4.3–4.5 repeated prose (~47% at first readback),
+removed oldFigures16/19 and duplicateWERtable17; movedEnglishcurve toAppendixB/B1.
+Preserved allmetrics,SDLC,PERT,GANTT. Appimages nowFigures10–14;newFigures15deployment,
+16basecurve,17WER;Tables1–20. Updated seven diagrams; user then requestedManuals as
+fifthpeer branch and clearerDFD routes, both applied. SweptChapter4: replacedexisting
+BlackboxAlpha “Insert here” with explicitunreportedstatus, filledAPpredecessor as
+Not specified andwhiteboxtotal description; mergedheader blanks retained. No invented
+experimental orparticipantresults. ConnectorPDFfailed; nativecurrent-tabPDFexport
+worked; visualQA completed; final_verified.pdf checked and page references updated.
+Removed blank page before Table16; no Chapter4 unfinished placeholders remain.
+Evidence: artifacts/reports/paper_condensation_20261014/REPORT.md.
+ExistingAppendixAcontentsentry has no body; no unrequested reconstruction.
+No model/code/training changes. Other tabs preserved at readback.
+
+## 2026-10-14 — Read-only manuscript length and visual audit
+
+Read current Manuscript tab and inspected all21figure groups plus five GANTT images.
+No manuscript/reviewMD edits. Proposal: condense repeated component/export/workflow
+prose across4.3–4.5; retain development evidence and template sections. Figure16 is
+redundant selection rationale; Figure17 should show deployment steps only. Figure19
+duplicates Table16; Figure21 training curve can move to appendix. Keep Figure18 base
+training and Figure20 two-panel five-stage WER; current plotted metrics match manuscript
+tables and latest canonical paper register (no new evaluation run). Figure8 missing
+Live/Practice return arrows; Figure9 No branch has no return. Figures1/6/8/17 still
+say open palms; canonical LiveFinishGesture and app manual specify right open + left
+fist above shoulders1s. Context/DFD need consistent formal notation; use-case actor
+excludes signers by its label. Preserve SDLC, PERT, GANTT; schedule durations should
+be reconciled against activity records before any corrections. Current tab has a
+Blackbox-Alpha Testing / Insert here placeholder and AppendixA reference without its
+body heading. User requested suggestions here first; nothing removed or applied.
+Downloaded figure copies: artifacts/reports/paper_length_visual_audit_20261014/.
+Next: discuss precise cuts and diagram corrections with user.
+
 ## 2026-10-13 — Application walkthrough inserted into Manuscript
 
 At explicit user authorization, replaced only the brief 4.3.3 feature discussion
