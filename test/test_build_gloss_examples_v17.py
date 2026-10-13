@@ -1,9 +1,11 @@
-"""Selection rules for the app's gloss examples.  Scoring only, no media written."""
+"""Selection rules for the app's gloss examples.  Includes a tiny synthetic media export check."""
 
 import json
 import hashlib
 from pathlib import Path
 import sys
+import subprocess
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -132,6 +134,28 @@ class SplitGuardTest(unittest.TestCase):
                     self.assertEqual(builder.local_candidates(), {})
                 train.write_text(json.dumps({"videos": [row]}))
                 self.assertEqual(builder.local_candidates()["SIGN"][0].sha256, digest)
+
+
+class PreviewEncodingTest(unittest.TestCase):
+    def test_render_uses_h264_and_preserves_frames_and_aspect(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            video = root / "source.mp4"
+            writer = builder.cv2.VideoWriter(str(video), builder.cv2.VideoWriter_fourcc(*"mp4v"), 30, (80, 60))
+            self.assertTrue(writer.isOpened())
+            for i in range(12):
+                frame = np.zeros((60, 80, 3), dtype=np.uint8)
+                frame[:, i:i + 10] = 200
+                writer.write(frame)
+            writer.release()
+            row = builder.render(builder.Candidate(label="CHECK", video=video, source="local"), root / "out", 80, 0)
+            info = json.loads(subprocess.check_output([
+                "ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                "stream=codec_name,pix_fmt,width,height,nb_frames", "-of", "json",
+                str(root / "out" / row["loop"]),
+            ]))["streams"][0]
+            self.assertEqual((info["codec_name"], info["pix_fmt"]), ("h264", "yuv420p"))
+            self.assertEqual((info["width"], info["height"], int(info["nb_frames"])), (80, 60, 12))
 
 
 class CatalogTest(unittest.TestCase):

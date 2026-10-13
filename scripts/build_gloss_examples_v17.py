@@ -25,6 +25,8 @@ from dataclasses import dataclass, field
 import json
 from pathlib import Path
 import sys
+import subprocess
+import tempfile
 
 import cv2
 import numpy as np
@@ -249,21 +251,24 @@ def render(candidate: Candidate, output: Path, width: int, pad: float) -> dict:
 
     output.mkdir(parents=True, exist_ok=True)
     loop = output / f"{candidate.label}.mp4"
-    writer = cv2.VideoWriter(
-        str(loop), cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height)
-    )
-    if not writer.isOpened():
-        raise RuntimeError(f"could not write {loop}")
-    for frame in resized:
-        writer.write(frame)
-    writer.release()
+    # H264/yuv420p is supported by the iPhone player. OpenCV's mp4v output can exceed
+    # MPEG4 Simple Profile playback limits on otherwise valid reference clips.
+    with tempfile.TemporaryDirectory(dir=output) as temporary:
+        encoded = Path(temporary) / loop.name
+        subprocess.run([
+            "ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pixel_format", "bgr24",
+            "-video_size", f"{width}x{height}", "-framerate", str(fps), "-i", "pipe:0",
+            "-an", "-c:v", "libx264", "-profile:v", "main", "-level:v", "3.1",
+            "-crf", "8", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(encoded),
+        ], input=b"".join(frame.tobytes() for frame in resized), check=True)
+        encoded.replace(loop)
 
     poster = output / f"{candidate.label}.jpg"
     cv2.imwrite(str(poster), resized[len(resized) // 2], [cv2.IMWRITE_JPEG_QUALITY, 88])
     return {
         "poster": poster.name, "loop": loop.name,
         "frames": len(resized), "fps": round(fps, 3),
-        "width": width, "height": height,
+        "width": width, "height": height, "codec": "h264",
     }
 
 
