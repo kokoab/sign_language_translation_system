@@ -1,5 +1,5 @@
 // PRACTICE setup and result (Figma 03 / PRACTICE SETUP), portrait. The round itself is the
-// native landscape camera screen; it returns the score here.
+// native portrait/landscape camera screen; it returns the score here.
 import 'package:flutter/material.dart';
 
 import 'style.dart';
@@ -50,7 +50,7 @@ class _PracticeSetupPageState extends State<PracticeSetupPage> {
               : null,
         ),
         const SizedBox(height: 16),
-        Text('Rotate your phone when practice begins.', style: Atlas.caption(), textAlign: TextAlign.center),
+        Text('Landscape recommended. Portrait works too.', style: Atlas.caption(), textAlign: TextAlign.center),
       ],
       children: [
         Align(alignment: Alignment.centerLeft, child: AtlasChip('$available signs available')),
@@ -136,11 +136,14 @@ class _ChoiceCard extends StatelessWidget {
 }
 
 class PracticeResultPage extends StatelessWidget {
-  const PracticeResultPage({super.key, required this.result, required this.onAgain, required this.onDone});
+  const PracticeResultPage({super.key, required this.result, required this.onAgain, required this.onDone, this.onWatch});
 
   final PracticeResult result;
   final VoidCallback onAgain;
   final VoidCallback onDone;
+
+  /// Opens a missed sign's clip in Glosses.
+  final ValueChanged<String>? onWatch;
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +161,7 @@ class PracticeResultPage extends StatelessWidget {
         const SizedBox(height: 12),
         AtlasButton(label: 'Done', style: AtlasButtonStyle.secondary, onPressed: onDone),
         const SizedBox(height: 16),
-        Text('A miss may be the model, not you. Scores are uncalibrated.',
+        Text('A miss may be ATLAS, not you. It can misread a sign.',
             style: Atlas.caption(), textAlign: TextAlign.center),
       ],
       children: [
@@ -176,8 +179,35 @@ class PracticeResultPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('NOT RECOGNISED', style: Atlas.label()),
+                const SizedBox(height: 4),
+                Text(onWatch == null ? 'Try these again.' : 'Tap a sign to watch it again.', style: Atlas.caption()),
                 const SizedBox(height: 12),
-                Text(result.missed.take(8).join('  ·  '), style: Atlas.subheading()),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final sign in result.missed.take(12))
+                      Material(
+                        color: Atlas.white,
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          onTap: onWatch == null ? null : () => onWatch!(sign),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            constraints: const BoxConstraints(minHeight: 44),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Text(sign, style: Atlas.button()),
+                              if (onWatch != null) ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.play_circle_outline_rounded, size: 18, color: Atlas.blue),
+                              ],
+                            ]),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),

@@ -12,6 +12,7 @@ import 'package:slt_mobile_app/main.dart';
 import 'package:slt_mobile_app/services/slt_inference_service.dart';
 import 'package:slt_mobile_app/shell/history_page.dart';
 import 'package:slt_mobile_app/shell/manual_page.dart';
+import 'package:slt_mobile_app/shell/practice_page.dart';
 
 /// A 390 × 844 portrait phone.
 void _phone(WidgetTester tester) {
@@ -42,7 +43,7 @@ void main() {
     await tester.tap(find.text('Practice'));
     await tester.pumpAndSettle();
     expect(find.text('Choose your\npractice set.'), findsOneWidget);
-    expect(find.text('Rotate your phone when practice begins.'), findsOneWidget);
+    expect(find.text('Landscape recommended. Portrait works too.'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('Back'));
     await tester.pumpAndSettle();
     expect(find.text('Hello.'), findsOneWidget);
@@ -145,6 +146,76 @@ void main() {
     expect(said, 'Hello, Gelo.');
     expect(describeSession({'glosses': ['HELLO', 'HOW']}).$3, 'HELLO HOW');
     expect(describeSession({}).$3, 'No recognized signs');
+  });
+
+  testWidgets('session detail shows the English first, speaks it again and deletes after confirming',
+      (WidgetTester tester) async {
+    final spoken = <String>[];
+    var deleted = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: SessionDetailPage(
+        row: const {
+          'started_utc': '2026-10-15T01:28:00Z',
+          'duration_seconds': 12,
+          'glosses': ['HELLO', 'HOW', 'YOU'],
+          'sentences': ['Hello, how are you?'],
+          'complete': true,
+          'timeline': <Map<String, Object>>[],
+        },
+        onBack: () {},
+        onSpeak: spoken.add,
+        onDelete: () => deleted++,
+      ),
+    ));
+    final english = tester.getTopLeft(find.text('Hello, how are you?'));
+    final signs = tester.getTopLeft(find.text('HELLO  HOW  YOU'));
+    expect(english.dy, lessThan(signs.dy));
+    expect(find.text('Copy'), findsNothing);
+    await tester.tap(find.text('Speak again'));
+    expect(spoken, ['Hello, how are you?']);
+    await tester.tap(find.text('Delete session'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete this session?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(deleted, 0);
+    await tester.tap(find.text('Delete session'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    expect(deleted, 1);
+  });
+
+  testWidgets('history clears all sessions after confirming', (WidgetTester tester) async {
+    var cleared = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: HistoryPage(
+        sessions: const [{'started_utc': '2026-10-15T01:28:00Z', 'sentences': ['Hello.'], 'glosses': ['HELLO']}],
+        onSelect: (_) {},
+        onBack: () {},
+        onClearAll: () => cleared++,
+      ),
+    ));
+    await tester.tap(find.text('Clear all'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    expect(cleared, 1);
+  });
+
+  testWidgets('practice result opens a missed sign', (WidgetTester tester) async {
+    final watched = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: PracticeResultPage(
+        result: const PracticeResult(score: 3, total: 5, missed: ['HELLO', 'THANK-YOU']),
+        onAgain: () {},
+        onDone: () {},
+        onWatch: watched.add,
+      ),
+    ));
+    expect(find.text('Tap a sign to watch it again.'), findsOneWidget);
+    await tester.tap(find.text('THANK-YOU'));
+    expect(watched, ['THANK-YOU']);
   });
 
   test('native inference result contract parses single and phrase output', () {

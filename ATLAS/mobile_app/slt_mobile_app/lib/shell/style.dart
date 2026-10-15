@@ -55,6 +55,7 @@ class AtlasButton extends StatelessWidget {
     this.style = AtlasButtonStyle.primary,
     this.height = 56,
     this.width,
+    this.compact = false,
   });
 
   final String label;
@@ -62,6 +63,10 @@ class AtlasButton extends StatelessWidget {
   final AtlasButtonStyle style;
   final double height;
   final double? width;
+
+  /// Narrow buttons in a row (playback speeds): little side padding, and the label shrinks rather
+  /// than truncating.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -85,8 +90,10 @@ class AtlasButton extends StatelessWidget {
             width: width,
             height: height,
             alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(label, style: Atlas.button(text), maxLines: 1, overflow: TextOverflow.ellipsis),
+            padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 20),
+            child: compact
+                ? FittedBox(fit: BoxFit.scaleDown, child: Text(label, style: Atlas.button(text), maxLines: 1))
+                : Text(label, style: Atlas.button(text), maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
         ),
       ),

@@ -150,9 +150,10 @@ class GlossDetailPage extends StatefulWidget {
 }
 
 class _GlossDetailPageState extends State<GlossDetailPage> {
-  static const _speeds = [0.5, 1.0, 1.5, 2.0];
+  static const _speeds = [0.5, 0.75, 1.0, 1.5, 2.0];
   VideoPlayerController? _video;
-  double _speed = 1.0;
+  /// Reference clips start at 0.75× so the handshape and movement are easy to follow.
+  double _speed = 0.75;
 
   @override
   void initState() {
@@ -164,7 +165,8 @@ class _GlossDetailPageState extends State<GlossDetailPage> {
       video.setLooping(true);
       video.setVolume(0);
       video.addListener(_changed);
-      video.initialize().then((_) {
+      video.initialize().then((_) async {
+        await video.setPlaybackSpeed(_speed);
         if (mounted) setState(video.play);
       });
     }
@@ -272,6 +274,7 @@ class _GlossDetailPageState extends State<GlossDetailPage> {
                     child: AtlasButton(
                       label: _speedLabel(speed),
                       height: 44,
+                      compact: true,
                       style: speed == _speed ? AtlasButtonStyle.primary : AtlasButtonStyle.secondary,
                       onPressed: () => _setSpeed(speed),
                     ),

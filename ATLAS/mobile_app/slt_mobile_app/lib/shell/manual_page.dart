@@ -61,7 +61,7 @@ class ManualSignals extends ManualBlock {
   final List<(String, SignalTone, String)> rows;
 }
 
-enum GestureArt { finish, fingerspell, name }
+enum GestureArt { finish }
 
 class ManualGesture extends ManualBlock {
   const ManualGesture(this.art, this.title, this.how, this.does, {this.watch});
@@ -93,7 +93,7 @@ const manualSections = [
         'words and sentences.'),
     ManualSteps(title: 'SET UP', [
       'Open ATLAS and wait until Start translating says “Ready when you are”. It takes a few seconds to get ready.',
-      'Stand your phone on its side so the screen is wide. Prop it up so it stays still.',
+      'Portrait works too; landscape is recommended to fit both hands. Prop your phone up so it stays still.',
       'Step back until your head, your shoulders and both hands fit on the screen.',
       'Face the light. A bright window behind you makes your hands hard to see.',
     ]),
@@ -101,25 +101,33 @@ const manualSections = [
       ('100 signs', 'ATLAS knows 100 signs. Browse them in Glosses. Other signs will not be recognised.'),
       ('One signer', 'If several people are in view, ATLAS follows the largest face, usually the person nearest the camera.'),
       ('Private', 'Everything is processed on your phone.'),
+      ('Tips', 'The first time you open Live, a few tips explain the screen. Settings (the gear on Home) can '
+          'show them again.'),
+      ('Hints', 'If it is too dark, or ATLAS cannot see you or your hands, Live shows a hint in the middle '
+          'of the screen. Follow it and it goes away.'),
     ]),
   ]),
   ManualSection('live', Icons.back_hand_outlined, 'Live translation', 'Turn your signing into English.', [
     ManualSteps([
-      'On Home, tap Start translating and turn your phone on its side.',
+      'On Home, tap Start translating. It opens in portrait; landscape is recommended.',
       'Tap Start. ATLAS does not translate anything until you do.',
       'Sign one sign at a time at a steady pace, with a short pause between signs.',
-      'Your signs appear as word pills at the top right.',
-      'Tap Finish when your sentence is done. ATLAS writes the sentence and reads it aloud.',
+      'Your signs appear as word pills at the top left, and the English appears at the bottom as you sign.',
+      'Tap Finish when your sentence is done. ATLAS completes the sentence and reads it aloud.',
       'Tap Start for the next sentence, or Back to go Home.',
     ]),
+    ManualPara('Use Flip camera in Live to switch between front and back. Practice uses the front camera. '
+        'The More menu (•••, top right) holds Show landmarks (the tracking points), Show signs (Live: '
+        'turn it off to keep only the English on screen) and How to use ATLAS. ATLAS remembers your choices.'),
     ManualTip('Hands-free: instead of tapping Finish, hold the finish pose. ATLAS finishes the sentence '
         'and keeps translating. See Gestures and special signs.'),
     ManualTerms('BUTTONS', [
       ('Start / Finish', 'Start translating, or finish the sentence and stop.'),
       ('Reset (↺)', 'Clears the signs so far so you can start over. Press and hold it to see what it does.'),
+      ('Speak again', 'After Finish, reads the sentence aloud again.'),
       ('Back', 'Leaves the camera. Your session is saved to History.'),
-      ('?', 'Opens this guide. Like Back, it leaves the camera and saves your session.'),
-      ('Gear', 'Shows technical details, such as how fast the camera is running. You do not need it to sign.'),
+      ('More (•••)', 'Show landmarks, Show signs and How to use ATLAS. The guide, like Back, leaves the camera and '
+          'saves your session.'),
     ]),
   ]),
   ManualSection('screen', Icons.visibility_outlined, 'Reading the screen', 'What each label and colour means.', [
@@ -130,8 +138,6 @@ const manualSections = [
       ('Watching', SignalTone.dim, 'Translating, but no hands are in view.'),
       ('Signing', SignalTone.white, 'ATLAS can see your hands.'),
       ('Reading sign…', SignalTone.gold, 'ATLAS is working out a sign.'),
-      ('Spelling…', SignalTone.blue, 'Reading letters only. See Gestures and special signs.'),
-      ('Name? Letters on', SignalTone.blue, 'You signed NAME. Spell the name now.'),
       ('Hold to finish 60%', SignalTone.gold, 'You are holding the finish pose. Keep still.'),
       ('Lower your hands', SignalTone.gold, 'The sentence is finishing. Relax your hands to carry on.'),
       ('Translating…', SignalTone.gold, 'Turning your signs into a sentence.'),
@@ -140,10 +146,9 @@ const manualSections = [
       ('Amber', 'Still deciding. The sign may change.'),
       ('White', 'Accepted.'),
       ('Green dot', 'The newest sign, or the sentence being read aloud.'),
-      ('Blue', 'Letters (fingerspelling) are on.'),
     ]),
   ]),
-  ManualSection('gestures', Icons.pan_tool_outlined, 'Gestures and special signs', 'Finish hands-free and spell words.', [
+  ManualSection('gestures', Icons.pan_tool_outlined, 'Gestures and special signs', 'Finish a sentence without touching the phone.', [
     ManualGesture(
       GestureArt.finish,
       'Finish pose',
@@ -152,39 +157,19 @@ const manualSections = [
       'Finishes the sentence and reads it aloud without touching the phone. The status counts up '
           '“Hold to finish”, then shows “Lower your hands”. Lower them to carry on. Works in Live only.',
     ),
-    ManualGesture(
-      GestureArt.fingerspell,
-      'FINGERSPELL sign',
-      'Hold one open hand near your shoulder, palm forward or down. Wiggle your fingers as you slide it '
-          'to the side.',
-      'Switches to letters so you can spell a word. The status shows “Spelling…”. To stop, sign '
-          'FINGERSPELL again or lower your hands for about 3 seconds.',
-    ),
-    ManualGesture(
-      GestureArt.name,
-      'NAME sign',
-      'Make an H with both hands: the index and middle fingers out together. Tap one H on the other twice.',
-      'Turns letters on for a few seconds so you can spell a name straight after. The status shows '
-          '“Name? Letters on”. Start spelling within about 4 seconds.',
-      watch: 'NAME',
-    ),
-    ManualTerms('LETTERS BUTTON', [
-      ('Off', 'ATLAS reads signs. Use FINGERSPELL or NAME when you want to spell.'),
-      ('On (blue)', 'ATLAS reads letters and signs all the time. Practice starts with it on.'),
-    ]),
   ]),
   ManualSection('practice', Icons.signal_cellular_alt_rounded, 'Practice', 'Learn signs with instant feedback.', [
     ManualSteps([
       'On Home, tap Practice and choose 5, 10 or 20 signs.',
-      'Tap Start practice and turn your phone on its side. The round starts straight away.',
-      'Watch the reference clip, then sign the word shown at the top.',
+      'Tap Start practice. It opens in portrait and starts straight away; landscape is recommended.',
+      'Watch the reference clip (it plays at 0.75× speed), then sign the word shown. Tap the clip to enlarge it; close with X or tap outside.',
       'A match shows “Matched · +1” in green and moves on by itself. Tap Next to move on sooner.',
       'If ATLAS saw a different sign, it shows “Saw … · try again” in red. Sign it again.',
       'Tap Skip to move on. A skipped sign counts as missed.',
     ]),
     ManualDiagram(ManualScreen.practice),
-    ManualPara('At the end you see your score and the signs that were not recognised. Tap Practice again '
-        'for a new round.'),
+    ManualPara('At the end you see your score and the signs that were not recognised. Tap a missed sign to '
+        'watch it in Glosses, or tap Practice again for a new round.'),
     ManualTip('A miss may be ATLAS, not you. Treat the score as a guide, not a grade.'),
   ]),
   ManualSection('glosses', Icons.menu_book_outlined, 'Glosses', 'Browse the 100 signs ATLAS knows.', [
@@ -193,18 +178,20 @@ const manualSections = [
     ManualSteps([
       'Search by name, or scroll through the list.',
       'Tap a sign to watch its example clip. Tap the clip to pause it.',
-      'Choose a playback speed to slow the clip down.',
+      'Clips play at 0.75× speed. Choose another speed to slow down or speed up.',
       'Tap Practice signs to practise just that sign.',
     ]),
   ]),
   ManualSection('history', Icons.schedule_rounded, 'History', 'Look back at past sessions.', [
     ManualPara('Every Live session is saved in History when you leave the camera.'),
     ManualSteps([
-      'Tap a session to see its signs, its sentence and a timeline.',
+      'Tap a session to see what was said, then its signs and a timeline. Tap Speak again to hear it.',
       'A session marked Unfinished was left before Finish.',
+      'Delete session removes one session; Clear all removes them all.',
     ]),
     ManualTerms('GOOD TO KNOW', [
-      ('Saved on this phone', 'Sessions, and a video of each take, stay on your phone.'),
+      ('Saved on this phone', 'Sessions stay on your phone. Videos are kept only if you turn on Save Live videos '
+          'in Settings.'),
     ]),
   ]),
   ManualSection('help', Icons.help_outline_rounded, 'Troubleshooting', 'Fixes for common problems.', [
@@ -212,7 +199,8 @@ const manualSections = [
       ('Start translating is greyed out', 'ATLAS is still getting ready. Wait a few seconds.'),
       ('A sign is not recognised', 'Check it is in Glosses. Sign at a steady pace, keep both hands on screen and add light.'),
       ('The wrong word appeared', 'Tap ↺ to clear it and sign again.'),
-      ('Letters will not stop', 'Sign FINGERSPELL again, or lower your hands for 3 seconds.'),
+      ('A hint keeps showing', 'Follow it: add light, step back so both shoulders show, or bring your hands '
+          'back inside the frame.'),
       ('The sentence finished by itself', 'You may have held the finish pose. Lower your hands between sentences.'),
       ('Someone else is being followed', 'Move closer to the camera, or ask others to step out of view.'),
     ]),
@@ -506,22 +494,22 @@ class ScreenDiagram extends StatelessWidget {
 
   static const _liveLegend = [
     ('Status', 'What ATLAS is doing right now. See Status below.'),
-    ('Letters', 'Keeps letters on. Blue means on.'),
-    ('?', 'Opens this guide.'),
-    ('Gear', 'Technical details.'),
+    ('Flip camera', 'Switches between front and back cameras in Live.'),
+    ('More (•••)', 'Show landmarks, Show signs and this guide.'),
     ('Word pills', 'Your signs so far. Amber with a ? is still being read.'),
-    ('Sentence', 'The English translation. Its dot turns green while it is read aloud.'),
-    ('Blue lines', 'ATLAS can see your hands.'),
     ('Current sign', 'Amber while reading, white once accepted. The bar shows how sure ATLAS is.'),
     ('Other guesses', 'The next most likely signs.'),
+    ('English', 'The translation, written as you sign. Its dot turns green while it is read aloud. '
+        'With Show signs off, only this stays on screen.'),
+    ('Blue lines', 'ATLAS can see your hands.'),
     ('Reset (↺)', 'Clears the signs so far.'),
     ('Start / Finish', 'Starts translating, or finishes the sentence and stops.'),
   ];
 
   static const _practiceLegend = [
     ('Sign this', 'The round number and the sign to perform.'),
-    ('Letters', 'Lets ATLAS read letters as well as signs. On at the start of Practice.'),
     ('Score', 'Signs matched so far.'),
+    ('More (•••)', 'Show landmarks and this guide.'),
     ('Reference', 'A looping clip of the sign. Copy it.'),
     ('Result', 'Green “Matched · +1”, or red “Saw … · try again” when ATLAS saw a different sign.'),
     ('Try again (↺)', 'Tries the same sign again.'),
@@ -696,48 +684,43 @@ class _LiveMock extends StatelessWidget {
         const Positioned(left: 260, top: 96, width: 280, height: 256, child: CustomPaint(painter: SignerPainter())),
         Positioned(left: 24, top: 16, child: _icon(Icons.chevron_left_rounded)),
         Positioned(left: 76, top: 18, child: _modeBlock('LIVE', live: true)),
-        Positioned(left: 540, top: 16, child: _glass(width: 92, child: Text('Letters', style: _hud(13, FontWeight.w600, _dim)))),
-        Positioned(left: 644, top: 16, child: _icon(Icons.question_mark_rounded)),
-        Positioned(left: 696, top: 16, child: _icon(Icons.settings_outlined)),
+        Positioned(left: 644, top: 16, child: _icon(Icons.flip_camera_ios_outlined)),
+        Positioned(left: 696, top: 16, child: _icon(Icons.more_horiz_rounded)),
         Positioned(
-          right: 24,
-          top: 68,
+          left: 24,
+          top: 72,
           child: Row(children: [
             _pill('HELLO', _dim, _dim),
             const SizedBox(width: 8),
-            _pill('MY', _dim, _dim),
-            const SizedBox(width: 8),
-            _pill('NAME?', Atlas.gold, Atlas.gold),
+            _pill('MY', Atlas.green, Atlas.white),
           ]),
+        ),
+        Positioned(
+          right: 24,
+          top: 68,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('NAME', style: _hud(20, FontWeight.w700, Atlas.gold)),
+              const SizedBox(height: 4),
+              _confidence(0.72, Atlas.gold),
+              const SizedBox(height: 8),
+              _pill('NAME  0.72', Atlas.gold, Atlas.white),
+              const SizedBox(height: 6),
+              _pill('MY  0.14', Atlas.sky, _dim),
+              const SizedBox(height: 6),
+              _pill('HELLO  0.05', Atlas.sky, _dim),
+            ],
+          ),
         ),
         Positioned(
           left: 24,
-          top: 108,
+          bottom: 34,
           child: Row(children: [
             _dot(Atlas.green, 14),
             const SizedBox(width: 10),
-            Text('Good morning.', style: _hud(22, FontWeight.w600)),
+            Text('Hello, my', style: _hud(28, FontWeight.w700)),
           ]),
-        ),
-        Positioned(
-          left: 28,
-          bottom: 20,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('NAME', style: _hud(34, FontWeight.w700, Atlas.gold)),
-              const SizedBox(height: 6),
-              _confidence(0.72, Atlas.gold),
-              const SizedBox(height: 10),
-              Row(children: [
-                _pill('NAME  0.72', Atlas.gold, Atlas.white),
-                const SizedBox(width: 6),
-                _pill('MY  0.14', Atlas.sky, _dim),
-                const SizedBox(width: 6),
-                _pill('HELLO  0.05', Atlas.sky, _dim),
-              ]),
-            ],
-          ),
         ),
         Positioned(
           right: 24,
@@ -745,16 +728,15 @@ class _LiveMock extends StatelessWidget {
           child: Row(children: [_reset(), const SizedBox(width: 12), _bigButton('Finish', Icons.check_rounded)]),
         ),
         _pinAt(1, 134, 30),
-        _pinAt(2, 528, 4),
-        _pinAt(3, 632, 4),
-        _pinAt(4, 684, 4),
-        _pinAt(5, 494, 69),
-        _pinAt(6, 232, 112),
-        _pinAt(7, 434, 108),
-        _pinAt(8, 142, 236),
-        _pinAt(9, 334, 308),
-        _pinAt(10, 508, 266),
-        _pinAt(11, 572, 264),
+        _pinAt(2, 632, 4),
+        _pinAt(3, 684, 4),
+        _pinAt(4, 176, 73),
+        _pinAt(5, 584, 66),
+        _pinAt(6, 566, 150),
+        _pinAt(7, 196, 270),
+        _pinAt(8, 434, 108),
+        _pinAt(9, 508, 266),
+        _pinAt(10, 572, 264),
       ],
     ),
   );
@@ -785,14 +767,8 @@ class _PracticeMock extends StatelessWidget {
             ]),
           ),
         ),
-        Positioned(
-          left: 436,
-          top: 16,
-          child: _glass(width: 88, fill: Atlas.blue, child: Text('Letters', style: _hud(13, FontWeight.w600))),
-        ),
         Positioned(left: 534, top: 16, child: _glass(width: 98, child: Text('Score 2 / 10', style: _hud(12, FontWeight.w600)))),
-        Positioned(left: 644, top: 16, child: _icon(Icons.question_mark_rounded)),
-        Positioned(left: 696, top: 16, child: _icon(Icons.settings_outlined)),
+        Positioned(left: 644, top: 16, child: _icon(Icons.more_horiz_rounded)),
         Positioned(
           right: 24,
           top: 68,
@@ -839,8 +815,8 @@ class _PracticeMock extends StatelessWidget {
           child: Row(children: [_reset(enabled: false), const SizedBox(width: 12), _bigButton('Next', Icons.arrow_forward_rounded)]),
         ),
         _pinAt(1, 224, 2),
-        _pinAt(2, 424, 4),
-        _pinAt(3, 522, 4),
+        _pinAt(2, 522, 4),
+        _pinAt(3, 632, 4),
         _pinAt(4, 574, 60),
         _pinAt(5, 144, 238),
         _pinAt(6, 508, 266),
@@ -874,12 +850,6 @@ bool _extended(HandPose pose, int finger) => switch (pose) {
   HandPose.fist => false,
   HandPose.h => finger < 2,
 };
-
-/// Fingertip centres of the extended fingers, in the hand's box (for motion marks).
-List<Offset> _tips(HandPose pose) => [
-  for (final (i, (x, w, tip, fan)) in _fingers.indexed)
-    if (_extended(pose, i)) Offset(x + (pose == HandPose.open ? fan : 0), tip + w / 2),
-];
 
 /// Draws one hand centred on [center], [size] across. [draw] runs afterwards in the hand's
 /// 100 × 100 box (for marks that move with the hand).
@@ -1005,8 +975,6 @@ class GestureIllustration extends StatelessWidget {
   Widget build(BuildContext context) {
     final (badge, left, right) = switch (art) {
       GestureArt.finish => ('HOLD 1 SECOND', 'LEFT HAND · FIST', 'RIGHT HAND · OPEN'),
-      GestureArt.fingerspell => ('WIGGLE AND SLIDE', null, null),
-      GestureArt.name => ('TAP TWICE', null, null),
     };
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -1019,10 +987,8 @@ class GestureIllustration extends StatelessWidget {
             children: [
               CustomPaint(painter: _GesturePainter(art)),
               Align(alignment: const Alignment(0, -0.86), child: AtlasChip(badge, fill: Atlas.white)),
-              if (left != null)
-                Align(alignment: const Alignment(-0.92, 0.9), child: Text(left, style: Atlas.label(Atlas.ink))),
-              if (right != null)
-                Align(alignment: const Alignment(0.92, 0.9), child: Text(right, style: Atlas.label(Atlas.ink))),
+              Align(alignment: const Alignment(-0.92, 0.9), child: Text(left, style: Atlas.label(Atlas.ink))),
+              Align(alignment: const Alignment(0.92, 0.9), child: Text(right, style: Atlas.label(Atlas.ink))),
             ],
           ),
         ),
@@ -1044,20 +1010,9 @@ class _GesturePainter extends CustomPainter {
     switch (art) {
       case GestureArt.finish:
         _finish(canvas);
-      case GestureArt.fingerspell:
-        _fingerspell(canvas);
-      case GestureArt.name:
-        _name(canvas);
     }
     canvas.restore();
   }
-
-  static final _ink = Paint()
-    ..color = Atlas.ink
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 2.6
-    ..strokeCap = StrokeCap.round
-    ..strokeJoin = StrokeJoin.round;
 
   /// Shown as on the (mirrored) camera screen: the signer's right hand is on the right.
   void _finish(Canvas canvas) {
@@ -1086,49 +1041,6 @@ class _GesturePainter extends CustomPainter {
     }
     paintHand(canvas, const Offset(74, 70), 58, HandPose.fist, mirror: true);
     paintHand(canvas, const Offset(246, 64), 70, HandPose.open);
-  }
-
-  void _fingerspell(Canvas canvas) {
-    paintHand(canvas, const Offset(118, 108), 104, HandPose.open,
-        angle: -0.12, fill: Atlas.white.withValues(alpha: 0.5), stroke: Atlas.ink.withValues(alpha: 0.25));
-    paintHand(canvas, const Offset(200, 104), 104, HandPose.open, angle: 0.1, draw: (canvas, line) {
-      for (final tip in _tips(HandPose.open)) {
-        canvas.drawPath(
-          Path()
-            ..moveTo(tip.dx - 5, tip.dy - 9)
-            ..quadraticBezierTo(tip.dx, tip.dy - 14, tip.dx + 5, tip.dy - 9),
-          line,
-        );
-      }
-    });
-    _arrow(canvas, const Offset(104, 178), const Offset(232, 178));
-  }
-
-  /// Two H hands crossing; the top one taps twice.
-  void _name(Canvas canvas) {
-    paintHand(canvas, const Offset(124, 132), 104, HandPose.h, angle: 1.0, mirror: true);
-    paintHand(canvas, const Offset(190, 118), 104, HandPose.h, angle: -1.0);
-    for (final (dx, dy) in [(-12.0, -6.0), (0.0, -10.0), (12.0, -6.0)]) {
-      final from = Offset(160 + dx, 70 + dy);
-      canvas.drawLine(from, from + Offset(dx * 0.5, dy * 0.9), _ink);
-    }
-  }
-
-  void _arrow(Canvas canvas, Offset from, Offset to) {
-    final paint = Paint()
-      ..color = Atlas.blue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawLine(from, to, paint);
-    canvas.drawPath(
-      Path()
-        ..moveTo(to.dx - 10, to.dy - 8)
-        ..lineTo(to.dx, to.dy)
-        ..lineTo(to.dx - 10, to.dy + 8),
-      paint,
-    );
   }
 
   @override
