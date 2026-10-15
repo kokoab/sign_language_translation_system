@@ -1,3 +1,99 @@
+## 2026-10-15 — Caption background panel removed; installed
+
+User: the dark card behind the English looked bad. Removed (the caption keeps its text shadow; the centre
+prompt keeps its panel). Speak again now sits 10 pt above the caption text; landscape caption bottom margin
+back to 12 pt. Native layout tests 4/4 from the mirror; screenshots reviewed; Release installed and launched
+on angelo iPhone 13.
+
+## 2026-10-15 — UX batch (iPhone): spelling, recording, 0.75×, Speak again, History, hints, tips; installed
+
+User approved the full agreed list minus the "show to listener" view and minus Copy (both dropped).
+Spelling: engine `fingerspellSign` false (FINGERSPELL sign never switches to letters); `nameLetters` only in
+LIVE with Settings "Spell a name after NAME" (SLTNameSpellingV17, default off); Practice never spells.
+Manual: FINGERSPELL/NAME cards, Letters button, Spelling/Name status rows, Blue colour and "Letters will not
+stop" removed (with their drawings); Settings fingerspelling line removed; the switch's caption is its only
+explanation. Recording: takes saved only with "Save Live videos" (SLTSaveLiveVideosV17, default off).
+Reference clips 0.75×: Practice PiP (AVPlayer defaultRate) and Glosses (default 0.75, speeds 0.5/0.75/1/1.5/2,
+compact buttons fit 320 pt). LIVE after Finish: Speak again pill above the caption. History detail: English
+first with Speak again (native speak channel), then signs and timeline; Delete session and Clear all (with
+confirmation; deletes session JSON, trace and takes). Practice result: "A miss may be ATLAS, not you", missed
+signs tappable into Glosses. Camera: LiveFraming hints after 1 s (too dark: mean luma < 45 on a coarse grid;
+step into view; step back for both shoulders; hands at the frame edge), dashed head-and-shoulders outline
+before Start / while a Step hint shows; dark panels behind caption and centre prompt; caption follows
+Dynamic Type (max 44 pt). Plain-language errors (models, frame, empty Finish, Home status). First-LIVE tips:
+five swipeable cards (100 signs, set-up, sign then Finish, finish pose, ••• menu); Settings "Show Live tips
+again". Manual documents Speak again, hints, tips, History delete, video setting, 0.75× clips.
+Tests: native layout 4/4 (Speak again placement, no Copy, tips render, framing unit test); full native suite
+19 pass, 3 device-only skips, 4 fail only on the known simulator body-pose weights gap
+(VNDetectHumanBodyPoseRequest; same tests passed on iPhone 13 before; code untouched); Flutter analyze clean,
+10/10 tests (History English-first/Speak/Delete/Clear all, Practice missed-sign link). Renders reviewed
+(layout_screenshots/, flutter_renders/). Darkness threshold untuned on real low light. Release built from the
+mirror, bundle strings verified (no FINGERSPELL text), installed and launched on angelo iPhone 13.
+
+## 2026-10-15 — ••• menu stays open on toggles; native tests also built from the mirror; installed
+
+User report: tapping Show signs closed the menu at once. Show landmarks / Show signs now carry
+UIMenuElement.Attributes.keepsMenuPresented (iOS 17 target) and refresh the open menu in place through
+contextMenuInteraction.updateVisibleMenu, so the checkmark flips and the menu closes only on a tap outside;
+How to use ATLAS still closes it (leaves the camera). The button's menu is one uncached
+UIDeferredMenuElement built once, so it is never replaced while showing. Tests assert the attributes and the
+deferred element: 3/3 native layout tests pass. Open-menu behaviour itself is not unit-testable; confirm on
+the phone. `build_ios_release_mirror.sh --test <sim> [tests]` runs simulator tests from the internal-disk
+mirror (a repo-path simulator build unmounted the exFAT volume again). Release built from the mirror,
+installed and launched on angelo iPhone 13.
+
+## 2026-10-15 — Live ••• menu, Show signs toggle, landscape caption level with controls; installed
+
+User request. Camera toolbar right side is now Flip camera (LIVE) + ••• menu only; the menu holds
+Show landmarks (checkmark, persisted SLTShowLandmarksV17), LIVE-only Show signs (persisted
+SLTShowSignsV17, default on; off hides the sign pills and the word/confidence/top-3 column, leaving only
+the English) and How to use ATLAS. Practice portrait: ••• right-aligned under the score chip. LIVE
+landscape: caption centred on the ↺/Finish row (high priority), never below the bottom margin, grows
+upwards. Manual: Live/Practice text, BUTTONS, legends and both screen diagrams redrawn for the new
+layout ("More (•••)" because Inter lacks U+22EF). Native layout tests extended (menu items/checkmarks,
+labels moved into the menu, Show signs hides pills+word and keeps caption, short landscape caption midY =
+controls midY ±1): 3/3 pass; screenshots incl. controls_live_captions_only_*.png reviewed. Flutter analyze
+clean, 7/7 tests; manual diagrams rendered (manual_diagrams/).
+Build note: Flutter's kernel snapshot and test cache rewrites on the exFAT repo volume fail (ENXIO/EIO) and
+briefly unmount it; one signed build failed this way. New `ATLAS/mobile_app/build_ios_release_mirror.sh`
+mirrors the project sources to ~/slt_mobile_build_mirror, regenerates the Flutter iOS config there and
+builds/installs from the internal disk. Release built that way, bundle strings verified, installed and
+launched on angelo iPhone 13. Evidence: artifacts/reports/mobile_live_captions_20261015/.
+
+## 2026-10-15 — Live layout: English caption largest (bottom-left), word + top-3 small (top-right); installed
+
+User request. LIVE only (Practice unchanged): English caption 32 pt bold, up to 4 lines, bottom-left above
+the controls (landscape: left of them); recognized word 22 pt (was 34) with 90 pt confidence bar and top-3
+in a 150 pt right-aligned column under the toolbar; sign pills top-left up to that column and scrolled to
+the newest pill. Long captions drop whole words from the front ("…") instead of head-truncating mid-word.
+Layout test now fills LIVE with a sample utterance (showSampleUtterance) and asserts caption/word/controls
+do not overlap, word column top-right, caption lower half, caption font > word font: 3/3 native layout
+tests pass at 320×568, 390×844, 844×390; screenshots reviewed. Signed Release installed and launched on
+angelo iPhone 13. Evidence: artifacts/reports/mobile_live_captions_20261015/ (layout_test.log,
+layout_screenshots/, layout_*.json).
+
+## 2026-10-15 — iPhone Live uses the desktop live captions (option B); installed on angelo iPhone 13
+
+User chose option B: the caption engine (live_captions_v17_20261014) writes the English on the phone and
+Finish (button or gesture) finalizes it; T5 is no longer loaded or used in Live. Speech only at Finish
+(whole final caption, once); per-sign speech removed. Desktop policy kept: tail settles after 1.5 s,
+new sentence after 3.5 s; ticks pause while the Finish gesture is held.
+Port: `ios/Runner/LiveReel/LiveCaptions.swift` (Accelerate float32 CPU, same five models and rules);
+weights `Models/live_captions_v17.{bin,json}` (29.3 MB, sha256 29969c54a41d…) from
+`ATLAS/python/export/export_live_captions_mobile_v17.py`. Swift-vs-Python parity: 352 timed streams
+(52 cases.json + 300 synthetic, push/tick/finish) = 91,445 caption updates, 0 mismatches; push median
+0.86 ms / p95 1.94 ms on Mac CPU (no iPhone timing yet). Live shows the caption under the sign pills
+while signing and the final caption after Finish; sessions record rendering_mode live_captions and
+caption events. Desktop bug found: two consecutive spelled names separated by >= 3.5 s crash
+merge_fingerspelling/tags (empty tagger input); Swift returns no tags instead. Android unchanged.
+Repo volume note: exFAT/FSKit returns ENXIO when a large existing file is truncated and rewritten;
+the export skips identical files and writes new ones via a temporary name.
+Signed Release build succeeded; installed and launched on 00008110-00111D1A0130A01E (app data kept).
+Evidence: artifacts/reports/mobile_live_captions_20261015/. Paper impact acknowledged by user
+(English generation now the caption engine, not T5). Next: user live-camera check; then remaining
+agreed UX items (final caption card, debug readouts, framing hints, recording toggle, 0.75x clips,
+first-Live walkthrough, History/Practice/error copy, NAME-only letters toggle, manual cleanup).
+
 ## 2026-10-13 — Software tests executed; results applied to Manuscript
 
 User authorized execution, fixes and GoogleDocs insertion. Python245/245 andFlutter7/7
