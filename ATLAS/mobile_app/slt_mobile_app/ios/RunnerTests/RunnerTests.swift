@@ -8,6 +8,245 @@ import XCTest
 
 class RunnerTests: XCTestCase {
 
+  func testLandmarkCaptureRotation() {
+    let point = CGPoint(x: 0.2, y: 0.3)
+    let cases: [(CGFloat, CGPoint)] = [
+      (0, point), (90, CGPoint(x: 0.3, y: 0.8)),
+      (180, CGPoint(x: 0.8, y: 0.7)), (270, CGPoint(x: 0.7, y: 0.2)),
+    ]
+    for (angle, expected) in cases {
+      let actual = LiveReelViewController.captureDevicePoint(point, rotation: angle)
+      XCTAssertEqual(actual.x, expected.x, accuracy: 0.0001)
+      XCTAssertEqual(actual.y, expected.y, accuracy: 0.0001)
+    }
+  }
+
+  @MainActor
+  func testAllPracticeReferencesPlayAndLoop() async throws {
+    let key = FlutterDartProject.lookupKey(forAsset: "assets/gloss_examples/catalog.json")
+    let path = try XCTUnwrap(Bundle.main.path(forResource: key, ofType: nil))
+    let catalog = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: path))) as! [String: Any]
+    let examples = catalog["examples"] as! [String: Any]
+    XCTAssertEqual(examples.count, 100)
+    for gloss in examples.keys.sorted() {
+      let key = FlutterDartProject.lookupKey(forAsset: "assets/gloss_examples/\(gloss).mp4")
+      let path = try XCTUnwrap(Bundle.main.path(forResource: key, ofType: nil), gloss)
+      let asset = AVURLAsset(url: URL(fileURLWithPath: path))
+      let duration = try await asset.load(.duration)
+      let player = AVQueuePlayer()
+      player.isMuted = true
+      let looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(asset: asset))
+      player.play()
+      let deadline = Date().addingTimeInterval(5)
+      while player.currentTime().seconds < 0.1 && Date() < deadline && looper.status != .failed {
+        try await Task.sleep(nanoseconds: 50_000_000)
+      }
+      XCTAssertGreaterThan(player.currentTime().seconds, 0.05, "\(gloss): \(String(describing: looper.error))")
+      XCTAssertNotEqual(looper.status, .failed, gloss)
+      await player.seek(to: CMTime(seconds: max(0, duration.seconds - 0.1), preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero)
+      let loopDeadline = Date().addingTimeInterval(3)
+      while looper.loopCount == 0 && Date() < loopDeadline && looper.status != .failed {
+        try await Task.sleep(nanoseconds: 50_000_000)
+      }
+      XCTAssertGreaterThan(looper.loopCount, 0, "\(gloss) did not loop")
+      player.pause()
+      looper.disableLooping()
+      player.removeAllItems()
+    }
+  }
+
+  @MainActor
+  func testCameraLayoutsLandmarkPreferenceAndReferenceOverlay() async throws {
+    let preference = "SLTShowLandmarksV17"
+    let old = UserDefaults.standard.object(forKey: preference)
+    defer {
+      if let old { UserDefaults.standard.set(old, forKey: preference) }
+      else { UserDefaults.standard.removeObject(forKey: preference) }
+    }
+    UserDefaults.standard.removeObject(forKey: preference)
+    func descendants(_ view: UIView) -> [UIView] { [view] + view.subviews.flatMap(descendants) }
+    let live = LiveReelViewController(mode: .live)
+    live.loadViewIfNeeded()
+    XCTAssertEqual(live.preferredInterfaceOrientationForPresentation, .portrait)
+    XCTAssertTrue(live.supportedInterfaceOrientations.contains(.landscapeLeft))
+    let signsPreference = "SLTShowSignsV17"
+    let oldSigns = UserDefaults.standard.object(forKey: signsPreference)
+    defer {
+      if let oldSigns { UserDefaults.standard.set(oldSigns, forKey: signsPreference) }
+      else { UserDefaults.standard.removeObject(forKey: signsPreference) }
+    }
+    UserDefaults.standard.removeObject(forKey: signsPreference)
+    // Landmarks, Show signs and the guide live in the ⋯ menu; checkmarks follow the toggles.
+    func menuItems(_ controller: LiveReelViewController) throws -> [UIAction] {
+      let button = try XCTUnwrap(descendants(controller.view).compactMap { $0 as? UIButton }.first { $0.accessibilityLabel == "More options" })
+      XCTAssertTrue(button.showsMenuAsPrimaryAction)
+      // The button's menu is one uncached deferred element (items are made each time it opens).
+      XCTAssertTrue(try XCTUnwrap(button.menu).children.first is UIDeferredMenuElement)
+      func actions(_ elements: [UIMenuElement]) -> [UIAction] {
+        elements.flatMap { ($0 as? UIMenu).map { actions($0.children) } ?? [$0 as? UIAction].compactMap { $0 } }
+      }
+      let items = actions(controller.menuItems())
+      // Toggles keep the menu open; the guide closes it (it leaves the camera).
+      for item in items {
+        XCTAssertEqual(item.attributes.contains(.keepsMenuPresented), item.title != "How to use ATLAS", item.title)
+      }
+      return items
+    }
+    func state(_ controller: LiveReelViewController, _ title: String) throws -> UIMenuElement.State {
+      try XCTUnwrap(try menuItems(controller).first { $0.title == title }).state
+    }
+    XCTAssertEqual(try menuItems(live).map(\.title), ["Show landmarks", "Show signs", "How to use ATLAS"])
+    XCTAssertEqual(try state(live, "Show landmarks"), .on)
+    XCTAssertEqual(try state(live, "Show signs"), .on)
+    live.perform(NSSelectorFromString("landmarksTapped"))
+    XCTAssertEqual(try state(live, "Show landmarks"), .off)
+    let practice = LiveReelViewController(mode: .practice(["HELLO", "GOOD"]))
+    practice.loadViewIfNeeded()
+    XCTAssertEqual(try menuItems(practice).map(\.title), ["Show landmarks", "How to use ATLAS"])
+    XCTAssertEqual(try state(practice, "Show landmarks"), .off)
+    for hidden in ["Show landmarks", "How to use ATLAS"] {
+      XCTAssertFalse(descendants(live.view).contains { $0.accessibilityLabel == hidden }, "\(hidden) belongs in the menu")
+    }
+    XCTAssertFalse(descendants(practice.view).contains { $0.accessibilityLabel == "Flip camera" })
+    XCTAssertTrue(descendants(live.view).contains { $0.accessibilityLabel == "Flip camera" })
+    let referenceDeadline = Date().addingTimeInterval(5)
+    while !descendants(practice.view).contains(where: { ($0 as? UILabel)?.text == "Reference" }) && Date() < referenceDeadline {
+      try await Task.sleep(nanoseconds: 50_000_000)
+    }
+    let output = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    for (name, controller) in [("live", live), ("practice", practice)] {
+      for size in [CGSize(width: 320, height: 568), CGSize(width: 390, height: 844), CGSize(width: 844, height: 390)] {
+        if name == "live" { live.showSampleUtterance() }
+        controller.view.frame = CGRect(origin: .zero, size: size)
+        controller.additionalSafeAreaInsets = size.height > size.width
+          ? UIEdgeInsets(top: 44, left: 0, bottom: 34, right: 0)
+          : UIEdgeInsets(top: 0, left: 44, bottom: 21, right: 44)
+        controller.view.setNeedsLayout()
+        controller.view.layoutIfNeeded()
+        XCTAssertFalse(descendants(controller.view).contains { ["Diagnostics", "Letters"].contains($0.accessibilityLabel ?? "") })
+        for label in ["Back", "More options"] + (name == "live" ? ["Flip camera"] : []) {
+          let button = try XCTUnwrap(descendants(controller.view).first { $0.accessibilityLabel == label })
+          let rect = button.convert(button.bounds, to: controller.view)
+          XCTAssertTrue(controller.view.bounds.insetBy(dx: -1, dy: -1).contains(rect), "\(name) \(size) \(label): \(rect)")
+          XCTAssertGreaterThanOrEqual(rect.height, 44)
+          if name == "live" {
+            let back = try XCTUnwrap(descendants(controller.view).first { $0.accessibilityLabel == "Back" })
+            XCTAssertEqual(rect.midY, back.convert(back.bounds, to: controller.view).midY, accuracy: 1)
+          }
+        }
+        if size.height > size.width {
+          func frame(_ identifier: String) throws -> CGRect {
+            let element = try XCTUnwrap(descendants(controller.view).first { $0.accessibilityIdentifier == identifier })
+            return element.convert(element.bounds, to: controller.view)
+          }
+          let center = controller.view.safeAreaLayoutGuide.layoutFrame.midX
+          if name == "practice" {
+            let action = try frame("cameraPrimaryAction")
+            let target = try frame("practiceTarget")
+            let reference = try frame("practiceReference")
+            XCTAssertEqual(action.midX, center, accuracy: 1)
+            XCTAssertEqual(target.midX, center, accuracy: 1)
+            XCTAssertEqual(reference.midX, center, accuracy: 1)
+            XCTAssertEqual(action.minY - target.maxY, 12, accuracy: 1)
+            XCTAssertLessThan(reference.maxY, target.minY)
+          } else {
+            XCTAssertEqual(try frame("cameraControls").midX, center, accuracy: 1)
+          }
+        }
+        if name == "live" {
+          // The English is the largest text, bottom-left above the controls; the word column is top-right.
+          func frame(_ identifier: String) throws -> CGRect {
+            let element = try XCTUnwrap(descendants(controller.view).first { $0.accessibilityIdentifier == identifier })
+            return element.convert(element.bounds, to: controller.view)
+          }
+          let caption = try frame("englishCaption"), word = try frame("recognizedWord")
+          let controls = try frame("cameraControls")
+          let safe = controller.view.safeAreaLayoutGuide.layoutFrame
+          XCTAssertFalse(caption.intersects(word), "\(size) caption \(caption) word \(word)")
+          XCTAssertFalse(caption.intersects(controls), "\(size) caption \(caption) controls \(controls)")
+          XCTAssertEqual(word.maxX, safe.maxX - 12, accuracy: 1)
+          XCTAssertLessThan(word.minY, safe.midY)
+          XCTAssertGreaterThan(caption.maxY, safe.midY)
+          let fonts = descendants(controller.view).compactMap { $0 as? UILabel }
+          let captionFont = try XCTUnwrap(fonts.first { $0.accessibilityIdentifier == "englishCaption" }).font.pointSize
+          let wordFont = try XCTUnwrap(fonts.first { $0.text == "YOU" && $0.superview?.accessibilityIdentifier == "recognizedWord" }).font.pointSize
+          XCTAssertGreaterThan(captionFont, wordFont)
+          if size.width > size.height {
+            // Landscape: a short caption sits level with ↺ and Finish.
+            live.showSampleUtterance(caption: "Hello, how are you?")
+            controller.view.setNeedsLayout(); controller.view.layoutIfNeeded()
+            XCTAssertEqual(try frame("englishCaption").midY, try frame("cameraControls").midY, accuracy: 1)
+            live.showSampleUtterance()
+            controller.view.setNeedsLayout(); controller.view.layoutIfNeeded()
+          }
+        }
+        let image = UIGraphicsImageRenderer(size: size).image { controller.view.layer.render(in: $0.cgContext) }
+        try image.pngData()?.write(to: output.appendingPathComponent("controls_\(name)_\(Int(size.width)).png"))
+        if name == "live" {
+          // Show signs off: only the English stays (no pills, word or candidates).
+          live.perform(NSSelectorFromString("signsTapped"))
+          controller.view.setNeedsLayout(); controller.view.layoutIfNeeded()
+          XCTAssertEqual(try state(live, "Show signs"), .off)
+          let visible = descendants(controller.view).filter { view in
+            sequence(first: view, next: \.superview).allSatisfy { !$0.isHidden && $0.alpha > 0 }
+          }
+          XCTAssertFalse(visible.contains { $0.accessibilityIdentifier == "recognizedWord" })
+          XCTAssertFalse(visible.contains { ($0 as? UILabel)?.text?.hasPrefix("HELLO") == true })
+          XCTAssertTrue(visible.contains { $0.accessibilityIdentifier == "englishCaption" })
+          let captionsOnly = UIGraphicsImageRenderer(size: size).image { controller.view.layer.render(in: $0.cgContext) }
+          try captionsOnly.pngData()?.write(to: output.appendingPathComponent("controls_live_captions_only_\(Int(size.width)).png"))
+          live.perform(NSSelectorFromString("signsTapped"))
+          XCTAssertEqual(try state(live, "Show signs"), .on)
+        }
+      }
+    }
+    // After Finish: the sentence with Speak again above it; nothing overlaps.
+    for size in [CGSize(width: 390, height: 844), CGSize(width: 844, height: 390)] {
+      live.showSampleFinished()
+      live.view.frame = CGRect(origin: .zero, size: size)
+      live.view.setNeedsLayout(); live.view.layoutIfNeeded()
+      func frame(_ identifier: String) throws -> CGRect {
+        let element = try XCTUnwrap(descendants(live.view).first { $0.accessibilityIdentifier == identifier })
+        return element.convert(element.bounds, to: live.view)
+      }
+      let speak = try XCTUnwrap(descendants(live.view).first { $0.accessibilityIdentifier == "speakAgain" })
+      XCTAssertTrue(sequence(first: speak, next: \.superview).allSatisfy { !$0.isHidden })
+      XCTAssertFalse(descendants(live.view).contains { $0.accessibilityIdentifier == "copySentence" })
+      let speakFrame = try frame("speakAgain"), caption = try frame("englishCaption")
+      XCTAssertLessThan(speakFrame.maxY, caption.minY)
+      XCTAssertGreaterThanOrEqual(speakFrame.height, 44)
+      XCTAssertTrue(live.view.bounds.contains(speakFrame))
+      let image = UIGraphicsImageRenderer(size: size).image { live.view.layer.render(in: $0.cgContext) }
+      try image.pngData()?.write(to: output.appendingPathComponent("controls_live_finished_\(Int(size.width)).png"))
+      // First-LIVE tips over the camera.
+      live.presentTips()
+      live.view.setNeedsLayout(); live.view.layoutIfNeeded()
+      let tips = try XCTUnwrap(descendants(live.view).first { $0.accessibilityIdentifier == "liveTips" })
+      XCTAssertTrue(descendants(tips).contains { ($0 as? UILabel)?.text == "ATLAS knows 100 signs" })
+      let tipsImage = UIGraphicsImageRenderer(size: size).image { live.view.layer.render(in: $0.cgContext) }
+      try tipsImage.pngData()?.write(to: output.appendingPathComponent("controls_live_tips_\(Int(size.width)).png"))
+      tips.removeFromSuperview()
+    }
+    let deadline = Date().addingTimeInterval(5)
+    while !descendants(practice.view).contains(where: { ($0 as? UILabel)?.text == "Reference" }) && Date() < deadline {
+      try await Task.sleep(nanoseconds: 50_000_000)
+    }
+    practice.perform(NSSelectorFromString("expandReference"))
+    practice.view.layoutIfNeeded()
+    let expanded = try XCTUnwrap(descendants(practice.view).first { $0.accessibilityIdentifier == "expandedReferenceVideo" })
+    XCTAssertGreaterThan(expanded.bounds.width, 110)
+    XCTAssertGreaterThan(expanded.bounds.height, 94)
+    let image = UIGraphicsImageRenderer(size: practice.view.bounds.size).image { practice.view.layer.render(in: $0.cgContext) }
+    try image.pngData()?.write(to: output.appendingPathComponent("controls_reference_expanded.png"))
+    let close = try XCTUnwrap(descendants(practice.view).compactMap { $0 as? UIButton }.first { $0.accessibilityLabel == "Close reference video" && $0.image(for: .normal) != nil })
+    close.sendActions(for: .touchUpInside)
+    XCTAssertFalse(descendants(practice.view).contains { $0.accessibilityLabel == "Close reference video" })
+    practice.perform(NSSelectorFromString("expandReference"))
+    let outside = try XCTUnwrap(descendants(practice.view).compactMap { $0 as? UIButton }.first { $0.accessibilityLabel == "Close reference video" && $0.image(for: .normal) == nil })
+    outside.sendActions(for: .touchUpInside)
+    XCTAssertFalse(descendants(practice.view).contains { $0.accessibilityLabel == "Close reference video" })
+  }
+
   /// Multi-sentence counted-output model (stage3_multisentence_tiny_v17_20260929): expected strings are
   /// the PyTorch outputs, which the native macOS replay matched on all 323 held-out sessions.
   func testStage3MultiSentenceModel() throws {
@@ -549,9 +788,42 @@ class RunnerTests: XCTestCase {
     XCTAssertEqual(buffer.flush().map(\.gloss), ["fs-JO"])
   }
 
-  /// LIVE and PRACTICE both keep a visible fingerspelling control (the ATLAS top-bar "Letters" button)
-  /// that reports its state; in PRACTICE it sits clear of the round banner and beside the score.
-  @MainActor func testLiveLettersControlPresent() throws {
+  /// The current camera toolbar omits manual Letters and diagnostics controls.
+  func testFramingHints() {
+    func point(_ x: Float, _ y: Float) -> LivePoint { LivePoint(x: x, y: y, c: 1) }
+    let shoulders = [point(0.35, 0.6), point(0.65, 0.6), LivePoint(), LivePoint()]
+    var hand = LiveHand()
+    for i in 0..<21 { hand.points[i] = point(0.5 + Float(i) * 0.005, 0.4) }
+    func frame(_ t: Double, body: [LivePoint], face: Bool = true, right: LiveHand? = nil) -> LiveObservation {
+      LiveObservation(seconds: t, width: 640, height: 480, left: nil, right: right, body: body,
+                      face: face ? [point(0.5, 0.3)] + [LivePoint](repeating: LivePoint(), count: 14) : [],
+                      faceForFeatures: true)
+    }
+    var framing = LiveFraming()
+    // A hint needs its condition to hold for a second.
+    XCTAssertNil(framing.update(frame(0, body: shoulders), brightness: 20, seconds: 0))
+    XCTAssertEqual(framing.update(frame(1.1, body: shoulders), brightness: 20, seconds: 1.1),
+                   "Too dark. Move somewhere brighter or face the light.")
+    XCTAssertNil(framing.update(frame(1.2, body: shoulders), brightness: 120, seconds: 1.2))
+    // Face but no shoulders: step back.
+    _ = framing.update(frame(2, body: [LivePoint](repeating: LivePoint(), count: 4)), brightness: 120, seconds: 2)
+    XCTAssertEqual(framing.update(frame(3.1, body: [LivePoint](repeating: LivePoint(), count: 4)), brightness: 120, seconds: 3.1),
+                   "Step back so both shoulders are in view.")
+    // A hand touching the frame edge.
+    var edge = hand
+    edge.points[8] = point(0.995, 0.4)
+    _ = framing.update(frame(4, body: shoulders, right: edge), brightness: 120, seconds: 4)
+    XCTAssertEqual(framing.update(frame(5.1, body: shoulders, right: edge), brightness: 120, seconds: 5.1),
+                   "Keep your hands inside the frame.")
+    XCTAssertNil(framing.update(frame(5.2, body: shoulders, right: hand), brightness: 120, seconds: 5.2))
+    // No one in view.
+    framing.reset()
+    _ = framing.update(frame(6, body: [LivePoint](repeating: LivePoint(), count: 4), face: false), brightness: 120, seconds: 6)
+    XCTAssertEqual(framing.update(frame(7.1, body: [LivePoint](repeating: LivePoint(), count: 4), face: false), brightness: 120, seconds: 7.1),
+                   "Step into view so ATLAS can see you.")
+  }
+
+  @MainActor func testCameraToolbarOmitsRemovedControls() throws {
     for mode: LiveReelViewController.Mode in [.live, .practice(["HELLO"])] {
       for size in [CGSize(width: 844, height: 390), CGSize(width: 667, height: 375)] {
         let controller = LiveReelViewController(mode: mode)
@@ -570,14 +842,16 @@ class RunnerTests: XCTestCase {
           view.subviews.forEach(visit)
         }
         visit(controller.view)
-        XCTAssertEqual(found.count, 1, "\(mode) \(size)")
-        if let button = found.first {
-          let frame = button.convert(button.bounds, to: controller.view)
-          XCTAssertTrue(controller.view.bounds.insetBy(dx: -1, dy: -1).contains(frame), "Offscreen Letters: \(frame)")
-          XCTAssertTrue(["On", "Off"].contains(button.accessibilityValue ?? ""))
-          for other in banner {
-            XCTAssertFalse(frame.intersects(other), "Letters \(frame) overlaps \(other) at \(size)")
-          }
+        XCTAssertTrue(found.isEmpty, "Manual Letters control must remain absent: \(mode) \(size)")
+        func accessibleViews(_ view: UIView) -> [UIView] { [view] + view.subviews.flatMap(accessibleViews) }
+        let views = accessibleViews(controller.view)
+        XCTAssertFalse(views.contains { $0.accessibilityLabel == "Diagnostics" })
+        // Landmarks and the guide moved into the ⋯ menu.
+        XCTAssertFalse(views.contains { ["Show landmarks", "How to use ATLAS"].contains($0.accessibilityLabel ?? "") })
+        for label in ["Back", "More options"] {
+          let control = try XCTUnwrap(views.first { $0.accessibilityLabel == label })
+          let frame = control.convert(control.bounds, to: controller.view)
+          XCTAssertTrue(controller.view.bounds.insetBy(dx: -1, dy: -1).contains(frame), "Offscreen \(label): \(frame)")
         }
         if case .practice = mode { XCTAssertEqual(banner.count, 2, "Practice round caption and score chip") }
         controller.viewWillDisappear(false)
@@ -585,10 +859,11 @@ class RunnerTests: XCTestCase {
     }
   }
 
-  @MainActor func testLiveAndPracticeKeepLandscapeLayout() {
+  @MainActor func testLiveAndPracticeSupportPortraitAndLandscapeLayout() {
     for mode: LiveReelViewController.Mode in [.live, .practice(["HELLO"])] {
       let controller = LiveReelViewController(mode: mode)
-      XCTAssertFalse(controller.supportedInterfaceOrientations.contains(.portrait))
+      XCTAssertTrue(controller.supportedInterfaceOrientations.contains(.portrait))
+      XCTAssertEqual(controller.preferredInterfaceOrientationForPresentation, .portrait)
       XCTAssertTrue(controller.supportedInterfaceOrientations.contains(.landscapeLeft))
       controller.loadViewIfNeeded()
       for size in [CGSize(width: 844, height: 390)] {

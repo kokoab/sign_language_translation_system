@@ -1,6 +1,6 @@
-// LIVE and PRACTICE (landscape, full-screen camera) of the ATLAS app. Both modes share one layout;
+// LIVE and PRACTICE (portrait or landscape, full-screen camera) of the ATLAS app. Both modes share one layout;
 // panels are iOS 26 Liquid Glass (a dark blur before iOS 26) over the camera, buttons are gradients:
-//   top bar      back · mode + status (dot while running) · Letters (blue = on) · PRACTICE score · ? · gear
+//   top bar      back · mode + status (dot while running) · landmarks · camera flip (LIVE) · ?
 //   under bar    LIVE: committed-word pills (newest last, amber "WORD?" preview) on the right,
 //                the finished sentence on the left (its dot turns green while it is spoken)
 //                PRACTICE: the round + sign to perform (top centre), the reference clip (top right)
@@ -10,7 +10,6 @@
 //                sentence; Back leaves and stops the camera), PRACTICE Skip → Next (the round starts from
 //                the set chosen on the setup page)
 //   ?            leaves like Back, opening the manual (LIVE: reading the screen, PRACTICE: practice)
-//   gear         diagnostics panel (FPS, frame time, hands, frames)
 // LIVE processes nothing until Start. PRACTICE runs as soon as the round opens.
 // ↺ LIVE clears the signs so far; PRACTICE retries the current sign. Long-press it for a hint.
 // LIVE records each Start → Finish take to Documents/live_reel_videos (Files app); ↺ restarts the take,
@@ -202,6 +201,8 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
 
     private let mode: Mode
     private var isPractice: Bool { if case .practice = mode { return true } else { return false } }
+    /// Confidence bar length: shorter in LIVE, where the word sits in a narrow top-right column.
+    private var barWidth: CGFloat { isPractice ? 120 : 90 }
     private var closeResult: [String: Any] = ["navigate": "HOME"]
 
     private let session = AVCaptureSession()
@@ -212,6 +213,20 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private var rotationObservers: [NSKeyValueObservation] = []
     private let bones = CAShapeLayer()
     private let joints = CAShapeLayer()
+    private var cameraPosition: AVCaptureDevice.Position = .front
+    private var switchingCamera = false
+    private let flipButton = UIButton(type: .system)
+    /// ⋯ menu: Show landmarks, (LIVE) Show signs, How to use ATLAS.
+    private let menuButton = UIButton(type: .system)
+    private var landmarksOn = UserDefaults.standard.object(forKey: "SLTShowLandmarksV17") as? Bool ?? true
+    /// LIVE: the sign pills and the word column (word, confidence, top 3); off leaves only the English.
+    private var signsOn = UserDefaults.standard.object(forKey: "SLTShowSignsV17") as? Bool ?? true
+    private var portraitConstraints: [NSLayoutConstraint] = []
+    private var landscapeConstraints: [NSLayoutConstraint] = []
+    private var portraitLayout: Bool?
+    private let orientationHint = UILabel()
+    private var referenceOverlay: UIView?
+    private var expandedVideo: UIView?
 
     // Engine state: touched only on `queue`.
     private var running = false
@@ -220,13 +235,12 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private var computeHistory: [Double] = []
     private var frameTimes: [Double] = []
     private var processedFrames = 0
+    private var framing = LiveFraming()
+    private var brightness: Double?
     private var utterance: [LiveWord] = []
-    // Incremental Stage 3 (counted-output models): committed words wait in `pendingTranslation`
-    // (engine queue -> language queue); one drain takes everything pending, so renders never queue
-    // up behind each other in front of Finish. `translator` is used only on the language queue.
-    private let translator = LiveIncrementalTranslator()
-    private let pendingLock = NSLock()
-    private var pendingTranslation: [LiveWord] = []
+    /// Live English captions (scripts/live_captions_v17.py): committed signs are pushed in order and
+    /// every frame ticks the pause timer. Created lazily and used only on LiveReelShared.languageQueue.
+    private var captions: LiveCaptions?
     // Pose tracking is owned by captureQueue, independently of model inference.
     private let captureQueue = DispatchQueue(label: "slt.live.capture", qos: .userInteractive)
     private let frameGate = LiveLatestFrameGate<CMSampleBuffer>()
@@ -258,8 +272,15 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private var videoTakes = 0
     private var fps = 0.0
     private var loadTimer: Timer?
-    /// Banner text other than the live words: the Stage 3 sentence, or a load/frame notice.
+    /// Banner text other than the live words: the finished caption, or a load/frame notice.
     private var bannerMessage: (caption: String, text: String)?
+    /// The caption of the utterance being signed (main thread).
+    private var captionText: String?
+    /// The last finished sentence, while it is on screen (Speak again).
+    private var finishedSentence: String?
+    /// The current framing hint (main thread), or nil.
+    private var advice: String?
+    private var captionWidth: CGFloat = 0
 
     // Practice (main thread).
     private var targets: [String] = []
@@ -278,15 +299,21 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private let modeLabel = UILabel()
     private let statusLabel = UILabel()
     /// Fingerspelling on/off (filled blue while on), then (PRACTICE) the score.
-    private let lettersButton = UIButton(type: .custom)
-    private let lettersFill = UIView()
     private let scoreChipLabel = UILabel()
-    private let helpButton = UIButton(type: .system)
-    private let gearButton = UIButton(type: .system)
     private let railStack = UIStackView()
+    private let railScroll = UIScrollView()
     private var railChipKey: [String]?
     private let sentenceDot = UIView()
     private let sentenceLabel = UILabel()
+    /// A dark panel behind the centre prompt (it sits over the framing outline before Start).
+    private let promptPanel = UIView()
+    /// LIVE: Speak again above a finished sentence.
+    private let actionsRow = UIStackView()
+    private let speakAgainButton = UIButton(type: .system)
+    /// Framing: an upper-body outline and a one-line hint (too dark, step back, hands out of frame).
+    private let framingGuide = CAShapeLayer()
+    private let adviceGlass = GlassView()
+    private let adviceLabel = UILabel()
     private let bannerBox = GlassView(radius: 18)
     private let bannerCaption = UILabel()
     private let bannerValue = UILabel()
@@ -300,6 +327,8 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private let feedbackPill = UIView()
     private let feedbackLabel = UILabel()
     private let candidatesStack = UIStackView()
+    /// The word in progress with its confidence, candidates and (Practice) verdict.
+    private let wordStack = UIStackView()
     private var candidateChipKey: [String]?
     private let statsPanel = GlassView(radius: 16)
     private let statsLabel = UILabel()
@@ -310,16 +339,6 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private let primaryButton = GradientButton(type: .custom)
     private let hintGlass = GlassView()
     private let hintLabel = UILabel()
-    /// Letters always on (manual override), remembered across launches, separately for LIVE and PRACTICE.
-    /// Off: words, and the FINGERSPELL sign (or NAME) switches spelling on; FINGERSPELL again or hands
-    /// down ends it. LIVE defaults off; PRACTICE defaults on (it judged with letters on before the switch).
-    private static func lettersKey(practice: Bool) -> String {
-        practice ? "SLTPracticeLettersAlwaysV17" : "SLTLiveLettersAlwaysV17"
-    }
-    private static func lettersSetting(practice: Bool) -> Bool {
-        UserDefaults.standard.object(forKey: lettersKey(practice: practice)) as? Bool ?? practice
-    }
-    private var lettersOn = false
     /// The engine's spell mode, for the top-bar status.
     private var spellMode: LiveReelEngine.SpellMode = .words
     private let pipView = GlassView(radius: 18)
@@ -328,20 +347,21 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private var pipPlayer: AVQueuePlayer?
     private var pipLooper: AVPlayerLooper?
     private var pipLayer: AVPlayerLayer?
+    private var referenceTask: Task<Void, Never>?
+    private var referenceStatus: NSKeyValueObservation?
     private let speech = AVSpeechSynthesizer()
 
     init(mode: Mode) {
         self.mode = mode
         if case .practice(let glosses) = mode { targets = glosses }
         super.init(nibName: nil, bundle: nil)
-        lettersOn = Self.lettersSetting(practice: isPractice)
         modalPresentationStyle = .fullScreen
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .landscape }
-    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation { .landscapeRight }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .allButUpsideDown }
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation { .portrait }
     override var prefersStatusBarHidden: Bool { true }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
 
@@ -368,7 +388,8 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
                 self.render()
             } else if status["state"] as? String == "failed" {
                 timer.invalidate()
-                self.bannerMessage = ("MODELS", "Model load failed: \(status["error"] as? String ?? "")")
+                NSLog("Live models failed to load: %@", status["error"] as? String ?? "")
+                self.bannerMessage = ("MODELS", "ATLAS couldn't load its sign models. Close the app and open it again.")
                 self.render()
             }
         }
@@ -378,13 +399,29 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         super.viewDidAppear(animated)
         UIApplication.shared.isIdleTimerDisabled = true
         setNeedsUpdateOfSupportedInterfaceOrientations()
-        view.window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape))
+        view.window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+        if !isPractice, !UserDefaults.standard.bool(forKey: LiveReelShared.liveTipsSeenKey) { presentTips() }
+    }
+
+    /// The first-LIVE tips (Settings → Show Live tips again resets them). Shown over the camera.
+    func presentTips() {
+        guard !view.subviews.contains(where: { $0 is LiveTipsView }) else { return }
+        let tips = LiveTipsView()
+        tips.onDone = { UserDefaults.standard.set(true, forKey: LiveReelShared.liveTipsSeenKey) }
+        tips.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tips)
+        NSLayoutConstraint.activate([
+            tips.leadingAnchor.constraint(equalTo: view.leadingAnchor), tips.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tips.topAnchor.constraint(equalTo: view.topAnchor), tips.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         UIApplication.shared.isIdleTimerDisabled = false
         loadTimer?.invalidate()
+        referenceTask?.cancel()
+        dismissReference()
         pipPlayer?.pause()
         isRunningUI = false
         frameGate.setEnabled(false)
@@ -414,7 +451,25 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         previewLayer?.frame = view.bounds
         bones.frame = view.bounds
         joints.frame = view.bounds
-        pipLayer?.frame = pipVideo.bounds
+        let portrait = view.bounds.height > view.bounds.width
+        if portraitLayout != portrait {
+            NSLayoutConstraint.deactivate(portraitConstraints + landscapeConstraints)
+            NSLayoutConstraint.activate(portrait ? portraitConstraints : landscapeConstraints)
+            portraitLayout = portrait
+            orientationHint.isHidden = !portrait
+            view.layoutIfNeeded()
+        }
+        pipLayer?.frame = (expandedVideo ?? pipVideo).bounds
+        framingGuide.frame = view.bounds
+        framingGuide.path = Self.framingPath(in: view.safeAreaLayoutGuide.layoutFrame)
+        // The caption is fitted to the label's width; refit when that width changes (rotation).
+        if !isPractice, sentenceLabel.bounds.width != captionWidth {
+            captionWidth = sentenceLabel.bounds.width
+            render()
+            view.layoutIfNeeded()
+            railScroll.setContentOffset(CGPoint(x: max(0, railScroll.contentSize.width - railScroll.bounds.width), y: 0),
+                                        animated: false)
+        }
     }
 
     // MARK: - Camera
@@ -453,6 +508,13 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         joints.fillColor = HUD.white.cgColor
         view.layer.insertSublayer(bones, above: previewLayer)
         view.layer.insertSublayer(joints, above: bones)
+        updateLandmarkVisibility()
+        configureRotation(device)
+        queue.async { self.session.startRunning() }
+    }
+
+    private func configureRotation(_ device: AVCaptureDevice) {
+        rotationObservers = []
         let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: previewLayer)
         rotation = coordinator
         applyRotation()
@@ -464,7 +526,6 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
                 DispatchQueue.main.async { self?.applyRotation() }
             },
         ]
-        queue.async { self.session.startRunning() }
     }
 
     private func applyRotation() {
@@ -472,11 +533,15 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         if let connection = output.connection(with: .video),
            connection.isVideoRotationAngleSupported(rotation.videoRotationAngleForHorizonLevelCapture) {
             let angle = rotation.videoRotationAngleForHorizonLevelCapture
-            if connection.videoRotationAngle != angle { frameGate.setEnabled(false) }
+            let resumeRecording = isRunningUI && !switchingCamera
+            if connection.videoRotationAngle != angle {
+                frameGate.setEnabled(false)
+                saveRecording()
+            }
             queue.async {
                 if connection.videoRotationAngle != angle {
                     self.frameGate.setEnabled(false)
-                    connection.videoRotationAngle = angle
+                    self.captureQueue.sync { connection.videoRotationAngle = angle }
                     // Frame geometry changed: start the stream fresh.
                     if self.running {
                         LiveReelShared.engine?.resetStream()
@@ -491,6 +556,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
                         self.bones.path = nil; self.joints.path = nil
                         self.previewText = nil; self.centerPreview = nil; self.top3 = []
                         self.finishGestureProgress = nil
+                        if resumeRecording && self.isRunningUI { self.startRecording() }
                         self.render()
                     }
                 }
@@ -502,10 +568,117 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         }
     }
 
+    @objc private func landmarksTapped() {
+        landmarksOn.toggle()
+        UserDefaults.standard.set(landmarksOn, forKey: "SLTShowLandmarksV17")
+        updateLandmarkVisibility()
+        updateMenu()
+    }
+
+    private func updateLandmarkVisibility() {
+        bones.isHidden = !landmarksOn
+        joints.isHidden = !landmarksOn
+    }
+
+    /// LIVE: show or hide the sign pills and the word column, leaving only the English.
+    @objc private func signsTapped() {
+        signsOn.toggle()
+        UserDefaults.standard.set(signsOn, forKey: "SLTShowSignsV17")
+        updateMenu()
+        render()
+    }
+
+    /// The ••• menu's items; checkmarks show the current toggles. The toggles keep the menu open
+    /// (tap outside to close it); How to use ATLAS closes it and leaves the camera.
+    func menuItems() -> [UIMenuElement] {
+        let symbol = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
+        var items: [UIMenuElement] = [
+            UIAction(title: "Show landmarks", image: UIImage(systemName: "point.3.connected.trianglepath.dotted", withConfiguration: symbol),
+                     attributes: .keepsMenuPresented, state: landmarksOn ? .on : .off) { [weak self] _ in self?.landmarksTapped() },
+        ]
+        if !isPractice {
+            items.append(UIAction(title: "Show signs", image: UIImage(systemName: "text.bubble", withConfiguration: symbol),
+                                  attributes: .keepsMenuPresented, state: signsOn ? .on : .off) { [weak self] _ in self?.signsTapped() })
+        }
+        items.append(UIMenu(options: .displayInline, children: [
+            UIAction(title: "How to use ATLAS", image: UIImage(systemName: "questionmark.circle", withConfiguration: symbol)) { [weak self] _ in
+                self?.helpPressed()
+            },
+        ]))
+        return items
+    }
+
+    /// Built once: the items are made each time the menu opens, so the menu is never replaced (which
+    /// would close it) while it is showing.
+    private func buildMenu() {
+        menuButton.menu = UIMenu(children: [UIDeferredMenuElement.uncached { [weak self] completion in
+            completion(self?.menuItems() ?? [])
+        }])
+        updateMenu()
+    }
+
+    /// After a toggle: refresh the open menu in place (new checkmarks, still open) and the button's value.
+    private func updateMenu() {
+        menuButton.contextMenuInteraction?.updateVisibleMenu { [weak self] menu in
+            menu.replacingChildren(self?.menuItems() ?? menu.children)
+        }
+        menuButton.accessibilityValue = [landmarksOn ? "Landmarks on" : "Landmarks off",
+                                         isPractice ? nil : signsOn ? "Signs on" : "Signs off"]
+            .compactMap { $0 }.joined(separator: ", ")
+    }
+
+    @objc private func flipCamera() {
+        guard !isPractice, !switchingCamera, !finishing else { return }
+        let position: AVCaptureDevice.Position = cameraPosition == .front ? .back : .front
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position),
+              let input = try? AVCaptureDeviceInput(device: device) else { return }
+        switchingCamera = true
+        flipButton.isEnabled = false
+        frameGate.setEnabled(false)
+        bones.path = nil; joints.path = nil
+        saveRecording()
+        queue.async {
+            self.session.beginConfiguration()
+            let old = self.session.inputs
+            old.forEach { self.session.removeInput($0) }
+            let switched = self.session.canAddInput(input)
+            if switched { self.session.addInput(input) }
+            else { old.forEach { self.session.addInput($0) } }
+            if let connection = self.output.connection(with: .video) {
+                connection.automaticallyAdjustsVideoMirroring = false
+                connection.isVideoMirrored = false
+            }
+            self.session.commitConfiguration()
+            LiveReelShared.engine?.reset()
+            self.resetPoseTracking()
+            self.deadline = 0
+            DispatchQueue.main.async {
+                if switched { self.cameraPosition = position }
+                if let connection = self.previewLayer.connection {
+                    connection.automaticallyAdjustsVideoMirroring = false
+                    connection.isVideoMirrored = self.cameraPosition == .front
+                }
+                if switched { self.configureRotation(device) }
+                self.previewText = nil; self.centerPreview = nil; self.top3 = []
+                self.finishGestureProgress = nil
+                self.switchingCamera = false
+                self.flipButton.isEnabled = true
+                self.queue.async { self.frameGate.setEnabled(self.running) }
+                if self.isRunningUI { self.startRecording() }
+                if !switched { self.bannerMessage = ("CAMERA", "Could not switch cameras. Try again.") }
+                self.render()
+            }
+        }
+    }
+
     /// On `queue`.
     private func startStream() {
-        // Both modes follow their own Letters switch (Practice on = the desktop's letters-on judging).
-        LiveReelShared.engine?.lettersAlways = lettersSetting
+        // Manual Letters override stays off in both modes, regardless of old saved preferences. The
+        // FINGERSPELL sign is off; NAME spells only in LIVE with the Settings switch on.
+        LiveReelShared.engine?.lettersAlways = false
+        LiveReelShared.engine?.fingerspellSign = false
+        LiveReelShared.engine?.nameLetters = !isPractice && UserDefaults.standard.bool(forKey: LiveReelShared.nameSpellingKey)
+        framing.reset(); brightness = nil
         LiveReelShared.engine?.reset()
         firstStamp = nil
         deadline = 0
@@ -522,6 +695,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         guard let generation = frameGate.activeGeneration,
               let frame = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         if frameGate.offer(sampleBuffer, generation: generation) { queue.async { self.processNextCapture() } }
+        let captureAngle = connection.videoRotationAngle
         let seconds = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
         guard seconds + 1e-6 >= poseDeadline else { return }
         poseDeadline = max(poseDeadline + 1 / LiveReelEngine.fps, seconds)
@@ -535,7 +709,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             let body = poseBody, face = poseFace
             DispatchQueue.main.async {
                 guard self.isRunningUI, self.frameGate.isCurrent(generation) else { return }
-                self.drawSkeleton(observation, body: body, face: face)
+                self.drawSkeleton(observation, body: body, face: face, captureAngle: captureAngle)
             }
         } catch { /* A failed overlay frame must not interrupt recognition. */ }
     }
@@ -572,7 +746,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             if frameTimes.count > 30 { frameTimes.removeFirst() }
             if !isPractice {
                 utterance += step.committed
-                translateIncrementally(step.committed)
+                caption(step.committed, seconds: seconds, held: step.finishProgress != nil)
             }
             if let spellEvent = step.spellEvent {
                 events.append(["event": "spell_mode", "seconds": seconds, "change": spellEvent])
@@ -582,6 +756,8 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
                 if !isPractice { sessionGlosses.append(w.gloss) }
             }
             let o = step.observation
+            if processedFrames % 5 == 1 { brightness = Self.brightness(frame) }
+            let advice = step.finishProgress == nil ? framing.update(o, brightness: brightness, seconds: seconds) : nil
             let preview = step.finishProgress == nil ? engine.preview : nil
             let pending = step.finishProgress != nil || engine.speller.letters.isEmpty ? nil : engine.speller.pending
             let previewKey = pending.map { "fs-" + $0 } ?? preview?.gloss ?? ""
@@ -599,6 +775,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             DispatchQueue.main.async {
                 guard self.isRunningUI else { return }
                 self.fps = fps
+                self.advice = advice
                 self.finishGestureProgress = step.finishProgress
                 self.spellMode = step.spellMode
                 self.apply(committed: step.committed, preview: preview, pending: pending)
@@ -611,7 +788,11 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             }
             if step.finishRequested { finishUtterance(reason: "two_hand_gesture") }
         } catch {
-            DispatchQueue.main.async { self.bannerMessage = ("NOTICE", "Frame error: \(error.localizedDescription)"); self.render() }
+            NSLog("Live frame error: %@", error.localizedDescription)
+            DispatchQueue.main.async {
+                self.bannerMessage = ("NOTICE", "The camera skipped a moment. ATLAS is still translating.")
+                self.render()
+            }
         }
     }
 
@@ -620,7 +801,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     /// LIVE Start/Stop (Stop finishes the utterance). PRACTICE Stop pauses the round; Start resumes it
     /// through the same startStream() the round opens with.
     @objc private func toggleStart() {
-        guard loaded else { return }
+        guard loaded, !switchingCamera else { return }
         let starting = !isRunningUI
         isRunningUI = starting
         if isPractice && !starting { previewText = nil; centerPreview = nil; top3 = [] }
@@ -646,23 +827,6 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         }
     }
 
-    /// Read on the engine queue.
-    private var lettersSetting: Bool { Self.lettersSetting(practice: isPractice) }
-
-    @objc private func lettersTapped() {
-        lettersOn.toggle()
-        UserDefaults.standard.set(lettersOn, forKey: Self.lettersKey(practice: isPractice))
-        let on = lettersOn
-        // Practice: the sign in progress was read by the other decoder; the attempt starts again.
-        if isPractice { previewText = nil; centerPreview = nil; top3 = [] }
-        render()
-        // Switching decoders restarts the open utterance's recognition (committed words stay).
-        queue.async {
-            LiveReelShared.engine?.lettersAlways = on
-            self.events.append(["event": "letters_always", "on": on])
-        }
-    }
-
     @objc private func resetPressed() {
         if isRunningUI { startRecording() }
         queue.async {
@@ -670,12 +834,12 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             self.frameGate.setEnabled(self.running)
             self.resetPoseTracking()
             self.utterance = []
-            self.takePendingTranslation()
-            LiveReelShared.languageQueue.async { self.translator.reset() }
+            LiveReelShared.languageQueue.async { self.captions?.reset() }
             self.events.append(["event": "reset"])
             DispatchQueue.main.async {
                 self.speech.stopSpeaking(at: .immediate)
-                self.rail = []; self.previewText = nil; self.committedWord = nil
+                self.rail = []; self.previewText = nil; self.committedWord = nil; self.captionText = nil
+                self.finishedSentence = nil
                 self.centerPreview = nil; self.top3 = []; self.finishing = false
                 self.finishGestureProgress = nil
                 self.bannerMessage = nil
@@ -704,10 +868,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
 
     @objc private func resetHint(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began else { return }
-        hintLabel.text = isPractice ? "Try this sign again" : "Clear the signs so far"
-        hintGlass.layer.removeAllAnimations()
-        hintGlass.alpha = 1
-        UIView.animate(withDuration: 0.4, delay: 1.6, options: [.beginFromCurrentState]) { self.hintGlass.alpha = 0 }
+        showHint(isPractice ? "Try this sign again" : "Clear the signs so far")
     }
 
     /// LIVE returns Home; PRACTICE returns to its setup (or the result page once the round is done).
@@ -718,11 +879,6 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     /// ?: leave (saving like Back) for the manual section about this screen.
     @objc private func helpPressed() {
         close(navigate: "MANUAL", section: isPractice ? "practice" : "screen")
-    }
-
-    @objc private func gearPressed() {
-        statsPanel.isHidden.toggle()
-        render()
     }
 
     private func close(navigate page: String, section: String? = nil) {
@@ -738,27 +894,28 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         dismiss(animated: true)
     }
 
-    /// Remove and return every committed word not yet given to the translator. Any queue.
-    @discardableResult
-    private func takePendingTranslation() -> [LiveWord] {
-        pendingLock.lock(); defer { pendingLock.unlock() }
-        let words = pendingTranslation
-        pendingTranslation = []
-        return words
+    /// The utterance's captions, created on first use (the models load after the recognizer).
+    /// languageQueue only; nil while the caption models are still loading or failed to load.
+    private func liveCaptions() -> LiveCaptions? {
+        if captions == nil, let models = LiveReelShared.captions { captions = LiveCaptions(models) }
+        return captions
     }
 
-    /// On `queue`: hand committed words to the incremental translator (counted-output models only).
-    /// Each call schedules one drain; a drain that finds nothing pending returns without rendering.
-    private func translateIncrementally(_ committed: [LiveWord]) {
-        guard !committed.isEmpty else { return }
-        pendingLock.lock(); pendingTranslation += committed; pendingLock.unlock()
+    /// On `queue`: push committed signs, then (unless the Finish gesture is held) tick the pause timer.
+    private func caption(_ committed: [LiveWord], seconds: Double, held: Bool) {
         LiveReelShared.languageQueue.async {
-            guard let stage3 = LiveReelShared.stage3 else { return }   // still loading: words stay pending
-            guard stage3.countedOutput else { self.takePendingTranslation(); return }
-            let words = self.takePendingTranslation()
-            guard let lock = self.translator.append(words, using: stage3) else { return }
+            guard let captions = self.liveCaptions() else { return }
+            var updates: [(kind: String, text: String)] = []
+            for w in committed { updates.append(("sign", captions.push(w.gloss, score: w.score, seconds: seconds))) }
+            if !held, let text = captions.tick(seconds) { updates.append(("end_of_turn", text)) }
+            guard let latest = updates.last?.text else { return }
             self.queue.async {
-                self.events.append(["event": "stage3_lock", "sentence": lock.text, "glosses": lock.words.map(\.gloss)])
+                for u in updates { self.events.append(["event": "caption", "kind": u.kind, "seconds": seconds, "text": u.text]) }
+            }
+            DispatchQueue.main.async {
+                guard !self.finishing else { return }
+                self.captionText = latest.isEmpty ? nil : latest
+                self.render()
             }
         }
     }
@@ -769,55 +926,46 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         let tail = (try? engine.finish()) ?? []
         utterance += tail
         sessionGlosses += tail.map(\.gloss)
-        pendingLock.lock(); pendingTranslation += tail; pendingLock.unlock()
         let words = utterance
         utterance = []
+        let seconds = tail.last?.commitSeconds ?? 0
         events.append(["event": reason, "words": words.map(\.json)])
         DispatchQueue.main.async {
             self.apply(committed: tail, preview: nil, pending: nil)
             self.previewText = nil; self.centerPreview = nil
             if words.isEmpty {
-                self.bannerMessage = ("TRANSLATION", "No recognized signs to finish.")
+                self.bannerMessage = ("TRANSLATION", "No signs yet. Sign first, then tap Finish.")
+                self.captionText = nil
             } else {
                 self.finishing = true
                 self.bannerMessage = nil
             }
             self.render()
         }
-        guard !words.isEmpty else {
-            takePendingTranslation()
-            LiveReelShared.languageQueue.async { self.translator.reset() }
-            return
-        }
         LiveReelShared.languageQueue.async {
             let started = Date()
-            var incremental: [String: Any] = [:]
-            let pending = self.takePendingTranslation()
-            var rendered: (sentence: String, clauses: [[String]])
-            if let stage3 = LiveReelShared.stage3, stage3.countedOutput,
-               self.translator.locked.flatMap(\.words).count + self.translator.buffer.count + pending.count == words.count {
-                // Only the open tail is rendered here; earlier sentences were locked while signing.
-                let result = self.translator.finish(pending, using: stage3)
-                rendered = (result.sentence, result.clauses)
-                incremental = ["locked": result.locked, "tail_words": result.tailWords]
-            } else {
-                self.translator.reset()
-                rendered = LiveReelShared.stage3?.renderUtterance(words)
-                    ?? (sentence: words.map { $0.gloss.hasPrefix("fs-") ? LiveStage3.spelledText($0.gloss) : $0.gloss.lowercased() }
-                            .joined(separator: " ") + ".", clauses: [[String]]())
-            }
+            let captions = self.liveCaptions()
+            for w in tail { captions?.push(w.gloss, score: w.score, seconds: seconds) }
+            guard !words.isEmpty else { captions?.reset(); return }
+            // Without caption models (not yet loaded or failed) the signs are shown as written words.
+            let sentence = captions?.finish() ?? words.map {
+                $0.gloss.hasPrefix("fs-") ? LiveStage3.spelledText($0.gloss) : $0.gloss.lowercased()
+            }.joined(separator: " ") + "."
+            captions?.reset()
             let ms = 1000 * Date().timeIntervalSince(started)
             self.queue.async {
-                var event: [String: Any] = ["event": "sentence", "sentence": rendered.sentence, "clauses": rendered.clauses, "ms": ms]
-                event.merge(incremental) { $1 }
-                self.events.append(event)
-                self.sessionSentences.append(rendered.sentence)
+                self.events.append(["event": "sentence", "sentence": sentence, "ms": ms,
+                                    "rendering_mode": captions == nil ? "literal" : "live_captions",
+                                    "live_captions": LiveReelShared.captions?.name ?? LiveReelShared.captionsError ?? "unloaded"])
+                self.sessionSentences.append(sentence)
             }
             DispatchQueue.main.async {
                 self.finishing = false
-                self.bannerMessage = ("TRANSLATION", rendered.sentence)
+                self.captionText = nil
+                self.finishedSentence = sentence
+                self.bannerMessage = ("TRANSLATION", sentence)
                 self.rail = []
-                self.say(rendered.sentence)
+                self.say(sentence)
                 self.render()
             }
         }
@@ -828,7 +976,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private var target: String? { !roundDone && practiceIndex < targets.count ? targets[practiceIndex] : nil }
 
     private func judge(_ committed: [LiveWord]) {
-        guard !awaitingNext, let target, let first = committed.first else { return }
+        guard referenceOverlay == nil, !awaitingNext, let target, let first = committed.first else { return }
         let seen = Self.display(first.gloss)
         practiceAttempts += 1
         if seen == target {
@@ -839,7 +987,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             awaitingNext = true
             let index = practiceIndex
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-                guard let self, self.awaitingNext, self.practiceIndex == index else { return }
+                guard let self, self.referenceOverlay == nil, self.awaitingNext, self.practiceIndex == index else { return }
                 self.nextPressed()
             }
         } else {
@@ -885,22 +1033,120 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
 
     /// The target's reference clip, looping (the desktop "HOW IT LOOKS" picture-in-picture).
     private func loadReference() {
+        referenceTask?.cancel()
+        referenceStatus = nil
+        dismissReference()
         pipPlayer?.pause()
+        pipLooper?.disableLooping()
+        pipPlayer?.removeAllItems()
         pipLayer?.removeFromSuperlayer()
         pipPlayer = nil; pipLooper = nil; pipLayer = nil
         guard let target else { pipView.isHidden = true; return }
-        let key = FlutterDartProject.lookupKey(forAsset: "assets/gloss_examples/\(target).mp4")
-        guard let path = Bundle.main.path(forResource: key, ofType: nil) else { pipView.isHidden = true; return }
-        let player = AVQueuePlayer()
-        player.isMuted = true
-        pipLooper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: URL(fileURLWithPath: path)))
-        let layer = AVPlayerLayer(player: player)
-        layer.videoGravity = .resizeAspectFill
-        layer.frame = pipVideo.bounds
-        pipVideo.layer.insertSublayer(layer, at: 0)
-        pipPlayer = player; pipLayer = layer
         pipView.isHidden = false
-        player.play()
+        pipLabel.text = "Loading…"
+        let key = FlutterDartProject.lookupKey(forAsset: "assets/gloss_examples/\(target).mp4")
+        guard let path = Bundle.main.path(forResource: key, ofType: nil) else {
+            pipLabel.text = "Unavailable"
+            return
+        }
+        let asset = AVURLAsset(url: URL(fileURLWithPath: path))
+        // AVPlayerLooper requires duration to be loaded; never block the camera UI on asset loading.
+        referenceTask = Task { @MainActor [weak self] in
+            do {
+                let (playable, duration) = try await asset.load(.isPlayable, .duration)
+                guard !Task.isCancelled, let self, self.target == target else { return }
+                guard playable, duration.seconds.isFinite, duration.seconds > 0 else {
+                    self.pipLabel.text = "Unavailable"
+                    return
+                }
+                let player = AVQueuePlayer()
+                player.isMuted = true
+                let looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(asset: asset))
+                let layer = AVPlayerLayer(player: player)
+                layer.videoGravity = .resizeAspect
+                layer.frame = self.pipVideo.bounds
+                self.pipVideo.layer.insertSublayer(layer, at: 0)
+                self.pipPlayer = player; self.pipLooper = looper; self.pipLayer = layer
+                self.pipLabel.text = "Reference"
+                self.referenceStatus = looper.observe(\.status, options: [.initial, .new]) { [weak self] looper, _ in
+                    guard looper.status == .failed else { return }
+                    DispatchQueue.main.async {
+                        guard let self, self.pipLooper === looper else { return }
+                        self.pipLabel.text = "Unavailable"
+                        NSLog("Practice reference %@: %@", target, String(describing: looper.error))
+                    }
+                }
+                // Reference clips play at 0.75× so the handshape and movement are easy to follow.
+                player.defaultRate = 0.75
+                player.play()
+            } catch {
+                guard !Task.isCancelled, let self, self.target == target else { return }
+                self.pipLabel.text = "Unavailable"
+                NSLog("Practice reference %@: %@", target, error.localizedDescription)
+            }
+        }
+    }
+
+    @objc private func expandReference() {
+        guard pipLayer != nil, referenceOverlay == nil else { return }
+        let overlay = UIView()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        overlay.accessibilityViewIsModal = true
+        let backdrop = UIButton(type: .custom)
+        backdrop.accessibilityLabel = "Close reference video"
+        backdrop.addTarget(self, action: #selector(dismissReference), for: .touchUpInside)
+        let video = UIView()
+        video.accessibilityIdentifier = "expandedReferenceVideo"
+        video.backgroundColor = .black
+        video.layer.cornerRadius = 16
+        video.clipsToBounds = true
+        let close = UIButton(type: .system)
+        close.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        close.tintColor = .white
+        close.accessibilityLabel = "Close reference video"
+        close.addTarget(self, action: #selector(dismissReference), for: .touchUpInside)
+        for child in [backdrop, video, close] {
+            child.translatesAutoresizingMaskIntoConstraints = false
+            overlay.addSubview(child)
+        }
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(overlay)
+        let guide = overlay.safeAreaLayoutGuide
+        NSLayoutConstraint.activate([
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backdrop.leadingAnchor.constraint(equalTo: overlay.leadingAnchor),
+            backdrop.trailingAnchor.constraint(equalTo: overlay.trailingAnchor),
+            backdrop.topAnchor.constraint(equalTo: overlay.topAnchor),
+            backdrop.bottomAnchor.constraint(equalTo: overlay.bottomAnchor),
+            video.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 20),
+            video.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -20),
+            video.topAnchor.constraint(equalTo: guide.topAnchor, constant: 64),
+            video.bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: -40),
+            close.trailingAnchor.constraint(equalTo: video.trailingAnchor),
+            close.bottomAnchor.constraint(equalTo: video.topAnchor, constant: -8),
+            close.widthAnchor.constraint(equalToConstant: 44),
+            close.heightAnchor.constraint(equalToConstant: 44),
+        ])
+        referenceOverlay = overlay
+        expandedVideo = video
+        pipLayer?.removeFromSuperlayer()
+        video.layer.addSublayer(pipLayer!)
+        view.setNeedsLayout()
+        UIAccessibility.post(notification: .screenChanged, argument: close)
+    }
+
+    @objc private func dismissReference() {
+        guard referenceOverlay != nil else { return }
+        pipLayer?.removeFromSuperlayer()
+        if let pipLayer { pipVideo.layer.addSublayer(pipLayer) }
+        expandedVideo = nil
+        referenceOverlay?.removeFromSuperview()
+        referenceOverlay = nil
+        pipLayer?.frame = pipVideo.bounds
+        UIAccessibility.post(notification: .screenChanged, argument: pipVideo)
     }
 
     // MARK: - Display state
@@ -915,11 +1161,11 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private func apply(committed: [LiveWord], preview: LivePreview?, pending: String?) {
         if !committed.isEmpty, !finishing, bannerMessage != nil {
             bannerMessage = nil             // a new utterance has started
+            finishedSentence = nil
         }
         for w in committed {
             rail.append(Self.display(w.gloss))
             committedWord = (Self.display(w.gloss), w.score, Date())
-            say(w.gloss.hasPrefix("fs-") ? LiveStage3.spelledText(w.gloss) : w.gloss.lowercased())
         }
         if rail.count > 24 { rail.removeFirst(rail.count - 24) }
         if let pending {
@@ -1010,13 +1256,6 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         statusLabel.textColor = stateColor
         liveDot.backgroundColor = isRunningUI ? HUD.green : HUD.white.withAlphaComponent(0.4)
         if isPractice { scoreChipLabel.text = "Score \(practiceScore) / \(targets.count)" }
-        lettersFill.isHidden = !lettersOn
-        lettersButton.setTitleColor(lettersOn ? HUD.white : HUD.white.withAlphaComponent(0.7), for: .normal)
-        lettersButton.accessibilityValue = lettersOn ? "On" : "Off"
-        lettersButton.accessibilityHint = lettersOn ? "Letters always on"
-            : "Sign FINGERSPELL to spell, FINGERSPELL again to stop"
-        lettersButton.accessibilityTraits = lettersOn ? [.button, .selected] : .button
-
         // Live: committed-word pills (newest at the right) and the amber preview after them.
         let railKey = Array(rail.suffix(7)) + ["\u{0}", previewText ?? "\u{1}"]
         if !isPractice && railChipKey != railKey {
@@ -1031,15 +1270,26 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             if let previewText {
                 railStack.addArrangedSubview(glassChip(previewText, dot: HUD.gold, textColor: HUD.gold))
             }
+            // Keep the newest pill in view.
+            railScroll.layoutIfNeeded()
+            railScroll.setContentOffset(CGPoint(x: max(0, railScroll.contentSize.width - railScroll.bounds.width), y: 0),
+                                        animated: false)
         }
 
         // Live: the finished sentence (or a notice) under the top bar.
         if !isPractice {
-            sentenceLabel.text = finishing ? "Finishing…" : bannerMessage?.text
+            sentenceLabel.text = fittedCaption(finishing ? (captionText ?? "Finishing…") : bannerMessage?.text ?? captionText)
             sentenceLabel.textColor = finishing ? HUD.white.withAlphaComponent(0.6) : HUD.white
             sentenceDot.backgroundColor = speech.isSpeaking ? HUD.green : HUD.white.withAlphaComponent(0.35)
             sentenceDot.isHidden = sentenceLabel.text == nil
+            actionsRow.isHidden = finishedSentence == nil || finishing || captionText != nil
         }
+
+        // Framing: the hint while running; the outline before Start, or while no one is in view.
+        let shownAdvice = isRunningUI && !finishing ? advice : nil
+        adviceLabel.text = shownAdvice
+        adviceGlass.isHidden = shownAdvice == nil
+        framingGuide.isHidden = !loaded || (isRunningUI ? !(shownAdvice?.hasPrefix("Step") ?? false) : isPractice)
 
         // Practice: the round and the sign to perform.
         if isPractice {
@@ -1077,7 +1327,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         bigWord.text = word
         bigWord.textColor = wordColor
         barFill.backgroundColor = level
-        barFillWidth.constant = 120 * CGFloat(max(0, min(1, score)))
+        barFillWidth.constant = barWidth * CGFloat(max(0, min(1, score)))
         scoreLabel.text = "\(Int((max(0, min(1, score)) * 100).rounded()))%"
         for v in [bigWord, barTrack.superview!] as [UIView] { v.alpha = word == nil ? 0 : alpha }
         bigWord.isHidden = word == nil
@@ -1093,14 +1343,16 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
                 prompt = ("Warming up", "Loading the on-device models…")
             } else if !isRunningUI {
                 prompt = isPractice ? ("Starting", "Get ready to sign.")
-                                    : ("Ready to translate", "Position your hands inside the frame, then tap Start.")
+                                    : ("Ready to translate", "Line yourself up with the outline, then tap Start.")
             } else if isPractice, target != nil {
                 prompt = ("Your turn", "Watch the reference, then sign it.")
             }
         }
+        if adviceLabel.text != nil { prompt = nil }   // the framing hint takes the centre
         promptTitle.text = prompt?.0
         promptDetail.text = prompt?.1
         promptTitle.superview?.isHidden = prompt == nil
+        promptPanel.isHidden = prompt == nil
 
         // Candidate pills under the word, the leader brightest.
         let candidateKey = top3.flatMap { [$0.gloss, String($0.score.bitPattern)] }
@@ -1115,6 +1367,10 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             }
         }
         candidatesStack.isHidden = !isRunningUI || top3.isEmpty
+        if !isPractice {
+            railScroll.isHidden = !signsOn
+            wordStack.isHidden = !signsOn
+        }
 
         // Controls: ↺ then the big button.
         let canReset: Bool
@@ -1138,14 +1394,111 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         resetGlass.alpha = canReset ? 1 : 0.4
     }
 
-    /// Hands, body and face on the mirrored, aspect-filled preview; body/face stay until re-detected.
-    private func drawSkeleton(_ o: LiveObservation, body: [LivePoint]?, face: [LivePoint]?) {
-        let bounds = view.bounds
-        let w = CGFloat(o.width), h = CGFloat(o.height)
-        let scale = max(bounds.width / w, bounds.height / h)
-        let ox = (bounds.width - w * scale) / 2, oy = (bounds.height - h * scale) / 2
+    /// A glass pill with an icon and a title (Speak again).
+    private func glassPill(_ button: UIButton, _ title: String, _ symbol: String, _ action: Selector) -> UIView {
+        let glass = GlassView(radius: 20)
+        var configuration = UIButton.Configuration.plain()
+        configuration.title = title
+        configuration.image = UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold))
+        configuration.imagePadding = 6
+        configuration.baseForegroundColor = HUD.white
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 14)
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer {
+            var attributes = $0; attributes.font = HUD.font(15, .semibold); return attributes
+        }
+        button.configuration = configuration
+        button.addTarget(self, action: action, for: .touchUpInside)
+        inset(button, in: glass.contentView, 0, 0)
+        glass.translatesAutoresizingMaskIntoConstraints = false
+        glass.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        return glass
+    }
+
+    /// LIVE: read the finished sentence aloud again.
+    @objc private func speakAgainPressed() {
+        guard let sentence = finishedSentence else { return }
+        speech.stopSpeaking(at: .immediate)
+        say(sentence)
+    }
+
+    private func showHint(_ text: String) {
+        hintLabel.text = text
+        hintGlass.layer.removeAllAnimations()
+        hintGlass.alpha = 1
+        UIView.animate(withDuration: 0.4, delay: 1.6, options: [.beginFromCurrentState]) { self.hintGlass.alpha = 0 }
+    }
+
+    /// Mean luma (0–255) over a coarse grid of a BGRA frame; nil for other formats.
+    static func brightness(_ frame: CVPixelBuffer) -> Double? {
+        guard CVPixelBufferGetPixelFormatType(frame) == kCVPixelFormatType_32BGRA else { return nil }
+        CVPixelBufferLockBaseAddress(frame, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(frame, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddress(frame)?.assumingMemoryBound(to: UInt8.self) else { return nil }
+        let width = CVPixelBufferGetWidth(frame), height = CVPixelBufferGetHeight(frame)
+        let row = CVPixelBufferGetBytesPerRow(frame)
+        var total = 0.0, count = 0
+        for y in stride(from: height / 24, to: height, by: max(1, height / 12)) {
+            for x in stride(from: width / 32, to: width, by: max(1, width / 16)) {
+                let p = base + y * row + x * 4
+                total += 0.114 * Double(p[0]) + 0.587 * Double(p[1]) + 0.299 * Double(p[2])
+                count += 1
+            }
+        }
+        return count > 0 ? total / Double(count) : nil
+    }
+
+    /// A dashed head-and-shoulders outline centred in `area`, showing where the signer should be.
+    static func framingPath(in area: CGRect) -> CGPath {
+        let size = min(area.height * 0.62, area.width * 0.8)
+        let cx = area.midX, top = area.midY - size * 0.5
+        let radius = size * 0.13
+        let path = UIBezierPath(arcCenter: CGPoint(x: cx, y: top + radius), radius: radius,
+                                startAngle: 0, endAngle: 2 * .pi, clockwise: true)
+        let shoulders = top + 2 * radius + size * 0.1, half = size * 0.42, neck = size * 0.12
+        path.move(to: CGPoint(x: cx - half, y: top + size))
+        path.addLine(to: CGPoint(x: cx - half, y: shoulders + size * 0.14))
+        path.addQuadCurve(to: CGPoint(x: cx - neck, y: shoulders), controlPoint: CGPoint(x: cx - half, y: shoulders))
+        path.addLine(to: CGPoint(x: cx + neck, y: shoulders))
+        path.addQuadCurve(to: CGPoint(x: cx + half, y: shoulders + size * 0.14), controlPoint: CGPoint(x: cx + half, y: shoulders))
+        path.addLine(to: CGPoint(x: cx + half, y: top + size))
+        return path.cgPath
+    }
+
+    /// The caption as shown: whole words dropped from the front (after "…") until it fits the label's
+    /// lines, so the newest words stay visible.
+    private func fittedCaption(_ text: String?) -> String? {
+        guard let text, let font = sentenceLabel.font, sentenceLabel.bounds.width > 0 else { return text }
+        let width = sentenceLabel.bounds.width
+        let limit = font.lineHeight * CGFloat(sentenceLabel.numberOfLines) + 1
+        func fits(_ candidate: String) -> Bool {
+            (candidate as NSString).boundingRect(with: CGSize(width: width, height: .greatestFiniteMagnitude),
+                                                 options: .usesLineFragmentOrigin, attributes: [.font: font],
+                                                 context: nil).height <= limit
+        }
+        if fits(text) { return text }
+        var words = text.split(separator: " ")
+        while words.count > 1 {
+            words.removeFirst()
+            let trimmed = "…" + words.joined(separator: " ")
+            if fits(trimmed) { return trimmed }
+        }
+        return text
+    }
+
+    /// Undo capture rotation before converting through the preview layer.
+    static func captureDevicePoint(_ point: CGPoint, rotation: CGFloat) -> CGPoint {
+        switch Int(rotation.rounded()) % 360 {
+        case 90: return CGPoint(x: point.y, y: 1 - point.x)
+        case 180: return CGPoint(x: 1 - point.x, y: 1 - point.y)
+        case 270: return CGPoint(x: 1 - point.y, y: point.x)
+        default: return point
+        }
+    }
+
+    private func drawSkeleton(_ o: LiveObservation, body: [LivePoint]?, face: [LivePoint]?, captureAngle: CGFloat) {
         func point(_ p: LivePoint) -> CGPoint {
-            CGPoint(x: ox + (1 - CGFloat(p.x)) * w * scale, y: oy + CGFloat(p.y) * h * scale)
+            let sensor = Self.captureDevicePoint(CGPoint(x: CGFloat(p.x), y: CGFloat(p.y)), rotation: captureAngle)
+            return previewLayer.layerPointConverted(fromCaptureDevicePoint: sensor)
         }
         let lines = UIBezierPath(), dots = UIBezierPath()
         let links = [(0, 1), (1, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7), (7, 8), (5, 9), (9, 10), (10, 11), (11, 12),
@@ -1198,13 +1551,13 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     }
 
     /// A 44-pt round glass button with an SF Symbol.
-    private func glassIcon(_ button: UIButton, _ symbol: String, _ label: String, _ action: Selector) -> UIView {
+    private func glassIcon(_ button: UIButton, _ symbol: String, _ label: String, _ action: Selector?) -> UIView {
         let glass = GlassView()
         button.setImage(UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)),
                         for: .normal)
         button.tintColor = HUD.white
         button.accessibilityLabel = label
-        button.addTarget(self, action: action, for: .touchUpInside)
+        if let action { button.addTarget(self, action: action, for: .touchUpInside) }
         inset(button, in: glass.contentView, 0, 0)
         glass.translatesAutoresizingMaskIntoConstraints = false
         glass.widthAnchor.constraint(equalToConstant: 44).isActive = true
@@ -1215,10 +1568,14 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
     private func buildInterface() {
         let guide = view.safeAreaLayoutGuide
 
-        // Top bar: back · mode/status · Letters switch · (Practice) score · ? · gear.
+        // Top bar: back · mode/status · (Live) flip · ••• menu.
         let back = glassIcon(backButton, "chevron.left", "Back", #selector(backPressed))
-        let help = glassIcon(helpButton, "questionmark", "How to use ATLAS", #selector(helpPressed))
-        let gear = glassIcon(gearButton, "gearshape", "Diagnostics", #selector(gearPressed))
+        let menu = glassIcon(menuButton, "ellipsis", "More options", nil)
+        menuButton.showsMenuAsPrimaryAction = true
+        menuButton.accessibilityIdentifier = "cameraMenu"
+        let flip = glassIcon(flipButton, "arrow.triangle.2.circlepath.camera", "Flip camera", #selector(flipCamera))
+        updateLandmarkVisibility()
+        buildMenu()
         liveDot.layer.cornerRadius = 4
         liveDot.isHidden = isPractice
         text(modeLabel, 16, .semibold, HUD.white)
@@ -1231,38 +1588,67 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         modeStack.axis = .vertical
         modeStack.alignment = .leading
         for v in [modeLabel, statusLabel] { v.shadowed(0.6, radius: 3) }
-        let chip = GlassView()
-        lettersFill.backgroundColor = HUD.blue
-        lettersFill.layer.cornerRadius = 22
-        lettersFill.layer.cornerCurve = .continuous
-        inset(lettersFill, in: chip.contentView, 0, 0)
-        lettersButton.setTitle("Letters", for: .normal)
-        lettersButton.titleLabel?.font = HUD.font(14, .semibold)
-        lettersButton.accessibilityLabel = "Letters"
-        lettersButton.addTarget(self, action: #selector(lettersTapped), for: .touchUpInside)
-        inset(lettersButton, in: chip.contentView, 0, 18)
         let scoreChip = GlassView()
         text(scoreChipLabel, 13, .semibold, HUD.white)
         inset(scoreChipLabel, in: scoreChip.contentView, 12, 14)
         let spacer = UIView()
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         modeStack.setContentHuggingPriority(.required, for: .horizontal)
-        let topBar = UIStackView(arrangedSubviews: [back, modeStack, spacer, chip] + (isPractice ? [scoreChip] : []) + [help, gear])
-        topBar.spacing = 14
+        let topBar = UIStackView(arrangedSubviews: [back, modeStack, spacer] + (isPractice ? [scoreChip] : []))
+        topBar.spacing = isPractice ? 14 : 8
+        statusLabel.lineBreakMode = .byTruncatingTail
+        statusLabel.widthAnchor.constraint(lessThanOrEqualTo: modeStack.widthAnchor).isActive = true
         topBar.alignment = .center
+        let tools = UIStackView(arrangedSubviews: (isPractice ? [] : [flip]) + [menu])
+        tools.spacing = 8
+        tools.alignment = .center
+        text(orientationHint, 11, .medium, HUD.white, align: .center)
+        orientationHint.text = "Landscape recommended"
+        orientationHint.shadowed()
 
         // Live: word pills and the finished sentence.
+        railScroll.showsHorizontalScrollIndicator = false
+        railStack.translatesAutoresizingMaskIntoConstraints = false
+        railScroll.addSubview(railStack)
+        NSLayoutConstraint.activate([
+            railStack.leadingAnchor.constraint(equalTo: railScroll.contentLayoutGuide.leadingAnchor),
+            railStack.trailingAnchor.constraint(equalTo: railScroll.contentLayoutGuide.trailingAnchor),
+            railStack.topAnchor.constraint(equalTo: railScroll.contentLayoutGuide.topAnchor),
+            railStack.bottomAnchor.constraint(equalTo: railScroll.contentLayoutGuide.bottomAnchor),
+            railStack.heightAnchor.constraint(equalTo: railScroll.frameLayoutGuide.heightAnchor),
+        ])
         railStack.axis = .horizontal
         railStack.spacing = 8
         railStack.alignment = .center
         sentenceDot.layer.cornerRadius = 9
-        sentenceLabel.font = HUD.font(26, .semibold)
+        // LIVE: the English is the largest text on screen (the recognized word sits small, top right).
+        sentenceLabel.font = UIFontMetrics(forTextStyle: .title1).scaledFont(for: HUD.font(32, .bold), maximumPointSize: 44)
+        sentenceLabel.adjustsFontForContentSizeCategory = true
         sentenceLabel.textColor = HUD.white
-        sentenceLabel.numberOfLines = 3
+        sentenceLabel.numberOfLines = 4
+        // A long caption is trimmed from the front, whole words at a time (fittedCaption).
+        sentenceLabel.lineBreakMode = .byWordWrapping
         sentenceLabel.shadowed(0.9, radius: 4)
 
-        // Practice: round banner (top centre) and the reference clip (left).
+        speakAgainButton.accessibilityIdentifier = "speakAgain"
+        actionsRow.addArrangedSubview(glassPill(speakAgainButton, "Speak again", "speaker.wave.2.fill", #selector(speakAgainPressed)))
+        actionsRow.spacing = 8
+        actionsRow.isHidden = true
+        framingGuide.strokeColor = HUD.white.withAlphaComponent(0.45).cgColor
+        framingGuide.fillColor = UIColor.clear.cgColor
+        framingGuide.lineWidth = 2
+        framingGuide.lineDashPattern = [8, 6]
+        framingGuide.isHidden = true
+        if let previewLayer { view.layer.insertSublayer(framingGuide, above: previewLayer) } else { view.layer.insertSublayer(framingGuide, at: 0) }
+        text(adviceLabel, 15, .semibold, HUD.white, align: .center)
+        adviceLabel.numberOfLines = 2
+        adviceGlass.accessibilityIdentifier = "framingAdvice"
+        inset(adviceLabel, in: adviceGlass.contentView, 10, 16)
+        adviceGlass.isHidden = true
+
+        // Practice: target banner and tappable reference clip.
         text(bannerCaption, 11, .semibold, HUD.white.withAlphaComponent(0.75), align: .center)
+        bannerCaption.numberOfLines = 2
         text(bannerValue, 24, .semibold, HUD.white, align: .center)
         bannerValue.adjustsFontSizeToFitWidth = true
         bannerValue.minimumScaleFactor = 0.6
@@ -1276,6 +1662,10 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         pipVideo.layer.cornerRadius = 12
         pipVideo.layer.cornerCurve = .continuous
         pipVideo.clipsToBounds = true
+        pipVideo.isAccessibilityElement = true
+        pipVideo.accessibilityLabel = "Enlarge reference video"
+        pipVideo.accessibilityTraits = .button
+        pipVideo.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(expandReference)))
         text(pipLabel, 12, .semibold, HUD.white.withAlphaComponent(0.8))
         pipLabel.text = "Reference"
         let pipStack = UIStackView(arrangedSubviews: [pipVideo, pipLabel])
@@ -1283,8 +1673,9 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         pipStack.spacing = 4
         inset(pipStack, in: pipView.contentView, 8, 8)
 
-        // Bottom-left: word, confidence bar and (Practice) verdict pill.
-        bigWord.font = HUD.font(34, .heavy)
+        // The word in progress, confidence bar, candidates and (Practice) verdict pill:
+        // bottom-left in PRACTICE, a small column top-right in LIVE.
+        bigWord.font = HUD.font(isPractice ? 34 : 22, .heavy)
         bigWord.adjustsFontSizeToFitWidth = true
         bigWord.minimumScaleFactor = 0.5
         bigWord.shadowed(0.9, radius: 4)
@@ -1307,12 +1698,14 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         // Candidate pills, stacked under the word (leader first).
         candidatesStack.axis = .vertical
         candidatesStack.spacing = 6
-        candidatesStack.alignment = .leading
-        let wordStack = UIStackView(arrangedSubviews: [feedbackPill, bigWord, confidence, candidatesStack])
+        candidatesStack.alignment = isPractice ? .leading : .trailing
+        for v in [feedbackPill, bigWord, confidence, candidatesStack] { wordStack.addArrangedSubview(v) }
         wordStack.axis = .vertical
         wordStack.spacing = 4
-        wordStack.alignment = .leading
+        wordStack.alignment = isPractice ? .leading : .trailing
         wordStack.setCustomSpacing(10, after: confidence)
+        wordStack.accessibilityIdentifier = "recognizedWord"
+        sentenceLabel.accessibilityIdentifier = "englishCaption"
 
         // Centre prompt (only while nothing is being read).
         text(promptTitle, 24, .semibold, HUD.white, align: .center)
@@ -1323,14 +1716,18 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         let promptStack = UIStackView(arrangedSubviews: [promptTitle, promptDetail])
         promptStack.axis = .vertical
         promptStack.spacing = 8
+        promptPanel.backgroundColor = HUD.night.withAlphaComponent(0.7)
+        promptPanel.layer.cornerRadius = 20
+        promptPanel.layer.cornerCurve = .continuous
+        promptPanel.isUserInteractionEnabled = false
 
-        // Diagnostics (gear).
+        // Internal diagnostics (not exposed in the camera toolbar).
         statsPanel.isHidden = true
         statsLabel.numberOfLines = 0
         statsLabel.attributedText = stats([("FPS", "--"), ("FRAME", "--"), ("HANDS", "--"), ("FRAMES", "0")])
         inset(statsLabel, in: statsPanel.contentView, 10, 12)
 
-        // Controls, bottom-right: ↺ then the big button.
+        // Bottom controls: ↺ then the primary action.
         resetButton.setImage(UIImage(systemName: "arrow.counterclockwise",
                                      withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold)),
                              for: .normal)
@@ -1342,6 +1739,10 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         resetGlass.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(resetHint(_:))))
         primaryButton.addTarget(self, action: #selector(primaryPressed), for: .touchUpInside)
         let controls = UIStackView(arrangedSubviews: [resetGlass, primaryButton])
+        controls.accessibilityIdentifier = "cameraControls"
+        primaryButton.accessibilityIdentifier = "cameraPrimaryAction"
+        bannerBox.accessibilityIdentifier = "practiceTarget"
+        pipView.accessibilityIdentifier = "practiceReference"
         controls.spacing = 14
         controls.alignment = .center
         text(hintLabel, 12, .semibold, HUD.white)
@@ -1349,9 +1750,9 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
         hintGlass.alpha = 0
         hintGlass.isUserInteractionEnabled = false
 
-        var views: [UIView] = [promptStack, wordStack, statsPanel, controls, hintGlass]
-        views += isPractice ? [pipView, bannerBox] : [railStack, sentenceDot, sentenceLabel]
-        views.append(topBar)
+        var views: [UIView] = [promptPanel, promptStack, adviceGlass, wordStack, statsPanel, controls, hintGlass]
+        views += isPractice ? [pipView, bannerBox] : [railScroll, sentenceDot, sentenceLabel, actionsRow]
+        views += [topBar, tools, orientationHint]
         for v in views {
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
@@ -1359,10 +1760,11 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
 
         NSLayoutConstraint.activate([
             topBar.topAnchor.constraint(equalTo: guide.topAnchor, constant: 12),
-            topBar.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
-            topBar.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
+            topBar.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 12),
             topBar.heightAnchor.constraint(equalToConstant: 44),
-            chip.heightAnchor.constraint(equalToConstant: 44),
+            tools.heightAnchor.constraint(equalToConstant: 44),
+            orientationHint.topAnchor.constraint(equalTo: tools.bottomAnchor, constant: 6),
+            orientationHint.centerXAnchor.constraint(equalTo: guide.centerXAnchor),
             scoreChip.heightAnchor.constraint(equalToConstant: 44),
             liveDot.widthAnchor.constraint(equalToConstant: 8),
             liveDot.heightAnchor.constraint(equalToConstant: 8),
@@ -1371,72 +1773,132 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             resetGlass.heightAnchor.constraint(equalToConstant: 56),
             primaryButton.widthAnchor.constraint(equalToConstant: 160),
             primaryButton.heightAnchor.constraint(equalToConstant: 60),
-            controls.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
             controls.bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: -12),
             hintGlass.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -8),
             hintGlass.trailingAnchor.constraint(equalTo: controls.trailingAnchor),
 
             promptStack.centerXAnchor.constraint(equalTo: guide.centerXAnchor),
             promptStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            promptStack.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, multiplier: 0.5),
+            promptStack.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, multiplier: 0.8),
+            promptPanel.leadingAnchor.constraint(equalTo: promptStack.leadingAnchor, constant: -20),
+            promptPanel.trailingAnchor.constraint(equalTo: promptStack.trailingAnchor, constant: 20),
+            promptPanel.topAnchor.constraint(equalTo: promptStack.topAnchor, constant: -14),
+            promptPanel.bottomAnchor.constraint(equalTo: promptStack.bottomAnchor, constant: 14),
+            adviceGlass.centerXAnchor.constraint(equalTo: guide.centerXAnchor),
+            adviceGlass.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            adviceGlass.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, multiplier: 0.85),
 
-            barTrack.widthAnchor.constraint(equalToConstant: 120),
+            barTrack.widthAnchor.constraint(equalToConstant: barWidth),
             barTrack.heightAnchor.constraint(equalToConstant: 5),
             barFill.leadingAnchor.constraint(equalTo: barTrack.leadingAnchor),
             barFill.topAnchor.constraint(equalTo: barTrack.topAnchor),
             barFill.bottomAnchor.constraint(equalTo: barTrack.bottomAnchor),
             barFillWidth,
-            bigWord.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, multiplier: 0.34),
-            wordStack.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 4),
-            wordStack.bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: -12),
+
 
             // Diagnostics: above the controls.
             statsPanel.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
             statsPanel.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -12),
         ])
+        portraitConstraints = [
+            topBar.trailingAnchor.constraint(equalTo: isPractice ? guide.trailingAnchor : tools.leadingAnchor, constant: isPractice ? -12 : -8),
+            tools.topAnchor.constraint(equalTo: isPractice ? topBar.bottomAnchor : topBar.topAnchor, constant: isPractice ? 8 : 0),
+            tools.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -12),
+            (isPractice ? primaryButton : controls).centerXAnchor.constraint(equalTo: guide.centerXAnchor),
+        ]
+        landscapeConstraints = [
+            topBar.trailingAnchor.constraint(equalTo: tools.leadingAnchor, constant: -16),
+            tools.topAnchor.constraint(equalTo: topBar.topAnchor),
+            tools.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -12),
+            controls.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -12),
+        ]
         if isPractice {
-            // Centred, but never under the status or the Letters/score chips beside it.
-            let centred = bannerBox.centerXAnchor.constraint(equalTo: guide.centerXAnchor)
-            centred.priority = .defaultHigh
-            let minimumWidth = bannerBox.widthAnchor.constraint(greaterThanOrEqualToConstant: 220)
-            minimumWidth.priority = .defaultHigh
             NSLayoutConstraint.activate([
-                bannerBox.topAnchor.constraint(equalTo: guide.topAnchor, constant: 12),
-                centred,
-                minimumWidth,
-                bannerBox.leadingAnchor.constraint(greaterThanOrEqualTo: modeStack.trailingAnchor, constant: 12),
-                bannerBox.trailingAnchor.constraint(lessThanOrEqualTo: chip.leadingAnchor, constant: -12),
-                bannerBox.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, multiplier: 0.5),
-                pipView.topAnchor.constraint(equalTo: topBar.bottomAnchor, constant: 12),
-                pipView.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
-                pipVideo.widthAnchor.constraint(equalToConstant: 130),
-                pipVideo.heightAnchor.constraint(equalToConstant: 110),
+                pipVideo.widthAnchor.constraint(equalToConstant: 110),
+                pipVideo.heightAnchor.constraint(equalToConstant: 94),
             ])
+            NSLayoutConstraint.activate([wordStack.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 16)])
+            portraitConstraints += [
+                wordStack.bottomAnchor.constraint(equalTo: bannerBox.topAnchor, constant: -16),
+                bigWord.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, multiplier: 0.85),
+                bannerBox.centerXAnchor.constraint(equalTo: guide.centerXAnchor),
+                bannerBox.widthAnchor.constraint(equalTo: guide.widthAnchor, constant: -24),
+                bannerBox.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -12),
+                pipView.centerXAnchor.constraint(equalTo: guide.centerXAnchor),
+                pipView.topAnchor.constraint(equalTo: tools.bottomAnchor, constant: 28),
+            ]
+            landscapeConstraints += [
+                wordStack.bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: -12),
+                bigWord.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, multiplier: 0.34),
+                bannerBox.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 12),
+                bannerBox.trailingAnchor.constraint(equalTo: pipView.leadingAnchor, constant: -12),
+                bannerBox.topAnchor.constraint(equalTo: tools.bottomAnchor, constant: 8),
+                pipView.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -12),
+                pipView.topAnchor.constraint(equalTo: bannerBox.topAnchor),
+            ]
             loadReference()
         } else {
+            // LIVE: sign pills top-left beside the word column (top-right); the English bottom-left.
             NSLayoutConstraint.activate([
-                railStack.topAnchor.constraint(equalTo: topBar.bottomAnchor, constant: 10),
-                railStack.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
-                railStack.leadingAnchor.constraint(greaterThanOrEqualTo: guide.leadingAnchor),
-                railStack.heightAnchor.constraint(equalToConstant: 30),
-                sentenceDot.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 4),
-                sentenceDot.topAnchor.constraint(equalTo: sentenceLabel.topAnchor, constant: 7),
+                wordStack.topAnchor.constraint(equalTo: tools.bottomAnchor, constant: 28),
+                wordStack.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -12),
+                wordStack.widthAnchor.constraint(equalToConstant: 150),
+                bigWord.widthAnchor.constraint(lessThanOrEqualTo: wordStack.widthAnchor),
+                railScroll.topAnchor.constraint(equalTo: tools.bottomAnchor, constant: 28),
+                railScroll.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 12),
+                railScroll.trailingAnchor.constraint(equalTo: wordStack.leadingAnchor, constant: -8),
+                railScroll.heightAnchor.constraint(equalToConstant: 30),
+                sentenceDot.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: 12),
+                sentenceDot.topAnchor.constraint(equalTo: sentenceLabel.topAnchor, constant: 11),
                 sentenceDot.widthAnchor.constraint(equalToConstant: 18),
                 sentenceDot.heightAnchor.constraint(equalToConstant: 18),
                 sentenceLabel.leadingAnchor.constraint(equalTo: sentenceDot.trailingAnchor, constant: 12),
-                sentenceLabel.topAnchor.constraint(equalTo: railStack.bottomAnchor, constant: 10),
-                sentenceLabel.trailingAnchor.constraint(lessThanOrEqualTo: guide.trailingAnchor),
-                // A long sentence truncates rather than running into the word and candidates.
-                sentenceLabel.bottomAnchor.constraint(lessThanOrEqualTo: wordStack.topAnchor, constant: -8),
+                // A long caption drops its oldest words rather than running into the pills.
+                sentenceLabel.topAnchor.constraint(greaterThanOrEqualTo: railScroll.bottomAnchor, constant: 12),
+                actionsRow.leadingAnchor.constraint(equalTo: sentenceDot.leadingAnchor),
+                actionsRow.bottomAnchor.constraint(equalTo: sentenceLabel.topAnchor, constant: -10),
             ])
+            portraitConstraints += [
+                sentenceLabel.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -20),
+                sentenceLabel.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -16),
+            ]
+            // Landscape: level with ↺ and Finish; a longer caption grows upwards.
+            let level = sentenceLabel.centerYAnchor.constraint(equalTo: controls.centerYAnchor)
+            level.priority = .defaultHigh
+            landscapeConstraints += [
+                level,
+                sentenceLabel.bottomAnchor.constraint(lessThanOrEqualTo: guide.bottomAnchor, constant: -12),
+                sentenceLabel.trailingAnchor.constraint(equalTo: controls.leadingAnchor, constant: -16),
+            ]
         }
+    }
+
+    /// Layout tests only: LIVE mid-utterance (sign pills, recognized word with candidates, English caption).
+    func showSampleUtterance(caption: String = "Hello, how are you doing today? I am happy to meet you") {
+        loaded = true; isRunningUI = true
+        rail = ["HELLO", "HOW"]; previewText = nil; centerPreview = nil
+        committedWord = ("YOU", 0.91, Date())
+        top3 = [("YOU", 0.91), ("YOUR", 0.05), ("WE", 0.02)]
+        captionText = caption
+        finishedSentence = nil; bannerMessage = nil
+        render()
+    }
+
+    /// Layout tests only: LIVE after Finish (the sentence with Speak again).
+    func showSampleFinished(_ sentence: String = "Hello, how are you?") {
+        loaded = true; isRunningUI = false
+        rail = []; committedWord = nil; centerPreview = nil; top3 = []; captionText = nil
+        finishedSentence = sentence
+        bannerMessage = ("TRANSLATION", sentence)
+        render()
     }
 
     // MARK: - Recording
 
     /// Main thread, LIVE only: begin a take (Start), or begin it again (↺), dropping the old one.
     private func startRecording() {
-        guard !isPractice else { return }
+        // Takes are saved only with the Settings switch "Save Live videos" on (default off).
+        guard !isPractice, UserDefaults.standard.bool(forKey: LiveReelShared.saveVideosKey) else { return }
         videoTakes += 1
         let name = LiveReelSessions.stamp(openedAt) + String(format: "_%02d", videoTakes)
         let take = LiveVideoRecorder(name: name)
@@ -1467,7 +1929,7 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             "started_utc": ISO8601DateFormatter().string(from: openedAt),
             "duration_seconds": Date().timeIntervalSince(openedAt),
             "glosses": sessionGlosses, "sentences": sessionSentences, "complete": complete,
-            "stage3_checkpoint": LiveReelShared.stage3?.checkpointIdentifier ?? "unloaded",
+            "rendering_mode": "live_captions", "live_captions": LiveReelShared.captions?.name ?? "unloaded",
             "events": events, "timing": LiveReelShared.engine?.timing ?? [:],
             "device": UIDevice.current.model, "system": UIDevice.current.systemVersion,
         ]
@@ -1477,5 +1939,191 @@ final class LiveReelViewController: UIViewController, AVCaptureVideoDataOutputSa
             lastTraceSave = Date()
         }
         lastHistorySave = Date()
+    }
+}
+
+/// Camera framing hints for LIVE and PRACTICE: light, the signer in view, both shoulders, hands at the
+/// frame edge. A hint appears once its condition has held for a second and clears as soon as it is
+/// fixed; the first failing check wins. Engine queue only.
+struct LiveFraming {
+    /// Mean frame luma below this reads as too dark (auto-exposure has run out of range).
+    static let darkLuma = 45.0
+    private var since: [Int: Double] = [:]
+    private var checked = false, personSeen = false, shouldersSeen = false
+
+    mutating func reset() { since = [:]; checked = false; personSeen = false; shouldersSeen = false }
+
+    mutating func update(_ o: LiveObservation, brightness: Double?, seconds: Double) -> String? {
+        if o.faceForFeatures {   // body and face are only detected on these frames
+            shouldersSeen = o.body.count >= 2 && o.body[0].c > 0 && o.body[1].c > 0
+            personSeen = shouldersSeen || o.face.contains { $0.c > 0 }
+            checked = true
+        }
+        let hands = [o.left, o.right].compactMap { $0 }
+        let atEdge = hands.contains { hand in
+            hand.points.contains { $0.c > 0 && ($0.x < 0.02 || $0.x > 0.98 || $0.y < 0.02 || $0.y > 0.98) }
+        }
+        let checks: [(String, Bool)] = [
+            ("Too dark. Move somewhere brighter or face the light.", (brightness ?? 255) < Self.darkLuma),
+            ("Step into view so ATLAS can see you.", checked && !personSeen && hands.isEmpty),
+            ("Step back so both shoulders are in view.", checked && personSeen && !shouldersSeen),
+            ("Keep your hands inside the frame.", atEdge),
+        ]
+        var shown: String?
+        for (i, (text, failing)) in checks.enumerated() {
+            guard failing else { since[i] = nil; continue }
+            let start = since[i] ?? seconds
+            since[i] = start
+            if shown == nil, seconds - start >= 1 { shown = text }
+        }
+        return shown
+    }
+}
+
+/// The first-LIVE tips: swipeable cards over the camera with Skip, page dots and Next / Start.
+private final class LiveTipsView: UIView, UIScrollViewDelegate {
+    var onDone: (() -> Void)?
+
+    static let pages: [(symbol: String, title: String, body: String)] = [
+        ("hand.raised.fill", "ATLAS knows 100 signs",
+         "It turns the 100 signs in Glosses into English. Other signs are not recognised."),
+        ("camera.viewfinder", "Set up the camera",
+         "Prop the phone up in landscape at chest height, about an arm's length away. Keep your head, shoulders and hands in view, in good light."),
+        ("text.bubble.fill", "Sign, then Finish",
+         "Tap Start and sign at a steady pace. The English appears as you sign. Tap Finish and ATLAS reads it aloud. Speak again repeats it."),
+        ("hand.raised.fingers.spread.fill", "Finish hands-free",
+         "Instead of tapping Finish, raise both hands above your shoulders, right hand open and left hand in a fist, and hold for a second."),
+        ("ellipsis.circle.fill", "More options",
+         "Tap ••• to hide the sign details and keep only the English, to show the tracking points, or to open the guide."),
+    ]
+
+    private let scroll = UIScrollView()
+    private let pageControl = UIPageControl()
+    private let nextButton = UIButton(type: .system)
+    private let skipButton = UIButton(type: .system)
+    private var page = 0
+
+    init() {
+        super.init(frame: .zero)
+        backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        accessibilityIdentifier = "liveTips"
+        let card = UIView()
+        card.backgroundColor = ReelStyle.white
+        card.layer.cornerRadius = 28
+        card.layer.cornerCurve = .continuous
+        scroll.isPagingEnabled = true
+        scroll.showsHorizontalScrollIndicator = false
+        scroll.delegate = self
+        let pages = UIStackView()
+        pages.axis = .horizontal
+        pages.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(pages)
+        for content in Self.pages {
+            let pageView = Self.page(content)
+            pages.addArrangedSubview(pageView)
+            pageView.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor).isActive = true
+        }
+        pageControl.numberOfPages = Self.pages.count
+        pageControl.currentPageIndicatorTintColor = ReelStyle.blue
+        pageControl.pageIndicatorTintColor = ReelStyle.line
+        pageControl.addTarget(self, action: #selector(pageTapped), for: .valueChanged)
+        for (button, title, color) in [(skipButton, "Skip", ReelStyle.muted), (nextButton, "Next", ReelStyle.blue)] {
+            button.setTitle(title, for: .normal)
+            button.setTitleColor(color, for: .normal)
+            button.titleLabel?.font = ReelStyle.font(17, .semibold)
+        }
+        skipButton.addTarget(self, action: #selector(finish), for: .touchUpInside)
+        nextButton.addTarget(self, action: #selector(nextTapped), for: .touchUpInside)
+        nextButton.accessibilityIdentifier = "liveTipsNext"
+        let footer = UIStackView(arrangedSubviews: [skipButton, pageControl, nextButton])
+        footer.distribution = .equalCentering
+        footer.alignment = .center
+        for v in [card, scroll, footer] as [UIView] { v.translatesAutoresizingMaskIntoConstraints = false }
+        addSubview(card)
+        card.addSubview(scroll)
+        card.addSubview(footer)
+        let width = card.widthAnchor.constraint(equalToConstant: 420)
+        width.priority = .defaultHigh
+        NSLayoutConstraint.activate([
+            card.centerXAnchor.constraint(equalTo: safeAreaLayoutGuide.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: safeAreaLayoutGuide.centerYAnchor),
+            width,
+            card.widthAnchor.constraint(lessThanOrEqualToConstant: 420),
+            card.widthAnchor.constraint(lessThanOrEqualTo: safeAreaLayoutGuide.widthAnchor, constant: -32),
+            card.heightAnchor.constraint(lessThanOrEqualTo: safeAreaLayoutGuide.heightAnchor, constant: -24),
+            scroll.topAnchor.constraint(equalTo: card.topAnchor, constant: 24),
+            scroll.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+            pages.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
+            pages.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
+            pages.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
+            pages.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
+            pages.heightAnchor.constraint(equalTo: scroll.frameLayoutGuide.heightAnchor),
+            footer.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 8),
+            footer.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 24),
+            footer.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -24),
+            footer.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
+            footer.heightAnchor.constraint(equalToConstant: 44),
+        ])
+        let tallest = scroll.heightAnchor.constraint(equalToConstant: 230)
+        tallest.priority = .defaultHigh
+        tallest.isActive = true
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    private static func page(_ content: (symbol: String, title: String, body: String)) -> UIView {
+        let icon = UIImageView(image: UIImage(systemName: content.symbol,
+                                              withConfiguration: UIImage.SymbolConfiguration(pointSize: 36, weight: .semibold)))
+        icon.tintColor = ReelStyle.blue
+        icon.contentMode = .center
+        let title = UILabel(), body = UILabel()
+        title.text = content.title
+        title.font = ReelStyle.font(22, .bold)
+        title.textColor = ReelStyle.ink
+        title.textAlignment = .center
+        title.numberOfLines = 0
+        body.text = content.body
+        body.font = ReelStyle.font(16, .regular)
+        body.textColor = ReelStyle.muted
+        body.textAlignment = .center
+        body.numberOfLines = 0
+        let stack = UIStackView(arrangedSubviews: [icon, title, body])
+        stack.axis = .vertical
+        stack.spacing = 10
+        stack.setCustomSpacing(16, after: icon)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        let page = UIView()
+        page.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: page.leadingAnchor, constant: 28),
+            stack.trailingAnchor.constraint(equalTo: page.trailingAnchor, constant: -28),
+            stack.topAnchor.constraint(greaterThanOrEqualTo: page.topAnchor),
+            stack.centerYAnchor.constraint(equalTo: page.centerYAnchor),
+        ])
+        return page
+    }
+
+    private func show(page index: Int, animated: Bool) {
+        page = max(0, min(Self.pages.count - 1, index))
+        pageControl.currentPage = page
+        nextButton.setTitle(page == Self.pages.count - 1 ? "Start" : "Next", for: .normal)
+        scroll.setContentOffset(CGPoint(x: CGFloat(page) * scroll.bounds.width, y: 0), animated: animated)
+    }
+
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        guard scrollView.bounds.width > 0 else { return }
+        show(page: Int((scrollView.contentOffset.x / scrollView.bounds.width).rounded()), animated: false)
+    }
+
+    @objc private func pageTapped() { show(page: pageControl.currentPage, animated: true) }
+
+    @objc private func nextTapped() {
+        if page == Self.pages.count - 1 { finish() } else { show(page: page + 1, animated: true) }
+    }
+
+    @objc private func finish() {
+        onDone?()
+        UIView.animate(withDuration: 0.2, animations: { self.alpha = 0 }) { _ in self.removeFromSuperview() }
     }
 }

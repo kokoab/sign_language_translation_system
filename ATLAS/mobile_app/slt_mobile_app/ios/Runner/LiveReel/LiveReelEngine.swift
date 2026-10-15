@@ -54,6 +54,12 @@ final class LiveReelEngine {
     var lettersAlways = false {
         didSet { if oldValue != lettersAlways { reset() } }
     }
+    /// The FINGERSPELL sign switching to letters. Off in the app (2026-10-15): spelling is only
+    /// reachable through NAME, and only when `nameLetters` allows it.
+    var fingerspellSign = false
+    /// NAME arms letters for a few seconds so a name can be spelled (the Settings switch "Spell a name
+    /// after NAME"; always off in Practice). Off: NAME is an ordinary word. Set on the engine queue.
+    var nameLetters = false
     /// The spell-mode switch; nil if its model is not bundled (then only NAME arms letters).
     let trigger = try? LiveFingerspellTrigger(url: LiveModelLocator.resource("fingerspell_trigger_v17", "json"))
 
@@ -198,7 +204,7 @@ final class LiveReelEngine {
         if spellMode == .always {
             for w in try runtime.observe(observation, image: image) { shown += speller.push(w) }
         } else {
-            let fired = trigger?.push(LiveFeatures.raw(observation), seconds: seconds)
+            let fired = fingerspellSign ? trigger?.push(LiveFeatures.raw(observation), seconds: seconds) : nil
             if let trigger, signOpen, fired == nil {
                 if trigger.score > trigger.threshold { suppressUntil = seconds } else { signOpen = false; event = "sign_end" }
             }
@@ -219,7 +225,9 @@ final class LiveReelEngine {
                     if backlog.count > 40 { backlog.removeFirst(backlog.count - 40) }
                 }
                 for w in out where w.startSeconds >= suppressUntil { shown += accept(w) }
-                if let name = out.last(where: { $0.gloss == "NAME" && $0.startSeconds >= suppressUntil }) { pendingName = name }
+                if nameLetters, let name = out.last(where: { $0.gloss == "NAME" && $0.startSeconds >= suppressUntil }) {
+                    pendingName = name
+                }
                 if let name = pendingName, !name.early || name.closed || seconds - name.commitSeconds > 1.5 {
                     pendingName = nil
                     shown += try enterName(after: name.endSeconds, at: seconds); event = "on:name"

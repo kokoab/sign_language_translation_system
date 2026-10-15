@@ -12,7 +12,26 @@ enum LiveReelShared {
     // Written on `queue` / `languageQueue`, read on the main thread through `status`.
     nonisolated(unsafe) static var engine: LiveReelEngine?
     nonisolated(unsafe) static var stage3: LiveStage3?
+    /// Live English captions (desktop Live default since 2026-10-14); they replace the T5 sentence on
+    /// the phone, so T5 is no longer loaded. Written once on `languageQueue`.
+    nonisolated(unsafe) static var captions: LiveCaptionModels?
+    nonisolated(unsafe) static var captionsError: String?
     nonisolated(unsafe) private static var state = "idle"
+
+    // Settings shared with the Flutter Settings sheet (UserDefaults; all default off / unseen).
+    /// Spell a name after NAME (LIVE only; Practice never spells).
+    static let nameSpellingKey = "SLTNameSpellingV17"
+    /// Save each LIVE take to Documents/live_reel_videos (Files app).
+    static let saveVideosKey = "SLTSaveLiveVideosV17"
+    /// The first-LIVE tips have been shown.
+    static let liveTipsSeenKey = "SLTLiveTipsSeenV1"
+
+    /// Speech for the Flutter pages (History "Speak again"); main thread.
+    @MainActor private static let speech = AVSpeechSynthesizer()
+    @MainActor static func speak(_ text: String) {
+        speech.stopSpeaking(at: .immediate)
+        speech.speak(AVSpeechUtterance(string: text))
+    }
     nonisolated(unsafe) private static var failure: String?
 
     /// Build and warm the models once; safe to call repeatedly.
@@ -29,7 +48,14 @@ enum LiveReelShared {
                 try built.warm()
                 engine = built
                 state = "ready"
-                languageQueue.async { stage3 = try? LiveStage3(); stage3?.warm() }
+                languageQueue.async {
+                    do {
+                        captions = try LiveCaptionModels(spec: LiveModelLocator.resource("live_captions_v17", "json"),
+                                                         weights: LiveModelLocator.resource("live_captions_v17", "bin"))
+                    } catch {
+                        captionsError = error.localizedDescription
+                    }
+                }
             } catch {
                 failure = error.localizedDescription
                 state = "failed"
@@ -72,6 +98,22 @@ enum LiveReelSessions {
         if let data = try? JSONSerialization.data(withJSONObject: ["format": "slt_live_trace_v1", "frames": rows]) {
             try? data.write(to: dir.appendingPathComponent(stamp(started) + ".json"), options: .atomic)
         }
+    }
+
+    /// Delete one visit: its session file, its diagnostic trace and any takes saved from it.
+    static func delete(stamp: String) {
+        guard !stamp.isEmpty, !stamp.contains("/") else { return }
+        let files = FileManager.default
+        try? files.removeItem(at: directory.appendingPathComponent(stamp + ".json"))
+        let traces = directory.deletingLastPathComponent().appendingPathComponent("live_reel_traces", isDirectory: true)
+        try? files.removeItem(at: traces.appendingPathComponent(stamp + ".json"))
+        let takes = (try? files.contentsOfDirectory(at: LiveVideoRecorder.directory, includingPropertiesForKeys: nil)) ?? []
+        for url in takes where url.lastPathComponent.hasPrefix(stamp + "_") { try? files.removeItem(at: url) }
+    }
+
+    /// Delete every visit History lists.
+    static func deleteAll() {
+        for row in list() { if let stamp = row["stamp"] as? String { delete(stamp: stamp) } }
     }
 
     /// Newest first: stamp, started_utc, duration_seconds, glosses, sentences, complete, and the

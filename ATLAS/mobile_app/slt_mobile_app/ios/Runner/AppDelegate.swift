@@ -82,6 +82,37 @@ import UIKit
         (controller.presentedViewController ?? controller).present(live, animated: true)
       case "liveReelStatus":
         result(LiveReelShared.status)
+      case "getLiveSettings":
+        result([
+          "nameSpelling": UserDefaults.standard.bool(forKey: LiveReelShared.nameSpellingKey),
+          "saveVideos": UserDefaults.standard.bool(forKey: LiveReelShared.saveVideosKey),
+        ])
+      case "setLiveSetting":
+        let keys = ["nameSpelling": LiveReelShared.nameSpellingKey, "saveVideos": LiveReelShared.saveVideosKey]
+        guard let key = (arguments?["key"] as? String).flatMap({ keys[$0] }),
+              let value = arguments?["value"] as? Bool else {
+          result(FlutterError(code: "invalid_arguments", message: "Unknown Live setting", details: nil))
+          return
+        }
+        UserDefaults.standard.set(value, forKey: key)
+        result(nil)
+      case "resetLiveTips":
+        UserDefaults.standard.removeObject(forKey: LiveReelShared.liveTipsSeenKey)
+        result(nil)
+      case "speak":
+        guard let text = arguments?["text"] as? String, !text.isEmpty else {
+          result(FlutterError(code: "invalid_arguments", message: "Nothing to speak", details: nil))
+          return
+        }
+        LiveReelShared.speak(text)
+        result(nil)
+      case "deleteSession", "clearSessions":
+        let stamp = arguments?["stamp"] as? String
+        LiveReelShared.languageQueue.async {
+          if call.method == "clearSessions" { LiveReelSessions.deleteAll() }
+          else if let stamp { LiveReelSessions.delete(stamp: stamp) }
+          DispatchQueue.main.async { result(nil) }
+        }
       case "listSessions":
         LiveReelShared.languageQueue.async {
           let rows = LiveReelSessions.list()
