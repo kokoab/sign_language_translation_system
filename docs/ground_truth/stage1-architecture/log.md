@@ -1,5 +1,24 @@
 # stage1-architecture — log
 
+## 2026-10-19 — Defense-study trace of selected base learning rate (read-only)
+
+At user's request, traced the 96.83% base checkpoint's LR using archived launcher
+`artifacts/generated/kaggle_stage1_partwise_kokoab_v2/run.py` and targeted fields from
+`artifacts/generated/kaggle_stage1_partwise_kokoab_pull_v1/stage1_v17_partwise_v2/history.json`.
+Saved history peaks at 3e-4 (epochs 7–8); selected epoch100 logs
+0.00010526917802691153; final epoch130 logs 0.00003336423856128134.
+Launcher has no LR/warm-up override or fine-tune checkpoint. Compatible trainer
+defaults are AdamW3e-4, wd.03, warmup8/cosine/min-ratio.02; logged schedule supports
+that recipe. Do not interpret post-scheduler history entries as per-batch LR receipts.
+Historical partwise launch entry explicitly reuses prior seed/data/sampler/schedule/
+patience, rather than documenting an LR-optimality search. No dedicated evidence
+found for why exactly3e-4 was originally selected. Later run_v2 replay5e-5 is a
+different stage (sixfold smaller peak), not the original base rate.
+Updated external ml-foundations capstone CONFIG_REFERENCE.md and Q&A log; no model,
+trainer, data, manifest or current deployment change. No inference, training or test
+access. Next safe action: explain verified recipe versus inferred rationale; only
+search archived earlier LR trials if a stronger historical optimality claim is needed.
+
 Measured results, rejected approaches, and progress snapshots. Not read start-to-end —
 `rg` this file before re-running an experiment to see if it already failed.
 
