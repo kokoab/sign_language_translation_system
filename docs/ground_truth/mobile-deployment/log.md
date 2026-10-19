@@ -1,3 +1,24 @@
+## 2026-10-19 — Read-only deployed-release model-size inventory for defense study
+
+Measured retained mirror Release `/Users/frnzlo/slt_mobile_controls_device/Build/Products/Release-iphoneos/Runner.app`
+(directory timestamp Oct15 15:20:45 +0800), version1.0.0/build1, matching the Oct15
+installation-log lineage. Sum of logical file lengths: whole app565,021,291 bytes;
+16 compiled CoreML bundles444,329,441 bytes; live_captions_v17.bin29,291,188 bytes;
+combined model payload473,620,629 bytes. This is not phone Settings allocated storage,
+IPA compressed download size, system model/voice footprint or peak RAM.
+Selected recognizer26,995,802; FP16 crop encoder22,923,066; word boundary4,694,908;
+letter boundary4,694,914; T5 encoder45,616,456; T5 decoder50,094,650 bytes.
+Those six total155,019,796 bytes. Ten additional compiled variants289,309,645 bytes
+remain bundled; inventory does not authorize removal. Caption weights add29,291,188.
+Repo-local Oct13 Runner.app is older (523,150,688 bytes; no caption binary), not the
+latest mirror release. Current canonical/mirror LiveReelViewController.swift hashes
+match and show LIVE/Finish text from LiveCaptions, literal fallback; T5 remains bundled.
+Keep this Oct15 route distinct from submitted paper's T5 evaluation. Updated external
+ml-foundations capstone CONFIG_REFERENCE.md and Q&A log only (plus this history entry).
+No app/model/source/data edits, build, install, inference or protected evaluation.
+Next safe action: report per-component compiled sizes and scoped total; verify any
+future actual-phone storage claim on that device rather than infer it from this sum.
+
 ## 2026-10-15 — Caption background panel removed; installed
 
 User: the dark card behind the English looked bad. Removed (the caption keeps its text shadow; the centre
