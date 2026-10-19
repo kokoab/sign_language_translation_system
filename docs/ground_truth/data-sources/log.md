@@ -2635,3 +2635,110 @@ activation is 0.03233 and 0.03213 respectively. The close split statistics are a
 distribution check. The cache occupies 3.4 GiB and leaves approximately 16 GiB free.
 It is temporary training data and is not required by an eventual phone runtime. The
 Citizen test split was not accessed.
+## 2026-10-19 — Flat known-training class examples authorized; selection in progress
+
+User confirmed ATLAS/Citizen100 vocabulary, destination `data/local/model_class_examples/`,
+one original video per class without subfolders, Citizen/ASL-LEX priority, and recognition
+verification. Reusing Citizen train provenance, pinned raw-gloss/ASL-LEX identities,
+extraction rejection exclusions and quality ranking from `scripts/build_gloss_examples_v17.py`.
+Prepared selection/replay/copy gate under `artifacts/reports/model_class_examples_20261019/`;
+compiled the current canonical native Swift harness to `/private/tmp/slt-class-examples-harness`
+(succeeded with existing unused-value warnings). No source datasets or model settings changed.
+Next: native pixel replay with current bundled FP16 packages, select exact-output train
+originals, verify final combined selection, copy with source/destination SHA256 equality.
+
+Preparation admitted 1,475 Citizen training candidates covering all100classes. Native
+compilation succeeded; first replay was blocked by CoreML temporary-directory sandbox
+access. User-approved unsandboxed retry then exposed stale harness-resource links
+(missing current ConfidenceDual package); the selection script now reads canonical app
+`LiveReel/Models` directly and explicitly selects the deployed FP16 image encoder.
+Current replay is active; 34 source/model/configuration/provenance hashes are pinned.
+
+## 2026-10-19 — All100 Citizen training examples selected; final replay pending
+
+`model_class_examples_20261019/select_examples.py` verified official training provenance,
+class index, exact raw gloss, ASL-LEX code and raw SHA256 before replay. First native
+round:90/100exact single-gloss hypotheses; misses OUR/HOW/KNOW/THINK/FIND/ANSWER/ANGRY/
+SMALL/MAN/SIGN. Second-choice Citizen clips passed10/10. Selected100/100fromCitizen
+train; no ASL-LEX/local fallback, validation/test clips, training or threshold changes.
+All110attempts and initial failures retained in `attempts.json` and round replay files.
+Fresh combined100-original replay is running before copy; next: require exact output
+for every selected source, verify byte-identical flat copies, then record completed inventory.
+
+Combined replay returned95/100exact: THEY/NAME/COME/SAD/OUR added HE/WRITE/HUNGRY/SAME/MY.
+No copies were delivered. This reproduces the previously documented cross-clip Vision
+cadence sensitivity; single-candidate success alone does not establish stable batch
+output. All failed results retained in `final_originals_replay.json`. Replacement
+Citizen training candidates are being checked; no decoder/model modifications.
+
+## 2026-10-19 — Example verification uses independent-file extraction state
+
+Shared-engine replays97/100then97/100despite replacements changed which clips failed
+(LIKE/HOT/ANSWER, thenSMALL/ANGRY/ANSWER). Stop treating playback-order tuning as a
+property of standalone clips. Report-only harness copies now create a new `LiveVision`
+per independent video, as at engine construction, while reusing unchanged current
+native models, extractor/decoder logic, FP16 packages, .all and EOF flush. Only two
+report-local lines differ: mutable `vision` binding and replacement after each file
+reset. Canonical app/Python sources remain untouched. Previous shared-engine failures
+remain evidence; this protocol does not promise every live-camera cadence will match.
+Next: verify/reselect standalone Citizen training originals under this fixed protocol,
+then copy and hash-check all100flat files. Report path unchanged.
+
+## 2026-10-19 — Flat100-class known-training video folder completed
+
+Delivered `data/local/model_class_examples/`:100regular MP4 files,0subfolders, canonical
+class filenames,64,874,681bytes. All100areCitizenofficial-train originals, byte-identical
+copies; no ASL-LEX/local fallback needed. Admission pins class index/raw gloss/ASL-LEX
+code/provenance SHA256 and excludes existing extraction rejections. Standalone native
+FP16 `.all` replay:94/100exact in `final_03`; all6replacement clips exact in `repair_03`.
+The per-file extractor state makes these100independent-file recognition checks; earlier
+shared-engine95/97/97results and all125candidate attempts remain visible. No blanket
+live-camera/order-invariance or independent accuracy claim. Manifest/evidence/report:
+`artifacts/reports/model_class_examples_20261019/`; metadata outside the video folder.
+Final inventory, class coverage, all100copy hashes and34canonical source/model/config/
+provenance hashes passed. No canonical code/models/datasets changed beyond new copies;
+current-state note added to PROJECT_GROUND_TRUTH. Next: use as known examples; retain
+separate phone/generalization gates. No training/acquisition/test decoding performed.
+Artifact index regenerated successfully (72,679bytes); scoped `git diff --check`
+passed. No unrelated worktree changes reverted or committed.
+
+## 2026-10-19 — User requested primary-head re-audit of every copied example
+
+User questioned ASK/YOU visual similarity and latest-primary identity. Re-audit is under
+`artifacts/reports/model_class_examples_reaudit_20261019/`, using the actual100flat
+destination files, not prior source replay records. Verified all34prior canonical
+source/model/config/provenance pins remain unchanged. Current loader reads the
+ConfidenceDual `original_word_logits` primary unless the scoped MY repair is eligible;
+primary checkpoint is `run_frag25_reject/span_recognizer/best_model.pth` (99a18801).
+Fresh direct native full-clip primary audit is running (no boundaries/expected-label
+selection/MY repair); raw tensors retained per file for PyTorch primary parity.
+Prepared100visual frame comparisons against97locally available pinned ASL-LEX clips.
+ASK B_02_023 metadata has index flexion change; YOU D_02_065 has straight movement,
+no flexion change. Similar handshape alone does not establish a swapped label.
+Next: finish every-video direct inference, verify current checkpoint outputs on identical
+tensors, inspect all visual comparisons and report exact findings/gaps; preserve originals.
+
+## 2026-10-19 — Every actual copied video passes direct current-primary re-audit
+
+Fresh AVFoundation pixels→canonical Apple Vision/native crops/FP16 encoder→onefull-clip
+primary prediction per actual copied file (no boundary search, label-conditioned
+selection or MY repair):100/100expectedCoreMLtop1. Identical fresh tensors through
+documented current primary99a18801:100/100PyTorchcorrect,100/100backendtop1agreement.
+All100official Citizen train identities/raw-gloss/ASL-LEX/class-index records and copy/
+source/provenance SHA256 values reverified,100uniquevideos;34canonical source/model/
+configuration/provenance pins unchanged. Report/CSV/code/results in
+`artifacts/reports/model_class_examples_reaudit_20261019/`; earlier selection report
+and PROJECT_GROUND_TRUTH now link the more direct primary evidence.
+
+ASK=98.03%primary, YOU=99.57%; distinct P40 clips. Local pinned ASL-LEXASKB_02_023 has
+indexflexionchange; YOUD_02_065 straightmovement/no flexionchange. Compared copied and
+pinnedreference frame sequences; no filename-swap evidence. Visually screened sampled
+frames of all100, with97exact-code local citation references; THEY/DIFFERENT/CHILD
+references unavailable locally. No fluent-ASL certification claimed. ANSWER is weakest
+at47.98%top1, explicitly recorded. Native compile retains existing warnings; CPU
+PyTorch inference succeeds despite optional-library/version warnings. All100videos,
+canonical models and sources unchanged. No acquisition/training/test decoding.
+Next: inspect per-video evidence; retain separate fluent-review/phone/live-boundary gates.
+Final evidence/folder assertions and scoped `git diff --check` passed. Artifact index
+regenerated successfully (72,679bytes). No unrelated changes reverted or committed.
+
