@@ -2,36 +2,20 @@
  "format": "slt_v17_app_gloss_examples",
  "version": 1,
  "manifest": "active/v17/citizen100_manifest.json",
- "preference": "project-owned local exact-variant pool, then ASL Citizen train",
- "source_split": "train",
+ "selection": "Owner-supplied reference videos; named clips retain supplied labels, unnamed clips use model top1 or explicit user confirmation.",
+ "source_split": "preview_only",
+ "training_eligible": false,
  "val_accessed": false,
  "test_accessed": false,
- "selection": "eligible train sources with native preview and source replay verification; reference selection only, not a generalization metric",
- "score_semantics": "ranks candidates within one gloss only; not comparable across glosses because hand_presence counts both hands",
- "weights": {
-  "hand_presence": 0.4,
-  "hand_frames": 0.25,
-  "face_presence": 0.15,
-  "edges": 0.1,
-  "duration": 0.1
+ "preview_source_root": "/Users/frnzlo/Downloads/signs",
+ "owner_preview_count": 100,
+ "recognition_check": {
+  "scope": "Label assistance for unnamed videos only; not a recognition-accuracy benchmark.",
+  "recognizer": "SpanRecognizerV17ConfidenceDualB8FP16 retained primary",
+  "platform": "macOS native Swift replay",
+  "unnamed_clips": 34,
+  "physical_phone_verified": false
  },
- "ideal_seconds": [
-  1.2,
-  2.6
- ],
- "rejected_videos_skipped": [
-  "10667360637258794-SLEEP.mp4",
-  "3500609473112364-HE.mp4"
- ],
- "classes_covered": 100,
- "classes_from_local": 63,
- "classes_from_citizen": 37,
- "local_pool": "data/local/local_citizen100_quality_audit_q82_cap14_exact/candidate_selection.json",
- "local_training_manifest": "data/local/web_variant_supplement_v17_20261008/local_train_citizen_variant_v2.json",
- "classes_missing": [],
- "classes_with_edge_notes": [
-  "HUNGRY"
- ],
  "examples": {
   "I": {
    "canonical_label": "I",
@@ -39,31 +23,24 @@
    "category": "people_and_reference",
    "citizen_raw_gloss": "ME",
    "citizen_asl_lex_code": "B_01_068",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/I/6366246076484883-ME.mp4",
-   "source_sha256": "30643166b549d464fc3d31b9548f8ed30fee6fbfa3e8df6322ef764a299f48f1",
-   "split": "train",
-   "seconds": 1.535,
-   "score": 0.7319,
-   "components": {
-    "hand_presence": 0.4309,
-    "hand_frames": 0.913,
-    "face_presence": 0.875,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 13,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/I.mov",
+   "source_sha256": "81f2ab7d5afb137507376a7d82c60afafe8c65b50a2e9f96af84f977b6379801",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.7667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "I.jpg",
     "loop": "I.mp4",
-    "frames": 60,
-    "fps": 29.971,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "d7dc819a92401264c9a5e21bee294342270e50c69e0958eaaecebee3fe41a7f2",
-    "poster_sha256": "068a772d347224f3f51f7ec60930d2f5bfaf467204439bb29f93c64acace6445"
+    "poster": "I.jpg",
+    "loop_sha256": "c28da12b8dfdb336b4f5757845cd72be1ca4cf0156d8626ebc91d59da0dd983a",
+    "poster_sha256": "85e6b3054223ad6dbf7420ecaa0a4864ac212e894a04ac1413e9649700b13cdf",
+    "frames": 113,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "YOU": {
@@ -72,29 +49,52 @@
    "category": "people_and_reference",
    "citizen_raw_gloss": "YOU",
    "citizen_asl_lex_code": "D_02_065",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/YOU/YOU_12.mp4",
-   "source_sha256": "498738e039056189203066c5da6c668106963207d182ff2161778102daaa2871",
-   "split": "train",
-   "seconds": 1.633,
-   "score": 1.0499,
-   "components": {
-    "quality": 0.9999,
-    "duration": 1.0
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4122.MOV",
+   "source_sha256": "3097eb3cc1bd16b3c89f95bfc363506970d536197205c3876f8dde76c3ceb0a1",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.4333,
    "notes": [],
+   "preview_label_source": "user_confirmed",
    "assets": {
-    "poster": "YOU.jpg",
     "loop": "YOU.mp4",
-    "frames": 49,
+    "poster": "YOU.jpg",
+    "loop_sha256": "ab4a8dfd3405c73844e039940ef9cdd8efd36480504493c39123beef97d4b2cb",
+    "poster_sha256": "003297720c594be496aaacae49aebc779f1dfcd43d89ce97996a5d1b678da71b",
+    "frames": 73,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "74978fe74b393687007eb462bba5433a26ee50a7c4b4f0c3ea593dcf03c79a3b",
-    "poster_sha256": "36f2940c8ddfa2194be23fb315237f023a62ee4955260020976d75360b494a12"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "ASK",
+     "logit": 4.359375,
+     "probability": 0.4019310803388539
+    },
+    {
+     "label": "NEED",
+     "logit": 3.744140625,
+     "probability": 0.21724945531854783
+    },
+    {
+     "label": "YOU",
+     "logit": 3.044921875,
+     "probability": 0.10796720320498641
+    },
+    {
+     "label": "HOW",
+     "logit": 0.7509765625,
+     "probability": 0.01089040574209446
+    },
+    {
+     "label": "GO",
+     "logit": 0.7294921875,
+     "probability": 0.010658927665830762
+    }
+   ]
   },
   "WE": {
    "canonical_label": "WE",
@@ -102,32 +102,52 @@
    "category": "people_and_reference",
    "citizen_raw_gloss": "WE",
    "citizen_asl_lex_code": "G_03_019",
-   "source": "citizen",
-   "participant": "P30",
-   "source_video": "data/local/citizen100_v17/raw/train/WE/6257769266405475-WE.mp4",
-   "source_sha256": "c73904534a248062c7165bfeb84b2cb40f8de7b12674bec97d6cebe185be82ef",
-   "split": "train",
-   "seconds": 1.702,
-   "score": 0.7522,
-   "components": {
-    "hand_presence": 0.4658,
-    "hand_frames": 0.8824,
-    "face_presence": 0.9688,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 16,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4102.MOV",
+   "source_sha256": "0966ad2c4b40db9b192d5c8c61b8500ff39f224daca0015db8ec7c8e575e1298",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.4333,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WE.jpg",
     "loop": "WE.mp4",
-    "frames": 65,
-    "fps": 29.971,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "dc40d17e1e09cfdde6473f415e09470fdae955dca0674084f3acab210e39fbbf",
-    "poster_sha256": "db792d91d55af55eafa7f8786d19bfa70149d68323d285680b4b2a89c4676ff9"
-   }
+    "poster": "WE.jpg",
+    "loop_sha256": "6eb2e39f23dc5d185363595c63b69a89d832fb029de14fa285f506505d5d2854",
+    "poster_sha256": "19bb789b4a6bd4172b857a769d748a977af8fa36e1ebcf538eb7848e3ad7b2f2",
+    "frames": 103,
+    "fps": 30.0,
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WE",
+     "logit": 8.0859375,
+     "probability": 0.9705065104178754
+    },
+    {
+     "label": "DAY",
+     "logit": 1.466796875,
+     "probability": 0.0012952160120327906
+    },
+    {
+     "label": "SAME",
+     "logit": 0.70703125,
+     "probability": 0.0006058710289363609
+    },
+    {
+     "label": "SIGN",
+     "logit": 0.66650390625,
+     "probability": 0.0005818075925806822
+    },
+    {
+     "label": "WHERE",
+     "logit": 0.56591796875,
+     "probability": 0.0005261329085289887
+    }
+   ]
   },
   "THEY": {
    "canonical_label": "THEY",
@@ -135,32 +155,52 @@
    "category": "people_and_reference",
    "citizen_raw_gloss": "THEY1",
    "citizen_asl_lex_code": "F_02_103",
-   "source": "citizen",
-   "participant": "P33",
-   "source_video": "data/local/citizen100_v17/raw/train/THEY/9450633955249712-THEY.mp4",
-   "source_sha256": "4c13929e95d44d3caa03ac7c4deff4166db134a113f6f3f76bae9bf74d1fedeb",
-   "split": "train",
-   "seconds": 1.207,
-   "score": 0.7246,
-   "components": {
-    "hand_presence": 0.416015625,
-    "hand_frames": 0.8888888888888888,
-    "face_presence": 0.90625,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 18,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4083.MOV",
+   "source_sha256": "e586f6094e4634ccec9bcc0af167c089452c2a266cea74c3fba3f4c04b63efe5",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.2667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "THEY.jpg",
     "loop": "THEY.mp4",
-    "frames": 50,
-    "fps": 29.834,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "543b56c06db048c48840027a521c20c6f549936348e15a15cdc05cc3c8a90598",
-    "poster_sha256": "9d6c913ee3d0a568b6b248423c06f84712345c59ce955be4d37f48c6eb228ab2"
-   }
+    "poster": "THEY.jpg",
+    "loop_sha256": "b205ae407cd41cd83e681736e68ec6d71ec7ba8b2c90e955268dd4b87094942e",
+    "poster_sha256": "9e12515c13aa3ab2471ea577e30d2aaa00ba24bcc8b4f34e993ca8e60fe34645",
+    "frames": 98,
+    "fps": 30.0,
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "THEY",
+     "logit": 7.53515625,
+     "probability": 0.9564607452017138
+    },
+    {
+     "label": "LIKE",
+     "logit": 1.19140625,
+     "probability": 0.0016811696106500886
+    },
+    {
+     "label": "WE",
+     "logit": 0.86376953125,
+     "probability": 0.001211492449923629
+    },
+    {
+     "label": "WEEK",
+     "logit": 0.6787109375,
+     "probability": 0.0010068175700406897
+    },
+    {
+     "label": "ANSWER",
+     "logit": 0.58447265625,
+     "probability": 0.0009162703226773069
+    }
+   ]
   },
   "HE": {
    "canonical_label": "HE",
@@ -168,31 +208,24 @@
    "category": "people_and_reference",
    "citizen_raw_gloss": "HE",
    "citizen_asl_lex_code": "F_02_044",
-   "source": "citizen",
-   "participant": "P33",
-   "source_video": "data/local/citizen100_v17/raw/train/HE/71363394216049-HE.mp4",
-   "source_sha256": "9db61719e5e79faf191c44afaa470c34ef53c9c56b32155b3f36420bf8867fc1",
-   "split": "train",
-   "seconds": 1.039,
-   "score": 0.7003,
-   "components": {
-    "hand_presence": 0.4285,
-    "hand_frames": 0.871,
-    "face_presence": 0.8125,
-    "edges": 1.0,
-    "duration": 0.8926
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/he.mp4",
+   "source_sha256": "c0048c05b7a411f9df19f9268a115a7e98703f7f0f98b4da33b9adce1161b54c",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.7667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HE.jpg",
     "loop": "HE.mp4",
-    "frames": 45,
-    "fps": 29.839,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "08a51b4579cf879b8aac8f07c1d07d074bef3696893c9a71ae8a30cfb5013b40",
-    "poster_sha256": "1c3dd4563dd22cd1d4228975afcf08f8fae35f52df44febf183ebfeff0080c22"
+    "poster": "HE.jpg",
+    "loop_sha256": "005ef7aca28e479e5b6ad2814d85dbdb98b54a94492aa845b2f704a0422597e7",
+    "poster_sha256": "d9002c0730eb9534c3c451e6795c0773ab5b9b85aad51cc715b88706c69a6883",
+    "frames": 143,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "MY": {
@@ -201,28 +234,24 @@
    "category": "people_and_reference",
    "citizen_raw_gloss": "MY",
    "citizen_asl_lex_code": "C_01_060",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/MY/MY_1.mp4",
-   "source_sha256": "5f0e9b11fe45b45315aa49c0e6064811b31e54d6d5ec569e5c1f61cac26228b3",
-   "split": "train",
-   "seconds": 1.5,
-   "score": 1.036,
-   "components": {
-    "quality": 0.986,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/MY.mov",
+   "source_sha256": "70a978f600e1c367d895204ced1c332db1707a6d531a08d9a4fbd2f2b398790a",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.6667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "MY.jpg",
     "loop": "MY.mp4",
-    "frames": 45,
+    "poster": "MY.jpg",
+    "loop_sha256": "0df408a56822a508a6211beedce8bb860acdd4714979a8d591909050264d10f1",
+    "poster_sha256": "1264506c3d8089edfd0a9792da4b68a096dee9480fe0e07307122c9127db165f",
+    "frames": 80,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "e8098247e6a4979b7ff250152fc47ec1ca3c3ca642fdbc24f456c5c3e589c496",
-    "poster_sha256": "1c3cd6616cd28daff5583951dfb275a5ba6f775d88744e0fce45c177986cac2e"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "YOUR": {
@@ -231,29 +260,52 @@
    "category": "people_and_reference",
    "citizen_raw_gloss": "YOUR",
    "citizen_asl_lex_code": "F_01_052",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/YOUR/6759a789.mp4",
-   "source_sha256": "efadd3eefdd418c903dc08f68922c092336d538f398a760f11bb3578cf3b302a",
-   "split": "train",
-   "seconds": 1.233,
-   "score": 1.0408,
-   "components": {
-    "quality": 0.9908,
-    "duration": 1.0
-   },
-   "candidates_considered": 7,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4123.MOV",
+   "source_sha256": "a6c4b3569c3fb0e9c7d1d1dac4873fe0df11490c5c716b4d92f965247ab6345e",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.6,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "YOUR.jpg",
     "loop": "YOUR.mp4",
-    "frames": 37,
+    "poster": "YOUR.jpg",
+    "loop_sha256": "abb0c12a793ba9a1e8cde0594aba4bcdb2c9027a95d33ae2a1595f22c293244f",
+    "poster_sha256": "11e7c56cefb84e20ba976d313beeaa57c8ef99c49a5887bb95905cbda53721aa",
+    "frames": 78,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "ae87e5173ccdb3a5ebe8ae25a54b3dc97d2997157fde20995685663324fbe9de",
-    "poster_sha256": "1438fe24d8837d67d8b5031516a1deb4b5bd87fc2d8c48d56c73756313680210"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "YOUR",
+     "logit": 7.9765625,
+     "probability": 0.9754130562641048
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 1.44140625,
+     "probability": 0.0014158142095738841
+    },
+    {
+     "label": "WATER",
+     "logit": 0.6865234375,
+     "probability": 0.0006655256937086598
+    },
+    {
+     "label": "MY",
+     "logit": 0.49853515625,
+     "probability": 0.0005514708403592718
+    },
+    {
+     "label": "WOMAN",
+     "logit": 0.33056640625,
+     "probability": 0.0004662025582167904
+    }
+   ]
   },
   "OUR": {
    "canonical_label": "OUR",
@@ -261,31 +313,24 @@
    "category": "people_and_reference",
    "citizen_raw_gloss": "OUR",
    "citizen_asl_lex_code": "G_02_067",
-   "source": "citizen",
-   "participant": "P40",
-   "source_video": "data/local/citizen100_v17/raw/train/OUR/8722565902421502-OUR.mp4",
-   "source_sha256": "815b93713d3cb0956e7b7326df2e244cc0679d1e4d69966ddcacfe54109b63c3",
-   "split": "train",
-   "seconds": 1.635,
-   "score": 0.7272,
-   "components": {
-    "hand_presence": 0.4404296875,
-    "hand_frames": 0.8979591836734694,
-    "face_presence": 0.84375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/OUR.mov",
+   "source_sha256": "e62a1b99d236417d4bd447c05c75a973d3ffe2aa4f2fb0d270d4e77f7fd33e45",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.5667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "OUR.jpg",
     "loop": "OUR.mp4",
-    "frames": 59,
-    "fps": 29.967,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "a2d681065bcd6a6653f7f13522ac75d7ba9d0dc06e3e4bf95fbd571fc8e4b6df",
-    "poster_sha256": "f7d78d57c978f66b356366d55c88d5ce2a1e9ba29a3072389e90460c7e964afc"
+    "poster": "OUR.jpg",
+    "loop_sha256": "9896b686c369b02969587c5fe9f8e30d9f92bbcdf30881f32dc878e4f3534172",
+    "poster_sha256": "c17117df570db0010a95825b15078b41bee1a57e364637349621b1ddc7e09b71",
+    "frames": 107,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "WHAT": {
@@ -294,32 +339,52 @@
    "category": "questions",
    "citizen_raw_gloss": "WHAT1",
    "citizen_asl_lex_code": "D_02_094",
-   "source": "citizen",
-   "participant": "P52",
-   "source_video": "data/local/citizen100_v17/raw/train/WHAT/43147199471175535-seedWHAT 2.mp4",
-   "source_sha256": "7746da593651670dfd27157bedae5624864ea61e7731e076cc86e2b48d5c193f",
-   "split": "train",
-   "seconds": 1.408,
-   "score": 0.9088,
-   "components": {
-    "hand_presence": 0.8535,
-    "hand_frames": 0.907,
-    "face_presence": 0.9375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 16,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4105.MOV",
+   "source_sha256": "41ed74a96ebd1e5c142199ea0eef5330c1f7503cd8f76f2c1f7c0732550629d2",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.0333,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WHAT.jpg",
     "loop": "WHAT.mp4",
-    "frames": 59,
-    "fps": 30.55,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "1fdfa217df2f8802c186c68630b81311a1f90ef84d18829982a5b1dda2317e7d",
-    "poster_sha256": "65460d10cf3280db1bcb605bd8ce894abc51a4ebc53ebad752cf19af2f142913"
-   }
+    "poster": "WHAT.jpg",
+    "loop_sha256": "4320b3501b6e57c9a1c669506f999d0ecbe76af6db050fad31412cf05f02b7cb",
+    "poster_sha256": "c570f9d2e115df58663ee9fa809fab08ff97559121d7bf8a327e18ebecf17f38",
+    "frames": 91,
+    "fps": 30.0,
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WHAT",
+     "logit": 6.60546875,
+     "probability": 0.8929318987592916
+    },
+    {
+     "label": "READ",
+     "logit": 1.759765625,
+     "probability": 0.007020308702462816
+    },
+    {
+     "label": "WRITE",
+     "logit": 1.3271484375,
+     "probability": 0.00455483817998008
+    },
+    {
+     "label": "WEEK",
+     "logit": 1.15234375,
+     "probability": 0.0038243377566813132
+    },
+    {
+     "label": "GOOD",
+     "logit": 0.7626953125,
+     "probability": 0.0025902046273273104
+    }
+   ]
   },
   "WHERE": {
    "canonical_label": "WHERE",
@@ -327,32 +392,52 @@
    "category": "questions",
    "citizen_raw_gloss": "WHERE",
    "citizen_asl_lex_code": "B_02_035",
-   "source": "citizen",
-   "participant": "P40",
-   "source_video": "data/local/citizen100_v17/raw/train/WHERE/9574229853297838-WHERE.mp4",
-   "source_sha256": "0de7f8a1fc0876387cdd7412ced3655d0ccd02b63e464194afb977cfd10a9da6",
-   "split": "train",
-   "seconds": 1.635,
-   "score": 0.7377,
-   "components": {
-    "hand_presence": 0.453857421875,
-    "hand_frames": 0.9183673469387755,
-    "face_presence": 0.84375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4107.MOV",
+   "source_sha256": "49ab4a6bc55a1ef8a52e9617e535a9ca1f93c4b6d3f9e94d166facea81c1db03",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.1,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WHERE.jpg",
     "loop": "WHERE.mp4",
-    "frames": 63,
-    "fps": 29.976,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "4534d1d1c12b03179ccefc7a6d11798d82a716402425076c668ceeffd74931f9",
-    "poster_sha256": "05720765066a139e5042e9974a2bfbb13232aca10b8d5aaa09ff3ad8995b7080"
-   }
+    "poster": "WHERE.jpg",
+    "loop_sha256": "6d7c928361283c044d7f9e9ed534f31a05e5086ad2563b171bdc51e88f962c0e",
+    "poster_sha256": "981657bd18079d478df7d69ad9dbc85a86154cb8767beb7c42c8ca147ac7583a",
+    "frames": 93,
+    "fps": 30.0,
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WHERE",
+     "logit": 6.921875,
+     "probability": 0.9123126748100219
+    },
+    {
+     "label": "DIFFERENT",
+     "logit": 1.41015625,
+     "probability": 0.0036849760507523697
+    },
+    {
+     "label": "HE",
+     "logit": 0.69091796875,
+     "probability": 0.0017950371987314397
+    },
+    {
+     "label": "IMPORTANT",
+     "logit": 0.66845703125,
+     "probability": 0.0017551684017943514
+    },
+    {
+     "label": "WATER",
+     "logit": 0.66064453125,
+     "probability": 0.001741509572927918
+    }
+   ]
   },
   "WHEN": {
    "canonical_label": "WHEN",
@@ -360,29 +445,52 @@
    "category": "questions",
    "citizen_raw_gloss": "WHEN",
    "citizen_asl_lex_code": "C_03_086",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/WHEN/bafcc0d5.mp4",
-   "source_sha256": "31f7c0bfe329d7eb372b346f254a9160bfa5b9ce7b4b71e6f765a5dc65f0be9d",
-   "split": "train",
-   "seconds": 1.167,
-   "score": 1.0344,
-   "components": {
-    "quality": 0.9855,
-    "duration": 0.9778
-   },
-   "candidates_considered": 8,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4106.MOV",
+   "source_sha256": "bf7c87beb65e63fd3cba88f3149757bbde83b98cd91d805f37b1290a1b641255",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.2667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WHEN.jpg",
     "loop": "WHEN.mp4",
-    "frames": 35,
+    "poster": "WHEN.jpg",
+    "loop_sha256": "63c8b4c2202044e7c97565c7386fc0fae29339ce78e7427ab8ec9a5a2e438cc6",
+    "poster_sha256": "5d522d45c0a46fd1dab6a549c934f493a1e6d734e37f8f0875ca64a245bb2b55",
+    "frames": 98,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "65865ac340f4f059e63cb8138dc89b8ca1803977107f708cf2765425ceb52091",
-    "poster_sha256": "c857968e2732650f9d1ed799ff279df90bd7385aa2f1208010d5f673ee133877"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WHEN",
+     "logit": 7.671875,
+     "probability": 0.9602558488843969
+    },
+    {
+     "label": "SIGN",
+     "logit": 1.2509765625,
+     "probability": 0.0015625222159091202
+    },
+    {
+     "label": "LANGUAGE",
+     "logit": 0.83056640625,
+     "probability": 0.0010262292521796218
+    },
+    {
+     "label": "DIFFERENT",
+     "logit": 0.8125,
+     "probability": 0.0010078554516336747
+    },
+    {
+     "label": "ANSWER",
+     "logit": 0.416015625,
+     "probability": 0.0006779649986456175
+    }
+   ]
   },
   "WHO": {
    "canonical_label": "WHO",
@@ -390,29 +498,52 @@
    "category": "questions",
    "citizen_raw_gloss": "WHO",
    "citizen_asl_lex_code": "C_01_041",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/WHO/955c68c7.mp4",
-   "source_sha256": "ccafdcdd354f1f556064b32334fb9220a0516bffb5e9eff7ba90a5dcc956b0fd",
-   "split": "train",
-   "seconds": 1.6,
-   "score": 1.0095,
-   "components": {
-    "quality": 0.9595,
-    "duration": 1.0
-   },
-   "candidates_considered": 11,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4110.MOV",
+   "source_sha256": "71bf48f5b2443499fb2a563a68b34be15e4c1c2b250c8932e00f60065dea3436",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.0333,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WHO.jpg",
     "loop": "WHO.mp4",
-    "frames": 48,
+    "poster": "WHO.jpg",
+    "loop_sha256": "db7b56a8c12d91fea6f0aa5758787e63a1653dff710193e3e1c46a3c08c95f39",
+    "poster_sha256": "2cf2c05e0a7f221bad713426443a5386f35f558d3d914a784de021962bb91487",
+    "frames": 91,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "ce847caf7f113f410f339022b704020358a4cb540ae18056bf582584cd89d3d9",
-    "poster_sha256": "bd3e957c225bc051fd3776847ef1c1d27b7c4b4959e2a9ca851b2e58fb705c4c"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WHO",
+     "logit": 7.72265625,
+     "probability": 0.9725620393339998
+    },
+    {
+     "label": "WATER",
+     "logit": 1.064453125,
+     "probability": 0.001248235235435475
+    },
+    {
+     "label": "YOU",
+     "logit": 0.6220703125,
+     "probability": 0.0008019956697996641
+    },
+    {
+     "label": "MY",
+     "logit": 0.49072265625,
+     "probability": 0.0007032803142303046
+    },
+    {
+     "label": "ANSWER",
+     "logit": 0.362060546875,
+     "probability": 0.000618373994168601
+    }
+   ]
   },
   "WHY": {
    "canonical_label": "WHY",
@@ -420,32 +551,52 @@
    "category": "questions",
    "citizen_raw_gloss": "WHY",
    "citizen_asl_lex_code": "D_01_067",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/WHY/10953401131792706-WHY.mp4",
-   "source_sha256": "a04903b6c4d668377923dc25c2b0e94238d931cdc9e5b72c749905ce02fc2c59",
-   "split": "train",
-   "seconds": 1.467,
-   "score": 0.7429,
-   "components": {
-    "hand_presence": 0.4375,
-    "hand_frames": 0.9090909090909091,
-    "face_presence": 0.9375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 13,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4113.MOV",
+   "source_sha256": "cd52e452d93b510f8cfafbc415c71908aaa3c27c925c93852792f7d9c57ff565",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.0333,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WHY.jpg",
     "loop": "WHY.mp4",
-    "frames": 57,
+    "poster": "WHY.jpg",
+    "loop_sha256": "bb77d23f17469769295e2ae74080dee8dac82cdea3bfcc0d48e20116223f4dfa",
+    "poster_sha256": "02717ea0f37567c863103d0413a1971be4e37f224dfd52f405527122d17cbb07",
+    "frames": 91,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "c83fbb11e6920b3fa93fda64d56ec958a333f2bcd01a478ac70429a96038ce67",
-    "poster_sha256": "df91d0667d8b3ff9e1ad5051752e64802c3a2415490a1c74a1b1ead3ba0982ef"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WHY",
+     "logit": 8.0234375,
+     "probability": 0.9747118948216255
+    },
+    {
+     "label": "HELLO",
+     "logit": 2.12890625,
+     "probability": 0.002684811940808655
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 0.974609375,
+     "probability": 0.0008464651987722167
+    },
+    {
+     "label": "HE",
+     "logit": 0.66259765625,
+     "probability": 0.0006195896289308615
+    },
+    {
+     "label": "PLEASE",
+     "logit": 0.497802734375,
+     "probability": 0.0005254538935391447
+    }
+   ]
   },
   "HOW": {
    "canonical_label": "HOW",
@@ -453,31 +604,24 @@
    "category": "questions",
    "citizen_raw_gloss": "HOW1",
    "citizen_asl_lex_code": "D_02_082",
-   "source": "citizen",
-   "participant": "P52",
-   "source_video": "data/local/citizen100_v17/raw/train/HOW/8835516863640922-seedHOW.mp4",
-   "source_sha256": "de34b913de3ce2c417a7123563eafacf2cf8b37fc5c95fc603462250caab2222",
-   "split": "train",
-   "seconds": 1.22,
-   "score": 0.8882,
-   "components": {
-    "hand_presence": 0.8349609375,
-    "hand_frames": 0.8918918918918919,
-    "face_presence": 0.875,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 17,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/HOW.mov",
+   "source_sha256": "016a8d677d07b6f0aa7ec6af4c55d73b850ab9618b1866dcef2ca95864efae98",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.9667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HOW.jpg",
     "loop": "HOW.mp4",
-    "frames": 53,
-    "fps": 30.325,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "bd648efd294ba4002fd778e34aef9f5446d6f27a8846887712e45ddcb914491a",
-    "poster_sha256": "76536d296f4e9915d62b2e9da6aad2320d2ff9ffa70666727e1e410b000cb773"
+    "poster": "HOW.jpg",
+    "loop_sha256": "2d7d253607d9866cc270606d2da6c1f674ead0d2ac153839455cb7c6235bb03b",
+    "poster_sha256": "e1cb8fc5cc6ba5b170d1d045f322f1a512202165380bed0cd669def259109a80",
+    "frames": 119,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "HELLO": {
@@ -486,28 +630,24 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "HELLO",
    "citizen_asl_lex_code": "D_02_055",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/HELLO/3f54b470.mp4",
-   "source_sha256": "2ad3691ec96c819cf4c66d1d9a41c3e16c03519cf16aae970fc5b89074334813",
-   "split": "train",
-   "seconds": 1.467,
-   "score": 0.9582,
-   "components": {
-    "quality": 0.9082,
-    "duration": 1.0
-   },
-   "candidates_considered": 8,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/hello.mp4",
+   "source_sha256": "c38f822b891dd21321f28db07a7bfee96a572ec1c98a8c06c9d3e426b87d9f83",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.8333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HELLO.jpg",
     "loop": "HELLO.mp4",
-    "frames": 44,
+    "poster": "HELLO.jpg",
+    "loop_sha256": "b23e33a2982838b2d25aafa868db947316e7a21ada45ff34d71714f128c7517f",
+    "poster_sha256": "3e61697c7e46209054237fac9acc5c751c066739a0be16534a238f9a8a3895e5",
+    "frames": 115,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "367bde18beea863d715c395bafd71a2a82b98c39cedfd6f16399d0e139660834",
-    "poster_sha256": "c3fb9b5d3f793fd3db112b12dec2a892955dacdc54a2b0e72f7a953987580883"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "GOODBYE": {
@@ -516,31 +656,24 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "BYE",
    "citizen_asl_lex_code": "E_01_058",
-   "source": "citizen",
-   "participant": "P29",
-   "source_video": "data/local/citizen100_v17/raw/train/GOODBYE/4327026387490418-BYE.mp4",
-   "source_sha256": "bfcaf3d06f33561cd2bcddf538ee1adcff96db882406078d5ce57ad29ff9b6d5",
-   "split": "train",
-   "seconds": 1.733,
-   "score": 0.7512,
-   "components": {
-    "hand_presence": 0.4614,
-    "hand_frames": 0.9038,
-    "face_presence": 0.9375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 15,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/goodbye.mp4",
+   "source_sha256": "4dfc711094a4a32fe8bc80c7489ef9cf5e4fbcb4883b027ef002e1bcef05dbbc",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 6.2,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "GOODBYE.jpg",
     "loop": "GOODBYE.mp4",
-    "frames": 67,
+    "poster": "GOODBYE.jpg",
+    "loop_sha256": "f74afcbdf1d9b7508b2b6beab6ee7594f0b3ed6939fadf8d109e3650717e62bc",
+    "poster_sha256": "98ee2f8d76d3d77b48e33a37601677f333845302aa4c82183cefae4afee83d1d",
+    "frames": 186,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "812745ff8eeda4cde4eb4c0c951de500b5c1dc798b823616eb9b5b5482401541",
-    "poster_sha256": "a6eb8779a4c8485458101c625b4899086ea2868010c9be31b7db1f9be7d61c39"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "PLEASE": {
@@ -549,28 +682,24 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "PLEASE",
    "citizen_asl_lex_code": "B_02_007",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/PLEASE/83e982ca.mp4",
-   "source_sha256": "dd8817f7d34866186f72b0da4687bd309296cbad1e77911f4e27d18e4f4e599a",
-   "split": "train",
-   "seconds": 1.5,
-   "score": 0.9806,
-   "components": {
-    "quality": 0.9306,
-    "duration": 1.0
-   },
-   "candidates_considered": 11,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/PLEASE.mov",
+   "source_sha256": "dd366f7e89447622fde762b7e3311e27518788bc541d8d0384bb72f968876629",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.9667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "PLEASE.jpg",
     "loop": "PLEASE.mp4",
-    "frames": 45,
+    "poster": "PLEASE.jpg",
+    "loop_sha256": "26710a729a3076e45d081947caa0335f04e0b2a166813b65cdbd6c82e485504c",
+    "poster_sha256": "28ba6eb57c349ff438ed2cfbcc3e5e808cd666cc3afcbb054d6d59d457358c29",
+    "frames": 119,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "5669a263a26ccec308177cbe2607142a267835e4f14b2e826c10dcffb62a7c7d",
-    "poster_sha256": "213ffec448e1da1db086be73c73a0f8b88ad22388bbd3deff750782bdc515242"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "THANKYOU": {
@@ -579,29 +708,52 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "THANKYOU",
    "citizen_asl_lex_code": "H_02_053",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/THANKYOU/f5e9102a.mp4",
-   "source_sha256": "ff3a7d9098d1d004c1f55e2e1b70815098f91548a7a299d86463a081ed41fbc3",
-   "split": "train",
-   "seconds": 1.267,
-   "score": 0.9683,
-   "components": {
-    "quality": 0.9183,
-    "duration": 1.0
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4082.MOV",
+   "source_sha256": "1da8412b1faa1554781992f702d22720136b43637e2926832346a52277256edf",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.6667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "THANKYOU.jpg",
     "loop": "THANKYOU.mp4",
-    "frames": 38,
+    "poster": "THANKYOU.jpg",
+    "loop_sha256": "358a72f30d4727a7ba953d7bec077a0d05df44530f6695701e5622539d1ed50b",
+    "poster_sha256": "a32a63bfd0402b87d8c85b9ef6ffddedc0b9825ed219bb5c8d32a1f6e155c664",
+    "frames": 80,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "6b14fbacb38c038e3a393e3407ea91b4b9b7f03d1aad13a00593cc81e8b9437c",
-    "poster_sha256": "f31090d38351e5bbb998673b6f43002f1a0d5023ecadd0ca79f19a4694eb3d1c"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "THANKYOU",
+     "logit": 9.28125,
+     "probability": 0.9929604106818485
+    },
+    {
+     "label": "GOOD",
+     "logit": 3.580078125,
+     "probability": 0.0033185200645400688
+    },
+    {
+     "label": "TOMORROW",
+     "logit": 0.35546875,
+     "probability": 0.00013198190420538386
+    },
+    {
+     "label": "PLEASE",
+     "logit": 0.169921875,
+     "probability": 0.00010963075526002453
+    },
+    {
+     "label": "FRIEND",
+     "logit": 0.1173095703125,
+     "probability": 0.00010401193416538095
+    }
+   ]
   },
   "SORRY": {
    "canonical_label": "SORRY",
@@ -609,29 +761,52 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "SORRY",
    "citizen_asl_lex_code": "C_01_020",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/SORRY/c01ace66.mp4",
-   "source_sha256": "595eba62fbae03a28079a67f43bdcce0ac14878446e03638852522c2018c7d7a",
-   "split": "train",
-   "seconds": 1.467,
-   "score": 0.9873,
-   "components": {
-    "quality": 0.9373,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4067.MOV",
+   "source_sha256": "7d5bcfb7bfcf7289032a7b3ceb489b1cf579aa0a956bb4f028889d99e0b076d5",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.2667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "SORRY.jpg",
     "loop": "SORRY.mp4",
-    "frames": 44,
+    "poster": "SORRY.jpg",
+    "loop_sha256": "c5250633033d0345ad043c146f9ae404281e2e861442495e21b60762454b7d59",
+    "poster_sha256": "5ad6606e28f8948e83af5e27e65cee576fde7b1d978c095ad8c7aa3d6b7ba61d",
+    "frames": 98,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "5ac2c145df0efb96ff782a78e1e448481143b86613f212af8e8eb8ea5a4d389e",
-    "poster_sha256": "4f3651cf5c47103437354e8786ea9191ee77a1a45025d28d4cd05e41ebeedb9e"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "SORRY",
+     "logit": 7.796875,
+     "probability": 0.9599831540773348
+    },
+    {
+     "label": "HUNGRY",
+     "logit": 1.9580078125,
+     "probability": 0.002795605021883283
+    },
+    {
+     "label": "PLEASE",
+     "logit": 1.359375,
+     "probability": 0.0015363596223748287
+    },
+    {
+     "label": "TIRED",
+     "logit": 0.52197265625,
+     "probability": 0.000664987784759171
+    },
+    {
+     "label": "TRY",
+     "logit": 0.412841796875,
+     "probability": 0.0005962367455851846
+    }
+   ]
   },
   "YES": {
    "canonical_label": "YES",
@@ -639,32 +814,52 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "YES",
    "citizen_asl_lex_code": "G_03_074",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/YES/709429051156695-YES.mp4",
-   "source_sha256": "2631a904cb50ca12abccf5e719b3deea5abac45981b921e1fad8b854bc2732ea",
-   "split": "train",
-   "seconds": 1.5,
-   "score": 0.7381,
-   "components": {
-    "hand_presence": 0.43603515625,
-    "hand_frames": 0.9111111111111111,
-    "face_presence": 0.90625,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4120.MOV",
+   "source_sha256": "2dca4d48e55170c27f14942222925c82e1ab1aeda88c896b03e8a4c71b57a5ad",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.6,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "YES.jpg",
     "loop": "YES.mp4",
-    "frames": 61,
+    "poster": "YES.jpg",
+    "loop_sha256": "d0b608c19152d9eec02124b34c9fa26a45ac9239dc6b53bc428714d59f1be943",
+    "poster_sha256": "a9bbf550537f534282e7509906edeb83d110373c92b269df2d64b17bfc631890",
+    "frames": 108,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "c101cb09ce290f9c0cb5ff321296663ac7426b9e7986e696dcee0992b24fc5f2",
-    "poster_sha256": "e5f85b53c7676c9a1391bf7693ff2e5b0d4396200b74dd8591f22d1e1fa5019b"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "YES",
+     "logit": 8.046875,
+     "probability": 0.9693421371468529
+    },
+    {
+     "label": "TOMORROW",
+     "logit": 1.16796875,
+     "probability": 0.00099771399917142
+    },
+    {
+     "label": "WORK",
+     "logit": 1.0791015625,
+     "probability": 0.0009128754690576503
+    },
+    {
+     "label": "LIKE",
+     "logit": 1.0166015625,
+     "probability": 0.0008575671403547356
+    },
+    {
+     "label": "TAKE",
+     "logit": 0.72607421875,
+     "probability": 0.0006413479478557438
+    }
+   ]
   },
   "NO": {
    "canonical_label": "NO",
@@ -672,28 +867,24 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "NO",
    "citizen_asl_lex_code": "C_03_041",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/NO/f9d6d502.mp4",
-   "source_sha256": "7e7e16516ab113fea85b3b0e76e581b70a84e6a5d31e77e9ed02b9857bf07bbb",
-   "split": "train",
-   "seconds": 1.8,
-   "score": 1.0383,
-   "components": {
-    "quality": 0.9883,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/NO.mov",
+   "source_sha256": "eb82dd4eff0061d12e0bd8be1c44cb3a5dd4fe6750f4187df458c2234df56102",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.1,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "NO.jpg",
     "loop": "NO.mp4",
-    "frames": 54,
+    "poster": "NO.jpg",
+    "loop_sha256": "a91adec49627bedbc1726830cbedf527fe9f74b7efeabf5163af07c1b7660b32",
+    "poster_sha256": "87ff827b2e359d4348816671bcf41a65d85279b3567e77884e65f9448ec936de",
+    "frames": 93,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "b97b2dcd672753d88ea7efaae6587dddb0092b398a76b1545cc266f16aa3f951",
-    "poster_sha256": "217c9a7996cbbaee77a30c5acbd31505283edb64582b981a75e97c6acacfa0d8"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "MAYBE": {
@@ -702,28 +893,24 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "MAYBE",
    "citizen_asl_lex_code": "B_03_022",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/MAYBE/30135481.mp4",
-   "source_sha256": "f48746d8f68b645be164feac228cf5301ad42cac483ba0d54d8754a3c1cc74dc",
-   "split": "train",
-   "seconds": 1.533,
-   "score": 0.9822,
-   "components": {
-    "quality": 0.9322,
-    "duration": 1.0
-   },
-   "candidates_considered": 13,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/MAYBE.mov",
+   "source_sha256": "09f8399a4d1e9134a546ec00eb49c4918ca21fb9a4d066ec5cf867adceff84ab",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.7667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "MAYBE.jpg",
     "loop": "MAYBE.mp4",
-    "frames": 46,
+    "poster": "MAYBE.jpg",
+    "loop_sha256": "4efe198caaf1d310aa0e49ec1e0996b673b2d7f04fcd4c7057676c0154b0c000",
+    "poster_sha256": "2116b33e05595ae837529d60d247608a0d2dec1150fdffc2c56575f5c60b0606",
+    "frames": 113,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "4eee70b447d03669c8ef22f33f8d8ae4bdde3446b9c6d68de26acdb1b4c0bb3a",
-    "poster_sha256": "b00a6ccb52370c116133fed408bf0e3a65c9327e6ba75279f645e35a1cf191fa"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "HELP": {
@@ -732,28 +919,24 @@
    "category": "social_and_safety",
    "citizen_raw_gloss": "HELP",
    "citizen_asl_lex_code": "D_01_042",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/HELP/276970e3.mp4",
-   "source_sha256": "8cbac07d9e55222346fb15ea40d075191a417c7f548f6d477bd9c25c5680fa79",
-   "split": "train",
-   "seconds": 1.267,
-   "score": 1.0345,
-   "components": {
-    "quality": 0.9845,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/help.mp4",
+   "source_sha256": "42b6e3e95b392e2dbaf434d7e0f48f16f1940bc683fd06b8a6b8022b4444b3cf",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.3333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HELP.jpg",
     "loop": "HELP.mp4",
-    "frames": 38,
+    "poster": "HELP.jpg",
+    "loop_sha256": "afa3ec3847ecbfac1be140d6955bdf1f006e6bb3fb548e58ce9d3aba3d3cad59",
+    "poster_sha256": "f07df666e16aa1816fcae8ac0cbaf631aca731b413887f1b0dec241ccbd628c3",
+    "frames": 130,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "c023377c339792e1effd432704279e14de5199338944d14dd0f56aa4a07abe79",
-    "poster_sha256": "5808b90332e4e519c21a71d39cdaca809553dc54fd6c8b1844922a654a0c59d4"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "WANT": {
@@ -762,32 +945,52 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "WANT1",
    "citizen_asl_lex_code": "E_01_025",
-   "source": "citizen",
-   "participant": "P29",
-   "source_video": "data/local/citizen100_v17/raw/train/WANT/08859845078833506-WANT 2.mp4",
-   "source_sha256": "06fd025603e31e520f45da103f5bd21fde0ab4568e43d8308465bb2f6795264d",
-   "split": "train",
-   "seconds": 1.567,
-   "score": 0.8797,
-   "components": {
-    "hand_presence": 0.811,
-    "hand_frames": 0.9149,
-    "face_presence": 0.8438,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 16,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4099.MOV",
+   "source_sha256": "4fd916186de4aff8b40704b568323fd055fef8ae146a8c9ff92f24815d23a0bf",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.9333,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WANT.jpg",
     "loop": "WANT.mp4",
-    "frames": 61,
+    "poster": "WANT.jpg",
+    "loop_sha256": "a4c702716b005918203a0e19953e8e88467a0002778a21870246781c5e0bb574",
+    "poster_sha256": "6e3e0ac860a712a8f54fb8322d0f0da59841dd0394713c45a7e6f00b88a8d611",
+    "frames": 88,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "1d8c7969b14de2f3c90d9d8872b27e60f99871f7098fbdb8bf4f137f37e99da9",
-    "poster_sha256": "ef140b9abd71cdaf0c3dd1140e545076560519cd4f1b720fdc06bb22e107676d"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WANT",
+     "logit": 6.58984375,
+     "probability": 0.8899331684502271
+    },
+    {
+     "label": "NO",
+     "logit": 1.1962890625,
+     "probability": 0.004045445501462193
+    },
+    {
+     "label": "WATER",
+     "logit": 1.001953125,
+     "probability": 0.0033309439865953625
+    },
+    {
+     "label": "ANSWER",
+     "logit": 0.58154296875,
+     "probability": 0.002187688675150833
+    },
+    {
+     "label": "GO",
+     "logit": 0.5791015625,
+     "probability": 0.002182354152863977
+    }
+   ]
   },
   "NEED": {
    "canonical_label": "NEED",
@@ -795,31 +998,24 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "NEED",
    "citizen_asl_lex_code": "C_02_034",
-   "source": "citizen",
-   "participant": "P52",
-   "source_video": "data/local/citizen100_v17/raw/train/NEED/8172430267718573-seedNEED.mp4",
-   "source_sha256": "3fa48bf1ff372812f12a8bdac104385ff7e9d72b232f1668231ee37d7ca4323b",
-   "split": "train",
-   "seconds": 1.468,
-   "score": 0.7387,
-   "components": {
-    "hand_presence": 0.4375,
-    "hand_frames": 0.9111111111111111,
-    "face_presence": 0.90625,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/NEED.mov",
+   "source_sha256": "fa70e2e02d4461b78e618fc92b39032ba7d64958da7d904239122dd2437d308a",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.9667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "NEED.jpg",
     "loop": "NEED.mp4",
-    "frames": 61,
-    "fps": 30.65,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "af3d6fe205247fccbe695c9bea2e14349ed8e0024a03e13209e085c380ec0614",
-    "poster_sha256": "d3849eb073ecd14e4b9fd6c50df3de6c501ea480b6ab604db7122e48cf25d4da"
+    "poster": "NEED.jpg",
+    "loop_sha256": "e9a19c3c5d96f24979c25a071b1c221ac4d958a11600f3f62e5d5e589bace763",
+    "poster_sha256": "b9b0004fe837c2256a34bebd1c1d5db74476c3c3cbfdd638f093d2b9e58e8860",
+    "frames": 89,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "LIKE": {
@@ -828,28 +1024,24 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "LIKE",
    "citizen_asl_lex_code": "F_03_063",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/LIKE/d8b98be9.mp4",
-   "source_sha256": "c8ed28667a577f0d468c400dc3ded3eff591a4f30406aeb811021f11f9ca6b83",
-   "split": "train",
-   "seconds": 0.8,
-   "score": 0.9985,
-   "components": {
-    "quality": 0.9619,
-    "duration": 0.7333333333333334
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/LIKE.mov",
+   "source_sha256": "7b7cad0637fd7a111a912e6f6be75e211dd69e8befc8e615a234a914aad5e357",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.4667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "LIKE.jpg",
     "loop": "LIKE.mp4",
-    "frames": 24,
+    "poster": "LIKE.jpg",
+    "loop_sha256": "d26d371dc456490a06f478460a871afc6056e9d8f4e1f485a94076ad0508825e",
+    "poster_sha256": "e1d166051e7654363de20374f58cd3c22fdf45a6da3cb5be86be6a12ba7f7d11",
+    "frames": 104,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "58a710a1802961b2896794a5c192a4fdb1c4971d2fb66ebae426b929db94ec62",
-    "poster_sha256": "765806cf33fd21f05316f48dd8bbd8de1d301cf16068e2635083cefa77790e29"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "LOVE": {
@@ -858,28 +1050,24 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "LOVE",
    "citizen_asl_lex_code": "G_01_068",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/LOVE/LOVE_8.mp4",
-   "source_sha256": "4458a258304a80c7393db484df4fd3c856a3e2fb2919523f8ea8bf3c04a90d7c",
-   "split": "train",
-   "seconds": 2.0,
-   "score": 1.0224,
-   "components": {
-    "quality": 0.9724,
-    "duration": 1.0
-   },
-   "candidates_considered": 12,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/LOVE.mov",
+   "source_sha256": "5ccdbdc4e890b6c4cc11810e1612be0ea1675f4eb6df5e57bb04385f4197a206",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.9,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "LOVE.jpg",
     "loop": "LOVE.mp4",
-    "frames": 60,
+    "poster": "LOVE.jpg",
+    "loop_sha256": "d0bd23c048cf8dd291bfe0380ef69b630d7838b534c5207d251d6735c01d6058",
+    "poster_sha256": "890b3a22c30d2606289a8d43fe8a849eae2a5b7d654252a2d13ba43e23c453b0",
+    "frames": 87,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "5a09c7175f125c8a68c331671ac8c9987f91961492bbd9f57b5dbfc4bbc0f86a",
-    "poster_sha256": "5a465fd42d2c947112ed369e51c1e10dd7b427962471949f3e2c93395e50f431"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "KNOW": {
@@ -888,28 +1076,24 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "KNOW",
    "citizen_asl_lex_code": "C_01_048",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/KNOW/0f86409e.mp4",
-   "source_sha256": "020b9df44f7878afee52859717db06f6f099b8964e27c9221233ab4389e426af",
-   "split": "train",
-   "seconds": 0.7,
-   "score": 0.9854,
-   "components": {
-    "quality": 0.9521,
-    "duration": 0.6666666666666667
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/KNOW.mov",
+   "source_sha256": "84b0469305be557bd919aebc388decaf2b2a46fce3b798dcc551db28d6743d80",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.1333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "KNOW.jpg",
     "loop": "KNOW.mp4",
-    "frames": 21,
+    "poster": "KNOW.jpg",
+    "loop_sha256": "754fa4e602943be9df597840df6f1e12cfd34fe5ee77e3ad822fb13deade1884",
+    "poster_sha256": "b6717113c60ef7cd7c132ba58e0b7066e2d4f6ad20b2f40cfb7f6a72b3555691",
+    "frames": 124,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "9186e6581d82e7da13ee7f02f18261dd37b3dad7478ecbde2541c2df62074d81",
-    "poster_sha256": "402e534449f6ccda5f4d76dcc7df5c29877778041e64ec197f07a5c9dd429470"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "UNDERSTAND": {
@@ -918,29 +1102,52 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "UNDERSTAND",
    "citizen_asl_lex_code": "C_01_006",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/UNDERSTAND/UNDERSTAND_3.mp4",
-   "source_sha256": "b8e6cdd1a3154a7ca88106a69797d3141e9f826fbadbe3dc6e724ce9fd84e9b6",
-   "split": "train",
-   "seconds": 1.4,
-   "score": 1.0371,
-   "components": {
-    "quality": 0.9871,
-    "duration": 1.0
-   },
-   "candidates_considered": 7,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4094.MOV",
+   "source_sha256": "7892fd21f4d6597c4b8a182d2240b441d42e9bed36a2129edf919c79df3b8ee5",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.5,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "UNDERSTAND.jpg",
     "loop": "UNDERSTAND.mp4",
-    "frames": 42,
+    "poster": "UNDERSTAND.jpg",
+    "loop_sha256": "92d4cbe504fa33283d67437bd96efcbb376043f4048ab4bb94bb1775bcb3f951",
+    "poster_sha256": "78d542016b80a37163ce69a7ea121c8da38dcae448376272ea4f8905e4874299",
+    "frames": 75,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "80e6812495e16430230923a81aa0c013826f33d279e4399af073576433970ce5",
-    "poster_sha256": "a2dd81e77e306b2f484d2ec69d7a76f1a9ef24e5981b09315c0d262b5233dc94"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "UNDERSTAND",
+     "logit": 8.859375,
+     "probability": 0.9895463561467053
+    },
+    {
+     "label": "HELLO",
+     "logit": 0.4794921875,
+     "probability": 0.00022703838009057535
+    },
+    {
+     "label": "BIG",
+     "logit": 0.460693359375,
+     "probability": 0.0002228101916176517
+    },
+    {
+     "label": "PLEASE",
+     "logit": 0.384521484375,
+     "probability": 0.00020646860673623733
+    },
+    {
+     "label": "TELL",
+     "logit": 0.185546875,
+     "probability": 0.0001692156210631148
+    }
+   ]
   },
   "THINK": {
    "canonical_label": "THINK",
@@ -948,29 +1155,52 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "THINK",
    "citizen_asl_lex_code": "C_03_053",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/THINK/THINK_1.mp4",
-   "source_sha256": "81567f0d2f5b30ed703339bc9c6fa5ffd28cf7cd66c907b02ed8322466e210ea",
-   "split": "train",
-   "seconds": 1.3,
-   "score": 1.0445,
-   "components": {
-    "quality": 0.9945,
-    "duration": 1.0
-   },
-   "candidates_considered": 12,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4084.MOV",
+   "source_sha256": "cc379bedcf9c2549a0f04fe6820bc21733fccb968145bb42316439d04b8906be",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.9,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "THINK.jpg",
     "loop": "THINK.mp4",
-    "frames": 39,
+    "poster": "THINK.jpg",
+    "loop_sha256": "a6eae1cb741be064d482a650bd4da1c47684024ec1bac35d058bb833f4650caa",
+    "poster_sha256": "d11f065008f6bfebdf45bf482186c19830b73e0c0ef21a845e0d43ebfcafd3d5",
+    "frames": 87,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "d871a4c7a57ef3cea465841d4a801ee98caf6596796ecabb20025ae31fccc6cc",
-    "poster_sha256": "9edb38aad61610e89cd557362220ef11ef4cbf116bc15eb317b666e1857102b4"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "THINK",
+     "logit": 8.640625,
+     "probability": 0.9853547102403498
+    },
+    {
+     "label": "WHEN",
+     "logit": 0.55908203125,
+     "probability": 0.0003046653613898978
+    },
+    {
+     "label": "YESTERDAY",
+     "logit": 0.51025390625,
+     "probability": 0.00029014647262785387
+    },
+    {
+     "label": "WHO",
+     "logit": 0.497802734375,
+     "probability": 0.000286556206919569
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 0.451416015625,
+     "probability": 0.0002735673880372221
+    }
+   ]
   },
   "FEEL": {
    "canonical_label": "FEEL",
@@ -978,28 +1208,24 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "FEEL",
    "citizen_asl_lex_code": "C_02_001",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/FEEL/dcb8fd03.mp4",
-   "source_sha256": "5fdd508732f0b7d0845c776806d845213a8d0d248e3f4e61ef469be0cfc64678",
-   "split": "train",
-   "seconds": 2.0,
-   "score": 0.9459,
-   "components": {
-    "quality": 0.8959,
-    "duration": 1.0
-   },
-   "candidates_considered": 6,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/feel.mp4",
+   "source_sha256": "e26ba66da6626ebc9dbffc8cf8044ecb43ed9f53b17b5fdf1bd84280f0fbb5cd",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 6.1,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "FEEL.jpg",
     "loop": "FEEL.mp4",
-    "frames": 60,
+    "poster": "FEEL.jpg",
+    "loop_sha256": "8cffca65facce35c0f55cffb31bee55fdd5384af8a9864d6db84f6dfead6c79d",
+    "poster_sha256": "966027830127adbb084f1bae80c49fd7766bbc9e8d1eda26f5bd5fd64a6997e8",
+    "frames": 183,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "fb5c1f4bb8903457625d3b919b282a2036d23bbf289c85e51942948f27f541dc",
-    "poster_sha256": "e687283c48926a2989f9cb886f8cde70ee6debf186b7520f41b7e3442e91fc93"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "HAVE": {
@@ -1008,31 +1234,24 @@
    "category": "needs_and_thought",
    "citizen_raw_gloss": "HAVE",
    "citizen_asl_lex_code": "B_03_057",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/HAVE/933847098991408-HAVE.mp4",
-   "source_sha256": "5d8bd0a44ab1c91476de37c11d90ef009f794296ef4bbc26a25f3bcdaee0add1",
-   "split": "train",
-   "seconds": 1.5,
-   "score": 0.8965,
-   "components": {
-    "hand_presence": 0.832,
-    "hand_frames": 0.9111,
-    "face_presence": 0.9062,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/have.mp4",
+   "source_sha256": "c5f695f6ba75eeccaa4b3e5e5a6c9c262887cefc334429247b65fb3bc4ab2788",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.1,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HAVE.jpg",
     "loop": "HAVE.mp4",
-    "frames": 56,
-    "fps": 29.996,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "dfa4b2a45570a6fdd84afd8a1694330f42faff6a0c87b35204807a80245caaa3",
-    "poster_sha256": "95d23847c1173d3a53d02f1c660686085bbe81a191d43bf42ddf27916e6bc743"
+    "poster": "HAVE.jpg",
+    "loop_sha256": "6d8b5ca0416e9da2199a9ee0266165a739ad647b19c8a04c439abd3c2ea4f12c",
+    "poster_sha256": "9d7f3c4579c06e8c1b850e3343e5d5b07f685339d2462ec986a09520a63437be",
+    "frames": 153,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "GIVE": {
@@ -1041,31 +1260,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "GIVE",
    "citizen_asl_lex_code": "F_01_023",
-   "source": "citizen",
-   "participant": "P40",
-   "source_video": "data/local/citizen100_v17/raw/train/GIVE/6761534511903275-GIVE.mp4",
-   "source_sha256": "986cd80ae0a30e76293db7dff1c39e8fa4ab7005c50fed4c8a4077c82b6e8a68",
-   "split": "train",
-   "seconds": 1.449,
-   "score": 0.7325,
-   "components": {
-    "hand_presence": 0.42333984375,
-    "hand_frames": 0.9090909090909091,
-    "face_presence": 0.90625,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/give.mp4",
+   "source_sha256": "9ca575dfad996d78c5bb3185c93075882f8fee2ae4152e97d54d5b46cf89cd61",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.3,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "GIVE.jpg",
     "loop": "GIVE.mp4",
-    "frames": 54,
-    "fps": 30.368,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "9c5c0058adb10271859911180aea58403991d9da1e7c0bb16e4815db5e0e9b4a",
-    "poster_sha256": "55899061bb6f7ceafbc1a2dbba5455fb1d2ab85c4c5b872e0d97b580fad59526"
+    "poster": "GIVE.jpg",
+    "loop_sha256": "1f065d17b4d1622c209339841e3ff31aaabd03bbf1168e4624b2608f858d78ec",
+    "poster_sha256": "4861f7ec5a90a92924c0fd0a486b5a7da4a0035504591a0b528cd1539a3e8646",
+    "frames": 129,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "TAKE": {
@@ -1074,29 +1286,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "TAKE",
    "citizen_asl_lex_code": "G_01_093",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/TAKE/f908808f.mp4",
-   "source_sha256": "89f077182f0271917c3fd9c51d1d0fb3370d7bdd38206b02528790bd93c42dad",
-   "split": "train",
-   "seconds": 0.7,
-   "score": 0.9856,
-   "components": {
-    "quality": 0.9523,
-    "duration": 0.6666666666666667
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4076.MOV",
+   "source_sha256": "78be09bd9969e7edbd219c37c77177200ecaa91b164e01dbd396c64c0dd1c395",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.3667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "TAKE.jpg",
     "loop": "TAKE.mp4",
-    "frames": 21,
+    "poster": "TAKE.jpg",
+    "loop_sha256": "ed0cff963f5ad7abb81e56d2ae5e5c96861230303ddc6d2b2ecf0748514d69d7",
+    "poster_sha256": "1893641eafd5b756b19582e1f49f2d2b39496f0a4fc31be65a905a46cdaa56e1",
+    "frames": 71,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "d2cc8682fe4e11a331dc19bf3f06b6ced5cc877c44bd28fadc975f0d34d910f7",
-    "poster_sha256": "98b4b6fca93cf4db1f03290e994d7f1bb95f62bab23f708c66eb72fa9beaa321"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "TAKE",
+     "logit": 8.28125,
+     "probability": 0.9752423657001117
+    },
+    {
+     "label": "NO",
+     "logit": 1.4814453125,
+     "probability": 0.0010864128793373208
+    },
+    {
+     "label": "GOODBYE",
+     "logit": 1.08984375,
+     "probability": 0.0007343862007448362
+    },
+    {
+     "label": "WOMAN",
+     "logit": 1.0517578125,
+     "probability": 0.0007069423436007738
+    },
+    {
+     "label": "DOCTOR",
+     "logit": 0.72265625,
+     "probability": 0.0005086944539109675
+    }
+   ]
   },
   "COME": {
    "canonical_label": "COME",
@@ -1104,31 +1339,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "COME",
    "citizen_asl_lex_code": "C_03_074",
-   "source": "citizen",
-   "participant": "P52",
-   "source_video": "data/local/citizen100_v17/raw/train/COME/010997145882042814-seedCOME.mp4",
-   "source_sha256": "69f4304973c1479198eb55c26a669e5bac59a43eb963d19eb09188e467dfbdda",
-   "split": "train",
-   "seconds": 1.286,
-   "score": 0.7223,
-   "components": {
-    "hand_presence": 0.428466796875,
-    "hand_frames": 0.8974358974358975,
-    "face_presence": 0.84375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 15,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/come.mp4",
+   "source_sha256": "6b3668326d6e9f4f527f2f0187e0628e6a295a2865f8a62a0ee96cb5bdbad4ea",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.6,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "COME.jpg",
     "loop": "COME.mp4",
-    "frames": 55,
-    "fps": 30.32,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "7c7d7d12ea30d0d3b65dede7ab9e91a58076913050d6510ec85c719740117aba",
-    "poster_sha256": "f78e70f3738bb1cf5f0342987b81a7f66e4e7e36394fa7edc99ea6e61b89c0df"
+    "poster": "COME.jpg",
+    "loop_sha256": "721eb406e0756f1af0b712d6d713bdfcaf36d2e531b539d87fb7e701568f4438",
+    "poster_sha256": "0d0ede4b004edaf32f1169acda88975c1a85380886a731ab35ccb7df95d7b2f6",
+    "frames": 108,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "GO": {
@@ -1137,28 +1365,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "GO",
    "citizen_asl_lex_code": "C_03_056",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/GO/GO_16.mp4",
-   "source_sha256": "5d3250e2ba14a4824b3b0325e004f4263bab9f987f73a7be137fceb40ebd2a4e",
-   "split": "train",
-   "seconds": 1.867,
-   "score": 1.0434,
-   "components": {
-    "quality": 0.9934,
-    "duration": 1.0
-   },
-   "candidates_considered": 12,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/go.mp4",
+   "source_sha256": "95af53b955a58d1a6fdca941a778ff08d9bcbe5c65033f69fc98f1f1376b9993",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.2,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "GO.jpg",
     "loop": "GO.mp4",
-    "frames": 56,
+    "poster": "GO.jpg",
+    "loop_sha256": "90400942946242470eb015dc689875ee6fced1bb54338bb3173773b36e462589",
+    "poster_sha256": "9cad5add481aedd7cea35f5d12e30e4b57ff0e76e3de0aa88dd6cd0f338d337d",
+    "frames": 126,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "0a7657bb7b6a22a848d0bd164bfc886bd766205d283cb8b16a9df17bcb5183c2",
-    "poster_sha256": "8ebfd38187650c1ae8c6b5b438bafe0315d4dd53662ab33a30432a8f6776fd6f"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "STOP": {
@@ -1167,29 +1391,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "STOP",
    "citizen_asl_lex_code": "D_01_010",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/STOP/7c56ae76.mp4",
-   "source_sha256": "bbecb55625ac64ece922c52c5b55ad34a7fd6b0f1aad89685033376f84a66473",
-   "split": "train",
-   "seconds": 1.6,
-   "score": 1.0347,
-   "components": {
-    "quality": 0.9847,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4068.MOV",
+   "source_sha256": "d49dde162cb2d8c8550529bcf5bb38e1be4cbd5fc842746c4c5e49acc59f0dd6",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.6,
    "notes": [],
+   "preview_label_source": "user_confirmed",
    "assets": {
-    "poster": "STOP.jpg",
     "loop": "STOP.mp4",
-    "frames": 48,
+    "poster": "STOP.jpg",
+    "loop_sha256": "4ca772da9d633750d882ca5fb1a63a6684ee281b4565947f998092d7cc614b62",
+    "poster_sha256": "51d5c27d6183c52ee4e19b101a6e34b4f7318a23b5af99619b977428be137db4",
+    "frames": 78,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "7b8858e272254c323c8560f1cd7dc00e3a70c5a9077eb6f94b4c55455156f714",
-    "poster_sha256": "144db961b79b3470ec072ecbcfeb2b43743d30edf9019acdf46dfff707ec8c4f"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "SCHOOL",
+     "logit": 4.11328125,
+     "probability": 0.44981745738468104
+    },
+    {
+     "label": "PLEASE",
+     "logit": 3.158203125,
+     "probability": 0.17308169789770173
+    },
+    {
+     "label": "STOP",
+     "logit": 2.857421875,
+     "probability": 0.12812194109276961
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 2.189453125,
+     "probability": 0.06569440258000663
+    },
+    {
+     "label": "EASY",
+     "logit": 1.78515625,
+     "probability": 0.04384746253494158
+    }
+   ]
   },
   "WAIT": {
    "canonical_label": "WAIT",
@@ -1197,29 +1444,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "WAIT",
    "citizen_asl_lex_code": "B_02_016",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/WAIT/WAIT_25.mp4",
-   "source_sha256": "6ba4e85d62fc5f240cd9f065bcd3b82112d4c82006f1a79c4de8460d97710c3e",
-   "split": "train",
-   "seconds": 2.033,
-   "score": 1.0385,
-   "components": {
-    "quality": 0.9885,
-    "duration": 1.0
-   },
-   "candidates_considered": 8,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4097.MOV",
+   "source_sha256": "4e979fc78d984d8c84dfcec8d5011aacaa1afe87ca6432aeeb502c62e94627f7",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.9667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WAIT.jpg",
     "loop": "WAIT.mp4",
-    "frames": 61,
+    "poster": "WAIT.jpg",
+    "loop_sha256": "e87beb88222e67c3bb3ef575394ab8401361d1505cadb9aa2e477d427645b916",
+    "poster_sha256": "beb4e54a4e605aaf833afb7a848ee28b7eee516b355fa5320daf79bb0ca184f6",
+    "frames": 89,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "c609d2178e17e3c989adc631265bcb90a9a0fbf540b3be8e90c00b2ec0b9824c",
-    "poster_sha256": "02f0634ca8b950cf8dc2793128a7e85282d8b13ccadcd9859a4e47284a353442"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WAIT",
+     "logit": 6.50390625,
+     "probability": 0.8478092405492248
+    },
+    {
+     "label": "SAD",
+     "logit": 2.46484375,
+     "probability": 0.01493329312614933
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 1.7958984375,
+     "probability": 0.0076495578272147025
+    },
+    {
+     "label": "DOCTOR",
+     "logit": 1.78125,
+     "probability": 0.007538320473265385
+    },
+    {
+     "label": "EASY",
+     "logit": 1.435546875,
+     "probability": 0.005335039471410966
+    }
+   ]
   },
   "TRY": {
    "canonical_label": "TRY",
@@ -1227,29 +1497,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "TRY",
    "citizen_asl_lex_code": "B_02_034",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/TRY/71de4bf8.mp4",
-   "source_sha256": "c8bf883b9ad29204d481f11c11505d88b0d5d4fbedfe3a1838bcfd1dbe275604",
-   "split": "train",
-   "seconds": 1.1,
-   "score": 1.017,
-   "components": {
-    "quality": 0.9704,
-    "duration": 0.9333
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4091.MOV",
+   "source_sha256": "07be998c75c062fb56715d774aba5795a1a10ba8a293924254af9c1db8c75e0c",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.3,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "TRY.jpg",
     "loop": "TRY.mp4",
-    "frames": 33,
+    "poster": "TRY.jpg",
+    "loop_sha256": "3b83ef1ad380e00ddea0d974a0763195e8886e0cee82c7725597a167366ef05a",
+    "poster_sha256": "a4f0c29a08cd08ffc784609d3922d86586aafb1533304fc874fec28e7e3166f6",
+    "frames": 99,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "3fe57a6686ffecbcda433d86b089fa759c61de972b774c961bcdef6580a8e503",
-    "poster_sha256": "34d4511e70fb6ca423a51acc121681b6030ae8111960fe3ccf4aea5579fa9013"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "TRY",
+     "logit": 8.578125,
+     "probability": 0.9871717693167715
+    },
+    {
+     "label": "GO",
+     "logit": 0.79736328125,
+     "probability": 0.0004123356145856559
+    },
+    {
+     "label": "HOW",
+     "logit": 0.677734375,
+     "probability": 0.0003658446208273875
+    },
+    {
+     "label": "YOU",
+     "logit": 0.5732421875,
+     "probability": 0.0003295461887777308
+    },
+    {
+     "label": "BIG",
+     "logit": 0.447509765625,
+     "probability": 0.000290610563354338
+    }
+   ]
   },
   "USE": {
    "canonical_label": "USE",
@@ -1257,29 +1550,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "USE",
    "citizen_asl_lex_code": "D_03_043",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/USE/USE_21.mp4",
-   "source_sha256": "42eb3ed6c0ce418ce70f1eee9a2f1e474ef060b46a8f0aa2a95bd32762c33803",
-   "split": "train",
-   "seconds": 2.4,
-   "score": 1.0112,
-   "components": {
-    "quality": 0.9612,
-    "duration": 1.0
-   },
-   "candidates_considered": 11,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4096.MOV",
+   "source_sha256": "fc8099c57d1cdca8663eb2acc3feb6d21ab787ff4d3f6759320baf17db1ecc2e",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.1,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "USE.jpg",
     "loop": "USE.mp4",
-    "frames": 72,
+    "poster": "USE.jpg",
+    "loop_sha256": "b6f9dd5de283be3decc9f743e5db5a68d240de4a27632d10b9c73bfcf0697c3e",
+    "poster_sha256": "aa0ff5f6d03dcd6ddb431e851e506c0df947a30b24c9ecedee94ecda7e425d26",
+    "frames": 123,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "d0214f88048aa37d2ca84bfcda420f357f18fb0edb3234f8a136c6d0ccc86a3b",
-    "poster_sha256": "5b90f5ff31e842afe5d5c363ae94fbc6ec8ec4d0337dedfb0400a627f98c96fc"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "USE",
+     "logit": 7.87109375,
+     "probability": 0.9676761424513102
+    },
+    {
+     "label": "YOUR",
+     "logit": 1.1796875,
+     "probability": 0.0012014044142885992
+    },
+    {
+     "label": "SCHOOL",
+     "logit": 1.0283203125,
+     "probability": 0.001032645576614801
+    },
+    {
+     "label": "WATER",
+     "logit": 0.89892578125,
+     "probability": 0.0009073105444940029
+    },
+    {
+     "label": "DOCTOR",
+     "logit": 0.72314453125,
+     "probability": 0.0007610534013080899
+    }
+   ]
   },
   "MAKE": {
    "canonical_label": "MAKE",
@@ -1287,28 +1603,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "MAKE",
    "citizen_asl_lex_code": "C_01_032",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/MAKE/e880ee91.mp4",
-   "source_sha256": "3d07bd8183d975a21a04281176fd6b036fd231e3c641434091c174193aea6347",
-   "split": "train",
-   "seconds": 1.167,
-   "score": 1.0154,
-   "components": {
-    "quality": 0.9665,
-    "duration": 0.9778
-   },
-   "candidates_considered": 7,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/MAKE.mov",
+   "source_sha256": "5c09e26403483f9b5557e8f67e42a328db85091f2313074c8ca3675cbfb692de",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.9667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "MAKE.jpg",
     "loop": "MAKE.mp4",
-    "frames": 35,
+    "poster": "MAKE.jpg",
+    "loop_sha256": "1a0f3eadddb516a3cf636e86556914b662242ed431fb3d63288385310718e0b4",
+    "poster_sha256": "a9393e7b085b8ef44beb75ce63067a1d3e160a0cc08a73da1142f4af05c2268b",
+    "frames": 89,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "0c457388c3bb84117d123c9562d387017773ffddace44f64a9272358f578ffef",
-    "poster_sha256": "27d14ad3c9567f981f74d61eac9ee4eefb7102c28858d1e55b508129a92f1bcd"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "FIND": {
@@ -1317,31 +1629,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "FIND",
    "citizen_asl_lex_code": "B_03_076",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/FIND/3204407663915092-FIND.mp4",
-   "source_sha256": "99b77d4f15a6f8d66e21636e3956634d81b6a6f9f0d7cbc5f70b91bd548add99",
-   "split": "train",
-   "seconds": 1.133,
-   "score": 0.7246,
-   "components": {
-    "hand_presence": 0.42626953125,
-    "hand_frames": 0.8529411764705882,
-    "face_presence": 0.96875,
-    "edges": 1.0,
-    "duration": 0.9555555555555556
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/find.mp4",
+   "source_sha256": "7d89e753ec4faf782e42636b825370c85877e4351a396d22b38376321f1753a3",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.0333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "FIND.jpg",
     "loop": "FIND.mp4",
-    "frames": 49,
+    "poster": "FIND.jpg",
+    "loop_sha256": "a82008db577f14adb60579fd441fc1bbfd533ab6fa1edbc77b3525440654d8b1",
+    "poster_sha256": "fd3e2e5ff4f359fa9d8b1ab794c861a5ebf8150589f867b61d16eb775285b16a",
+    "frames": 121,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "d562f5cc92c80a65639b9494850523b55495a122b6f0cc9d8a8a01ee061fe470",
-    "poster_sha256": "4c005b54d5296e845d356bcebb75a21d85a56678402c9b306cc79b8da45d8c29"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "SEE": {
@@ -1350,28 +1655,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "SEE",
    "citizen_asl_lex_code": "C_02_030",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/SEE/SEE_1.mp4",
-   "source_sha256": "ac68247d84dc9ef74b022385596d5bd9ef9c5d02ff6048293990d7e304d9ef04",
-   "split": "train",
-   "seconds": 1.7,
-   "score": 1.0456,
-   "components": {
-    "quality": 0.9956,
-    "duration": 1.0
-   },
-   "candidates_considered": 6,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/SEE.mov",
+   "source_sha256": "bb9bbac4933bdb25ed74256158da6c9c1e37970b838301a14c2d979843dbf26f",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.8,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "SEE.jpg",
     "loop": "SEE.mp4",
-    "frames": 51,
+    "poster": "SEE.jpg",
+    "loop_sha256": "bf817b8c7997bcb548e3a6cf485040e2db35a1ac357e2cdcc728fd1f16f149c4",
+    "poster_sha256": "4c3c421d3deeba4295467ba4da64c54ac3b0443e048a9def7197434c9c08ea3c",
+    "frames": 114,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "afd8025b262d717ae0f57727a53317b0d97870d30edb9e5182a3f77545605a94",
-    "poster_sha256": "5667bfa8a33d0a45518a02dba8b501eb2ba9395db20430314f31c86805cfd3ee"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "HEAR": {
@@ -1380,31 +1681,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "HEAR2",
    "citizen_asl_lex_code": "J_02_006",
-   "source": "citizen",
-   "participant": "P23",
-   "source_video": "data/local/citizen100_v17/raw/train/HEAR/26590410598868597-HEAR 2.mp4",
-   "source_sha256": "1e97e22b61343cc935807537692bd8bc29cf9e2fae94865043aed08fe18dba42",
-   "split": "train",
-   "seconds": 1.433,
-   "score": 0.7421,
-   "components": {
-    "hand_presence": 0.4368,
-    "hand_frames": 0.907,
-    "face_presence": 0.9375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 15,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/hear.mp4",
+   "source_sha256": "a88c654cae540beef404e2f1f63ce7a13cde8d3f9b5ea984f96b08ada9bacec1",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.3333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HEAR.jpg",
     "loop": "HEAR.mp4",
-    "frames": 59,
+    "poster": "HEAR.jpg",
+    "loop_sha256": "e98a9d4393cb7a51ca4d0b121bbb1fda0a741b9a7afc97325e0eb381b43cf467",
+    "poster_sha256": "0213a838612338262cc453f0e9232df567fe70d61f3b129d4f60752b1d92afbd",
+    "frames": 160,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "7a5b6914bbfe25c502f576cd602188eead06daf047d94104d4a7510ea327a973",
-    "poster_sha256": "dcf452e5c194fa06e8d1adc85307a2549061bfe856a7ef712d8232d24a7eaf9f"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "LISTEN": {
@@ -1413,31 +1707,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "LISTEN",
    "citizen_asl_lex_code": "K_01_117",
-   "source": "citizen",
-   "participant": "P32",
-   "source_video": "data/local/citizen100_v17/raw/train/LISTEN/9274530293728671-LISTEN.mp4",
-   "source_sha256": "7ccee87e2147f51522953753a38c1f063598c3b7ddc7fff07562d1e8b77b71a7",
-   "split": "train",
-   "seconds": 1.485,
-   "score": 0.7375,
-   "components": {
-    "hand_presence": 0.4346,
-    "hand_frames": 0.9111,
-    "face_presence": 0.9062,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 12,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/LISTEN.MOV",
+   "source_sha256": "e9849b73de0b795c74fbcac86511db5cb285bef0eaa16a3d6b23e4708cc4448b",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.5,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "LISTEN.jpg",
     "loop": "LISTEN.mp4",
-    "frames": 61,
-    "fps": 30.303,
-    "width": 480,
-    "height": 270,
-    "loop_sha256": "66fb1a749856341844b06e6632ce1ac48003493ed85877b64680fe555627934d",
-    "poster_sha256": "a8811e1f7d6550bbbbd3096bcc98332779574efe4b44ca8d75a2ad997f4e6d9c"
+    "poster": "LISTEN.jpg",
+    "loop_sha256": "a046d405ebbb29f0b9d5b8ae9e8abcf254cf618c9eac24c5fcb9f6059236da01",
+    "poster_sha256": "b65d6c4e20919a05231eb8b821380bfcbfa8536e72163e8e05bb048a241dfbd2",
+    "frames": 135,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "TALK": {
@@ -1446,32 +1733,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "TALK1",
    "citizen_asl_lex_code": "C_01_008",
-   "source": "citizen",
-   "participant": "P11",
-   "source_video": "data/local/citizen100_v17/raw/train/TALK/07753671674949336-TALK.mp4",
-   "source_sha256": "36c6faa1a57df2e59fc84f18a3142bf3a88df74f8b87e57f0379de1bfec4281d",
-   "split": "train",
-   "seconds": 0.867,
-   "score": 0.8053,
-   "components": {
-    "hand_presence": 0.7939,
-    "hand_frames": 0.8462,
-    "face_presence": 0.6562,
-    "edges": 1.0,
-    "duration": 0.7779
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4079.MOV",
+   "source_sha256": "4b982238cd45ce66adf0d4096767f201f191a22cc4d9ad2427df5a02cb6a1be5",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.2,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "TALK.jpg",
     "loop": "TALK.mp4",
-    "frames": 40,
-    "fps": 29.996,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "55bb945314240c177113c9f7b85768b1d3696fd7ad0d59897aeaf200e88eac71",
-    "poster_sha256": "f22f19526b181d542d0b3bf8d39b3f0e660fa837de8f48fd1663c5f95b95d4c5"
-   }
+    "poster": "TALK.jpg",
+    "loop_sha256": "00d10b3c837868a834685e1827618646fc580334a29d43a8d8111a8d6f189cc3",
+    "poster_sha256": "db002ce9f6d7a038b23b1ea3300cae814799659a40ab5f0119e6c4f12fec7e7e",
+    "frames": 96,
+    "fps": 30.0,
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "TALK",
+     "logit": 7.06640625,
+     "probability": 0.9450437802970354
+    },
+    {
+     "label": "WATER",
+     "logit": 1.4599609375,
+     "probability": 0.003472191470382976
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 0.94580078125,
+     "probability": 0.00207637957051787
+    },
+    {
+     "label": "ANSWER",
+     "logit": 0.67822265625,
+     "probability": 0.001588909069649943
+    },
+    {
+     "label": "MY",
+     "logit": 0.409912109375,
+     "probability": 0.0012149915404215553
+    }
+   ]
   },
   "TELL": {
    "canonical_label": "TELL",
@@ -1479,29 +1786,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "TELL",
    "citizen_asl_lex_code": "C_02_013",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/TELL/5223494b.mp4",
-   "source_sha256": "838cac02ca7f08a05d048cbc7d8f21ec27a5a09896a22bcac4fcf4c3bb672c99",
-   "split": "train",
-   "seconds": 2.0,
-   "score": 1.0066,
-   "components": {
-    "quality": 0.9566,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4081.MOV",
+   "source_sha256": "1c0c71fb2657d7b4030290ac6fb1fdd6d6e38444020b9c23abc154b06afe18d2",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.6,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "TELL.jpg",
     "loop": "TELL.mp4",
-    "frames": 60,
+    "poster": "TELL.jpg",
+    "loop_sha256": "4ff34f0f48d51c0e8805b675212e34a4bed2729db81147bb08e128f3d91855ff",
+    "poster_sha256": "1c472ebf5fcaf012104450599bb6842ebcedd79e371ec12b3f35ff53fe9ca0af",
+    "frames": 78,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "eea3d392f9c3f0b34b652dfbe4c3984a90b1ac4e631470d724fa5168f825599f",
-    "poster_sha256": "0be632137fe5dca0df9f583e1156ddab6d6024ae85a740fe63a202c73e01b9d4"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "TELL",
+     "logit": 7.26953125,
+     "probability": 0.9620784489525468
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 1.6064453125,
+     "probability": 0.0033401310996435847
+    },
+    {
+     "label": "YOU",
+     "logit": 0.8515625,
+     "probability": 0.0015700810545171754
+    },
+    {
+     "label": "TOMORROW",
+     "logit": 0.78955078125,
+     "probability": 0.0014756750208476223
+    },
+    {
+     "label": "MY",
+     "logit": 0.318603515625,
+     "probability": 0.0009214269856340605
+    }
+   ]
   },
   "ASK": {
    "canonical_label": "ASK",
@@ -1509,28 +1839,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "ASK",
    "citizen_asl_lex_code": "B_02_023",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/ASK/ASK_7.mp4",
-   "source_sha256": "c6161965a3c267bf49965a7ba4ec4598f03afc770f8cd2a3addc954e1527c255",
-   "split": "train",
-   "seconds": 1.2,
-   "score": 1.0375,
-   "components": {
-    "quality": 0.9875,
-    "duration": 1.0
-   },
-   "candidates_considered": 12,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/ask.mp4",
+   "source_sha256": "983467ac80a211bbfa1da77ec2d3333396d79edb9cd4f08e0da7a71f4ed6a578",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.2,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "ASK.jpg",
     "loop": "ASK.mp4",
-    "frames": 36,
+    "poster": "ASK.jpg",
+    "loop_sha256": "cd37b4982043bcdd72a92dbd1696e77b0e6e7d4851b5aa5097ffd6a3f90735ee",
+    "poster_sha256": "6304a238b557a1f33751c9169ecddf076bae91224921fd525af13ae5ef7da116",
+    "frames": 126,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "deafcd8be192f4fb4bc621998414d5d175627ef86b8502791bdf5f936fa0eaa1",
-    "poster_sha256": "0538017a86c995042715c8997e0eee0850b50ff5e0ef483fb652d105bbed9cfb"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "ANSWER": {
@@ -1539,28 +1865,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "ANSWER",
    "citizen_asl_lex_code": "E_03_065",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/ANSWER/ANSWER_12.mp4",
-   "source_sha256": "867b0b4be317e1a21a0af0584ac6ca02aa550bc10a42aaad013a970c3d511729",
-   "split": "train",
-   "seconds": 1.933,
-   "score": 1.0432,
-   "components": {
-    "quality": 0.9932,
-    "duration": 1.0
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/answer.mp4",
+   "source_sha256": "17d442284c4f2e6d8a856a68a557a5fabadb136b448c205c5fd66b23990ceede",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.0667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "ANSWER.jpg",
     "loop": "ANSWER.mp4",
-    "frames": 58,
+    "poster": "ANSWER.jpg",
+    "loop_sha256": "5a69ee34cd82b3dc45acfd91eba6f2bae345d18a1781b914292a91c20a4fafd4",
+    "poster_sha256": "c18a34acd648d440d7c5c78848fccba69a70e456e7acc87a83f65a888112d20c",
+    "frames": 122,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "3a526bbabd13650497d038180abbe69ce680a1612a02973c868d0fa81e2e0df3",
-    "poster_sha256": "2abd77ce4e8e6d961642e5d1582672a9a5629f0b4afc31cc0d9eea4bcc1e0454"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "LEARN": {
@@ -1569,31 +1891,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "LEARN",
    "citizen_asl_lex_code": "B_01_042",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/LEARN/22509831535531588-LEARN.mp4",
-   "source_sha256": "07352722c6b37e463e3bb403b40d3c551a3d3333abbd9825d25860abf958e70f",
-   "split": "train",
-   "seconds": 1.5,
-   "score": 0.7753,
-   "components": {
-    "hand_presence": 0.61328125,
-    "hand_frames": 0.8888888888888888,
-    "face_presence": 0.71875,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/LEARN.mov",
+   "source_sha256": "3ac1b742cf24e875a6b33470ded974d6b8ec9c9197bb5f5174b43f7a33a768f3",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.3333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "LEARN.jpg",
     "loop": "LEARN.mp4",
-    "frames": 54,
-    "fps": 30.004,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "3830f2c5dc2e9963997a41342fabd2f59680bcc9bc6bbf866bbe3e60197a590a",
-    "poster_sha256": "ec403e6bc660108abb299ed809f21d41e832562825089d4855da7ca3ac274e97"
+    "poster": "LEARN.jpg",
+    "loop_sha256": "04894b194751d9f551a612f14bfcb4a711b7d0bd7f790f5159fc6f4a24181ce4",
+    "poster_sha256": "3a3753ad6daa3657712ab3a41a5228b138defc471f1962b0c277c1ec538955c6",
+    "frames": 100,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "WORK": {
@@ -1602,29 +1917,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "WORK",
    "citizen_asl_lex_code": "B_03_059",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/WORK/8c31e7a4.mp4",
-   "source_sha256": "8ecc7e4adbc2ecc676fdb344b9766fa58695fe4134ca938dc206b1ecdc7519b9",
-   "split": "train",
-   "seconds": 1.233,
-   "score": 0.9754,
-   "components": {
-    "quality": 0.9254,
-    "duration": 1.0
-   },
-   "candidates_considered": 5,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4117.MOV",
+   "source_sha256": "5ae9f084061d6b0706d3b7723a9ba0018c2fa87000d260b8aa8007fe8848071a",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.8667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WORK.jpg",
     "loop": "WORK.mp4",
-    "frames": 37,
+    "poster": "WORK.jpg",
+    "loop_sha256": "06d1cfec1ab2921a87f78e57e378ff391e9a95ab35f1d4850a2cf31c3aba55b0",
+    "poster_sha256": "fa2c01ce5c240ed05a764e4c2ff22b4671ea11dc281d72a874d82c603c3a354d",
+    "frames": 86,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "f9cbab4573f5c5c809fdd447bb99f0ccfd7103fe14503d5acb24266b76df8861",
-    "poster_sha256": "1d92502d9092a530eeb3a75f6a173c1c69614aa7c7623c0cea5a7581c52eac9b"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WORK",
+     "logit": 8.1484375,
+     "probability": 0.97559826212174
+    },
+    {
+     "label": "NIGHT",
+     "logit": 1.8330078125,
+     "probability": 0.001764065692428919
+    },
+    {
+     "label": "WRITE",
+     "logit": 0.5341796875,
+     "probability": 0.00048132771172717387
+    },
+    {
+     "label": "I",
+     "logit": 0.457275390625,
+     "probability": 0.0004456990973032105
+    },
+    {
+     "label": "TALK",
+     "logit": 0.419921875,
+     "probability": 0.0004293577721042756
+    }
+   ]
   },
   "READ": {
    "canonical_label": "READ",
@@ -1632,28 +1970,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "READ",
    "citizen_asl_lex_code": "A_01_022",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/READ/5f3588d6.mp4",
-   "source_sha256": "47ef0fc8053b0cddb040617cad810ae3a23d56d5cf6424399e034f6ea1df7dab",
-   "split": "train",
-   "seconds": 1.0,
-   "score": 1.0004,
-   "components": {
-    "quality": 0.9571,
-    "duration": 0.8667
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/READ.mov",
+   "source_sha256": "5144d8bb99d0da484b58454520be4b2ee35f420c2b74def0ebb4c717f2f13d95",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.3,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "READ.jpg",
     "loop": "READ.mp4",
-    "frames": 30,
+    "poster": "READ.jpg",
+    "loop_sha256": "1b228637aee20a39fa865064022acfdf5226de8fc91902dab36591574a523b94",
+    "poster_sha256": "de1239fdd264cb8dda59737116fddd51899ab7fa77996ad1aa833fca221308fb",
+    "frames": 99,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "2ca79b6dc257a432ad16763cd24d807e1f99116f5bf384a048cc02c63fb4c375",
-    "poster_sha256": "9a4fc670f38a58c19232ae16b18824b69761ba859f59426d4408284584fd68a1"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "WRITE": {
@@ -1662,29 +1996,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "WRITE",
    "citizen_asl_lex_code": "D_01_051",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/WRITE/dc3b4e86.mp4",
-   "source_sha256": "04627ea2db6a469c4188d0fc7e8afefa534f700eb714124bfbde84b8fdbf48a1",
-   "split": "train",
-   "seconds": 1.0,
-   "score": 0.9642,
-   "components": {
-    "quality": 0.9209,
-    "duration": 0.8667
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4118.MOV",
+   "source_sha256": "e94282d8ca0a534c11ec4e0b02bcda3a63ab1827bf8970ec67c4e37eda459902",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.5667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WRITE.jpg",
     "loop": "WRITE.mp4",
-    "frames": 30,
+    "poster": "WRITE.jpg",
+    "loop_sha256": "db4614fad349c707fd70285548b535268310e3f18165a1fc8a6d21518693cb4f",
+    "poster_sha256": "77783d7b095ad80c38c9b296e7c7b2148d4f4b392d158fda80786191e34cd8ed",
+    "frames": 107,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "13dedb9119dcc8a0d97f4b1c6b209b5a3255313594b96034b52fac26be425e44",
-    "poster_sha256": "cb008c55681bb84509a945af6aee3b8f00f71de50b4a7d7093423b633cc4b138"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WRITE",
+     "logit": 7.54296875,
+     "probability": 0.9765509069699183
+    },
+    {
+     "label": "PLEASE",
+     "logit": 1.220703125,
+     "probability": 0.001753758599704358
+    },
+    {
+     "label": "SCHOOL",
+     "logit": 0.88232421875,
+     "probability": 0.001250298533727459
+    },
+    {
+     "label": "WEEK",
+     "logit": 0.72705078125,
+     "probability": 0.0010704818907551219
+    },
+    {
+     "label": "I",
+     "logit": 0.66552734375,
+     "probability": 0.00100660720669941
+    }
+   ]
   },
   "EAT": {
    "canonical_label": "EAT",
@@ -1692,31 +2049,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "EAT1",
    "citizen_asl_lex_code": "B_02_002",
-   "source": "citizen",
-   "participant": "P50",
-   "source_video": "data/local/citizen100_v17/raw/train/EAT/43234510854275543-EAT.mp4",
-   "source_sha256": "d62f68682a21d7f56206bb62a5ef7388e1504c20b3db88551be0f1d268b4d67e",
-   "split": "train",
-   "seconds": 1.3,
-   "score": 0.7223,
-   "components": {
-    "hand_presence": 0.428466796875,
-    "hand_frames": 0.8974358974358975,
-    "face_presence": 0.84375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 18,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/eat.mp4",
+   "source_sha256": "74bd6fd9aa23d5c6b1cd983881506fe22249fcaaf13012a84dc7f5e3012e03bf",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.5,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "EAT.jpg",
     "loop": "EAT.mp4",
-    "frames": 53,
-    "fps": 29.997,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "47c650a1aca4c6cb5235227b436da90c5fe02f597c33789fd130b8bf732a05c3",
-    "poster_sha256": "2a073e63d4a078d60ad52dd92d8750fab8009995c79715bf0ae7f145fa1e415e"
+    "poster": "EAT.jpg",
+    "loop_sha256": "795605d47eb2edf64574f755e452778d22f8fa97d719b399712331fd93b9c8e3",
+    "poster_sha256": "d3676fe4267d77bc83bf89bfd84553a3cc1dbe93629251e230b73038fade4f1b",
+    "frames": 165,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "DRINK": {
@@ -1725,31 +2075,24 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "DRINK1",
    "citizen_asl_lex_code": "B_02_012",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/DRINK/03800598663017607-DRINK.mp4",
-   "source_sha256": "bcbf26f3f1b5d12c699116a1946c826538677186051b7f0af29aee446bcfb7e3",
-   "split": "train",
-   "seconds": 1.2,
-   "score": 0.7295,
-   "components": {
-    "hand_presence": 0.4285,
-    "hand_frames": 0.8889,
-    "face_presence": 0.9062,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/drink.mp4",
+   "source_sha256": "c7c1f80de3b4553dab3810cb4d67f8e19cafa990f5b9df11e572f62bdc98cb76",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.3,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "DRINK.jpg",
     "loop": "DRINK.mp4",
-    "frames": 51,
+    "poster": "DRINK.jpg",
+    "loop_sha256": "705a062de757a62d1e670f642ce396393bb49818cb5a6b39864325c4df463083",
+    "poster_sha256": "cb494853586724c7bdbf9f6aacdb1f38e2a01994d30eba15cf8dd84c028a00f4",
+    "frames": 129,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "edb03b7f9323aa4aa98e69d12b81067a06f7d2a8a6291e183a05d4f2374f0203",
-    "poster_sha256": "cf01a3270cc59d61debee24c92e4380d1497ed5d7aed5385bc58abf88ea26a97"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "WATER": {
@@ -1758,32 +2101,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "WATER",
    "citizen_asl_lex_code": "A_02_031",
-   "source": "citizen",
-   "participant": "P33",
-   "source_video": "data/local/citizen100_v17/raw/train/WATER/19062537109661482-WATER.mp4",
-   "source_sha256": "791494eea91bd0839bf05849f88818ebf2f36700822a784c4d9bd679fff1c1ae",
-   "split": "train",
-   "seconds": 1.5,
-   "score": 0.7367,
-   "components": {
-    "hand_presence": 0.432373046875,
-    "hand_frames": 0.9111111111111111,
-    "face_presence": 0.90625,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4100.MOV",
+   "source_sha256": "87a34c633f23ba0169340b1e27eff965367e3e97089d92d9d92c6d557ad73570",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.1333,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WATER.jpg",
     "loop": "WATER.mp4",
-    "frames": 61,
+    "poster": "WATER.jpg",
+    "loop_sha256": "62dd5d2ebd24da355e223412f586d2430145ead7fb5733eaec19bf8ef54953f8",
+    "poster_sha256": "1fcf5b37e51328924fbf399c8eb663ebd7fb26267995d5e2d6a6c9cec2dc88b7",
+    "frames": 94,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "2e7b9ea39359f77e81c901517503cd78dc931562a1ff91448e3fa9409616dae7",
-    "poster_sha256": "c2fe2e58726d4a2e2d07f4d52398dc93ebd59310d19d8fb1fc9ba6905a82f242"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WATER",
+     "logit": 8.078125,
+     "probability": 0.9773787813102832
+    },
+    {
+     "label": "TALK",
+     "logit": 1.8525390625,
+     "probability": 0.0019334159056284535
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 0.78369140625,
+     "probability": 0.0006639427729939417
+    },
+    {
+     "label": "YOUR",
+     "logit": 0.38818359375,
+     "probability": 0.0004470579141205855
+    },
+    {
+     "label": "MY",
+     "logit": 0.2276611328125,
+     "probability": 0.00038075864133330984
+    }
+   ]
   },
   "SLEEP": {
    "canonical_label": "SLEEP",
@@ -1791,29 +2154,52 @@
    "category": "actions_and_communication",
    "citizen_raw_gloss": "SLEEP",
    "citizen_asl_lex_code": "B_03_037",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/SLEEP/a84a3f96.mp4",
-   "source_sha256": "1883a0a8f4bf160583b83f0cb96d050e84bf3f66d3ef5fcbecf09f3ff02898ec",
-   "split": "train",
-   "seconds": 1.133,
-   "score": 0.8853,
-   "components": {
-    "quality": 0.8375,
-    "duration": 0.9555555555555556
-   },
-   "candidates_considered": 3,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4063.MOV",
+   "source_sha256": "d905670d1f6ea2f3757bc77f0e1a48f3162096f9d8b834a3710b1b92a7d32f01",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.4,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "SLEEP.jpg",
     "loop": "SLEEP.mp4",
-    "frames": 34,
+    "poster": "SLEEP.jpg",
+    "loop_sha256": "402256c390af0c959a889accc723a22a6694be34d031d61c015c61725e589294",
+    "poster_sha256": "b832f4c0b1fe02c36f7f58435763eab979fd40f252e05509c70ed66420af8408",
+    "frames": 72,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "ccdfd753a0eae713c586cd8fc0402d278510a9828794c9b8343f38ebf89e98bc",
-    "poster_sha256": "bb2f7c4074387113ec1c2ee1f412bfe33469871b865deeaf18fc329b5a8a9083"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "SLEEP",
+     "logit": 7.96484375,
+     "probability": 0.9739839690788804
+    },
+    {
+     "label": "MAN",
+     "logit": 1.669921875,
+     "probability": 0.0017976369010924407
+    },
+    {
+     "label": "SAD",
+     "logit": 0.97900390625,
+     "probability": 0.0009008243421991852
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 0.37109375,
+     "probability": 0.0004904876614474587
+    },
+    {
+     "label": "GOOD",
+     "logit": 0.1829833984375,
+     "probability": 0.0004063804428002624
+    }
+   ]
   },
   "GOOD": {
    "canonical_label": "GOOD",
@@ -1821,28 +2207,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "GOOD",
    "citizen_asl_lex_code": "B_01_052",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/GOOD/7bfae277.mp4",
-   "source_sha256": "8fc82d32b69169655c6365e9f16815564bcd51c82a2e19784718b523e647b56e",
-   "split": "train",
-   "seconds": 1.133,
-   "score": 0.9733,
-   "components": {
-    "quality": 0.9255,
-    "duration": 0.9555555555555556
-   },
-   "candidates_considered": 8,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/good.mp4",
+   "source_sha256": "c7ba7b72fa7eac3e2e29e15677240c1b50dcac4751e9586aaae28cc9d04a9e9e",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.6333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "GOOD.jpg",
     "loop": "GOOD.mp4",
-    "frames": 34,
+    "poster": "GOOD.jpg",
+    "loop_sha256": "239c76781fc3637b4013f63645edd8313a74dbf6dbab8c4751ccfc654a1c504f",
+    "poster_sha256": "aa65648b5a5fdbfbf766cfc5f23a5d1b2e49445dde923e4652da0f64ec138a56",
+    "frames": 139,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "b2ce4d7fb635113e2d64e39b88ff093f2b8a62de87cad819a332a515c25327d5",
-    "poster_sha256": "b48b3643836f350341ff470687199a3cb738284d2b012ea63abb5901daf102f3"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "BAD": {
@@ -1851,28 +2233,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "BAD",
    "citizen_asl_lex_code": "B_02_082",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/BAD/16cc65c1.mp4",
-   "source_sha256": "907b3f7286806d020a1858eb25894864d7715cae3b8805e39bc968351267186d",
-   "split": "train",
-   "seconds": 0.7,
-   "score": 0.9254,
-   "components": {
-    "quality": 0.892,
-    "duration": 0.6666666666666667
-   },
-   "candidates_considered": 7,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/bad.mp4",
+   "source_sha256": "1d8ce0fc9527f9e875e350ea97f9f7c8580c96bd7bd7a33083c11abb2324bcd9",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.5667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "BAD.jpg",
     "loop": "BAD.mp4",
-    "frames": 21,
+    "poster": "BAD.jpg",
+    "loop_sha256": "f60416f636013a6d43b385bd5ceccc7e71aa5abf5144cea5437c9a9fadc04cb2",
+    "poster_sha256": "414dbac7ce3af69492e5187b8933cfacd0a4953d7093a858e1c9109c84106abe",
+    "frames": 137,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "1375da2ccb7bd5651459d19f1280d6bcdf128a65cdf94774b8794da6404725a2",
-    "poster_sha256": "7dc8ca1b412006e9f7d829e429c68575c2ef613d11e7be660e7cd682b785d351"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "HAPPY": {
@@ -1881,28 +2259,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "HAPPY",
    "citizen_asl_lex_code": "C_03_078",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/HAPPY/HAPPY_15.mp4",
-   "source_sha256": "4976de22822a89f63eb9a5217e21c3945e149ec13600088cef6214fe1dea4582",
-   "split": "train",
-   "seconds": 1.333,
-   "score": 1.0304,
-   "components": {
-    "quality": 0.9804,
-    "duration": 1.0
-   },
-   "candidates_considered": 7,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/happy.mp4",
+   "source_sha256": "4314c0908bd17f203fae12139f118cb0f8bed4d7a28b339d86e5e5cf4804e773",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.3,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HAPPY.jpg",
     "loop": "HAPPY.mp4",
-    "frames": 40,
+    "poster": "HAPPY.jpg",
+    "loop_sha256": "a98135969bf3da9efaf28dce11d28604e3e1b91f372892aae20d383695598af1",
+    "poster_sha256": "23eedaff218bc32b6fe6fb01efb663d1617eb84cbb5edb5b061a11c5821fbe1b",
+    "frames": 129,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "ee55307aff6dae02ccc04d4ce77f68b72e119fe6a450beac6742966e74768117",
-    "poster_sha256": "95583c354b52ed21f2eea3d14cb7ca4404b2b544a49bc5ffdf70a36406395f2b"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "SAD": {
@@ -1911,28 +2285,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "SAD",
    "citizen_asl_lex_code": "B_02_053",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/SAD/SAD_22.mp4",
-   "source_sha256": "337c4c00d8fb72e98f06880258c9d23ac650fc121ebc399c2eb813f6b97c2228",
-   "split": "train",
-   "seconds": 1.567,
-   "score": 1.0463,
-   "components": {
-    "quality": 0.9963,
-    "duration": 1.0
-   },
-   "candidates_considered": 11,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/SAD.mov",
+   "source_sha256": "bd7a0fc91feadaf4ff95d31c10e37a6caff2539e37f7091ea69a6751112eff79",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.8333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "SAD.jpg",
     "loop": "SAD.mp4",
-    "frames": 47,
+    "poster": "SAD.jpg",
+    "loop_sha256": "554a387f2c1357e6a2889a2c823c461836e02479992caad2ae7302a822001ad2",
+    "poster_sha256": "5cae8a1992ac2317d40aaed11392a5bda03074f94ce1d21cb4bb9324489b56ae",
+    "frames": 115,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "75b4df3ab6c17a7e4f7a74724338c52ca4896cb6ebf1c3d1c6f9042e56963dfc",
-    "poster_sha256": "16847ec137d5e6d2cd5d787e451159653792cb9f02c5a4f0496c48c598b074f5"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "ANGRY": {
@@ -1941,30 +2311,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "ANGRY",
    "citizen_asl_lex_code": "B_01_070",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/ANGRY/b9a70dbf.mp4",
-   "source_sha256": "c00e601a6a137fb0b44432e05628c43d32125f17711652eee1e15e5e5271133b",
-   "split": "train",
-   "seconds": 1.167,
-   "score": 0.9909,
-   "components": {
-    "quality": 0.942,
-    "duration": 0.9778
-   },
-   "candidates_considered": 7,
-   "notes": [
-    "preview retains 640px source width after 480px native replay inserted COLD"
-   ],
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/angry.mp4",
+   "source_sha256": "daf152d0e06445474f17d0e4f03b9a0e13bdba5d04f2762ec937fdd500fc0548",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.4,
+   "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "ANGRY.jpg",
     "loop": "ANGRY.mp4",
-    "frames": 35,
+    "poster": "ANGRY.jpg",
+    "loop_sha256": "0ad71ec9b964c62799d264aa663774ad0dd995df788462fc6ad2398912c96d44",
+    "poster_sha256": "afb908ec7f4d19ce6580a2866ba58cd371ba1cf84541f693b0ce7bffcb3c074a",
+    "frames": 102,
     "fps": 30.0,
-    "width": 640,
-    "height": 480,
-    "loop_sha256": "55dc288ec3f3f06fbdcb861f3a556d9bc71b38bdf2411bbfa322fad480ef8588",
-    "poster_sha256": "71d57d3401dc4eeb6f98c947dfc737efe9164d3ef9112c40d5babca92ce6bfed"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "EXCITED": {
@@ -1973,28 +2337,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "EXCITED",
    "citizen_asl_lex_code": "H_01_102",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/EXCITED/EXCITED_25.mp4",
-   "source_sha256": "6dff8d6aba3fd8572706ca916bed570ec54eb5a977079ec01d857b06203a9e16",
-   "split": "train",
-   "seconds": 1.867,
-   "score": 1.0427,
-   "components": {
-    "quality": 0.9927,
-    "duration": 1.0
-   },
-   "candidates_considered": 7,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/excited.mp4",
+   "source_sha256": "78cdfce84c7a3eb37b24254d875915a8d13e1b2aa95d97a6cd61591ce110ccd1",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 7.1333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "EXCITED.jpg",
     "loop": "EXCITED.mp4",
-    "frames": 56,
+    "poster": "EXCITED.jpg",
+    "loop_sha256": "ce660e5629d9485ba39588274d745fc9bc8291ba1911fac5ffb4a4f5996c6207",
+    "poster_sha256": "5e808be5b93aa741eb52a19ca03f1af52eb1671f653f016e603e29d9dd2c2622",
+    "frames": 214,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "5fe7967d820be748911bf0bda4a2020f1ce4104af37de965789323d6090fbfbb",
-    "poster_sha256": "f3f0b687ba1725ba0fe6e56646596e603975acef990ac1edc7902c05fbf0f884"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "TIRED": {
@@ -2003,29 +2363,52 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "TIRED",
    "citizen_asl_lex_code": "D_02_050",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/TIRED/431d7511.mp4",
-   "source_sha256": "4bf4ef617cf5e841016bcb62a0fd94c9fbebd2bba37c6a7c96d32248b88a7d72",
-   "split": "train",
-   "seconds": 1.267,
-   "score": 1.0238,
-   "components": {
-    "quality": 0.9738,
-    "duration": 1.0
-   },
-   "candidates_considered": 12,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4087.MOV",
+   "source_sha256": "05a3084996440df2f5b9c31b1f4d4215684edfca05a7fd3e81cf861b1a02f44c",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.2667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "TIRED.jpg",
     "loop": "TIRED.mp4",
-    "frames": 38,
+    "poster": "TIRED.jpg",
+    "loop_sha256": "f46ea5806a0c4640d763cd35cee78e04db237b8a1d2ee3163b3792fb796a6e47",
+    "poster_sha256": "5221a8a61f7eb2f1c5168068c8f17bf4ffc1cece0d1f0465b2ed8cdf41207a18",
+    "frames": 98,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "7289923d776ddc2a963a786136ce091116ac20ebdccb083832a772aab5c3770a",
-    "poster_sha256": "178486362c89753e02d23395d442d0b6a0c494e7a26b8029b619cc43a69dcf67"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "TIRED",
+     "logit": 8.8671875,
+     "probability": 0.9879923425181316
+    },
+    {
+     "label": "NOW",
+     "logit": 1.0859375,
+     "probability": 0.0004124769090767901
+    },
+    {
+     "label": "I",
+     "logit": 0.87255859375,
+     "probability": 0.0003332194626702963
+    },
+    {
+     "label": "TRY",
+     "logit": 0.8408203125,
+     "probability": 0.00032280971717400564
+    },
+    {
+     "label": "HAVE",
+     "logit": 0.5703125,
+     "probability": 0.0002463012120664042
+    }
+   ]
   },
   "SICK": {
    "canonical_label": "SICK",
@@ -2033,31 +2416,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "SICK",
    "citizen_asl_lex_code": "B_01_072",
-   "source": "citizen",
-   "participant": "P50",
-   "source_video": "data/local/citizen100_v17/raw/train/SICK/2393498289810021-SICK.mp4",
-   "source_sha256": "dde0741da2506c387886b1af391bf961f755acd7c2fcbea11fb62533466bd349",
-   "split": "train",
-   "seconds": 1.133,
-   "score": 0.8718,
-   "components": {
-    "hand_presence": 0.7759,
-    "hand_frames": 0.8824,
-    "face_presence": 0.9688,
-    "edges": 1.0,
-    "duration": 0.9554
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/SICK.mov",
+   "source_sha256": "775105ff35d1beef0530cf8007fe7c1bb958a23254f5ce705f9e7a91d7d9c965",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.3667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "SICK.jpg",
     "loop": "SICK.mp4",
-    "frames": 50,
-    "fps": 30.004,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "44f10ae38767d4a6dd6dd3992fcbf0dbe1925e9df58527961616317ac6ac2209",
-    "poster_sha256": "5633b5b395a7b1864873444b5f643d791fa9c6b288ca8d5cca810223779a5338"
+    "poster": "SICK.jpg",
+    "loop_sha256": "b6d67adf7b9669c91edfa1c68542be12da6189756184c892345d47a5dc36fccc",
+    "poster_sha256": "1e29f9cb01efebecacb99a2e923e7f6c2b4f732b613e9cb62c290f3b2d925797",
+    "frames": 101,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "HUNGRY": {
@@ -2066,34 +2442,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "HUNGRY",
    "citizen_asl_lex_code": "C_01_010",
-   "source": "citizen",
-   "participant": "P16",
-   "source_video": "data/local/citizen100_v17/raw/train/HUNGRY/0036168932795541675-HUNGRY.mp4",
-   "source_sha256": "e8a65a9c0ed58cf2c380e1dde8b41eba888e012ac0e96a6b9cce5eb455a971c1",
-   "split": "train",
-   "seconds": 2.2,
-   "score": 0.7641,
-   "components": {
-    "hand_presence": 0.6719,
-    "hand_frames": 1.0,
-    "face_presence": 0.9688,
-    "edges": 0.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 15,
-   "notes": [
-    "activity starts on the first frame",
-    "activity runs to the last frame"
-   ],
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/HUNGRY.mov",
+   "source_sha256": "3bd15f48c70c69a876e3979bb8148aee7a43488d14e87d6eaf888d26091f1834",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.0667,
+   "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HUNGRY.jpg",
     "loop": "HUNGRY.mp4",
-    "frames": 66,
+    "poster": "HUNGRY.jpg",
+    "loop_sha256": "b3f81ed78684a5f93805b3df8b2d1cc01a95dfd1040a5e9e30bce0646fd0fc06",
+    "poster_sha256": "4a8b587e7cb839d2155560c7226484a78e5cf753426fba6afc25f8f7a578b00b",
+    "frames": 92,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "b557f9db62cba1bf6f5931b1f300fcd4683e49f87c6d467097adecbf05d20d6e",
-    "poster_sha256": "9ca14b8047d69428df2af4b608fabe2d80cda0061fc226f7d2974446c97eba68"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "HOT": {
@@ -2102,28 +2468,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "HOT",
    "citizen_asl_lex_code": "F_02_093",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/HOT/HOT_1.mp4",
-   "source_sha256": "1a6b2961bd2d17481f895fa175fb9d63b5415c21bed9a330dd5fd807664408c8",
-   "split": "train",
-   "seconds": 1.433,
-   "score": 1.0422,
-   "components": {
-    "quality": 0.9922,
-    "duration": 1.0
-   },
-   "candidates_considered": 11,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/hot.mp4",
+   "source_sha256": "6bffd18b588b99be7fb20a3fba1d7dc004bf75fe1b8fab6f98ec7f16725f92a9",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.4,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HOT.jpg",
     "loop": "HOT.mp4",
-    "frames": 43,
+    "poster": "HOT.jpg",
+    "loop_sha256": "690c829e3ac583a637cd93bca037a34b07601195b3458ed9f28aa3d796e097f0",
+    "poster_sha256": "45f789e25cc5eaf637a27ed91c6afad9a272f909e71350c613e1154a6858d8b8",
+    "frames": 162,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "cc5da4b2c11656ccc0a6ecb3930696f42954414395ba934cc1c02dccde074590",
-    "poster_sha256": "4b3defad09d36024702573ea7aff55312cd50c42a0f888ef748971746ab806fc"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "COLD": {
@@ -2132,28 +2494,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "COLD",
    "citizen_asl_lex_code": "C_02_068",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/COLD/COLD_5.mp4",
-   "source_sha256": "2f5af8539d561eac75bcd6c7a1d0bc566ec88a71e9dc6e4b9380a19b453d7972",
-   "split": "train",
-   "seconds": 1.767,
-   "score": 1.0446,
-   "components": {
-    "quality": 0.9946,
-    "duration": 1.0
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/cold.mp4",
+   "source_sha256": "967cc8d8462bb6511c0707e8e74494d347c99fc16f0b7746a398ad6f87559256",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.0667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "COLD.jpg",
     "loop": "COLD.mp4",
-    "frames": 53,
+    "poster": "COLD.jpg",
+    "loop_sha256": "97d1a03a43595441f518c10355620eaf0bee09ae539acbb670709cdf2d94c2e8",
+    "poster_sha256": "13f9f69f0cb58dbb4c7ad70439ee05b73597accf5beb9a20966c9a0a4b3ce3aa",
+    "frames": 92,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "7ec43816b10c2439559e917f91b1158dbcd449fdbef8536f7b0e74c2529aa363",
-    "poster_sha256": "2dba02aab1aba50180cb63eedbc2b9ae50203fe7baf3389677d8b45e3ffc08f3"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "BIG": {
@@ -2162,31 +2520,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "BIG",
    "citizen_asl_lex_code": "F_02_054",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/BIG/3717896319825944-BIG.mp4",
-   "source_sha256": "0ac6e91e7694ca512b10a753938c33fbb649f9ef55804768aad563c5eaf8ea20",
-   "split": "train",
-   "seconds": 1.635,
-   "score": 0.8687,
-   "components": {
-    "hand_presence": 0.79296875,
-    "hand_frames": 0.9183673469387755,
-    "face_presence": 0.8125,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 15,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/big.mp4",
+   "source_sha256": "0dc6c6923020d4ce8badf38349a0994b0efe30ff89e4b7acc403bf55254661a5",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.6333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "BIG.jpg",
     "loop": "BIG.mp4",
-    "frames": 57,
-    "fps": 29.973,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "3c23b6b7aab64974a70272c2b64e4931426dcd6eb9b8798e87dd4e6fe8b561db",
-    "poster_sha256": "f130ca3dfeb76ccd75341d478875ec5cacf6758392a1bf15ca1ca8b1e8c8531e"
+    "poster": "BIG.jpg",
+    "loop_sha256": "dd91cbf466f39ebb3bc9d596cf91d6f12467a5443a12d6b1b71f6f0b8abc3e46",
+    "poster_sha256": "7bee68383f195c431ef43319d7089c3162ee8a782ab9e30f90ef9258159a0e53",
+    "frames": 139,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "SMALL": {
@@ -2195,29 +2546,52 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "SMALL",
    "citizen_asl_lex_code": "D_01_030",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/SMALL/SMALL_25.mp4",
-   "source_sha256": "a1baf96cb89518f4d6f84517cdc25af2c86ba3cc24df717bb7788cd685264e8c",
-   "split": "train",
-   "seconds": 2.467,
-   "score": 1.0026,
-   "components": {
-    "quality": 0.9526,
-    "duration": 1.0
-   },
-   "candidates_considered": 8,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4065.MOV",
+   "source_sha256": "42868c484a340432ac401ac40c1ab26cbcd64ab2f7108a01b312c9e82abdea44",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.2667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "SMALL.jpg",
     "loop": "SMALL.mp4",
-    "frames": 74,
+    "poster": "SMALL.jpg",
+    "loop_sha256": "cdb2aafe79dc582f5375701b6f9ec7a826edab44f7ddd955bbad9bf476f7a919",
+    "poster_sha256": "8939f200c025d9050d1bd2cb9e8868c4da8b7e1d6a8650724da18c3ca0041831",
+    "frames": 98,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "912afd50401d062d30a0cb50e43c64188397a71bac7b08ec388efb38940207d8",
-    "poster_sha256": "aa318d4f8822c519ecb75ef9399cd3dd3cb8aa8ac6ca4572b6c4be544f00ebbf"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "SMALL",
+     "logit": 7.59375,
+     "probability": 0.976475165083485
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 1.84765625,
+     "probability": 0.0031200704054343323
+    },
+    {
+     "label": "SCHOOL",
+     "logit": 0.861328125,
+     "probability": 0.0011636102336419491
+    },
+    {
+     "label": "PLEASE",
+     "logit": 0.640625,
+     "probability": 0.0009331627252332057
+    },
+    {
+     "label": "HELLO",
+     "logit": 0.404541015625,
+     "probability": 0.00073693199265183
+    }
+   ]
   },
   "MORE": {
    "canonical_label": "MORE",
@@ -2225,28 +2599,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "MORE",
    "citizen_asl_lex_code": "B_03_032",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/MORE/2e3262ee.mp4",
-   "source_sha256": "137cf41266b2d9e524f8d818f568a105bdaf5d0ba42af9c56e85d465e11d5f5d",
-   "split": "train",
-   "seconds": 1.267,
-   "score": 1.0363,
-   "components": {
-    "quality": 0.9863,
-    "duration": 1.0
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/MORE.mov",
+   "source_sha256": "511b66ec1bfe3411749c44339f6751d780adee84cfe5ec2d81ba32682cd86077",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.4,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "MORE.jpg",
     "loop": "MORE.mp4",
-    "frames": 38,
+    "poster": "MORE.jpg",
+    "loop_sha256": "44abe4ffb6aa68d0da61a4baf38adabae5538f0fd0b48c15ad9d7399178461ad",
+    "poster_sha256": "7864a415a43cdf081efbc13ca2b1d8f4b30c09924e40a98f4d356a5a22c7d3d2",
+    "frames": 102,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "b32ce4adf839d0621ab46331aaec5495d237357421b1d4644773afa9d95d5238",
-    "poster_sha256": "c2654a6c6d8b5074ded4e02b3f93419dc12774e6aaa339b93f4157b02b779c74"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "LESS": {
@@ -2255,28 +2625,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "LESS",
    "citizen_asl_lex_code": "E_02_043",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/LESS/6db34606.mp4",
-   "source_sha256": "39488cb172a50d637bee0b35863d158cd38b479e2be87d88f70a3befbd86fa89",
-   "split": "train",
-   "seconds": 1.133,
-   "score": 0.9937,
-   "components": {
-    "quality": 0.946,
-    "duration": 0.9556
-   },
-   "candidates_considered": 12,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/LESS.mov",
+   "source_sha256": "7fe745956cb8c599445560c395eb85d784aa13074a28b400f2592293f053e2df",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.0,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "LESS.jpg",
     "loop": "LESS.mp4",
-    "frames": 34,
+    "poster": "LESS.jpg",
+    "loop_sha256": "4a1a9d96de727738012cdf920f254fe8e029e4dc9325c7d1966f49448e6f354c",
+    "poster_sha256": "3325f9c2631a0e5b26d53bb563e9b921d3b856a7b660f9a12608eae488853f7f",
+    "frames": 90,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "75e2816ba52e0714a8500b5db2b6ed8ef2cb7e879f3ae52444e98870db961023",
-    "poster_sha256": "3fe88f49837bf73539c54e1115265e0ac28d2211baecb92cbba67f836161b145"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "SAME": {
@@ -2285,31 +2651,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "SAME1",
    "citizen_asl_lex_code": "B_02_009",
-   "source": "citizen",
-   "participant": "P7",
-   "source_video": "data/local/citizen100_v17/raw/train/SAME/285027381058337-SAME.mp4",
-   "source_sha256": "c38fd4010bfee5e21f855b6cc3ee418359886f684a5af4906d14874c485a8088",
-   "split": "train",
-   "seconds": 2.199,
-   "score": 0.7917,
-   "components": {
-    "hand_presence": 0.5928,
-    "hand_frames": 0.8182,
-    "face_presence": 1.0,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 13,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/SAME.mov",
+   "source_sha256": "3f7c5e4762129b80459e57f9383d518c4dafb5a83323c3e85fa391ac71aadb40",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.8667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "SAME.jpg",
     "loop": "SAME.mp4",
-    "frames": 40,
-    "fps": 15.007,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "577b297dc6c3755377fb2b9836d54d4efd0ece7240b618ff0198399630fc7cde",
-    "poster_sha256": "3a06da35795190d05f28427bcb711e3fd516e664d2d1ed324291ebae58ce8cfb"
+    "poster": "SAME.jpg",
+    "loop_sha256": "14fb0141c7a25d3e77a30b48f64a08a16761ed785e9905e99b7465befc5db416",
+    "poster_sha256": "9e908c64b8408141897498514782f51e20aeccefd81cfc172793766abcc809c6",
+    "frames": 146,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "DIFFERENT": {
@@ -2318,28 +2677,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "DIFFERENT",
    "citizen_asl_lex_code": "E_03_095",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/DIFFERENT/8b411fdb.mp4",
-   "source_sha256": "9563a5d71eb2697477c5d78b38c3c86a0adc04791bb6415f1069c07c43fada89",
-   "split": "train",
-   "seconds": 1.233,
-   "score": 0.952,
-   "components": {
-    "quality": 0.902,
-    "duration": 1.0
-   },
-   "candidates_considered": 5,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/different.mp4",
+   "source_sha256": "61f3a84bf214c41410d3845fbaca3292a0d30edfb3839573cf2af527a68db568",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.6,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "DIFFERENT.jpg",
     "loop": "DIFFERENT.mp4",
-    "frames": 37,
+    "poster": "DIFFERENT.jpg",
+    "loop_sha256": "2e6f06f401cdcb2933c526b2b60169aa24c7c1b489e88b38073f9a03a8e72f9d",
+    "poster_sha256": "5a881810db4923fab1c923b4d863c52d417208f015eedcde603557ddba0a2932",
+    "frames": 168,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "a086fb0a56c267a29703302e17bcb79cbb9172cdb1480d95436909d3e9303680",
-    "poster_sha256": "7473213c4a5e009432da32e189278fb7a8304e00e6bd5d7277126b556233219a"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "EASY": {
@@ -2348,28 +2703,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "EASY",
    "citizen_asl_lex_code": "D_01_070",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/EASY/6d9163ca.mp4",
-   "source_sha256": "73189675c34e2fb24a7209744471a230aad239fa55f2efb55beb143cb9b80dbe",
-   "split": "train",
-   "seconds": 1.567,
-   "score": 1.0421,
-   "components": {
-    "quality": 0.9921,
-    "duration": 1.0
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/easy.mp4",
+   "source_sha256": "d28fbff2be3766a3713058506a961099ac7c8c68c517cf0511b64e0bca3914dd",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.5,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "EASY.jpg",
     "loop": "EASY.mp4",
-    "frames": 47,
+    "poster": "EASY.jpg",
+    "loop_sha256": "99e995956721dac221ebcefb58b3fe8df0c44a4ee6e53c3230e57f1e89d0f8ce",
+    "poster_sha256": "2ccde45b1ff09379f031b049cac1256386cb36f9cb0c6175427ac9bf816dafce",
+    "frames": 135,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "c40e80fcef66fbdabbd2e7d3842e45a2218c082a9a13e20ad924c230b3057120",
-    "poster_sha256": "3100a8587c78419ece9c7a968ae480c4e36a382a82e8c5ee3feb1bbc08a49ee2"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "IMPORTANT": {
@@ -2378,28 +2729,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "IMPORTANT",
    "citizen_asl_lex_code": "B_01_081",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/IMPORTANT/2d585d5d.mp4",
-   "source_sha256": "a6dbaa4043f263568045f680fa4330e845d84be9d5592024a787003fb8047bcc",
-   "split": "train",
-   "seconds": 1.133,
-   "score": 0.9779,
-   "components": {
-    "quality": 0.9301,
-    "duration": 0.9555555555555556
-   },
-   "candidates_considered": 13,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/IMPORTANT.mov",
+   "source_sha256": "4e5fad3b4964124d6748f61af5d425e9d0ff46f9b3648c7307e8349eee12abe1",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.1667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "IMPORTANT.jpg",
     "loop": "IMPORTANT.mp4",
-    "frames": 34,
+    "poster": "IMPORTANT.jpg",
+    "loop_sha256": "53228001a3226c81f5865953dcf556e6ef30ce84dcd41aa2ce199c83cc5ef87d",
+    "poster_sha256": "4f5b4fe063ed80cbaa225167d0caa259cc5f4f2f740bbca7c486c8807d1e8d48",
+    "frames": 95,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "6c7b036bec205d86fee57135b033b4f0e81170a22b8ab1a2afc67fb1c23dff6c",
-    "poster_sha256": "f8bcbdf281d3abc0c971736cc059ec826ae6b0f1a3957515666abe19706ce14d"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "READY": {
@@ -2408,31 +2755,24 @@
    "category": "descriptions_and_states",
    "citizen_raw_gloss": "READY",
    "citizen_asl_lex_code": "F_03_042",
-   "source": "citizen",
-   "participant": "P52",
-   "source_video": "data/local/citizen100_v17/raw/train/READY/5071771946794466-seedREADY.mp4",
-   "source_sha256": "fdf6fc0c04f451be55e585428a69578b1341406e7fd8cd027620fa071e12f7f2",
-   "split": "train",
-   "seconds": 1.223,
-   "score": 0.8885,
-   "components": {
-    "hand_presence": 0.833984375,
-    "hand_frames": 0.8947368421052632,
-    "face_presence": 0.875,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 11,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/READY.mov",
+   "source_sha256": "a8ae6a1ac8b29424048fb2d875a32f0a273c03709c3753ecbf7a269875da81bd",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.1333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "READY.jpg",
     "loop": "READY.mp4",
-    "frames": 54,
-    "fps": 31.077,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "105690b9a9513a9c3e70a8040c102d5619c9020eca9a46076a65abd4b5134219",
-    "poster_sha256": "44b47f0e03944f12dc217cb9eadff3d34cd817b591bb69870207f832973bf9a2"
+    "poster": "READY.jpg",
+    "loop_sha256": "a0f764e5e28af5a97aa80f53305cf5177eda6b7ade3315ab164df4569bea7178",
+    "poster_sha256": "b9d400373e321556193a1421535013fb224de3f4d05f74cea0edc1e05ff93564",
+    "frames": 94,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "NOW": {
@@ -2441,28 +2781,24 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "NOW",
    "citizen_asl_lex_code": "C_03_062",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/NOW/82bf699c.mp4",
-   "source_sha256": "5161b63b222388a69c2dc73420fbb62554c2d379ce4081010205e63a926881b0",
-   "split": "train",
-   "seconds": 0.8,
-   "score": 0.9866,
-   "components": {
-    "quality": 0.95,
-    "duration": 0.7333
-   },
-   "candidates_considered": 8,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/NOW.mov",
+   "source_sha256": "d3da3f589a96ee1efa3c0150f923c88f2591431f08cde5363b74cc4f7de06c82",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.7333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "NOW.jpg",
     "loop": "NOW.mp4",
-    "frames": 24,
+    "poster": "NOW.jpg",
+    "loop_sha256": "99c2f56635307268e44adf8c097842a2ca1a7b8073662cdcec34c9b79f532881",
+    "poster_sha256": "7820cb0c9a2bea8c120da8ef4e3931be37fc9fc49a261ff25513a891675ca409",
+    "frames": 112,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "16de394259f1580fff0d259791d6b126d9b04e1b70b5edfd9da90d183b3536bf",
-    "poster_sha256": "4f31f49b74c5f9ef14c17028cce6540285cff531e23f853375f052c2b6f292ab"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "TOMORROW": {
@@ -2471,29 +2807,52 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "TOMORROW",
    "citizen_asl_lex_code": "F_02_040",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/TOMORROW/01468c17.mp4",
-   "source_sha256": "74bf78af145cd387942104586efd0e71c979c9a4b529285e935375456e2ca006",
-   "split": "train",
-   "seconds": 0.933,
-   "score": 0.9898,
-   "components": {
-    "quality": 0.9487,
-    "duration": 0.8222222222222223
-   },
-   "candidates_considered": 11,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4088.MOV",
+   "source_sha256": "7bcbb47aff99e819709d609cdfc1510038d8e455c055d1bc69f3c4156aad4fca",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.4333,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "TOMORROW.jpg",
     "loop": "TOMORROW.mp4",
-    "frames": 28,
+    "poster": "TOMORROW.jpg",
+    "loop_sha256": "e33e7562bf6015d38525c057e018eb0089c13a3b1106b26664baa6bacaf83ef8",
+    "poster_sha256": "5d19f0ed766413c682dcf850c6d943de8d6bd51494d1e0036bbbc3b713debeaf",
+    "frames": 73,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "59d4df37e931802588dc2283adc5626ee5c1aba3501b353da4071a045133b410",
-    "poster_sha256": "6673253804d1207a1740257f949f8b5e5ea7d38e02455fd1014a5e407fd5c047"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "TOMORROW",
+     "logit": 8.234375,
+     "probability": 0.9854952472482439
+    },
+    {
+     "label": "HOW",
+     "logit": 1.2431640625,
+     "probability": 0.0009065884924867322
+    },
+    {
+     "label": "YOU",
+     "logit": 0.68359375,
+     "probability": 0.0005180741262460633
+    },
+    {
+     "label": "SCHOOL",
+     "logit": 0.479248046875,
+     "probability": 0.0004223239314975064
+    },
+    {
+     "label": "I",
+     "logit": 0.438720703125,
+     "probability": 0.0004055504523877506
+    }
+   ]
   },
   "YESTERDAY": {
    "canonical_label": "YESTERDAY",
@@ -2501,29 +2860,52 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "YESTERDAY",
    "citizen_asl_lex_code": "D_01_024",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/YESTERDAY/38ef1de2.mp4",
-   "source_sha256": "36d4eeb2aa5e3c31096b0562f3fb8fb96b17463d456e54b887c0b114c4418720",
-   "split": "train",
-   "seconds": 0.8,
-   "score": 1.0002,
-   "components": {
-    "quality": 0.9636,
-    "duration": 0.7333
-   },
-   "candidates_considered": 5,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4121.MOV",
+   "source_sha256": "8f9888cca531aab69c47d38398b4225bfbcdac10904bfd2dcc5959418d82879b",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.1667,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "YESTERDAY.jpg",
     "loop": "YESTERDAY.mp4",
-    "frames": 24,
+    "poster": "YESTERDAY.jpg",
+    "loop_sha256": "742b31c893a659f400b35dcde905da58e55bf95c5957090ded350fae11489b37",
+    "poster_sha256": "f522b3ee41e95fbdf9ca891c901d6881e20d28175ffea6d91bd56098036b00c0",
+    "frames": 95,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "822fe3ba2bea0cca6ada3ec74534f3facad14997423c2472eaf0fd6d188c3a14",
-    "poster_sha256": "5038a0a0edfb07f1a103490ef1c6c50e909ef16f5bd8f57773e899601743f437"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "YESTERDAY",
+     "logit": 8.8515625,
+     "probability": 0.9862686258331504
+    },
+    {
+     "label": "DRINK",
+     "logit": 0.86865234375,
+     "probability": 0.00033655913872404495
+    },
+    {
+     "label": "MAN",
+     "logit": 0.78955078125,
+     "probability": 0.000310962497385395
+    },
+    {
+     "label": "LEARN",
+     "logit": 0.57861328125,
+     "probability": 0.00025182510473253965
+    },
+    {
+     "label": "HOME",
+     "logit": 0.57861328125,
+     "probability": 0.00025182510473253965
+    }
+   ]
   },
   "MORNING": {
    "canonical_label": "MORNING",
@@ -2531,28 +2913,24 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "MORNING",
    "citizen_asl_lex_code": "C_02_012",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/MORNING/7ada2f2e.mp4",
-   "source_sha256": "321e8a633a7b8c964369fb697cd15c96dda3b946a6831f15c2bfce90587f5de8",
-   "split": "train",
-   "seconds": 1.133,
-   "score": 1.0124,
-   "components": {
-    "quality": 0.9647,
-    "duration": 0.9556
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/MORNING.mov",
+   "source_sha256": "0bbb390c12650441a3f1538a20ca4c5830cc14290c11bec04844919e07e39375",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.7667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "MORNING.jpg",
     "loop": "MORNING.mp4",
-    "frames": 34,
+    "poster": "MORNING.jpg",
+    "loop_sha256": "3d0175c6e520d229f4779fe35049b82673c00fc0818ff2773561a61d48431d50",
+    "poster_sha256": "e04d812c40b50c40a294fcf610f596570c4f1c292474e6cd607c75996ce86ff4",
+    "frames": 83,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "ecfc3454bfa8a4a477b1a67e51c4a6ce4e62a79ce5f011310e847e7360e59590",
-    "poster_sha256": "8b1211075a429a64544fecebc6d64e1ee6088e4c6b131c0f458504623a489193"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "NIGHT": {
@@ -2561,31 +2939,24 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "NIGHT1",
    "citizen_asl_lex_code": "A_01_003",
-   "source": "citizen",
-   "participant": "P40",
-   "source_video": "data/local/citizen100_v17/raw/train/NIGHT/31514063915992985-NIGHT.mp4",
-   "source_sha256": "1be96fdeccc9f7f7dae1c272db15a2cc49bbe58e41870b5019b2b9fb0e47029b",
-   "split": "train",
-   "seconds": 1.734,
-   "score": 0.9124,
-   "components": {
-    "hand_presence": 0.8525,
-    "hand_frames": 0.9231,
-    "face_presence": 0.9375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 17,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/NIGHT.mov",
+   "source_sha256": "0615c9b5573ee3b4fb4fd0bfea866e02103b9bb71dec188d07c934e904abbdc1",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.8667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "NIGHT.jpg",
     "loop": "NIGHT.mp4",
-    "frames": 66,
-    "fps": 29.997,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "6fa75c0d8c32d5842c179c6cf41361739a1b117dcfdcc686b5e98c377f2576ff",
-    "poster_sha256": "fff8b5d3470522b13a63080420cba17f54a0a26787dfa8da8d77ea3c31e175f6"
+    "poster": "NIGHT.jpg",
+    "loop_sha256": "3f6dc30bae795fe6a60f78f3932a4ee48f2b836cb935fd0719a01c33680fe5a9",
+    "poster_sha256": "d5d1ef442db61a360c665b32a60540ead37222eab411f98d313c790b4e0115ed",
+    "frames": 116,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "TIME": {
@@ -2594,29 +2965,52 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "TIME",
    "citizen_asl_lex_code": "B_02_080",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/TIME/95ab1c0c.mp4",
-   "source_sha256": "70e194697b6d1d10b880116c97ded1050d4e6aa903e345f7bc9a28bad4e3ff7d",
-   "split": "train",
-   "seconds": 1.233,
-   "score": 1.037,
-   "components": {
-    "quality": 0.987,
-    "duration": 1.0
-   },
-   "candidates_considered": 6,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4086.MOV",
+   "source_sha256": "3efb89abe6288e35b3e35b5280e7eafd85c97e23868f26e3f6cfda8ce4c6ee8a",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.5,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "TIME.jpg",
     "loop": "TIME.mp4",
-    "frames": 37,
+    "poster": "TIME.jpg",
+    "loop_sha256": "f9162a7070faa5909b232e65e372c82d01ec622f673e972400b1597b73ea6b54",
+    "poster_sha256": "b262bb93bf8b42675c12d9a4a8aa61438e9a0d1c74cf15a413bbb75145829b9a",
+    "frames": 105,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "adb3e070374b9e65cb24a076ffb178ee04d94c624c3860af7d9a6c80d484910a",
-    "poster_sha256": "2364414e4e9493c2289e775c2f78230c3766ebc315aab56b5016b7e4d7b893be"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "TIME",
+     "logit": 8.5546875,
+     "probability": 0.9819372004615001
+    },
+    {
+     "label": "DOCTOR",
+     "logit": 0.97607421875,
+     "probability": 0.0005020347565204169
+    },
+    {
+     "label": "NIGHT",
+     "logit": 0.86376953125,
+     "probability": 0.00044870455563363336
+    },
+    {
+     "label": "DAY",
+     "logit": 0.65673828125,
+     "probability": 0.00036479422077156205
+    },
+    {
+     "label": "WORK",
+     "logit": 0.654296875,
+     "probability": 0.00036390469616830103
+    }
+   ]
   },
   "DAY": {
    "canonical_label": "DAY",
@@ -2624,28 +3018,24 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "DAY",
    "citizen_asl_lex_code": "C_01_044",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/DAY/abe26bfb.mp4",
-   "source_sha256": "9e72106f0286b559fb794ace5a8b0a11eaaf9aad4e9429cd66af5a5aaa8ee83c",
-   "split": "train",
-   "seconds": 1.367,
-   "score": 1.0337,
-   "components": {
-    "quality": 0.9837,
-    "duration": 1.0
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/day.mp4",
+   "source_sha256": "dd1504eabe4e8fce4b32293abc2e9c175c7821c321cbe4248ec19346a5c93a9b",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 6.1333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "DAY.jpg",
     "loop": "DAY.mp4",
-    "frames": 41,
+    "poster": "DAY.jpg",
+    "loop_sha256": "c6b9ae1cdd79d13757b2c6e1a71955cfe655530a8c883953f275ef832abbb00d",
+    "poster_sha256": "2ac309fffdc17e580e00b77a970300cfa6a8b0fe9e93d82d6b282fb606b0fbcd",
+    "frames": 184,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "240e315a273a570d3c9f1c1b04c945620c2f57fca94b88ac1954efb74518cd3b",
-    "poster_sha256": "19dd68b83d34d18bce77db6b360fdd08eedabdb11f73f53a1a788b9c2b0fa912"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "WEEK": {
@@ -2654,29 +3044,52 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "WEEK",
    "citizen_asl_lex_code": "B_02_079",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/WEEK/WEEK_16.mp4",
-   "source_sha256": "2bd480f283e99043b3e2a4ad92e9c580054160d502543d516b4d12bf281ff6ac",
-   "split": "train",
-   "seconds": 2.333,
-   "score": 1.014,
-   "components": {
-    "quality": 0.964,
-    "duration": 1.0
-   },
-   "candidates_considered": 11,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4103.MOV",
+   "source_sha256": "4c8acf1d395aa0a9133c8246b20498487c7262c6420e71455fbb40e6573f77c4",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.2,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WEEK.jpg",
     "loop": "WEEK.mp4",
-    "frames": 70,
+    "poster": "WEEK.jpg",
+    "loop_sha256": "5c36edcbfc6dc65b275d82b2041efc5892cf1b53ec8f9efa4e818b04b12da1df",
+    "poster_sha256": "5e390775d97257db537d7fe97eb131c3e104b19209f37a32089e8f50d99a6927",
+    "frames": 96,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "3ddd0b38cc3c5437a2aa3ed96ed5153ec6d72ed608613d8564197e42eff30085",
-    "poster_sha256": "9517b5ec673fa819dccbdfe56605a0fee7d0bed5c7d758381624f5244e383be3"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WEEK",
+     "logit": 8.203125,
+     "probability": 0.9856998626152664
+    },
+    {
+     "label": "SCHOOL",
+     "logit": 1.048828125,
+     "probability": 0.0007703233126478474
+    },
+    {
+     "label": "PLEASE",
+     "logit": 0.98974609375,
+     "probability": 0.0007261294335243779
+    },
+    {
+     "label": "MY",
+     "logit": 0.54833984375,
+     "probability": 0.00046699662563681033
+    },
+    {
+     "label": "THANKYOU",
+     "logit": 0.50927734375,
+     "probability": 0.00044910626585636774
+    }
+   ]
   },
   "YEAR": {
    "canonical_label": "YEAR",
@@ -2684,29 +3097,52 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "YEAR",
    "citizen_asl_lex_code": "B_02_015",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/YEAR/ed6972e5.mp4",
-   "source_sha256": "3e2b01ebef6c88789cd760cb6ee1130202cb2e21d680313ec8d8009454be65a7",
-   "split": "train",
-   "seconds": 1.433,
-   "score": 1.012,
-   "components": {
-    "quality": 0.962,
-    "duration": 1.0
-   },
-   "candidates_considered": 13,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4119.MOV",
+   "source_sha256": "39ff2cb4bf46aa88119fa8643813c87088d67215b3ccce95bb5e425b1e80378f",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.4,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "YEAR.jpg",
     "loop": "YEAR.mp4",
-    "frames": 43,
+    "poster": "YEAR.jpg",
+    "loop_sha256": "f8dd45d5a6b2349f84354f04d58c04b48e26260df66ac389a2eceeb8e693f260",
+    "poster_sha256": "cb9dd4f37ebaf3fdbab7464233b5d4f4a0e68be616acb9eb249b43988fe20de2",
+    "frames": 102,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "35112100cccfd2a09b0cae75ebffb94689bb6891d8489c4548c61402d507af4a",
-    "poster_sha256": "ee97cdfd3932f482f350be31ac44f6696402fd04aaae8dfed90c9d87381289c7"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "YEAR",
+     "logit": 8.5859375,
+     "probability": 0.9821760455125754
+    },
+    {
+     "label": "MAKE",
+     "logit": 0.81494140625,
+     "probability": 0.00041427489453364807
+    },
+    {
+     "label": "I",
+     "logit": 0.76025390625,
+     "probability": 0.00039222758681723135
+    },
+    {
+     "label": "SIGN",
+     "logit": 0.57958984375,
+     "probability": 0.0003273985340692101
+    },
+    {
+     "label": "TOMORROW",
+     "logit": 0.45361328125,
+     "probability": 0.00028864617351595506
+    }
+   ]
   },
   "HOME": {
    "canonical_label": "HOME",
@@ -2714,31 +3150,24 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "HOME",
    "citizen_asl_lex_code": "B_03_063",
-   "source": "citizen",
-   "participant": "P4",
-   "source_video": "data/local/citizen100_v17/raw/train/HOME/6393982664215556-HOME.mp4",
-   "source_sha256": "f46b0d7aa27d124d2332a0a5cdcc789b5fb6b4ca7e52e48a09e8137b748afb22",
-   "split": "train",
-   "seconds": 1.471,
-   "score": 0.737,
-   "components": {
-    "hand_presence": 0.4346,
-    "hand_frames": 0.9091,
-    "face_presence": 0.9062,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/home.mp4",
+   "source_sha256": "46d82fffb97e2a043541cdacb911da5345233798b660a892ff007acbc34303a0",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.7667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HOME.jpg",
     "loop": "HOME.mp4",
-    "frames": 58,
-    "fps": 29.918,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "fa8ea63e084117d6c70487bf2465c16ef9746618878af69166724737acf3e179",
-    "poster_sha256": "77cc009c393baf9ff61b94fafe22ba3549727d27cf8b6cc027e78ac984f490b5"
+    "poster": "HOME.jpg",
+    "loop_sha256": "f85f042083e46007cd1ea835f6599ee33f606b2a522100a86ba549809668e6dc",
+    "poster_sha256": "d0cec2aa51bcbc3f9be897421906bcb22185baa84c64c4be8940598a1953f640",
+    "frames": 113,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "SCHOOL": {
@@ -2747,28 +3176,24 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "SCHOOL",
    "citizen_asl_lex_code": "C_03_089",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/SCHOOL/74c7254b.mp4",
-   "source_sha256": "622947f252d4d67b9179615fe4f49f0f3b295a50294a2ad38e9b181b87945623",
-   "split": "train",
-   "seconds": 1.067,
-   "score": 1.0014,
-   "components": {
-    "quality": 0.9558,
-    "duration": 0.9111
-   },
-   "candidates_considered": 9,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/SCHOOL.mov",
+   "source_sha256": "677b308a8b6bb8b146cd6b7e4e87e32c0d985ca8d48a1441df3643d89dd7e7da",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.7,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "SCHOOL.jpg",
     "loop": "SCHOOL.mp4",
-    "frames": 32,
+    "poster": "SCHOOL.jpg",
+    "loop_sha256": "cf7aa574377fbd607c5995ba85f2fde83fd804a68cc3fc4749f0bb7639f40b96",
+    "poster_sha256": "d5056a9e013d0f08146e8d5fec6da934444bc7a2bb7e2f359aa690defd84b2f7",
+    "frames": 111,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "8cecfb8ef957b601d2950f26f1c8596899a759ff691f7317dfb22fef5dc5f203",
-    "poster_sha256": "5ba920e8e3943bf8b8e7908a76f67ccf528c1e631fd5707c2ca46f5ca774d1dd"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "HOSPITAL": {
@@ -2777,31 +3202,24 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "HOSPITAL1",
    "citizen_asl_lex_code": "B_02_026",
-   "source": "citizen",
-   "participant": "P33",
-   "source_video": "data/local/citizen100_v17/raw/train/HOSPITAL/3284942530084891-HOSPITAL.mp4",
-   "source_sha256": "7b9995bf35919015640a9fac1bffa44d3cdddd0261e79a76e1b1807d9d27accb",
-   "split": "train",
-   "seconds": 1.638,
-   "score": 0.7642,
-   "components": {
-    "hand_presence": 0.4614,
-    "hand_frames": 0.9184,
-    "face_presence": 1.0,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 18,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/hospital.mp4",
+   "source_sha256": "b58b56f798b80aba8de9b3c7ea27beabf0eadd017c06e570846617460bd4bc03",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.7333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "HOSPITAL.jpg",
     "loop": "HOSPITAL.mp4",
-    "frames": 63,
-    "fps": 29.918,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "435293bb60b2f9d574f3c8d79797c097def631b9f2aba5160606dfed1ae2f0c3",
-    "poster_sha256": "01baf023d8466f648cafe5fd6f16905c5ed8dc31f22d5c9f4bb7ee7071f6c9e1"
+    "poster": "HOSPITAL.jpg",
+    "loop_sha256": "c0b1f33288931c5d742711c3aecbc780e40d5ad34ee14852ad44d1e22519a589",
+    "poster_sha256": "d70d872912b0829ad763bfb42b75f76b70077ecb4891a6997711f762a030ff81",
+    "frames": 142,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "DOCTOR": {
@@ -2810,31 +3228,24 @@
    "category": "time_and_places",
    "citizen_raw_gloss": "DOCTOR1",
    "citizen_asl_lex_code": "A_03_020",
-   "source": "citizen",
-   "participant": "P40",
-   "source_video": "data/local/citizen100_v17/raw/train/DOCTOR/2977445528211726-DOCTOR.mp4",
-   "source_sha256": "bee2e3137d134ba8cf0f7adaa51ddcadfb6015ad8a5de29c38b5dfd4f1fb832f",
-   "split": "train",
-   "seconds": 1.666,
-   "score": 0.9407,
-   "components": {
-    "hand_presence": 0.9136,
-    "hand_frames": 0.92,
-    "face_presence": 0.9688,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 13,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/doctor.mp4",
+   "source_sha256": "6e073d4b407e25be09d3d789797d42fd6d51228dd33c97b95f1fff9f5fb8770d",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 4.3,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "DOCTOR.jpg",
     "loop": "DOCTOR.mp4",
-    "frames": 66,
-    "fps": 30.003,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "2d54d735a300b81bcf44505436b61f514817a0454716fa5c49e1b80fe1b9749f",
-    "poster_sha256": "a2f2565064e5eaa3538275b462793eb9fb014004eb531c636fdd1ea6054c05a0"
+    "poster": "DOCTOR.jpg",
+    "loop_sha256": "0f7022831241ef9b065924c81c0e58f16563c864ee737afa37aeae213ada919b",
+    "poster_sha256": "f1b127ac98e9f0e4e449eb08fae523de70afb73a8f9098e888c9803ff84c59c6",
+    "frames": 129,
+    "fps": 30.0,
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "FAMILY": {
@@ -2843,28 +3254,24 @@
    "category": "people_and_family",
    "citizen_raw_gloss": "FAMILY",
    "citizen_asl_lex_code": "C_01_025",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/FAMILY/b3eb7cf2.mp4",
-   "source_sha256": "5a7165b1c8927e9844a3d786cba8eb353e8aab37ea86711841f67d92776cff10",
-   "split": "train",
-   "seconds": 1.1,
-   "score": 1.031,
-   "components": {
-    "quality": 0.9843,
-    "duration": 0.9333333333333335
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/family.mp4",
+   "source_sha256": "0b140a0a1bd525c96f01a36490d4d9e073eca7ebdf0123e13d63c57f52f4f7de",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.5,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "FAMILY.jpg",
     "loop": "FAMILY.mp4",
-    "frames": 33,
+    "poster": "FAMILY.jpg",
+    "loop_sha256": "74ac91103d6cca28cd9d58cd5167f425b02205edfcbe15adf4fc87d7733c654e",
+    "poster_sha256": "aa13e7591aa878603e86461dfcab6d2ef3c6d2f8492b562c8eedfdc9ebf397f8",
+    "frames": 165,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "a16f64b8c28b6e779a0c5294bd2c6229ee7b4aa964f69da5b265564525c8f747",
-    "poster_sha256": "7f3f7155d432d542c45017175777568bcbd863edd16670b660f6701b7e9d4b86"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "FRIEND": {
@@ -2873,28 +3280,24 @@
    "category": "people_and_family",
    "citizen_raw_gloss": "FRIEND",
    "citizen_asl_lex_code": "D_03_010",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/FRIEND/26b51918.mp4",
-   "source_sha256": "e8e3d0f953f6b820d5c7c5b2d78deb522f2a84d3fa6fe6e26b6c79e79320914b",
-   "split": "train",
-   "seconds": 1.233,
-   "score": 1.0388,
-   "components": {
-    "quality": 0.9888,
-    "duration": 1.0
-   },
-   "candidates_considered": 13,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/friend.mp4",
+   "source_sha256": "f7d3ff3947c8022cbbc8fe49c2fd154faac547501de54a9b3a9fe8c87e25fb30",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.4667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "FRIEND.jpg",
     "loop": "FRIEND.mp4",
-    "frames": 37,
+    "poster": "FRIEND.jpg",
+    "loop_sha256": "57bdbde6b81dc1573ba2893592797122c4a59e2496498b3aa6467c3fdc071553",
+    "poster_sha256": "626c105e140f37467164d7196ab4b1f4096732da9f3a63a5beab1e62a7397a0f",
+    "frames": 164,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "a73f3fec382b4b755ab132b78151e1456cbaf337e647b88313c7c1c87aa83fd1",
-    "poster_sha256": "eedc6665e5eb667e554e4a0acf19af5a52095c6f03b77a31723e87f38acbec20"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "MOTHER": {
@@ -2903,28 +3306,24 @@
    "category": "people_and_family",
    "citizen_raw_gloss": "MOTHER",
    "citizen_asl_lex_code": "B_02_008",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/MOTHER/b0644df4.mp4",
-   "source_sha256": "ccd8d40f6c9c868a8a97fbd1001a71c88283df0fa0225c8846d0f0fe1ac9db88",
-   "split": "train",
-   "seconds": 1.6,
-   "score": 1.05,
-   "components": {
-    "quality": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/MOTHER.mov",
+   "source_sha256": "482a82e75c20e994626d4df956a4e176c4561f26a547105bfe286399e82560f2",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.3,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "MOTHER.jpg",
     "loop": "MOTHER.mp4",
-    "frames": 48,
+    "poster": "MOTHER.jpg",
+    "loop_sha256": "e0712ff95d111812f7f144d06c7eaab90b7bbbd197383ea106ebb756a4cacefc",
+    "poster_sha256": "d1ba25f80aa7fb8c581b2c2da3a71204b3241dcf5c47800456f7a15a2a721419",
+    "frames": 99,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "8f1abba24cf0db850d7d1d3c1c785505c4300253da1b67791bff1640eac8e457",
-    "poster_sha256": "e42a0a9be66e15bf357aebc5b9a4f40f7b613f26fe82a44ae6b19f4b66ce9d6a"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "FATHER": {
@@ -2933,28 +3332,24 @@
    "category": "people_and_family",
    "citizen_raw_gloss": "FATHER",
    "citizen_asl_lex_code": "B_01_077",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/FATHER/9f051576.mp4",
-   "source_sha256": "832e859d8b8c331920d1a52446ff5e646c293b6d22e9313c7f2b4a6b1a2ce936",
-   "split": "train",
-   "seconds": 1.233,
-   "score": 0.9526,
-   "components": {
-    "quality": 0.9026,
-    "duration": 1.0
-   },
-   "candidates_considered": 6,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/father.mp4",
+   "source_sha256": "01a7ff78c1f61fe98744f686fb439617011cef07c66be3db5369bcf5872c2c89",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.7,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "FATHER.jpg",
     "loop": "FATHER.mp4",
-    "frames": 37,
+    "poster": "FATHER.jpg",
+    "loop_sha256": "ae2a36725dabf87f1b7ce961112d08b167960db5ccdb54ef4d100f6768a43dad",
+    "poster_sha256": "6cdd2aeb7d8a66a52a0b1d940c909bcc1550e278a807d1ad41aa71ecbdd9ec5e",
+    "frames": 171,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "d19b20270acbf9094f60bab19f5460a74471a1cd206645de1b0fa0b1d3f1c09a",
-    "poster_sha256": "fa16742463e3e8f3db5bfe1c966318dd8bcf582c8da7cc73b0e0fde78a83c3ea"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "CHILD": {
@@ -2963,31 +3358,24 @@
    "category": "people_and_family",
    "citizen_raw_gloss": "CHILD",
    "citizen_asl_lex_code": "F_03_101",
-   "source": "citizen",
-   "participant": "P31",
-   "source_video": "data/local/citizen100_v17/raw/train/CHILD/6537920676433713-CHILD.mp4",
-   "source_sha256": "fccf5cb51b17d8c7343188adbfd6ca99f22e63feb3d1d56bcf19318ba9be9c47",
-   "split": "train",
-   "seconds": 1.9,
-   "score": 0.7423,
-   "components": {
-    "hand_presence": 0.458251953125,
-    "hand_frames": 0.9298245614035088,
-    "face_presence": 0.84375,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 16,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/Glosses/child.mp4",
+   "source_sha256": "789a56b63b36ea72c0e649565fc15da7147dcefb289d0b3f58592ad1a63bcb39",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 6.8,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "CHILD.jpg",
     "loop": "CHILD.mp4",
-    "frames": 73,
+    "poster": "CHILD.jpg",
+    "loop_sha256": "aeff6326e98e278d1055e1688a4f92a43ef3dadb1ebe7137c6eb27a42c56f1c9",
+    "poster_sha256": "9277aaf20d6ab2d36a1be2c8fbcd59026600a945488fdc146fc6736fc1e4e1ee",
+    "frames": 204,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "6ec74775fbe8e4a38b0957e6b5bc781eac8a701d983cd362b3f87890cde18ca6",
-    "poster_sha256": "fba482707a9aba736267f26779e4919b0c8274300d36b1ae14921456173b7d54"
+    "width": 720,
+    "height": 720,
+    "codec": "h264"
    }
   },
   "MAN": {
@@ -2996,31 +3384,24 @@
    "category": "people_and_family",
    "citizen_raw_gloss": "MAN",
    "citizen_asl_lex_code": "C_01_040",
-   "source": "citizen",
-   "participant": "P14",
-   "source_video": "data/local/citizen100_v17/raw/train/MAN/07906567248016683-MAN.mp4",
-   "source_sha256": "9f1c71b52be040713603f84eaaa6963267295bdcf16de9fddc68e35e19763c70",
-   "split": "train",
-   "seconds": 1.134,
-   "score": 0.7253,
-   "components": {
-    "hand_presence": 0.427734375,
-    "hand_frames": 0.8529411764705882,
-    "face_presence": 0.96875,
-    "edges": 1.0,
-    "duration": 0.9561748633879782
-   },
-   "candidates_considered": 8,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/MAN.mov",
+   "source_sha256": "ed4230415d6b52fc5bc244034d6d7d0b3edf39cf2c46b5492f641ce55705e8ce",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.6667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "MAN.jpg",
     "loop": "MAN.mp4",
-    "frames": 48,
-    "fps": 29.975,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "79ab415cf061ef8c5580d344998e2b3c400948688f4c7e5c171a3f4fda85e489",
-    "poster_sha256": "ed93ab75ba8ed9ab4be604c1fc36de15a19ec6da46931e779d8b829a00e155dd"
+    "poster": "MAN.jpg",
+    "loop_sha256": "b745701f414a40d04a7b2528109c0839d6c7671d1548720e877006ca462e6ebf",
+    "poster_sha256": "9a28a7676fe08ffccda774dd35a5e0d19b36e3b9f494a8aa5796dd7cde7210b0",
+    "frames": 80,
+    "fps": 30.0,
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "WOMAN": {
@@ -3029,32 +3410,52 @@
    "category": "people_and_family",
    "citizen_raw_gloss": "WOMAN1",
    "citizen_asl_lex_code": "C_02_028",
-   "source": "citizen",
-   "participant": "P50",
-   "source_video": "data/local/citizen100_v17/raw/train/WOMAN/020744311307733465-WOMAN.mp4",
-   "source_sha256": "ccbb4d8998687f1afee5d9457ca1b284f3faa7a4d953aa9b56576b99e60e820c",
-   "split": "train",
-   "seconds": 0.967,
-   "score": 0.7039,
-   "components": {
-    "hand_presence": 0.431640625,
-    "hand_frames": 0.8620689655172413,
-    "face_presence": 0.875,
-    "edges": 1.0,
-    "duration": 0.8444444444444444
-   },
-   "candidates_considered": 14,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/IMG_4116.MOV",
+   "source_sha256": "10f615663eaa1cbea39bcf090416437f5eabf42e60cb595f522b693f4bd9b07e",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 2.9333,
    "notes": [],
+   "preview_label_source": "model_top1",
    "assets": {
-    "poster": "WOMAN.jpg",
     "loop": "WOMAN.mp4",
-    "frames": 45,
+    "poster": "WOMAN.jpg",
+    "loop_sha256": "ada6914139d3e476ae4aaf7b54dddcea491255efd04225686951445e40b7016d",
+    "poster_sha256": "51e07975932b49d4cd17a4501464288a55272957f83d52f0f48bdaeca2c75ee3",
+    "frames": 88,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "147f43c0d75e59990ccfc28117ba957a310a6ac74556f51390f7db63b6f3ca1f",
-    "poster_sha256": "cf525f96dffa04d24e2d93103bf0ecbe839e353f00721ae41b8bd65e30a22ebf"
-   }
+    "width": 406,
+    "height": 720,
+    "codec": "h264"
+   },
+   "preview_model_top5": [
+    {
+     "label": "WOMAN",
+     "logit": 8.453125,
+     "probability": 0.9835363095039342
+    },
+    {
+     "label": "SAD",
+     "logit": 0.8720703125,
+     "probability": 0.0005016261631215172
+    },
+    {
+     "label": "MY",
+     "logit": 0.63134765625,
+     "probability": 0.0003943080635797684
+    },
+    {
+     "label": "WATER",
+     "logit": 0.6171875,
+     "probability": 0.00038876394521728436
+    },
+    {
+     "label": "MAN",
+     "logit": 0.49462890625,
+     "probability": 0.00034392160571587943
+    }
+   ]
   },
   "NAME": {
    "canonical_label": "NAME",
@@ -3062,28 +3463,24 @@
    "category": "language",
    "citizen_raw_gloss": "NAME",
    "citizen_asl_lex_code": "D_01_021",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/NAME/86c7be2c.mp4",
-   "source_sha256": "b4240921656df868dc8e0f51dc46c02617931d7f2c3513f4b1de20b5c74cdd6f",
-   "split": "train",
-   "seconds": 0.833,
-   "score": 0.9865,
-   "components": {
-    "quality": 0.9487,
-    "duration": 0.7556
-   },
-   "candidates_considered": 6,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/NAME.mov",
+   "source_sha256": "9b6a65e43e3285996cbf0dc6385a75760310f744e7d53753c6d7707893c3dca6",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.3333,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "NAME.jpg",
     "loop": "NAME.mp4",
-    "frames": 25,
+    "poster": "NAME.jpg",
+    "loop_sha256": "a5c5ac69f478fa97a18dfc4fbbc0071317924b7834c043cdd74812d1b679b1a6",
+    "poster_sha256": "75f4abbbb3eb0f4b3c45ca25c8c7ce3fe39e3e8d2a719b95a3572b33adf5cc4c",
+    "frames": 100,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "36aa44728be545da84eb66f7acc9a950a20c82a3e38c557820acf10c11e522d1",
-    "poster_sha256": "e9f8d2e43fe05345e8a679a09c1e73241c9e106aabf55aba952dfd24442d2d7f"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "SIGN": {
@@ -3092,31 +3489,24 @@
    "category": "language",
    "citizen_raw_gloss": "SIGN",
    "citizen_asl_lex_code": "E_03_050",
-   "source": "citizen",
-   "participant": "P40",
-   "source_video": "data/local/citizen100_v17/raw/train/SIGN/9039030666503207-SIGN.mp4",
-   "source_sha256": "74d8294a57879d27da10efd2aa3c0a8cde347b5fcdf36f5dd723833c1aa42325",
-   "split": "train",
-   "seconds": 1.867,
-   "score": 0.9181,
-   "components": {
-    "hand_presence": 0.88671875,
-    "hand_frames": 0.9285714285714286,
-    "face_presence": 0.875,
-    "edges": 1.0,
-    "duration": 1.0
-   },
-   "candidates_considered": 15,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/SIGN.mov",
+   "source_sha256": "8aa5d05aa755f949e73e3dc48d5f4e5c84bfed173dba065511472ad24712f48f",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 5.2,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "SIGN.jpg",
     "loop": "SIGN.mp4",
-    "frames": 72,
+    "poster": "SIGN.jpg",
+    "loop_sha256": "5221efe3b8bca6c2fd3addd94b63b2b352262a07235654e05c26a2915ba7d80e",
+    "poster_sha256": "0db8f58371e3b75c423e8cfc90da762914c503254e315c212a50a5634b40ca71",
+    "frames": 156,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "7451f3d20bb2af2137dfe8b4276704dbe0ac3d9e72e25387e0ffa57dd76005bc",
-    "poster_sha256": "7f8bea84df0b0f31002735fb759feba92c2e32f7b102b84e2bd469d96313fb88"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   },
   "LANGUAGE": {
@@ -3125,43 +3515,25 @@
    "category": "language",
    "citizen_raw_gloss": "LANGUAGE",
    "citizen_asl_lex_code": "A_01_067",
-   "source": "local",
-   "participant": "",
-   "source_video": "data/raw_videos/ASL VIDEOS/LANGUAGE/cd2b6376.mp4",
-   "source_sha256": "1a4108b01fd026f8a9414d5b73612c8aaea1de8b11eeeff57b0dca7f4cba1b35",
-   "split": "train",
-   "seconds": 0.833,
-   "score": 0.9984,
-   "components": {
-    "quality": 0.9606,
-    "duration": 0.7556
-   },
-   "candidates_considered": 10,
+   "source": "owner_supplied_preview",
+   "source_video": "/Users/frnzlo/Downloads/signs/HOW-SIGN/LANGUAGE.mov",
+   "source_sha256": "c1e80daa94c84cff5937b39778464f601b338b402afbc0e1bb06db161d60516e",
+   "split": "preview_only",
+   "training_eligible": false,
+   "seconds": 3.1667,
    "notes": [],
+   "preview_label_source": "filename",
    "assets": {
-    "poster": "LANGUAGE.jpg",
     "loop": "LANGUAGE.mp4",
-    "frames": 25,
+    "poster": "LANGUAGE.jpg",
+    "loop_sha256": "4a22e689d08bacf7eb66d6f1623628fad28e951f5a6d82cf7d7a623a2ce0d6e9",
+    "poster_sha256": "11f3c81ed48639c4be4c96dc52c59970d5de2e28e7a668fbb8b59b622e667667",
+    "frames": 95,
     "fps": 30.0,
-    "width": 480,
-    "height": 360,
-    "loop_sha256": "1eb4dc7be8a6353afdd03435874ba48a69a1595f48e65f6f55c48ee087faff57",
-    "poster_sha256": "4c7e5c16cf52cef95775ee3b7b269d8905bac6c14654ecde856a628ea953bfd4"
+    "width": 720,
+    "height": 406,
+    "codec": "h264"
    }
   }
- },
- "local_training_manifest_sha256": "d4e4eb97096c35d039f1dfd00d6795e974b8e5ed2fb31e26e80dc54eaeea5a8c",
- "recognition_check": {
-  "report": "artifacts/reports/mobile_preview_audit_v17_20261013",
-  "platform": "macOS native Swift replay",
-  "compute_units": "all",
-  "recognizer": "SpanRecognizerV17ConfidenceDualB8FP16",
-  "image_encoder": "MobileCLIP2S0ImageEncoderV17FP16",
-  "exact_previews": 100,
-  "exact_sources": 100,
-  "total": 100,
-  "physical_phone_verified": false,
-  "end_of_file_flush": true,
-  "finish_gesture_enabled": false
  }
 }
