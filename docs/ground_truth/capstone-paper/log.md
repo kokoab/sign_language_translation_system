@@ -1,3 +1,213 @@
+## 2026-10-20 — Primary loss panel removed at user request
+
+User cancelled the matched train/validationCE comparison and requested loss removed.
+Changed only latest Top5 generator/primaryPNG/SVG/PDF: entire primaryLoss panel removed,
+learningrate expands across lowerrow; accuracy, macro metrics and summarytable retained.
+Generator --primary-only preserves baseexports; base and originalbatch hashes match.
+Removed lossreceipt dependency and visible loss wording; measuredCE evidence remains
+preserved on disk. PNG visually checked for layout/legibility; scoped diffcheck passes.
+Before cancellation, only inspected cached training membership and trainer inputcontract;
+no trainingCE inference or training was launched. Original cache had25SemLex train/rawval
+sharedIDs; latest chart continues its existing admitted953SemLex validation filter.
+No new accuracy claim, protectedtest access, model/app or manuscript change.
+Next safe action: use the latest loss-free primaryTop5 export; olderbatch remains intact.
+
+## 2026-10-20 — Selected primary validation loss added to latest Top-5 chart
+
+User requested validation loss. Confirmed original span-training history and logs
+record only composite training loss, domain Top1 and tuning WER; no epoch-wise
+validation loss, and only selected best_model.pth retained. Replayed pinned epoch4
+primary checkpoint on exact saved3957validation membership; allTop1predictions match
+saved outputs. Mean unsmoothed classification cross-entropy=0.23797814375453488
+(Citizen0.17754511,SemLex0.55288420,local0.13239483). Stored per-example loss and
+source/cache/model hashes in primary_validation_loss.json with reproducible
+`20261020_metrics_top5/evaluate_validation_loss.py`. Weighted loss recomputation and
+finite/nonnegative checks pass. Latest generator --primary-only adds measured red
+epoch4point(0.2380) to Loss panel, labels training curve as composite objective and
+keeps validationCE scope explicit. No fabricated validationcurve; training objective
+includes additional terms and is not the same quantity as isolated-validation CE.
+Regenerated only latestprimary PNG/SVG/PDF; visually checked no clipping. Base chart
+exports and originalbatch allfilehashes unchanged. No training, protectedtest access,
+app/model or manuscript changes. Next safe action: use updated primarychart with its
+selected-checkpoint note; full validationloss curve cannot be recovered from retainedfiles.
+
+## 2026-10-20 — Separate Top-5 chart batch; original charts preserved
+
+User requested another batch for primary recognizer and base landmark model, adding
+Top-5 without replacement. Created `docs/capstone_papers/review_assets/20261020_metrics_top5/`
+with separate generate.py, evaluate_top5.py, receipts and two PNG/SVG/PDF dashboards.
+Primary checkpoint99a18801 replayed on exact saved3957validation examples using
+saved IDs to filter original cache (953admittedSemLex, not978). All3957Top1predictions
+exactly match saved labels/predictions. Top5:3912/3957=98.86277483% (Citizen376/378,
+SemLex920/953,local2616/2626). Primary chart marks Top5 at selected epoch4 only;
+no unrecorded epochcurve invented. Base uses recorded Top5 history and selected
+epoch100:375/378=99.20634921%. Both retain one combined Top1curve and other existing
+panels; summarytables now include Top1/Top5/macroprecision/recall/F1. Historical
+primary curve3982/current summary3957scope note retained. Original batch all file
+SHA256hashes captured and checked unchanged after rendering. PNGs visually inspected:
+five-column tables and legends legible, no clipping. Existing metric assertions pass.
+No training, protectedtest access, app/manuscript changes or model selection.
+Next safe action: use either batch as requested; Top5 is validation, not phone/testaccuracy.
+
+## 2026-10-20 — Combined accuracy curve and base-landmark dashboard
+
+User rejected dataset-separated curves and requested base landmark chart. Replaced
+primary accuracy panel with one pooled curve, recovering integer correct counts using
+original Citizen378/SemLex978/local2626 denominators (3982 total); all percentages
+match integer counts within1e-4. Kept later3957clip primary metric summary explicitly
+separate in the short caption. Simplified LR to one recognition-head schedule.
+Added base_landmark_metrics PNG/SVG/PDF and JSON alongside primary files in
+`docs/capstone_papers/review_assets/20261020_primary_metrics/`; shared generator.
+Base uses original130epoch history with selected epoch100, accuracy, macro F1,
+train/validation loss and recorded LR. Replayed only cached Citizen validation378
+with pinned base checkpoint on MPS; label mapping matches fusion lineage.
+Accuracy96.82539683 and macroF1 96.60620491 exactly reproduce checkpoint metadata;
+new macro precision97.77142857 and recall96.58333333. Cached labels/predictions,
+checkpoint/cache/history hashes retained in base receipt. No protected test access,
+training, model/app or manuscript edits. Macro precision/recall per-epoch curves
+unavailable; snapshot metrics retained in table. Both exported PNGs visually checked;
+all assertions pass. Next safe action: use the two dashboard exports with their
+validation scope; do not interpret the different validation sets as a controlled comparison.
+
+## 2026-10-20 — Primary metric chart restyled to reference dashboard
+
+User supplied a four-panel training dashboard reference. Updated the standalone
+`20261020_primary_metrics/generate.py` and regenerated PNG/SVG/PDF plus metrics receipt.
+Panels show recorded per-domain validation accuracy (epochs0–8, selected4), selected
+checkpoint macro metrics, recorded composite training loss and reconstructed cosine
+learning-rate schedule. Bottom validation table retains95.50/94.51/94.52/94.38%.
+Per-epoch classification macro metrics and validation loss were not logged, so those
+curves are not fabricated. Original training-log domain membership differs from the
+later pooled3957clip evaluation; scopes are explicit. Command has no LR overrides;
+verified trainer defaults head2e-5/encoder1e-5 and CosineAnnealingLR(T_max=8).
+Independent metric assertions pass; rendered PNG visually checked with readable panels
+and no clipping. No training, inference, protected-test access or manuscript edits.
+Next safe action: use the dashboard export, retaining its validation and snapshot labels.
+
+## 2026-10-20 — Primary recognizer four-metric validation chart
+
+Created only the requested standalone primary-head chart in
+`docs/capstone_papers/review_assets/20261020_primary_metrics/` (PNG/SVG/PDF,
+reproducible `generate.py`, source/model hashes and exact values in `metrics.json`).
+Reused saved `current_lineage_components_v17_20261013/results.json` predictions:
+3,779/3,957 correct across 100 signs; Citizen378/SemLex953/local2626.
+Accuracy95.50164266%, macro precision94.50973366%, macro recall94.52438877%,
+macro F1 94.37835193%. Each macro metric averages per-sign values equally;
+F1 is calculated per sign before averaging. Confusion-matrix calculations independently
+match sklearn within1e-12 and reproduce the saved accuracy. PNG visually inspected:
+all four labels/values legible, axis starts at zero, isolated-validation scope explicit.
+No training, inference rerun, protected-test access, model/app or manuscript edits.
+Next safe action: use the standalone chart in the paper/presentation when requested;
+keep its pooled isolated-sign validation scope attached.
+
+## 2026-10-20 — Inspection assets grouped by conversion stage
+
+User requested organization of current_runtime_models shown in Finder. Moved its
+retained mlpackage directories into coreml_packages; original PTH/PT/safetensors,
+English source folder and provenance documents into before_conversion. Kept exported
+English BIN/spec in english_export because it is not Core ML. Preserved every retained
+asset and corresponding Finder metadata; no duplicate checkpoint copies added.
+Source manifest paths resolve relative to before_conversion. App and canonical
+assets unchanged. Next safe action: use coreml_packages for exported graph inspection
+and before_conversion for source checkpoint inspection.
+
+## 2026-10-20 — Minimal selected-model folder
+
+User requested a separate minimal folder with only selected singular models.
+Created `ATLAS/selected_models/` containing three source-weight copies only:
+recognizer_primary.pth (retained primary), boundary_student.pth (selected word
+boundary), MobileCLIP2S0_original.safetensors (pinned pretrained encoder source).
+Excluded recognizer refinement/auxiliary checkpoints and English ensemble because
+current captions needs five cooperating models, not one ranked best checkpoint.
+No README/manifests added to this minimal folder; provenance remains in the prior
+current_runtime_models/PYTORCH_SOURCES.json. Copies hash-verified; previous folders,
+original assets and app unchanged. Next safe action: inspect these three with their
+matching architecture definitions; this is a study selection, not a full deploy bundle.
+
+## 2026-10-20 — PyTorch sources for user-retained runtime models
+
+User reduced inspection folder to three main Core ML packages plus captions BIN
+and requested their PyTorch sources. Preserved retained files and copied 12 source
+files (436,639,422 bytes): primary/refined recognizer checkpoints, package auxiliary
+head, word-boundary student, five English PT state dictionaries with manifest/vocab,
+and original MobileCLIP2 safetensors. Preserved native formats; no renamed fake PTH.
+Dual recognizer needs its preserved primary fusion head plus refined checkpoint and
+auxiliary head; original MobileCLIP source contains text/image towers but phone uses
+image only. PYTORCH_README.md explains these contracts; PYTORCH_SOURCES.json records
+paths/sizes/hashes. Every copy hash-matches source; boundary/refined/auxiliary hashes
+also match export receipts, captions match release manifest and image matches pinned
+schema hash. No removed standalone models restored. No training, export, inference,
+app change or protected evaluation. Next safe action: study copied checkpoints with
+matching architecture source; state dictionaries alone may not show full Netron graphs.
+
+## 2026-10-20 — Current runtime model inspection folder
+
+User requested a separate folder containing only used models. Created
+`ATLAS/current_runtime_models/` with copies of 11 currently loaded model/support
+assets (19 files, 88,550,462 bytes), README and SHA-256 manifest. Verified current
+App/Engine/Models/Decoder load sites, including the FP16 image override and captions
+weights/spec. Excluded inactive T5 packages, historical recognizer alternatives and
+training checkpoints. README distinguishes main word pipeline from additional
+spelling assets actually initialized by this app, which remain outside study diagrams.
+All copied files hash-match originals. Originals and application loading remain
+unchanged; no training, inference, benchmark, build or protected evaluation.
+Next safe action: inspect the copied dual recognizer package in Netron alongside
+the FigJam detail; custom caption/JSON weights are not standalone Core ML graphs.
+
+## 2026-10-20 — Additive detailed FigJam companions
+
+Added eight detailed companions (25 smaller subdiagrams) beside the eight existing
+study overviews on board QD1x6X7ts34SVBSpvkRhYS. Original section XML, coordinates,
+cards and connectors compare unchanged for all eight. New views trace input origins,
+tensor shapes, intermediate operations, losses, optimizer updates and outputs.
+Kept explicit-boundary recognition, separate illustrative HELLO and paper T5 English;
+excluded recognition subsystems remain absent. Code supplements, paper results and
+toy numbers are distinguished. Verified stage-specific freezing, interval objective,
+boundary feature/target alignment and matching paper T5 training receipt. Screenshot
+QA and bounds checks passed; corrected one clipped label; no companion collisions.
+No model/source change, training, export, benchmark, build or protected evaluation.
+Artifact: artifacts/reports/atlas_detailed_companions_20261020/REPORT.md and
+board_content.json. Next safe action: open runtime detail node48:1195 and read its
+four subdiagrams individually, using overview step IDs to trace evidence reuse.
+
+## 2026-10-20 — Simplified FigJam flow and separate training diagrams
+
+Revised the same board QD1x6X7ts34SVBSpvkRhYS after user feedback. Replaced the
+complex multi-version layout with eight separate panels: general runtime R,
+illustrative HELLO H, isolated training I, phrase adaptation P, interval adaptation C,
+boundary distillation B, paper T5 training E and deployment D. Every process has
+stable step IDs and cards identify where inputs originate and where outputs go.
+User explicitly retained general flow separately from HELLO, requested current
+continuous implementation only and paper English only, and removed out-of-scope
+recognition subsystems. Board scan confirms those terms absent; no overflow;
+all eight panels visually inspected. 54 cards keep formulas/settings below short
+main flows. Corrected stage-specific freezing: phrase encoders frozen, selected
+primary interval encoders trainable, later scoped refinement encoders frozen.
+Matched recorded T5 recipe (Adafactor,batch32,peak3e-4,warm-up100,linear decay)
+to paper validation receipt step4539/loss0.2515; final-step retention differs from
+recognizer validation selection. No new training/evaluation/source or deployment
+change. Evidence/artifact: artifacts/reports/atlas_study_board_revision_20261020/.
+Next safe action: open R at node19:633 and follow input origins; use H independently
+for the worked example. Earlier FigJam artifact describes the superseded layout.
+
+## 2026-10-20 — Editable camera-to-output FigJam study board
+
+Created https://www.figma.com/board/QD1x6X7ts34SVBSpvkRhYS for defense study.
+User requested full runtime inputs, operations, shapes, units, settings, buffers,
+decisions and outputs. After review, merged equivalent paper/current overview
+stages using simple names with technical terms in parentheses. Kept the actual
+English-path difference explicit: submitted T5 versus current iPhone LiveCaptions.
+Eight detailed sections contain 46 source-referenced cards. Verified current LIVE
+camera entry point, boundary/candidate contracts, selected recognizer checkpoint
+metadata, fusion/dual-output selection, decoder settings, captions and Finish.
+No training, inference benchmark, protected evaluation, source/model change or
+deployment. Artifact: artifacts/reports/atlas_runtime_figjam_20261020/REPORT.md
+and board_content.json. External volume briefly disconnected, then returned;
+continued source verification after reconnection. Visual QA found reparented
+connector routing problems; rebuilt attached connectors and removed unsuccessful
+floating-route attempts. Next safe action: use the board for guided stage-by-stage
+study; keep paper evaluation results attached to the evaluated T5 path.
+
 ## 2026-10-14 — Chapter 4 whitespace repair verified
 
 User identified excessive blank space after condensation. FullChapter4PDFcontact sweep
