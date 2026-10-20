@@ -1,0 +1,496 @@
+{
+  "boardUrl": "https://www.figma.com/board/QD1x6X7ts34SVBSpvkRhYS",
+  "entryUrl": "https://www.figma.com/board/QD1x6X7ts34SVBSpvkRhYS?node-id=19-633",
+  "date": "2026-10-20",
+  "scope": "Word-recognition implementation and submitted-paper T5 English path. General runtime and HELLO example remain separate. Current explicit-boundary continuous approach only.",
+  "diagrams": [
+    {
+      "key": "runtime",
+      "title": "A · General runtime",
+      "ref": "R",
+      "color": "#C2E5FF",
+      "stroke": "#3DADFF",
+      "flow": "rOne[\"R1 · Capture signing (camera)\"] --> rTwo[\"R2 · Extract points and hand details (visual extraction)\"]\nrTwo --> rThree[\"R3 · Estimate sign intervals (boundary student)\"]\nrThree --> rFour[\"R4 · Identify candidate signs (recognizer)\"]\nrFour --> rFive[\"R5 · Select and accept signs (segmental decoder)\"]\nrFive --> rSix[\"R6 · Generate English (paper T5 path)\"]\nrSix --> rSeven[\"R7 · Finish, display and speak (local output)\"]",
+      "id": "19:633"
+    },
+    {
+      "key": "hello",
+      "title": "B · HELLO walkthrough",
+      "ref": "H",
+      "color": "#BDECC3",
+      "stroke": "#66D575",
+      "flow": "hOne[\"H1 · A person performs HELLO\"] --> hTwo[\"H2 · Extract this movement's points and hand details\"]\nhTwo --> hThree[\"H3 · Propose intervals around the movement\"]\nhThree --> hFour[\"H4 · Score HELLO and the other vocabulary signs\"]\nhFour --> hFive[\"H5 · Accept one HELLO event when evidence is sufficient\"]\nhFive --> hSix[\"H6 · Send committed HELLO to T5\"]\nhSix --> hSeven[\"H7 · Finish: display and speak the English greeting\"]",
+      "id": "20:665"
+    },
+    {
+      "key": "isolated",
+      "title": "C · Isolated-sign training",
+      "ref": "I",
+      "color": "#DCCCFF",
+      "stroke": "#874FFF",
+      "flow": "iOne[\"I1 · Collect labeled single-sign clips\"] --> iTwo[\"I2 · Preserve training and validation splits\"]\niTwo --> iThree[\"I3 · Prepare landmark and hand-image inputs\"]\niThree --> iFour[\"I4 · Predict with the recognition branches\"]\niFour --> iFive[\"I5 · Measure error (training loss)\"]\niFive --> iSix[\"I6 · Calculate gradients and update trainable weights\"]\niSix --> iSeven[\"I7 · Validate and keep branch checkpoints\"]\niSeven --> iEight[\"I8 · Adapt local examples and train learned fusion\"]",
+      "id": "21:700"
+    },
+    {
+      "key": "phrase",
+      "title": "D · Phrase adaptation",
+      "ref": "P",
+      "color": "#DCCCFF",
+      "stroke": "#874FFF",
+      "flow": "pOne[\"P1 · Load isolated multimodal checkpoint from I8\"] --> pFour[\"P4 · Calculate features using frozen encoders\"]\npTwo[\"P2 · Use annotated phrase recordings\"] --> pThree[\"P3 · Extract one labeled sign segment at a time\"]\npThree --> pFour\npFour --> pFive[\"P5 · Mix phrase-segment features and isolated replay\"]\npFive --> pSix[\"P6 · Update the fusion head with the adaptation loss\"]\npSix --> pSeven[\"P7 · Check phrase and isolated validation\"]\npSeven --> pEight[\"P8 · Keep the phrase-adapted checkpoint\"]",
+      "id": "22:737"
+    },
+    {
+      "key": "interval",
+      "title": "E · Continuous candidate-interval adaptation",
+      "ref": "C",
+      "color": "#DCCCFF",
+      "stroke": "#874FFF",
+      "flow": "cOne[\"C1 · Load phrase-adapted checkpoint from P8\"] --> cFour[\"C4 · Predict from mixed interval and replay inputs\"]\ncTwo[\"C2 · Prepare candidate intervals from phrase evidence\"] --> cFour\ncThree[\"C3 · Prepare full, partial and tiny isolated views\"] --> cFour\ncFour --> cFive[\"C5 · Combine classification, rejection and retention losses\"]\ncFive --> cSix[\"C6 · Update encoders and fusion head carefully\"]\ncSix --> cSeven[\"C7 · Check development WER and isolated retention\"]\ncSeven --> cEight[\"C8 · Keep primary checkpoint and scoped refinement output\"]",
+      "id": "23:774"
+    },
+    {
+      "key": "boundary",
+      "title": "F · Boundary-model training",
+      "ref": "B",
+      "color": "#FFECBD",
+      "stroke": "#FFC943",
+      "flow": "bOne[\"B1 · Use matching recordings for both feature pipelines\"] --> bTwo[\"B2 · Run frozen timing teacher on MediaPipe pose\"]\nbTwo --> bThree[\"B3 · Align teacher O/B/I targets to timestamps\"]\nbOne --> bFour[\"B4 · Build Apple Vision student features\"]\nbThree --> bFive[\"B5 · Compare student timing predictions with targets\"]\nbFour --> bFive\nbFive --> bSix[\"B6 · Update student weights; teacher stays frozen\"]\nbSix --> bSeven[\"B7 · Validate timing agreement on held-out videos\"]\nbSeven --> bEight[\"B8 · Keep the boundary student for mobile export\"]",
+      "id": "24:811"
+    },
+    {
+      "key": "english",
+      "title": "G · Paper T5 English training",
+      "ref": "E",
+      "color": "#FFECBD",
+      "stroke": "#FFC943",
+      "flow": "eOne[\"E1 · Prepare gloss sequences paired with English targets\"] --> eTwo[\"E2 · Tokenize inputs, targets and masks\"]\neTwo --> eThree[\"E3 · Start from pretrained T5-efficient-tiny\"]\neThree --> eFour[\"E4 · Predict target English tokens (teacher forcing)\"]\neFour --> eFive[\"E5 · Measure token error (cross-entropy)\"]\neFive --> eSix[\"E6 · Backpropagate and update T5 weights\"]\neSix --> eSeven[\"E7 · Keep the recorded checkpoint and evaluate\"]\neSeven --> eEight[\"E8 · Export the paper's gloss-to-English model\"]",
+      "id": "25:851"
+    },
+    {
+      "key": "deployment",
+      "title": "H · Checkpoints to mobile runtime",
+      "ref": "D",
+      "color": "#C2E5FF",
+      "stroke": "#3DADFF",
+      "flow": "dOne[\"D1 · Gather selected checkpoints and label maps\"] --> dTwo[\"D2 · Define model input and output contracts\"]\ndTwo --> dThree[\"D3 · Convert graphs to Core ML\"]\ndThree --> dFour[\"D4 · Compare converted outputs with source outputs\"]\ndFour --> dFive[\"D5 · Bundle models and decoder configuration\"]\ndFive --> dSix[\"D6 · Load and warm models on the device\"]\ndSix --> dSeven[\"D7 · Run the general pipeline R1 to R7\"]\ndSeven --> dEight[\"D8 · Measure device behavior and keep evaluation scopes clear\"]",
+      "id": "26:888"
+    }
+  ],
+  "notes": {
+    "runtime": {
+      "intro": "The main sequence is deliberately simple. Read each card's INPUT FROM line to see reused evidence; an arrow does not mean that all data comes only from the immediately previous step. Word-recognition scope; English follows the submitted paper's T5 description.",
+      "cards": [
+        [
+          "R1 · Capture signing",
+          "INPUT FROM: device camera.\nDO: receive upright, unmirrored BGRA frames and their timestamps. Current iPhone LIVE requests 1280×720, with 640×480 fallback; processing targets 20 positions/s.\nOUTPUT: pixel buffer + elapsed seconds + image dimensions.\nUSED BY: R2. Only the front-camera preview is mirrored."
+        ],
+        [
+          "R2 · Extract visual information",
+          "INPUT FROM: R1 frames.\nDO: Apple Vision extracts 61 selected hand, face and upper-body points; make left-hand, right-hand and union crops. Encode valid 256×256 RGB crops using MobileCLIP2-S0.\nOUTPUT: timestamped points/confidence; cached [3,512] appearance features, validity [3], boxes [3,4].\nUSED BY: BOTH R3 and R4. The image encoder runs once per processed frame, not once per candidate."
+        ],
+        [
+          "R3 · Estimate intervals",
+          "INPUT FROM: R2 landmark observations, not hand-image embeddings.\nDO: derive 450 geometry/motion/presence/confidence features. The boundary student reads [1,64,450] plus [1,64] validity and predicts outside/beginning/inside (O/B/I), with six-position lookahead. Candidate proposals use this timing evidence.\nOUTPUT: O/B/I timing scores and proposed [start,end] intervals.\nUSED BY: BOTH R4 and R5. This stage does not name the sign."
+        ],
+        [
+          "R4 · Recognize each candidate",
+          "INPUT FROM: R2 points AND cached hand features, selected using R3 intervals.\nDO: trim/normalize the span; resample landmarks to [32,61,5], select 16 image times → [16,3,512], plus validity [16,3] and boxes [16,3,4]. Part-wise/global landmark and temporal hand branches feed learned fusion.\nOUTPUT: 100 vocabulary logits per candidate; derive normalized scores with softmax.\nUSED BY: R5. Export batch eight means eight candidate slots, not eight simultaneous signs."
+        ],
+        [
+          "R5 · Select and commit",
+          "INPUT FROM: R3 timing + R4 recognition scores + R2 motion evidence.\nDO: score whole intervals; semi-Markov search selects an ordered, non-overlapping path. Stability and repetition rules determine when results become committed.\nOUTPUT: accepted gloss, score, event interval and commit time, stored in the gloss buffer.\nUSED BY: R6. A high score alone is insufficient; preview is still provisional."
+        ],
+        [
+          "R6 · Generate English",
+          "INPUT FROM: committed gloss sequence and scores from R5; trained T5 from E8 via deployment D3–D5.\nDO: encode gloss evidence and generate English incrementally; retain completed sentences after consistency checks. Token inputs/masks [1,64]; encoder hidden states [1,64,256].\nOUTPUT: provisional English; Finish finalizes the remaining text.\nUSED BY: R7. This is the PAPER English path, not an assertion about another English implementation."
+        ],
+        [
+          "R7 · Finish, display and speak",
+          "INPUT FROM: Finish control + pending R3–R5 evidence + R6 English.\nDO: flush unresolved timing/decoding first; send any newly committed tail to R6, then finalize English. Display the final message and use local text-to-speech.\nOUTPUT: English text and audio; session history where enabled by the app.\nNEXT: reset utterance state. Finish does not guarantee that recognition or translation errors are corrected."
+        ]
+      ],
+      "source": "Paper: §3.2, §4.6.1–4.6.2, printed pp.75–82. Code supplement: LiveReelCore.swift; LiveReelModels.swift; LiveReelEngine.swift; LiveReelDecoder.swift; LiveReelStage3.swift. Shapes/settings describe their verified contracts; English is explicitly the paper path."
+    },
+    "hello": {
+      "intro": "A separate worked example of R1–R7. This illustrates the intended flow; it is not a newly measured HELLO replay, and no confidence score or time interval is invented.",
+      "cards": [
+        [
+          "H1 · The camera sees HELLO",
+          "CORRESPONDS TO: R1.\nINPUT FROM: the signer performs one HELLO event in front of the camera.\nDO: capture the movement over successive timestamps, including surrounding rest.\nOUTPUT TO H2: frames containing that event. The system has not yet identified HELLO."
+        ],
+        [
+          "H2 · Extract evidence",
+          "CORRESPONDS TO: R2.\nINPUT FROM: H1 frames.\nDO: detect point locations and crop visible hands. Cache each frame's hand embeddings.\nOUTPUT TO H3 AND H4: the same timestamped landmark and appearance evidence. Landmarks describe geometry; appearance features can supply hand-detail information."
+        ],
+        [
+          "H3 · Propose possible intervals",
+          "CORRESPONDS TO: R3.\nINPUT FROM: H2 landmarks.\nDO: estimate where activity begins and continues. Several overlapping intervals may describe the same HELLO movement.\nOUTPUT TO H4 AND H5: candidate intervals and timing scores. Three proposals do not mean the signer performed three signs."
+        ],
+        [
+          "H4 · Score the candidates",
+          "CORRESPONDS TO: R4.\nINPUT FROM: H2 visual evidence selected by H3 intervals.\nDO: form the 32-time landmark tensor and 16-time hand tensor for each candidate. Compare the resulting learned representation against the 100-class output space.\nOUTPUT TO H5: each candidate's HELLO score and alternative-class scores. Recognizer confidence is not validation accuracy."
+        ],
+        [
+          "H5 · Accept one event",
+          "CORRESPONDS TO: R5.\nINPUT FROM: H3 timing + H4 scores + H2 movement evidence.\nDO: compare compatible interval sequences and wait for sufficient stability. Overlapping HELLO predictions can refer to one event.\nILLUSTRATIVE OUTPUT TO H6: one committed HELLO, with its score and timestamps. The decoder can still make errors; this example assumes correct acceptance."
+        ],
+        [
+          "H6 · Render the greeting",
+          "CORRESPONDS TO: R6.\nINPUT FROM: the committed HELLO in H5, not provisional H4 predictions.\nDO: the paper's T5 path renders English from the accumulated gloss evidence.\nILLUSTRATIVE OUTPUT TO H7: an English greeting such as “Hello.” Exact wording is not a measured output of this walkthrough."
+        ],
+        [
+          "H7 · Complete the message",
+          "CORRESPONDS TO: R7.\nINPUT FROM: Finish plus H6 text and any pending recognition tail.\nDO: flush, finalize the English and display/speak the result locally.\nOUTPUT: the greeting as text and speech. The GENERAL diagram remains separate and still covers any in-vocabulary word."
+        ]
+      ],
+      "source": "Teaching example mapped to general steps R1–R7; shapes are actual input contracts, while the successful HELLO event and English greeting are illustrative. No new camera test or evaluation was run."
+    },
+    "isolated": {
+      "intro": "This trains recognition of a labeled single-sign clip. It is different from training timing or English. After each optimizer update, repeat prediction/loss/update on the next training batch; validation does not backpropagate.",
+      "cards": [
+        [
+          "I1–I2 · Data and separation",
+          "INPUT FROM: admitted isolated-sign datasets and their class labels; 100-word label map.\nDO: preserve official signer-disjoint Citizen splits and applicable source identities. Separate train from validation; do not tune on the protected test set.\nOUTPUT TO I3: labeled training and validation memberships. One example has one sign label, unlike an unsegmented phrase."
+        ],
+        [
+          "I3 · Prepare model inputs",
+          "INPUT FROM: I2 single-sign clips.\nDO: extract/normalize landmarks, preserve missing-data flags, resample 32 times; obtain pretrained MobileCLIP2 appearance features at 16 times and three views.\nOUTPUT TO I4: [B,32,61,5], [B,16,3,512], [B,16,3] validity and [B,16,3,4] boxes, plus target class IDs.\nTRAIN ONLY: augmentation and balanced class sampling; validation uses its fixed evaluation preparation."
+        ],
+        [
+          "I4 · Branch predictions",
+          "INPUT FROM: I3 tensors.\nDO: landmark branch processes four anatomical regions at width 64, combines them at width 256, then uses four global blocks/eight heads. Hand temporal branch uses three blocks/eight heads, width 256.\nOUTPUT TO I5: branch class logits and pooled embeddings.\nLEARNED: feature projections, temporal blocks, pooling and classifiers; the pretrained crop encoder supplies cached appearance features."
+        ],
+        [
+          "I5 · Loss, in proper steps",
+          "INPUT FROM: I4 logits + the correct I3 class.\n1. Softmax converts logits into a class distribution.\n2. Cross-entropy compares prediction with the target: L=−Σ y_k log p_k, where y is the target distribution and p is the model distribution.\n3. Base label smoothing ε=0.1 softens targets; it does not change the correct class.\nOUTPUT TO I6: a differentiable training loss. Accuracy alone does not provide the same smooth gradient signal."
+        ],
+        [
+          "I6 · Update weights",
+          "INPUT FROM: I5 loss and the active model parameters.\n1. Backpropagation computes gradients ∂L/∂w.\n2. The optimizer uses gradients to update trainable weights after each batch.\nCODE SUPPLEMENT, BASE: AdamW, peak LR 3×10⁻⁴, eight warm-up epochs then cosine decay, w eight decay 0.03. LR scales the update; it is not a class probability.\nOUTPUT: new weights for the next training batch."
+        ],
+        [
+          "I7 · Check generalization",
+          "INPUT FROM: trained I6 branch checkpoints + held-out I2 validation clips.\nDO: evaluate without w eight updates; select the recorded checkpoint under that stage's rule.\nPAPER: base study recorded 130 epochs; selected epoch 100 reached 96.83% base validation accuracy.\nOUTPUT TO I8: selected branch weights. This is a base-study result, not the accuracy of every later component or the complete camera-to-English system."
+        ],
+        [
+          "I8 · Replay and fusion",
+          "INPUT FROM: I7 landmark checkpoint, trained hand temporal branch and isolated examples.\nDO: the selected lineage includes mild-roll local replay, then a learned fusion head using frozen branch features/scores. Replay peak LR 5×10⁻⁵ is a later adaptation rate, not the original base rate.\nOUTPUT TO P1: isolated multimodal checkpoint.\nFUSION: 0.75/0.25 normalized-score baseline + a learned gated residual, rather than only averaging."
+        ],
+        [
+          "Class sampling and regularization",
+          "ORIGIN: I3 training batches.\nBalanced class sampling changes how often examples are drawn, not automatically how severely their mistakes are penalized. Replacement means a clip can repeat and another can be unseen in one epoch.\nDropout masks activations during training; w eight decay shrinks parameters; EMA maintains averaged weights. EMA does not clip gradients. These mechanisms help retention/generalization but still require validation."
+        ]
+      ],
+      "source": "Paper: recognition development, Table10, printed pp.78–79,93–94. Code supplements: train_stage_1_v17.py; model_v17.py; train_stage_1_hand_mobileclip2_v17.py; train_unified_multimodal_student_v17.py. Base LR verified in stage1-architecture log2026-10-19; ancestry in paper_checkpoint_lineage_v17_20261013/REPORT.md."
+    },
+    "phrase": {
+      "intro": "Phrase adaptation still teaches single-sign classification: it extracts individually annotated signs from connected signing. It still predicts individual sign identities.",
+      "cards": [
+        [
+          "P1 · Starting weights",
+          "INPUT FROM: I8 isolated multimodal checkpoint.\nDO: initialize the recognizer with already learned branch encoders and fusion weights.\nOUTPUT TO P4/P6: starting encoders and fusion head. Fine-tuning starts from prior weights rather than starting again from random weights."
+        ],
+        [
+          "P2–P3 · Obtain labeled segments",
+          "INPUT FROM: approved phrase recordings and per-sign start/end annotations.\nDO: take the interval assigned to one gloss. Preserve its surrounding-sign context in the original recording; prepare the model inputs from the admitted segment views.\nOUTPUT TO P4: one sign segment and its label. A phrase containing several signs supplies several annotated segments; these are not independent signers."
+        ],
+        [
+          "P4 · Calculate frozen features",
+          "INPUT FROM: P3 segments + P1 encoders.\nDO: run the landmark and hand encoders to calculate embeddings and branch scores. Encoder weights are frozen in the saved phrase phase.\nOUTPUT TO P5: cached branch features/logits and labels.\nFROZEN DOES NOT MEAN OFF: calculations continue; gradients do not update these encoder weights."
+        ],
+        [
+          "P5 · Add isolated replay",
+          "INPUT FROM: P4 phrase features + earlier isolated examples/features from I3/I8.\nDO: mix the two views so adaptation also sees earlier vocabulary behavior.\nOUTPUT TO P6: mixed training batches.\nWHY: the fusion head still changes, so its decisions can drift even when encoders are frozen. Replay constrains the trainable part's behavior."
+        ],
+        [
+          "P6 · Learn the fusion change",
+          "INPUT FROM: P5 mixed batch + frozen reference predictions from the starting model.\nDO: calculate class cross-entropy, the configured confusable-pair term, replay KL retention and parameter anchoring. Backpropagate through the trainable fusion head.\nOUTPUT: updated fusion parameters; encoder parameters remain unchanged.\nSOURCE MECHANISM: AdamW and cosine scheduling; do not borrow an unverified exact starting LR from a different phase."
+        ],
+        [
+          "P7–P8 · Validate and retain",
+          "INPUT FROM: P6 candidates + phrase and isolated development sets.\nDO: assess phrase-segment recognition alongside isolated retention; preserve the saved selection rule.\nCODE SUPPLEMENT: saved phrase checkpoint has frozen encoders and selected epoch 21.\nOUTPUT TO C1: phrase-adapted checkpoint. It learns from signs embedded in phrases; it does not generate English."
+        ],
+        [
+          "Connection to runtime",
+          "TRAINING OUTPUT: P8 is a parent checkpoint for C1, not a standalone additional camera stage.\nRUNTIME PURPOSE: signs in connected signing may start/end away from the resting poses common in isolated clips. Adapting to those views can help recognition.\nLIMIT: this purpose does not prove perfect boundary tolerance; candidate-interval training and end-to-end evaluation still matter."
+        ]
+      ],
+      "source": "Paper: printed pp.79,93–94. Source: train_unified_phrase_adapt_v17.py:cached frozen-encoder features, losses and head update. Saved phase metadata/lineage: run_v2/phrase_adapt and paper_checkpoint_lineage_v17_20261013/REPORT.md. No new training is authorized or launched."
+    },
+    "interval": {
+      "intro": "This is the current explicit-boundary approach to connected signing. The recognizer learns candidate-interval behavior; the boundary student learns timing separately, and the segmental decoder performs search rather than gradient training.",
+      "cards": [
+        [
+          "C1–C2 · Parent and interval data",
+          "INPUT FROM: P8 weights and admitted phrase annotations/candidate-interval supervision derived from P2/P3.\nDO: construct views resembling the intervals R3 may propose, including boundary variation and transitions.\nOUTPUT TO C4: interval tensors and sign targets.\nPURPOSE: improve recognition on runtime-like inputs, not merely on neatly trimmed isolated clips."
+        ],
+        [
+          "C3 · Three replay views",
+          "INPUT FROM: earlier isolated training clips from I3.\nFULL: keep the original sign label and earlier prediction as eligible retention evidence.\nPARTIAL: shorten a sign but keep the parent label for the eligible partial view.\nTINY FRAGMENT: train toward a flat distribution over existing 100 classes to discourage a confident guess.\nOUTPUT TO C4: tensors plus the appropriate supervision type; no extra rest-word class is added."
+        ],
+        [
+          "C4–C5 · Combine the losses",
+          "INPUT FROM: predictions on C2/C3 and a frozen reference model initialized from C1.\n1. Class cross-entropy supervises eligible labeled inputs.\n2. Tiny fragments receive a flat-target penalty.\n3. Applicable full isolated replay receives KL retention at temperature 2.\n4. Parameter anchoring discourages drift from starting weights.\nOUTPUT TO C6: total loss. Partial/rejection views are excluded from whole-clip reference retention."
+        ],
+        [
+          "C6 · Which weights change?",
+          "INPUT FROM: C5 gradients.\nSELECTED PRIMARY RUN: encoders are NOT frozen; encoder LR 1×10⁻⁵ and fusion-head LR 2×10⁻⁵. AdamW decay 0.001; cosine schedule; gradient-norm clipping 1.\nCODE SUPPLEMENT: clipping limits the gradient norm before the optimizer step, not confidence or the exact final parameter-update norm.\nOUTPUT: adapted branch encoders and fusion head. This differs from frozen-encoder P6."
+        ],
+        [
+          "C7 · Choose under both objectives",
+          "INPUT FROM: C6 checkpoints + connected-signing development evaluation + isolated validation.\nDO: minimize development WER subject to isolated retention floors.\nCODE SUPPLEMENT: eight planned epochs; selected primary epoch 4.\nOUTPUT TO C8: accepted primary checkpoint. A later epoch or a higher isolated percentage alone is not automatically preferable."
+        ],
+        [
+          "C8 · Primary and refinement",
+          "INPUT FROM: C7 primary, plus separately reviewed transition examples for scoped refinement.\nDO: preserve the primary output while keeping an additional adapted fusion output for guarded transition evidence. The refinement phase freezes encoders; do not apply that statement backward to C6.\nOUTPUT TO D1/R4: primary recognition and conditional refinement evidence.\nThe two interval variants share a phrase parent; one is not assumed to descend from the other."
+        ],
+        [
+          "Loss formula and settings",
+          "SOURCE-ONLY OBJECTIVE: L=L_class+0.5 × L_flat+L_retain+0.01 × L_anchor, with terms applied only to eligible rows; retention uses KL at T=2 and factor T².\nRecorded partial probability 0.30, retained fraction≥0.25; tiny-fragment probability 0.15 on eligible non-partial replay, fraction 0.10–0.25.\nThese are conditional sampling rules, not two unconditional percentages of all clips. They are implementation supplements, not new paper results."
+        ]
+      ],
+      "source": "Paper: printed pp.79,93–94. Source: train_span_recognizer_v17.py:fragment/reject masks, parameter groups, loss and selection; selected run_frag25_reject history/checkpoint metadata. Refinement: confidence_training_recipe.json and train_confidence.py; current primary/guarded use in LiveReelModels.swift."
+    },
+    "boundary": {
+      "intro": "The timing teacher and the ASL recognizer are different models. This diagram trains the O/B/I timing student used at R3; it does not train the 100 sign labels.",
+      "cards": [
+        [
+          "B1 · Matching recordings",
+          "INPUT FROM: admitted videos with both teacher-pose and Apple raw-observation caches.\nDO: preserve recording identity and timestamps. Exclude the protected test/tuning and specified validation groups from training.\nOUTPUT TO B2/B4: two representations of the SAME recording; this is how teacher targets can be aligned with student observations."
+        ],
+        [
+          "B2–B3 · Frozen teacher targets",
+          "INPUT FROM: B1 MediaPipe pose sequence.\nDO: run the pretrained German Sign Language timing teacher; derive outside/beginning/inside distributions and align them to student timestamps.\nOUTPUT TO B5: soft O/B/I targets q, not ASL vocabulary names.\nTEACHER WEIGHTS: unchanged. Soft uncertainty is evidence from the teacher, not deliberately wrong answers to make learning harder."
+        ],
+        [
+          "B4 · Student inputs",
+          "INPUT FROM: B1 Apple Vision raw observations.\nDO: build 450 geometry/motion/presence/confidence features per position and 64-position windows with a validity mask.\nOUTPUT TO B5: [B,64,450], valid [B,64].\nSTUDENT: width 256, four Transformer layers, eight heads; six-position runtime lookahead. These dimensions are source supplements to the paper's four-layer description."
+        ],
+        [
+          "B5 · Compare timing distributions",
+          "INPUT FROM: B3 target q and B4 student prediction p.\n1. Student produces three O/B/I logits per selected window position.\n2. Log-softmax gives log p.\n3. Soft-target cross-entropy: L=−mean Σ q_k log p_k.\nOUTPUT TO B6: student loss. The word recognizer's class labels are not needed for this distribution-matching objective."
+        ],
+        [
+          "B6 · Update the student",
+          "INPUT FROM: B5 training loss.\nDO: backpropagate through the student; clip gradient norm and update its trainable weights. The compatible trainer uses AdamW and OneCycle scheduling.\nOUTPUT TO B7: candidate student checkpoints.\nThe teacher still provides targets without w eight updates. Exact command overrides must be verified before quoting a particular training LR as selected."
+        ],
+        [
+          "B7–B8 · Select timing model",
+          "INPUT FROM: student checkpoints + separate held-out-video teacher/student pairs.\nDO: compare timing distributions using KL; the checked trainer selects its lowest held-out KL.\nOUTPUT TO D1, THEN R3: selected Apple-input boundary student.\nThis measures timing imitation, not 100-class recognition accuracy. Teacher training language does not make the student a German-to-ASL translator."
+        ]
+      ],
+      "source": "Paper: printed pp.78–79 and §4.6.2. Source: train_av_boundary_v17.py:teacher_obi, aligned, train/validation exclusions, soft-target loss and KL selection; av_boundary_v17.py. Teacher and student representations are aligned by recording and time."
+    },
+    "english": {
+      "intro": "Only the submitted paper's T5 English path is covered here. It learns a text-to-text mapping, rather than learning sign recognition from camera pixels.",
+      "cards": [
+        [
+          "E1 · Training pairs",
+          "INPUT FROM: the prepared gloss-to-English corpus; each row supplies glosses, confidence evidence and a target English rendering.\nDO: preserve its train/validation memberships and hold out evaluation sessions.\nOUTPUT TO E2: text pairs. A target is supervision, not proof that every English rendering is linguistically perfect.\nThis corpus preparation is separate from extracting landmark/image tensors."
+        ],
+        [
+          "E2 · Token preparation",
+          "INPUT FROM: E1 pairs.\nDO: encode each gloss with its confidence bucket and tokenize the English target. Prepare input IDs, attention masks and target IDs; mask target padding with −100 so it contributes no token loss.\nOUTPUT TO E3/E4: integer tensors [B,L], with recorded length buckets 24/40/64.\nFor the mobile export, L=64. Tokens are not necessarily whole words."
+        ],
+        [
+          "E3–E4 · Fine-tune T5",
+          "INPUT FROM: pretrained T5-efficient-tiny plus E2 tensors.\nDO: encoder reads the gloss evidence; during training, the decoder receives the shifted correct target prefix and predicts the next English token (teacher forcing).\nOUTPUT TO E5: token logits [B,L,V], where V is tokenizer vocabulary size.\nPAPER MODEL: about 15.6M parameters. Exported encoder hidden states are [1,64,256]."
+        ],
+        [
+          "E5–E6 · Token loss and update",
+          "INPUT FROM: E4 logits + E2 target IDs.\n1. Calculate cross-entropy for non-padding target tokens.\n2. Backpropagate that loss through T5.\n3. Update trainable parameters using Adafactor.\nRECORDED RECIPE, CODE SUPPLEMENT: batch 32, peak LR 3×10⁻⁴,100 warm-up steps then linear decay toward 10%, FP32, gradient clipping 1. Repeat across training batches."
+        ],
+        [
+          "E7 · Recorded checkpoint rule",
+          "INPUT FROM: E6 final checkpoint and validation text pairs.\nDO: keep the final step of the recorded bounded run; validation loss was reported, not used to select its best epoch.\nPAPER: validation loss 0.2515 at optimizer step 4,539.\nEvaluate English separately from recognizer accuracy/WER. Overlap scores and automated judgments do not replace independent human assessment of faithfulness."
+        ],
+        [
+          "E8 · Connect training to runtime",
+          "INPUT FROM: E7 T5 checkpoint + tokenizer/metadata.\nOUTPUT TO D1–D5: encoder and decoder-step exports, both parts of one English model.\nUSED AT R6: inference generates tokens autoregressively using its own generated prefix. Unlike training, the correct target sentence is not supplied at runtime.\nThe English model cannot enlarge the recognizer's 100-sign visual vocabulary."
+        ]
+      ],
+      "source": "Paper: printed p.81, §4.8 translation results, validation loss0.2515/step4,539. Matching code/receipts: train_stage3_multisentence_v17.py; stage3_multisentence_bakeoff_v17_20260929/tiny/recipe.json and targeted training_result fields; export_stage3_t5_coreml_v17.py."
+    },
+    "deployment": {
+      "intro": "Training produces checkpoints; deployment makes them usable by the app. Conversion is not another training phase, and this board's English contract remains the paper's T5 path.",
+      "cards": [
+        [
+          "D1 · Gather selected outputs",
+          "INPUT FROM: I8/P8/C8 recognizer lineage, B8 boundary student and E8 T5, plus the pretrained crop encoder and 100-word label map.\nDO: pin the selected checkpoints and their metadata. C8 is the word-recognition output used here; earlier parents are provenance, not extra sequential runtime models.\nOUTPUT TO D2: a defined set of model components."
+        ],
+        [
+          "D2 · Pin the contracts",
+          "INPUT FROM: D1 models + preparation code.\nRECOGNIZER: [8,32,61,5], [8,16,3,512], [8,16,3], [8,16,3,4] → word logits [8,100]. Short candidate batches repeat the last input into unused slots; ignore unused outputs.\nBOUNDARY: [1,64,450] plus validity → [1,3].\nT5: token/mask [1,64] → hidden [1,64,256] → next-token decoding."
+        ],
+        [
+          "D3 · Export compatible graphs",
+          "INPUT FROM: D2 contracts and selected weights.\nDO: convert to Core ML for the mobile runtime. Selected visual/recognition graphs use FP16; the paper T5 encoder and decoder exports use FP32.\nOUTPUT TO D4: exported graph packages.\nThe recognizer package does not contain the crop encoder, boundary model, translator or system speech engine."
+        ],
+        [
+          "D4 · Check conversion effects",
+          "INPUT FROM: D3 exports + source model outputs on matching inputs.\nDO: compare logits/predictions and evaluate the relevant held-out or development contract. Equal total accuracy alone does not establish identical per-example predictions.\nOUTPUT TO D5: verified export evidence, not an assumption that lower precision is behaviorally identical. No new evaluation is run to draw this diagram."
+        ],
+        [
+          "D5–D6 · Integrate and warm",
+          "INPUT FROM: D4 exports, label/token maps and decoder settings.\nDO: bundle assets, load them through the app's model interfaces and warm graph execution. Engine processing and English work use separate queues; UI updates run on the main thread.\nOUTPUT TO R2/R3/R4/R6: loaded inference components.\nSegmental decoding is runtime search/configuration, not a separate learned neural checkpoint."
+        ],
+        [
+          "D7–D8 · Operate and measure",
+          "INPUT FROM: the complete R1–R7 path on the target phone.\nDO: measure recognition/sequence behavior and device latency, memory and sustained performance with clear boundaries.\nOUTPUT: deployment evidence. Package bytes measure storage, not runtime RAM or compute. The paper's 31.14ms extraction-to-recognizer measurement is not full camera-to-speech delay.\nNo weights are trained during ordinary inference."
+        ]
+      ],
+      "source": "Paper: prototype/export/performance sections. Source: export_dual_confidence.py; export_stage3_t5_coreml_v17.py; LiveReelModels.swift; retained T5 interface LiveReelStage3.swift. Recognition/timing implementation and paper T5 are deliberately scoped, not claimed as an audit of every current app subsystem."
+    }
+  },
+  "sections": [
+    {
+      "key": "runtime",
+      "id": "19:633",
+      "title": "R · General runtime",
+      "width": 3000,
+      "height": 1532,
+      "cardIds": [
+        "27:904",
+        "27:907",
+        "27:910",
+        "27:913",
+        "27:916",
+        "27:919",
+        "27:922"
+      ],
+      "x": 0,
+      "y": 260
+    },
+    {
+      "key": "hello",
+      "id": "20:665",
+      "title": "H · HELLO walkthrough",
+      "width": 3000,
+      "height": 1356,
+      "cardIds": [
+        "27:927",
+        "27:930",
+        "27:933",
+        "27:936",
+        "27:939",
+        "27:942",
+        "27:945"
+      ],
+      "x": 3300,
+      "y": 260
+    },
+    {
+      "key": "isolated",
+      "id": "21:700",
+      "title": "I · Isolated-sign training",
+      "width": 3000,
+      "height": 1501,
+      "cardIds": [
+        "27:950",
+        "27:953",
+        "27:956",
+        "27:959",
+        "27:962",
+        "27:965",
+        "27:968",
+        "27:971"
+      ],
+      "x": 0,
+      "y": 2112
+    },
+    {
+      "key": "phrase",
+      "id": "22:737",
+      "title": "P · Phrase adaptation",
+      "width": 3000,
+      "height": 1693,
+      "cardIds": [
+        "27:976",
+        "27:979",
+        "27:982",
+        "27:985",
+        "27:988",
+        "27:991",
+        "27:994"
+      ],
+      "x": 3300,
+      "y": 2112
+    },
+    {
+      "key": "interval",
+      "id": "23:774",
+      "title": "C · Candidate-interval adaptation",
+      "width": 3000,
+      "height": 1945,
+      "cardIds": [
+        "27:999",
+        "27:1002",
+        "27:1005",
+        "27:1008",
+        "27:1011",
+        "27:1014",
+        "27:1017"
+      ],
+      "x": 0,
+      "y": 4125
+    },
+    {
+      "key": "boundary",
+      "id": "24:811",
+      "title": "B · Boundary-model training",
+      "width": 3000,
+      "height": 1292,
+      "cardIds": [
+        "27:1022",
+        "27:1025",
+        "27:1028",
+        "27:1031",
+        "27:1034",
+        "27:1037"
+      ],
+      "x": 3300,
+      "y": 4125
+    },
+    {
+      "key": "english",
+      "id": "25:851",
+      "title": "E · Paper T5 English training",
+      "width": 3000,
+      "height": 1129,
+      "cardIds": [
+        "27:1042",
+        "27:1045",
+        "27:1048",
+        "27:1051",
+        "27:1054",
+        "27:1057"
+      ],
+      "x": 0,
+      "y": 6390
+    },
+    {
+      "key": "deployment",
+      "id": "26:888",
+      "title": "D · Deployment to runtime",
+      "width": 3000,
+      "height": 1042,
+      "cardIds": [
+        "27:1062",
+        "27:1065",
+        "27:1068",
+        "27:1071",
+        "27:1074",
+        "27:1077"
+      ],
+      "x": 3300,
+      "y": 6390
+    }
+  ],
+  "verification": {
+    "contentScan": "No scoped-out subsystem terms in board sections.",
+    "structure": "No section child overflow.",
+    "visual": "All eight sections rendered and inspected. Final spacing/notation polish preserved card heights. One final English screenshot confirms the polish.",
+    "activity": "Read-only source/metadata inspection; no training, inference, test-gate access, export, build or deployment."
+  }
+}

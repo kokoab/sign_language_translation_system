@@ -1,0 +1,424 @@
+{
+  "boardUrl": "https://www.figma.com/board/QD1x6X7ts34SVBSpvkRhYS",
+  "verifiedOn": "2026-10-20",
+  "scope": "Submitted paper and current iPhone LIVE; shared overview merged per user request, English paths separated.",
+  "sections": [
+    {
+      "prefix": "2",
+      "title": "01  Capture and extraction",
+      "subtitle": "Turn camera pixels into two complementary evidence streams: landmark geometry and hand appearance.",
+      "cards": [
+        [
+          "Camera input and scheduling",
+          "CURRENT LIVE: AVCaptureSession requests 1280×720 when supported, otherwise 640×480. Capture delivers BGRA CVPixelBuffers. The model receives upright, unmirrored frames; the front-camera preview is mirrored only for display. A timestamp gate targets 20 processed positions/s. Late frames are discarded and the latest-frame gate prevents an unbounded capture backlog."
+        ],
+        [
+          "Find the signer and points",
+          "Apple Vision hand-pose detection runs each processed position. Body and face features run every eighth position. Signer locking filters bystanders; left/right slots use chirality and previous wrist locations. Hand points below 0.15 confidence are missing; a hand needs at least five usable points. Face/body observations between auxiliary detections are marked absent for feature preparation."
+        ],
+        [
+          "Observation output",
+          "61 nodes = 21 left-hand + 21 right-hand + 15 selected face + 4 upper-body points. Each observation also carries elapsed seconds and image width/height. Vision confidence describes point detection, not sign correctness. Presence is a missing-data flag. The raw boundary row stores [x, y, 0, presence, confidence] per node; recognizer depth is derived later."
+        ],
+        [
+          "Coordinates and units",
+          "Convert Vision Y to top-down image Y. Preserve image proportions: x_iso=(x·W−W/2)/max(W,H), y_iso=(y·H−H/2)/max(W,H). These are dimensionless coordinates, not meters or degrees. Boundary features and candidate recognition use different normalization routines; both start from the same timestamped observations."
+        ],
+        [
+          "Build three hand views",
+          "Views are anatomical LEFT, RIGHT and UNION. Individual hand-box scale=1.70; union scale=1.20; minimum box fraction=0.14. Square crops use reflect-101 padding beyond image borders, area resizing when shrinking and cubic resizing when enlarging. Output per valid view: 256×256 RGB bytes. Boxes are normalized [x1/W,y1/H,x2/W,y2/H]; missing views have validity 0."
+        ],
+        [
+          "Encode once, reuse many times",
+          "MobileCLIP2S0ImageEncoderV17FP16 maps each valid crop to 512 learned appearance values. Per-position cache: embeddings [3,512], validity [3], boxes [3,4]. Missing view embeddings stay zero. Cached embeddings are reused when overlapping candidate intervals are scored; pixels are not re-encoded for every candidate. This encoder is separate from the span-recognizer package."
+        ]
+      ],
+      "source": "SOURCE: LiveReelViewController.swift:480,733; LiveReelEngine.swift:10,178; LiveReelCore.swift:151,524,789; LiveReelModels.swift:190. PAPER: §4.6.1–4.6.2, printed pp.75–82."
+    },
+    {
+      "prefix": "3",
+      "title": "02  Timing and candidate preparation",
+      "subtitle": "Boundary timing proposes where to look; preparation makes variable-length evidence fit fixed recognizer inputs.",
+      "cards": [
+        [
+          "450 features per processed position",
+          "Boundary row = 122 normalized XY values + 122 time-normalized XY motion values + 61 presence flags + 61 confidence values + 84 hand-local XY values. Total: 450. Shoulder midpoint/width provide center/scale; a stale or unavailable body uses center 0 and scale 0.3. Motion is divided by elapsed seconds, clipped to ±10 and divided by 10. Hand-local coordinates use wrist and palm size."
+        ],
+        [
+          "Boundary model input and output",
+          "AVBoundaryStudentV17L6FP16 receives Float32 features [1,64,450] and valid [1,64]; model computation is FP16. Pad the left with zero rows, mask padding, keep the latest 64 rows. Output is O/B/I logits [1,3] for the position six steps behind the newest observation. Log-softmax adds a tiny UNK placeholder. O=outside, B=beginning, I=inside: no vocabulary label is predicted here."
+        ],
+        [
+          "Streaming timing and proposals",
+          "At the target 20 Hz, six lookahead positions correspond nominally to 0.30 s; actual timestamps remain authoritative. Raw history spans about 1.2 s; a gap above 0.26 s resets boundary state. Candidate union: B/I runs and B peaks ≥0.2, lengths 3–30 positions; plus dense active-grid spans, step 2, activity ≥0.3, lengths 3–20. Current word mode permits up to eight internal rest positions."
+        ],
+        [
+          "Gather, trim and repair short gaps",
+          "Candidate evidence includes ±0.1 s context, bounded by the available observation indices. Input building needs at least four observations and two active-hand positions. Trim to active hand evidence with two-position margins. Fill bounded gaps only: hands ≤3 missing positions; face/body ≤16. Interpolated confidence is half the smaller endpoint confidence. Long missing runs remain missing."
+        ],
+        [
+          "Normalize relative to the body",
+          "XY: subtract the interpolated shoulder midpoint, divide by median shoulder width. If shoulders are unavailable, use median wrist center and palm-size scale; guard invalid scale. Hand depth proxy=ln(median palm length/current palm length); face/body proxy uses shoulder widths. This is relative apparent scale, not measured 3D depth. Output before time resampling: N×61×5."
+        ],
+        [
+          "32 landmark times versus 16 image times",
+          "Landmarks: target position j maps to p=j(N−1)/31. Linearly interpolate x,y,depth,confidence; take nearest presence; zero absent-node values. Output [32,61,5]. Hand branch: choose 16 nearest cached positions over the same trimmed interval, with repeats possible for short spans. Output [16,3,512], valid [16,3], boxes [16,3,4]. These are time samples, never groups of pixels."
+        ]
+      ],
+      "source": "SOURCE: LiveReelCore.swift:548,616,679,756; LiveReelModels.swift:97,133,296; LiveReelDecoder.swift:329,540,700. Shape [32,61,5] is also stated in PAPER p.76; additional runtime settings are code evidence."
+    },
+    {
+      "prefix": "4",
+      "title": "03  How landmark recognition works",
+      "subtitle": "Each body region builds its own temporal features, then the global stage models how the regions work together.",
+      "cards": [
+        [
+          "Input and derived motion",
+          "Input [B,32,61,5]: B candidate intervals, 32 sampled times, 61 nodes, five channels [x,y,depth proxy,presence,confidence]. Internal motion appends XYZ first differences and second differences: 5+3+3=11 channels per node. Missing observations mask differences that would cross a gap. These sampled-index differences are not literal physical velocity or acceleration."
+        ],
+        [
+          "Selected pairwise distances",
+          "For chosen hand-node pairs i,j: d_ij=√((x_i−x_j)²+(y_i−y_j)²). There are 33 selected pairs per hand, 66 total; it is not all possible node pairs. Invalid pairs are masked. Current selected checkpoint enables these distances and disables explicit bone and hand-angle feature flags. Pairwise means relationships between points; part-wise means separate processing of anatomical groups."
+        ],
+        [
+          "Four regional branches",
+          "Flatten node features within each group at each time. Left/right: 21×11+33=264 values each. Face:15×11=165. Upper body:4×11=44. Each branch projects to 64 learned features, adds its own position encoding and uses one temporal Squeezeformer block. Each branch output is [B,32,64]. These branches are before the four global blocks."
+        ],
+        [
+          "What one block does",
+          "Order: half residual feed-forward → multi-head self-attention → convolution module → half residual feed-forward → final normalization. Attention makes input-dependent comparisons across sampled times: softmax(QKᵀ/√d_k)V. Convolution reuses learned local filters across time: pointwise expansion and GLU, depthwise temporal filter, SiLU, pointwise projection. Residual connections retain earlier information."
+        ],
+        [
+          "Combine regions, then four global blocks",
+          "Concatenate four [B,32,64] streams into [B,32,256], apply fusion projection and global position encoding, then four successive global blocks. Selected width=256, attention heads=8, convolution kernel=15. Heads operate in parallel inside each block; blocks operate in sequence. Kernel 15 spans nominally seven neighbors on each side in one convolution operation. Attention already makes contextual features; this is not a strict whole-network 15-position limit."
+        ],
+        [
+          "Pool the interval and classify",
+          "A learned score per sampled time is masked by usable hand evidence, then softmaxed over time. Weighted sum reduces [B,32,256] to [B,256]. The landmark classifier produces [B,100] raw logits. Both the pooled embedding and logits go to fusion. No temporal U-Net/downsampling is enabled in this selected ATLAS architecture. During inference, learned parameters stay fixed; dropout is disabled."
+        ]
+      ],
+      "source": "SOURCE: recognition/model_v17.py:masked_temporal_features, PartwiseTemporalEncoderV17, SqueezeformerBlockV17, SLTStage1V17. Selected checkpoint metadata: run_frag25_reject/span_recognizer/best_model.pth, epoch 4. PAPER: §2.1.4 and §4.6."
+    },
+    {
+      "prefix": "5",
+      "title": "04  Hand appearance and multimodal fusion",
+      "subtitle": "Appearance and geometry supply complementary evidence; the deployed wrapper preserves primary and adapted scores.",
+      "cards": [
+        [
+          "Crop encoder versus temporal hand encoder",
+          "MobileCLIP2 is the pixel-to-feature encoder: [256,256,3] RGB → 512 values per crop. The hand temporal branch starts from embeddings, not raw images. Candidate inputs: [B,16,3,512], validity [B,16,3], boxes [B,16,3,4]. Boxes are dimensionless normalized corners. The number 16 is temporal sampling; 256×256 is spatial resolution."
+        ],
+        [
+          "Combine views at each sampled time",
+          "Layer-normalize and linearly project each 512-vector to width 256. Project [four box coordinates + validity] to 256 and add learned view identity. Invalid views are zeroed. Learned masked softmax weights combine left/right/union at each time, giving [B,16,256]. Union supplies joint appearance when both hands interact; it is not a third physical hand."
+        ],
+        [
+          "Model appearance through time",
+          "Add learned temporal positions. Use three successive Squeezeformer blocks, width 256, eight attention heads, kernel 7. Mask invalid frames, then apply learned masked temporal attention pooling to [B,256]. A separate hand classifier gives [B,100] logits. Temporal blocks connect appearance changes across the 16 sampled times."
+        ],
+        [
+          "Fusion calculation",
+          "Normalize each branch’s 100 logits by per-sample z-score. Baseline=0.75×landmark scores +0.25×hand scores. Normalize both 256-dimensional embeddings and concatenate them: 512 values. Residual network input is 512+100+100=712; hidden width=384; output=100. A learned sigmoid gate from the two embeddings scales this residual. Final logits=baseline+gated residual; it is not only a fixed average."
+        ],
+        [
+          "Deployed tensor contract",
+          "SpanRecognizerV17ConfidenceDualB8FP16 accepts Float32 arrays [8,32,61,5], [8,16,3,512], [8,16,3], [8,16,3,4]; computes in FP16 through Core ML. Up to eight independent candidate intervals are scored per call. A short batch repeats its final candidate into unused slots, and unused outputs are ignored. B=8 is the export batch, not eight signs performed by the user."
+        ],
+        [
+          "Which output is actually used?",
+          "Outputs: original_word_logits [8,100], adapted word_logits [8,100], letter_logits [8,27]. The letter head covers A–Z plus NONE. Runtime selects original_word_logits by default; adapted output is retained for guarded transition repairs. Encoders are shared, not two full independent recognizers. Package excludes the image encoder, boundary model and English models. Primary confidence is a score, not measured accuracy."
+        ]
+      ],
+      "source": "SOURCE: model_hand_mobileclip2_v17.py; model_unified_multimodal_v17.py; export_dual_confidence.py; LiveReelModels.swift:267–346. Configuration values verified from selected checkpoint metadata, not trainer defaults."
+    },
+    {
+      "prefix": "7",
+      "title": "05  Segmental decoding and commitment",
+      "subtitle": "Choose a compatible sequence of sign events, then decide when those events are stable enough to publish.",
+      "cards": [
+        [
+          "Score whole candidate intervals",
+          "For candidate [s,e] with top label g: S=2·max(log q_g,log θ)+0.25·Σ log a_t+0.5·log b_s−c. Current word settings: θ=0.4, c=−1.5; a_t=max(P(B)+P(I),0.5). b_s is beginning evidence, with a tiny numerical floor and guarded repair floors where applicable. Rest steps use 0.25·log(P(O)+P(UNK)). These are decoder scoring settings, not learned attention weights."
+        ],
+        [
+          "Semi-Markov search",
+          "Dynamic programming compares resting for one position with accepting an entire candidate segment ending here. best[t]=max(best[t−1]+restScore, best[s]+segmentScore(s,t−1)). Backtracking yields ordered, non-overlapping intervals. Semi-Markov means a decision can span variable-duration segments. The search is an algorithm; its evidence comes from learned boundary and recognition models."
+        ],
+        [
+          "When can a result become committed?",
+          "Current word lag=6 known boundary positions; contextFrames=2. Early acceptance needs the same label for three updates, q≥0.9 and span length≥4; unsafe labels are excluded. Standard commitment also checks continuation evidence, with hard=0.5 and softExtra=2. These waits and six-position boundary lookahead are different mechanisms; do not report one as complete end-to-end latency."
+        ],
+        [
+          "Repeated labels and ordered output",
+          "Current decoder has duplicateGap=20 processed positions; letters use gap=6. Nearby repeated labels can extend the previous event instead of creating a new one. This can suppress intentional rapid repeats: timing policy has a tradeoff. An ordering barrier holds later results behind unresolved earlier segments. Preview is provisional; a published gloss is committed. Labels alone do not prove whether motion is one or two events."
+        ],
+        [
+          "Current guarded score repairs",
+          "HAVE/ANGRY uses crop and handshape checks when either is among the top two words. TIRED/HAVE uses fingertip droop geometry (threshold 1.0 hand-size units). MY/LIKE and successor repairs combine primary/adapted scores with contact, motion and later-event evidence; ±0.1 s candidate context supports this path. These checks refine specific ambiguities, not a universal guarantee that scores are correct."
+        ],
+        [
+          "Output and optional spelling",
+          "LiveWord carries gloss, score, start/end/commit frame indices, start/end/commit seconds and early/closed state. Default LIVE mode is words. Hidden letter competitors can absorb low-confidence transition spans; gate=0.95 on top-word probability. User-visible name spelling is off by default and can be enabled after NAME. FINGERSPELL-sign switching is off. NONE belongs to letter scoring, not a 101st ASL word class."
+        ]
+      ],
+      "source": "SOURCE: LiveReelDecoder.swift:58,329,405,540,610,820,1258; LiveReelEngine.swift:16–65. Code settings shown here are current LIVE behavior; the PAPER describes sequence-decoder responsibilities at §4.6.2."
+    },
+    {
+      "prefix": "8",
+      "title": "06A  Paper English path — T5",
+      "subtitle": "The submitted paper’s language-generation description. Export details below are implementation supplements.",
+      "cards": [
+        [
+          "What the paper claims",
+          "Accepted glosses accumulate in a buffer. Fine-tuned T5-efficient-tiny generates English incrementally; Finish finalizes the remaining text for display and local speech. The English model receives recognized gloss evidence, not camera frames, and does not expand the recognizer’s 100-sign vocabulary. Generated English can add grammatical words but can also alter intended meaning."
+        ],
+        [
+          "Tokenizer and encoder inputs",
+          "Retained T5 mobile path encodes each gloss with a confidence bucket: hi≥0.60, mid≥0.40, otherwise lo. Token IDs are Int32 [1,64], with Int32 attention mask [1,64]. Pad with zero IDs and append EOS. The four-layer, four-head T5 encoder outputs Float32 hidden states [1,64,256]. A full utterance reaching context capacity is rejected rather than silently dropping words. These token limits come from the retained export, not a paper-reported accuracy result."
+        ],
+        [
+          "Decoder loop and incremental output",
+          "Decoder receives [1,64] prefix IDs, encoder hidden states, encoder mask and position [1]. The four-layer, four-head decoder is also FP32. It returns the next token ID by greedy decoding; append and repeat until EOS or length limit. Detokenize pieces to English. Metadata marks counted-sentence output, letting incremental logic lock completed sentences. Encoder and decoder are two exported graphs of one translator, not independent translation systems."
+        ],
+        [
+          "Keep the versions distinct",
+          "Current iPhone LIVE does not load this T5 path; it loads LiveCaptions instead. T5 exports remain in the bundle and older helpers still reference them. The paper’s T5 evaluation results belong to that evaluated translation path; they are not evidence for the newer caption engine. Shared extraction/recognition stages are shown once in the overview; only the English implementation branches."
+        ]
+      ],
+      "source": "PAPER: §3.2, §4.6.2, printed p.82; §4.8 translation evaluation. SUPPLEMENT: LiveReelStage3.swift:24,71; Models/stage3_tokens.json; LiveReelApp.swift:14–17."
+    },
+    {
+      "prefix": "9",
+      "title": "06B  Current LIVE English — LiveCaptions",
+      "subtitle": "Five compact Transformer components choose constrained English forms from the committed gloss stream.",
+      "cards": [
+        [
+          "Inputs, shapes and models",
+          "Input is a sequence of gloss IDs, confidence-bucket IDs and positions; length T varies with the open clause. Buckets: 1 if score≥0.6, 2 if≥0.4, otherwise 3. EOS is appended when ended. Four taggers use width192, three layers, four heads; mover uses width160, three layers, four heads. Weights are Float32 CPU arrays executed with Accelerate, loaded from live_captions_v17.bin plus JSON vocabulary/config."
+        ],
+        [
+          "Live and draft predictions",
+          "Two live taggers use one-gloss lookahead and average log-probabilities. A causal draft tagger handles the newest gloss with no lookahead and no trailing words. Per-sign outputs: pre-word logits [T,170], form logits [T,306], post-word logits [T,55]. Each input sums learned token, confidence and position embeddings. This lookahead is in glosses, not camera frames."
+        ],
+        [
+          "Constrained wording",
+          "Each gloss has allowed English forms; illegal forms are masked. A pre/form pair mask allows only approved combinations. Confident signs (score≥0.6) cannot choose the drop form. Pronoun/here/there insertions require probability≥0.5. The tagger selects words before, the form of this sign, and words after, then detokenizes. These constraints reduce some errors; they do not establish perfect semantic faithfulness."
+        ],
+        [
+          "Finalize a clause",
+          "The mover proposes at most one gloss relocation. A full-context labeler renders a refined clause after that move. The revision check compares negation, question type, tense and movement/order evidence. Use the refined clause when revision is needed; otherwise retain live wording and appropriate final punctuation. Spelled names are restored after placeholder handling."
+        ],
+        [
+          "Pause and Finish behavior",
+          "After 1.5 s without a new committed sign, provisionally settle the open tail. If a new sign arrives after a settled pause≥3.5 s, freeze the preceding sentence and start a new one. Finish closes and finalizes the current caption, then resets caption state. While the Finish gesture is held, the pause tick is suppressed. Long clauses reuse position index48 rather than allocating unseen positional embeddings."
+        ],
+        [
+          "Failure path and output",
+          "If caption models are unavailable, Finish displays lowercased literal gloss words with spelled-name restoration and punctuation. Successful output is an English string sent to the main UI; final speech occurs once at Finish, not on every sign. The caption subsystem cannot recover an unseen sign class or infer the signer’s intended message with certainty."
+        ]
+      ],
+      "source": "SOURCE: LiveCaptions.swift:1,214,294,376,417,523; Models/live_captions_v17.json (source live_captions_v17_20261014); LiveReelViewController.swift:899,924. This implementation is distinct from the submitted T5 evaluation."
+    },
+    {
+      "prefix": "10",
+      "title": "07  Final output, speech and session lifecycle",
+      "subtitle": "Finish resolves pending evidence and produces the user-facing message; display, storage and inference are separate responsibilities.",
+      "cards": [
+        [
+          "Controls and control-pose handling",
+          "Finish can be tapped or triggered by a one-second held control pose: right open upright hand and left fist, both wrists above shoulder line. The last shoulder line can be used for up to1.5 s. The control pose is excluded from recognition while held, so it is not interpreted as a vocabulary sign. Practice disables this Finish gesture."
+        ],
+        [
+          "Flush before generating final text",
+          "Engine.finish flushes boundary lookahead and pending segment decisions, then flushes any spelling buffer. Append the final committed tail before finalizing English. If no signs were committed, show No signs yet. Otherwise finalize on the language queue, reset caption state, update the final English view and clear previews/gloss rail."
+        ],
+        [
+          "Queues and model warmup",
+          "One serial engine queue handles model loading, frame processing, flush and resets. A separate language queue runs caption updates and finalization; main thread renders the UI. Shared models load and warm before capture is processed. Current iPhone startup selects FP16 image encoder and Core ML computeUnits=.all for image encoder, recognizer and boundaries."
+        ],
+        [
+          "Local speech and session history",
+          "AVSpeechSynthesizer speaks the final English string locally. History supports reviewing stored text and Speak again. Session JSON includes recognized words, sentences, event and timing information. Saving LIVE videos is a separate Settings opt-in, off by default; it is not required for inference. Offline operation does not mean the app stores no local session data."
+        ],
+        [
+          "Memory and reuse",
+          "Stream caches retain observations, encoded hands, timing and candidate scores; already scored spans are reused. After progress, trim observations/BIO before origin−40 and drop stale score records. Fixed batch8 concerns candidate evaluation only. Model package storage is distinct from runtime RAM, compute cost and total app size."
+        ],
+        [
+          "Evidence and timing boundaries",
+          "This board documents source behavior verified2026-10-20, not a new phone benchmark or retraining run. The paper’s31.14 ms extraction-to-recognizer measurement is not total camera-to-speech latency. Actual output wait includes scheduling, boundary lookahead, decoder policy and English/speech processing. The paper description and current English branch are labeled separately."
+        ]
+      ],
+      "source": "SOURCE: LiveReelCore.swift:43; LiveReelApp.swift:9,30,39,70; LiveReelViewController.swift:733,924; LiveReelDecoder.swift:667,677. PAPER: §4.6–4.8. No model, training or application source was changed for this diagram."
+    }
+  ],
+  "diagramSources": [
+    [
+      "01 — Capture and visual extraction",
+      "flowchart LR\ncamera[\"Camera: upright BGRA pixel buffer\"] --> throttle[\"Target 20 processed positions per second\"]\nthrottle --> vision[\"Apple Vision: hand pose every processed position\"]\nvision --> identity[\"Assign anatomical left and right; filter by signer\"]\nvision --> auxiliary[\"Face and upper-body extraction every eighth position\"]\nidentity --> observation[\"Timestamped observation: 61 points plus confidence\"]\nauxiliary --> observation\nobservation --> raw[\"Boundary stream: isotropic raw landmarks\"]\nobservation --> crop[\"Left, right and union square crops: 256 x 256 RGB\"]\ncrop --> encoder[\"MobileCLIP2-S0 FP16 image encoder\"]\nencoder --> cache[\"Cache per-position embeddings: 3 x 512\"]\nraw --> timing[\"Boundary timing stream\"]\ncache --> candidate[\"Reuse cached evidence for many candidate intervals\"]\nobservation --> candidate\nstyle camera fill:#C2E5FF,stroke:#3DADFF\nstyle encoder fill:#DCCCFF,stroke:#874FFF"
+    ],
+    [
+      "02 — Boundary timing and candidate construction",
+      "flowchart LR\nraw[\"Per-position raw landmark row: 61 x 5\"] --> features[\"Build 450 boundary features from short raw history\"]\nfeatures --> window[\"Right-aligned 64-position window plus validity mask\"]\nwindow --> boundary[\"Word boundary student: AVBoundaryStudentV17L6FP16\"]\nboundary --> timing[\"O, B and I log-probabilities for position six steps back\"]\ntiming --> proposals[\"Union of boundary-based and dense-grid candidate spans\"]\nproposals --> context[\"Wait for two additional context positions unless finishing\"]\ncontext --> interval[\"Retrieve span observations and cached hand evidence\"]\ninterval --> landmarks[\"Trim active interval, fill bounded gaps, normalize, resample to 32\"]\ninterval --> images[\"Choose 16 nearest cached times from the same trimmed interval\"]\nlandmarks --> tensors[\"Four recognizer input tensors\"]\nimages --> tensors\ntensors --> scorer[\"Score uncached candidates in batches of eight\"]\nscorer --> search[\"Send recognition scores to segmental decoder\"]\nscorer --> search"
+    ],
+    [
+      "03 — Landmark recognizer: part-wise then global",
+      "flowchart LR\ninput[\"Landmarks: B x 32 x 61 x 5\"] --> motion[\"Masked first and second differences: 11 channels per node\"]\ninput --> distance[\"33 selected XY distances per hand: 66 total\"]\nmotion --> parts[\"Split into left hand, right hand, face and upper body\"]\ndistance --> parts\nparts --> left[\"Left hand: project to 64, then one temporal block\"]\nparts --> right[\"Right hand: project to 64, then one temporal block\"]\nparts --> face[\"Face: project to 64, then one temporal block\"]\nparts --> body[\"Upper body: project to 64, then one temporal block\"]\nleft & right & face & body --> concat[\"Concatenate at each time: B x 32 x 256\"]\nconcat --> global[\"Fusion projection and position encoding, then four global blocks\"]\nglobal --> pool[\"Learned temporal attention pooling: B x 256\"]\npool --> lmScores[\"Landmark classifier: B x 100 logits\"]\npool --> fusion[\"Landmark embedding goes to multimodal fusion\"]\nlmScores --> fusion"
+    ],
+    [
+      "04 — Hand appearance, fusion and dual outputs",
+      "flowchart LR\ncrop[\"Each valid 256 x 256 RGB crop\"] --> clip[\"MobileCLIP2-S0 image encoder\"]\nclip --> input[\"Cached features: B x 16 x 3 x 512\"]\nvalid[\"Validity B x 16 x 3 and boxes B x 16 x 3 x 4\"] --> tokens[\"Project embeddings and box-plus-validity to 256; add view identities\"]\ninput --> tokens\ntokens --> views[\"Masked attention combines three views at each time\"]\nviews --> temporal[\"B x 16 x 256: position encoding and three temporal blocks\"]\ntemporal --> pool[\"Masked temporal attention pooling: B x 256\"]\npool --> handScores[\"Hand classifier: B x 100 logits\"]\nlandmark[\"Landmark embedding and 100 landmark logits\"] --> fusion[\"Score normalization, branch baseline and gated residual fusion\"]\npool & handScores --> fusion\nfusion --> primary[\"Preserved primary word output: B x 100\"]\nfusion --> adapted[\"Adapted word output: B x 100\"]\nprimary --> choose[\"Use primary by default; adapted scores only for guarded repairs\"]\nadapted --> choose\nprimary --> letters[\"Letter head also uses both embeddings: B x 27\"]\nchoose --> word[\"Selected word evidence for decoder\"]\nletters --> competition[\"Optional spelling or gated letter competition\"]"
+    ],
+    [
+      "05 — Segmental search, acceptance and gloss output",
+      "flowchart LR\ntiming[\"Boundary log-probabilities over available time\"] --> score[\"Score rest steps and labeled candidate segments\"]\nrecognition[\"Selected word scores plus optional letter competitors\"] --> score\nscore --> dp[\"Semi-Markov dynamic programming: best non-overlapping path\"]\ndp --> stable[\"Fixed-lag or guarded early-accept decision\"]\nstable --> check{\"Stable enough to publish?\"}\ncheck -->|No| preview[\"Keep provisional preview and await evidence\"]\ncheck -->|Yes| merge[\"Merge nearby repeated labels and preserve output order\"]\nmerge --> mode{\"Word or spelling mode?\"}\nmode -->|Word| gloss[\"Committed gloss with score, start, end and commit time\"]\nmode -->|Letters enabled| spelling[\"Collect letter events into a spelled word\"]\nspelling --> gloss\ngloss --> captions[\"Append to utterance and send to language queue\"]\nfinish[\"Finish requested\"] --> flush[\"Flush boundary lookahead, pending candidates and spelling\"]\nflush --> gloss\npreview -.-> dp"
+    ],
+    [
+      "06A — Submitted paper: T5 English path",
+      "flowchart LR\ngloss[\"Accumulated committed gloss sequence\"] --> prepare[\"Prepare gloss text and recognition-evidence tokens\"]\nprepare --> tokenizer[\"Tokenizer IDs and attention mask\"]\ntokenizer --> encoder[\"T5-efficient-tiny encoder\"]\nencoder --> decoder[\"Autoregressive decoder: next English token\"]\ndecoder --> stop{\"End token or context limit?\"}\nstop -->|Continue| decoder\nstop -->|Complete| english[\"Detokenize to English\"]\nenglish --> incremental[\"Update incremental English while signing\"]\nfinish[\"Finish control\"] --> final[\"Finalize remaining English using available gloss context\"]\ngloss --> final\nfinal --> display[\"Final English on screen\"]\ndisplay --> speech[\"Local text-to-speech\"]\nstyle encoder fill:#DCCCFF,stroke:#874FFF\nstyle decoder fill:#DCCCFF,stroke:#874FFF"
+    ],
+    [
+      "06B — Current LIVE: constrained caption path",
+      "flowchart LR\ngloss[\"Committed gloss, score and timestamp\"] --> prepare[\"Merge spelling, map gloss IDs and confidence buckets\"]\nprepare --> live[\"Two live taggers: one-gloss lookahead\"]\nprepare --> draft[\"Draft tagger: zero-gloss lookahead for newest sign\"]\nlive --> tags[\"For each sign: words before, legal word form, words after\"]\ndraft --> tags\ntags --> constraints[\"Legal-form and pair masks, confidence keep rule, pronoun guard\"]\nconstraints --> caption[\"Detokenize, restore names and display provisional caption\"]\npause[\"Pause timer or Finish\"] --> mover[\"Clause finalization: move at most one gloss\"]\nprepare --> mover\nmover --> full[\"Full-context labeler produces candidate revision\"]\nfull --> revise{\"Meaning or order requires revision?\"}\ncaption --> revise\nrevise -->|Yes| revised[\"Use refined clause\"]\nrevise -->|No| kept[\"Keep live wording; add final punctuation\"]\nrevised & kept --> output[\"Settled English text\"]\noutput --> finish[\"Explicit Finish: display and speak final utterance\"]\nstyle live fill:#C2E5FF,stroke:#3DADFF\nstyle full fill:#C2E5FF,stroke:#3DADFF"
+    ],
+    [
+      "07 — Finish, speech, history and reset",
+      "flowchart LR\nbutton[\"User taps Finish or completes control gesture\"] --> flush[\"Engine flushes unresolved timing, spans and spelling\"]\nflush --> tail[\"Append any final committed words to utterance\"]\ntail --> empty{\"Any committed signs?\"}\nempty -->|No| message[\"Show No signs yet; no translation\"]\nempty -->|Yes| finalize[\"Language queue finalizes current LIVE captions\"]\nfinalize --> ui[\"Main thread: final English, clear preview and gloss rail\"]\nui --> tts[\"AVSpeechSynthesizer speaks English locally\"]\nfinalize --> history[\"Record sentence, glosses, events and timing for session history\"]\nrecording[\"Optional Save LIVE videos setting\"] -.-> history\nhistory --> review[\"History: review text and Speak again\"]\nfinalize --> reset[\"Reset caption state and prepare next utterance\"]\nstyle tts fill:#BDECC3,stroke:#66D575"
+    ]
+  ],
+  "sectionIds": [
+    {
+      "id": "12:667",
+      "title": "01  Capture and extraction",
+      "x": 0,
+      "y": 1000,
+      "width": 4400,
+      "height": 1800,
+      "cardIds": [
+        "12:670",
+        "12:673",
+        "12:676",
+        "12:679",
+        "12:682",
+        "12:685"
+      ]
+    },
+    {
+      "id": "12:689",
+      "title": "02  Timing and candidate preparation",
+      "x": 4640,
+      "y": 1000,
+      "width": 4400,
+      "height": 1800,
+      "cardIds": [
+        "12:692",
+        "12:695",
+        "12:698",
+        "12:701",
+        "12:704",
+        "12:707"
+      ]
+    },
+    {
+      "id": "12:711",
+      "title": "03  How landmark recognition works",
+      "x": 0,
+      "y": 3700,
+      "width": 4400,
+      "height": 1800,
+      "cardIds": [
+        "12:714",
+        "12:717",
+        "12:720",
+        "12:723",
+        "12:726",
+        "12:729"
+      ]
+    },
+    {
+      "id": "12:733",
+      "title": "04  Hand appearance and multimodal fusion",
+      "x": 4640,
+      "y": 3700,
+      "width": 4400,
+      "height": 1800,
+      "cardIds": [
+        "12:736",
+        "12:739",
+        "12:742",
+        "12:745",
+        "12:748",
+        "12:751"
+      ]
+    },
+    {
+      "id": "12:755",
+      "title": "05  Segmental decoding and commitment",
+      "x": 0,
+      "y": 6400,
+      "width": 4400,
+      "height": 1937,
+      "cardIds": [
+        "12:758",
+        "12:761",
+        "12:764",
+        "12:767",
+        "12:770",
+        "12:773"
+      ]
+    },
+    {
+      "id": "12:777",
+      "title": "06A  Paper English path — T5",
+      "x": 4640,
+      "y": 6400,
+      "width": 4400,
+      "height": 1800,
+      "cardIds": [
+        "12:780",
+        "12:783",
+        "12:786",
+        "12:789"
+      ]
+    },
+    {
+      "id": "12:793",
+      "title": "06B  Current LIVE English — LiveCaptions",
+      "x": 0,
+      "y": 9100,
+      "width": 4400,
+      "height": 1800,
+      "cardIds": [
+        "12:796",
+        "12:799",
+        "12:802",
+        "12:805",
+        "12:808",
+        "12:811"
+      ]
+    },
+    {
+      "id": "12:815",
+      "title": "07  Final output, speech and session lifecycle",
+      "x": 4640,
+      "y": 9100,
+      "width": 4400,
+      "height": 1800,
+      "cardIds": [
+        "12:818",
+        "12:821",
+        "12:824",
+        "12:827",
+        "12:830",
+        "12:833"
+      ]
+    }
+  ],
+  "notes": "Generated Mermaid followed by editable FigJam annotations. Original decoder diagram was replaced with forward routing. Source metadata inspected only; no training, protected evaluation, build, deployment or runtime source mutation.",
+  "verification": {
+    "visual_qa": "All eight detail sections viewed; final relevant screenshots passed. Native attached connectors retained; floating routing experiments removed.",
+    "structural_qa": "No child-node overflow in the eight detailed sections.",
+    "scope": "Current iPhone LIVE source; paper T5 path separately labeled.",
+    "checks": "Companion JSON parses; changed documentation git diff --check passes."
+  }
+}
