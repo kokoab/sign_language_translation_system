@@ -1,3 +1,112 @@
+## 2026-10-20 — User confirmed final two preview labels; all 100 published
+
+User explicitly confirmed IMG_4068.MOV=STOP and IMG_4122.MOV=YOU. Recorded exact
+pairs in confirmed_labels.json; stage/publish now select all 100 supplied clips,
+with no unresolved labels or incumbent fallbacks. Both catalogs mark these two labels
+user_confirmed, preserving raw model rankings. All 100 MP4s fully decode without
+errors, both mobile bundles match staged hashes, and native AVPlayer play/loop test
+passes for all 100. Android Debug rebuild succeeds; APK hash in build_receipt.json.
+Original sources unchanged; previous destination assets remain backed up. No runtime,
+model, training or protected-test changes. Updated signed iOS Release built and installed
+on connected jaz iPhone16. Launch blocked by Locked (CoreDevice10002/FBS error7);
+physical viewing remains after user unlock. No Android device connected; APK ready.
+Next safe action: user opens Glosses/Practice and checks previews. Evidence: artifacts/reports/mobile_user_previews_20261020/.
+
+## 2026-10-20 — Owner previews published98/100; two labels pending
+
+User replaced recording investigation with request to use Downloads/signs as mobile
+Glosses previews and model-label unnamed clips. Source100videos:66named+34IMG.
+Converted all100upright with aspect-preserving720max,H264Main/yuv420p,30fps; original
+files unchanged. Current native FP16 retained-primary model gives32clear unnamed
+matches; two ambiguous IMG_4068(SCHOOL/PLEASE/STOP),IMG_4122(ASK/NEED/YOU). Asked user
+whether STOP/YOU; no answer yet. Published98newMP4/poster pairs+catalogs to Flutter
+(Android/iOS) and nativeiOS bundles; retained incumbentSTOP/YOU until confirmed.
+Backups preserve changed previous files in mobile_user_previews_20261020/before/.
+Catalog retains locked vocabulary metadata; owner rows preview_only,trainingfalse;
+no model/dataset/trainingmanifest changes or accuracy/linguistic-certification claims.
+Both mobile bundles match staged hashes. All100fullFFmpegdecodes pass; nativeAVPlayer
+all100play/looptestpasses; AndroidDebugbuildpasses. Current phones unavailable, so
+not installed. Canonical runtimecode untouched; no recordingfix from interruptedtask.
+Sources/scripts/mappings/ranks/media/buildreceipts in
+artifacts/reports/mobile_user_previews_20261020/. Next safe action: confirm two names,
+rerun stage/publish with confirmed_labels.json, rebuild and install on targetphone.
+
+## 2026-10-20 — Current iOS Release installed and launched on jaz
+
+User requested update on connected phone. ADB had no device; devicectl identified
+jaz iPhone16(00008140-0004381C3610401C). Ran canonical build_ios_release_mirror.sh
+with that UDID and --install. Fresh signedRelease BUILD SUCCEEDED; install succeeded
+for com.kokoab.sltMobileApp(version1.0.0/build1), also confirmed with filtered device
+apps query. Launch failed with CoreDevice10002/FBS Security: invalid signature,
+entitlements or developer profile not explicitly trusted. Local codesign --verify
+--deep --strict passes; embedded provisioning admits this UDID, matches application
+identifier/team and expires2026-10-27T08:01:26UTC. Eight canonical app files match
+internalmirror hashes. Launch retry then succeeded without source/signature/profile
+changes: process34488 confirmed in launch_retry.json. Initial Security refusal retained
+in receipts; its exact transient/trust cause is unconfirmed. No source/model edits or
+tests/training. Next safe action: user checks current Live/Practice/History behavior;
+installation/launch alone does not establish signing accuracy or sustained phone performance.
+Receipts:artifacts/reports/ios_jaz_update_20261020_uZpMCH/ including build_install.log,
+source_receipt.json, install_receipt.json and installed_app.json. Prior phone installs
+remain historical evidence; no app/data uninstall performed.
+
+## 2026-10-20 — Android update installed on Samsung Galaxy A23 5G
+
+User authorized installation. After USB-debugging setup, SamsungSM-A236E(Android14,
+API34) became authorized overADB. Installed current553.4MiB DebugAPK via `adb install -r`:
+Success. Launched `com.example.slt_mobile_app/.MainActivity`: Statusok,COLD,
+TotalTime4842ms, process32719confirmed. StartupSLTLive crop test680.6ms/crop; do not
+interpret startup timing as sustainedrecognition/frame latency. No selectedprocess
+AndroidRuntimeerror in initial filteredlog. This is install/launch evidence only;
+Live/Practice/History, alignment, speech, recording and sustainedperformance acceptance
+still pending physicaluse. Receipt:artifacts/reports/android_ios_parity_20261020/samsung_install.json.
+No new model/data changes, training or protectedtest access. Next safe action: user
+opens Live and grants Camera permission, then checks Finish and Practice behavior.
+
+## 2026-10-20 — Android current-iOS behavior port built and verified
+
+Updated canonical Android MainActivity, LiveEngine, LiveReelActivity, LiveVision,
+manifest/Gradle; added LiveCaptions.kt, LiveFraming.kt, caption assets, timed fixtures,
+LiveCaptionsTest/LiveControlsTest and internal-disk build_android_mirror.sh. Shared
+Flutter app_shell/service expose supported Android History/settings actions; ATLAS
+README documents build and remaining platform limits. iOS source/helper unchanged.
+Port includes live English caption updates/Finish speech/Speak again, current Finish
+pose (right open palm+left fist above fresh shoulders, hold1s), portrait+rotation,
+front/back flip, shared CameraX viewport, persistent landmarks/sign toggles, guides,
+framing advice, asynchronous0.75x looping/expandable Practice references, History
+speech/delete/clear and default-off silent video saving with unsupported-camera fallback.
+Android keeps existing MediaPipe/TFLite model family/decoder/performance defaults;
+all9 original model/task payloads match original exports or GitHEAD. Two caption
+assets exactly match iOS. LegacyT5 files retained but not loaded at normal app startup.
+NAME spelling unavailable without compatible Android letter model; switch hidden.
+
+Final focused JVM5/5, zero skips/failures: all352 caption streams/91445 events exact
+against desktop/iOS fixture, Finish shoulder freshness/hold/latch/release and framing
+priority/delay, plus existing alignment checks. Flutter10/10 and focused analyzer clean.
+Debug APK builds in1m16s on internal mirror; final15source/fixture/asset hashes match
+mirror. zsh syntax and scoped gitdiffcheck pass. APK path/hash and test XML receipts:
+artifacts/reports/android_ios_parity_20261020/{REPORT.md,validation.json,model_assets.json}.
+Initial unqualified Gradle task unnecessarily started unrelated plugin tests; stopped
+and reran :app tasks only. Initial asset check assumed ignoredTFLite existed inHEAD;
+corrected to compare original exports, allmatch. Two early edit snippets used the
+wrongcwd and wrote nothing; corrected before final source/mirror verification.
+No training, protectedtest access, dataset/checkpoint deletion or newaccuracy claim.
+No Android device connected, so no install or physical camera/recording/speech/performance
+claim. Next safe action: install built APK and check both orientations/cameras, Finish,
+Practice, History, optional recording and both model modes; measure phone latency/thermals.
+
+## 2026-10-20 — Android parity update started
+
+User explicitly requested Android match current iOS app. Scope: port Live caption
+engine and UI/History/Practice behavior while retaining Android MediaPipe/TFLite
+recognition family and current performance-mode defaults. Native Android letter
+model is absent; do not pretend NAME spelling is supported or reuse incompatible
+Apple weights. Preserve all existing models/data and compatibility links. Build
+on internal-disk mirror due known external-volume rewrite failures. Validation:
+caption fixture parity, JVM tests, Flutter tests/analyzer and Android debug APK.
+Physical-phone behavior/performance remains a device check. No training or protected
+test access authorized/needed. Next safe action: implement and validate port.
+
 ## 2026-10-19 — Read-only deployed-release model-size inventory for defense study
 
 Measured retained mirror Release `/Users/frnzlo/slt_mobile_controls_device/Build/Products/Release-iphoneos/Runner.app`
