@@ -153,18 +153,26 @@ fun assignHands(hands: List<LiveHand>, previous: Map<String, Pair<Float, Float>>
 class LiveFinishGesture {
     private val holdSeconds = 1.0
     private var startedAt: Double? = null
+    private var shoulderY: Float? = null
+    private var shoulderAt: Double? = null
     var active = false
         private set
     private var latched = false
     var progress = 0.0
         private set
 
-    fun reset() { startedAt = null; active = false; latched = false; progress = 0.0 }
+    fun reset() { startedAt = null; shoulderY = null; shoulderAt = null; active = false; latched = false; progress = 0.0 }
 
-    fun update(left: LiveHand?, right: LiveHand?, seconds: Double): Boolean {
-        if (left == null || right == null || !isOpenPalm(left) || !isOpenPalm(right) ||
-            length(left.points[0].x - right.points[0].x, left.points[0].y - right.points[0].y) < 0.12f) {
-            reset(); return false
+    fun update(left: LiveHand?, right: LiveHand?, body: Array<LivePoint>, seconds: Double): Boolean {
+        if (body.size >= 2 && body[0].c > 0f && body[1].c > 0f) {
+            shoulderY = (body[0].y+body[1].y)/2; shoulderAt = seconds
+        }
+        val shoulder = shoulderY
+        val fresh = shoulderAt?.let { seconds-it <= 1.5 } ?: false
+        if (!fresh || shoulder == null || left == null || right == null || !isOpenPalm(right) || !isFist(left) ||
+            left.points[0].y >= shoulder || right.points[0].y >= shoulder) {
+            startedAt = null; active = false; latched = false; progress = 0.0
+            return false
         }
         active = true
         if (latched) return false
@@ -176,6 +184,14 @@ class LiveFinishGesture {
     }
 
     private fun length(x: Float, y: Float) = sqrt(x * x + y * y)
+
+    private fun isFist(hand: LiveHand): Boolean {
+        val p = hand.points
+        if (!intArrayOf(0,5,9,13,17).all { p[it].c > 0f } || length(p[9].x-p[0].x,p[9].y-p[0].y) < .025f) return false
+        return listOf(5 to 8,9 to 12,13 to 16,17 to 20).count { (mcp,tip) ->
+            p[tip].c > 0f && length(p[tip].x-p[0].x,p[tip].y-p[0].y) < length(p[mcp].x-p[0].x,p[mcp].y-p[0].y)
+        } >= 3
+    }
 
     private fun isOpenPalm(hand: LiveHand): Boolean {
         val required = intArrayOf(0, 2, 3, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16, 17, 18, 20)

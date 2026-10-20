@@ -1,6 +1,8 @@
 package com.example.slt_mobile_app
 
 import android.content.Intent
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 import com.example.slt_mobile_app.live.LiveHandImageMode
 import com.example.slt_mobile_app.live.LiveReelActivity
 import com.example.slt_mobile_app.live.LiveSessions
@@ -12,7 +14,18 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** The Flutter shell plus the native Live Reel (same channel and methods as ios/Runner/AppDelegate.swift). */
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
+    private var speech: TextToSpeech? = null
+    private var speechReady = false
+    private var pendingSpeech: String? = null
+
+    override fun onInit(status: Int) {
+        speechReady = status == TextToSpeech.SUCCESS && (speech?.setLanguage(Locale.US) ?: -1) >= 0
+        pendingSpeech?.let { if (speechReady) speech?.speak(it, TextToSpeech.QUEUE_FLUSH, null, "slt-history") }
+        pendingSpeech = null
+    }
+
+    override fun onDestroy() { speech?.shutdown(); super.onDestroy() }
     companion object {
         private const val CHANNEL = "slt_mobile_app/inference_v17"
         private const val LIVE_REQUEST = 7301
@@ -44,10 +57,44 @@ class MainActivity : FlutterActivity() {
                     startActivityForResult(intent, LIVE_REQUEST)
                 }
                 "liveReelStatus" -> result.success(LiveShared.status)
-                "listSessions" -> Thread {
+                "getLiveSettings" -> result.success(mapOf(
+                    "nameSpelling" to false,
+                    "saveVideos" to getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean("saveVideos", false)))
+                "setLiveSetting" -> {
+                    val key = call.argument<String>("key")
+                    val value = call.argument<Boolean>("value")
+                    if (key != "saveVideos" || value == null) result.error("invalid_arguments", "Unsupported Live setting", null)
+                    else { getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(key, value).apply(); result.success(null) }
+                }
+                "resetLiveTips" -> {
+                    getSharedPreferences(PREFS, MODE_PRIVATE).edit().remove("liveTipsSeen").apply(); result.success(null)
+                }
+                "speak" -> {
+                    val text = call.argument<String>("text")
+                    if (text.isNullOrBlank()) result.error("invalid_arguments", "Nothing to speak", null)
+                    else {
+                        if (speechReady) speech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "slt-history")
+                        else { pendingSpeech = text; if (speech == null) speech = TextToSpeech(this, this) }
+                        result.success(null)
+                    }
+                }
+                "deleteSession", "clearSessions" -> {
+                    val stamp = call.argument<String>("stamp")
+                    LiveShared.languageExecutor.execute {
+                        val failure = runCatching {
+                            if (call.method == "clearSessions") LiveSessions.deleteAll(this)
+                            else LiveSessions.delete(this, requireNotNull(stamp) { "Missing session stamp" })
+                        }.exceptionOrNull()
+                        runOnUiThread {
+                            if (failure == null) result.success(null)
+                            else result.error("session_delete_failed", failure.message, null)
+                        }
+                    }
+                }
+                "listSessions" -> LiveShared.languageExecutor.execute {
                     val rows = runCatching { LiveSessions.list(this) }.getOrDefault(emptyList())
                     runOnUiThread { result.success(rows) }
-                }.start()
+                }
                 "getHandImageMode" -> result.success(mapOf(
                     "mode" to LiveShared.mode(this).name, "active" to LiveShared.engine?.handImages,
                     "crop_encode_ms" to LiveShared.cropEncodeMs, "budget_ms" to LiveShared.AUTO_CROP_BUDGET_MS))

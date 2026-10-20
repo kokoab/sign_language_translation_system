@@ -98,7 +98,7 @@ class LiveEngine(context: Context, val handImages: Boolean, useGpu: Boolean = tr
         val started = SystemClock.elapsedRealtimeNanos()
         val observation = vision.observe(image, rgba.width, rgba.height, seconds)
         if (!allowFinishGesture) resetFinishGesture()
-        val finishRequested = allowFinishGesture && finishGesture.update(observation.left, observation.right, seconds)
+        val finishRequested = allowFinishGesture && finishGesture.update(observation.left, observation.right, observation.body, seconds)
         if (finishGesture.active) {
             // Preserve the pending sign for Finish; never classify the control pose.
             return Step(observation, emptyList(), (SystemClock.elapsedRealtimeNanos() - started) / 1e9,
@@ -120,7 +120,7 @@ class LiveEngine(context: Context, val handImages: Boolean, useGpu: Boolean = tr
 enum class LiveHandImageMode { AUTO, ON, OFF }
 
 /**
- * Process-wide models (LiveReelShared on iOS): the engine and Stage 3 are built once in the
+ * Process-wide models (LiveReelShared on iOS): the engine and caption models are built once in the
  * background behind the home page; the live screen waits for `status`.
  */
 object LiveShared {
@@ -148,18 +148,20 @@ object LiveShared {
 
     /** One model job at a time (frames, Finish, reloads). */
     val engineExecutor = Executors.newSingleThreadExecutor(inferenceThread("slt-live-engine"))
-    /** Stage 3 renders, off the frame path. */
+    /** English captions, off the frame path. */
     val languageExecutor = Executors.newSingleThreadExecutor(inferenceThread("slt-live-language"))
 
     @Volatile var engine: LiveEngine? = null; private set
-    @Volatile var stage3: LiveStage3? = null; private set
+    @Volatile var captions: LiveCaptionModels? = null; private set
+    @Volatile var captionsError: String? = null; private set
     @Volatile private var state = "idle"
     @Volatile private var error: String? = null
     @Volatile var cropEncodeMs: Double? = null; private set
 
     val status: Map<String, Any?>
         get() = mapOf("ready" to (state == "ready"), "state" to state, "error" to error,
-            "hand_images" to engine?.handImages, "crop_encode_ms" to cropEncodeMs)
+            "hand_images" to engine?.handImages, "crop_encode_ms" to cropEncodeMs,
+            "captions_ready" to (captions != null), "captions_error" to captionsError)
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -207,7 +209,11 @@ object LiveShared {
                 engine = built
                 Log.i(TAG, "engine ready (hand images ${built.handImages}) in ${SystemClock.elapsedRealtime() - started} ms")
                 languageExecutor.execute {
-                    try { stage3 = LiveStage3(app).also { it.warm() } } catch (t: Throwable) { Log.e(TAG, "Stage 3 failed", t) }
+                    try {
+                        captions = LiveCaptionModels(
+                            app.assets.open("live_captions_v17.json").bufferedReader().use { it.readText() },
+                            app.assets.open("live_captions_v17.bin").use { it.readBytes() })
+                    } catch (t: Throwable) { captionsError = t.message; Log.e(TAG, "Live captions failed", t) }
                 }
                 state = "ready"
             } catch (t: Throwable) {
@@ -249,11 +255,22 @@ object LiveSessions {
     fun utcNow(): String = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
         .apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
 
-    fun save(context: Context, stamp: String, value: JSONObject) {
+    @Synchronized fun save(context: Context, stamp: String, value: JSONObject) {
         val file = File(directory(context), "$stamp.json")
         val tmp = File(file.path + ".tmp")
         tmp.writeText(value.toString())
-        tmp.renameTo(file)
+        check(tmp.renameTo(file)) { "Could not save session" }
+    }
+
+    @Synchronized fun delete(context: Context, stamp: String) {
+        require(Regex("[0-9]{8}_[0-9]{6}(?:_[0-9]{3})?").matches(stamp)) { "Invalid session stamp" }
+        File(directory(context), "$stamp.json").delete()
+        File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_MOVIES), "live_reel_videos")
+            .listFiles()?.filter { it.name.startsWith("${stamp}_") && it.extension == "mp4" }?.forEach { it.delete() }
+    }
+
+    @Synchronized fun deleteAll(context: Context) {
+        directory(context).listFiles()?.filter { it.extension == "json" }?.forEach { delete(context,it.nameWithoutExtension) }
     }
 
     fun list(context: Context): List<Map<String, Any?>> {
@@ -277,7 +294,8 @@ object LiveSessions {
                 "stamp" to file.nameWithoutExtension,
                 "started_utc" to value.optString("started_utc", utcNow()),
                 "duration_seconds" to value.optDouble("duration_seconds", 0.0),
-                "glosses" to glosses, "sentences" to sentences,
+                "glosses" to (value.optJSONArray("glosses")?.let { a -> List(a.length()) { a.getString(it) } } ?: glosses),
+                "sentences" to (value.optJSONArray("sentences")?.let { a -> List(a.length()) { a.getString(it) } } ?: sentences),
                 "complete" to value.optBoolean("complete", true),
                 "timeline" to timeline,
             ))

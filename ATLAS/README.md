@@ -59,6 +59,21 @@ Android source: `mobile_app/slt_mobile_app/android/app/src/main/kotlin/com/examp
 Bundled MediaPipe/TFLite files: `mobile_app/slt_mobile_app/android/app/src/main/assets/`.
 Android has its own extractor/model family; the iOS repair is not an Android model update.
 
+The 2026-10-20 Android app update shares the iOS Live caption weights/policy,
+Finish controls, portrait/landscape flow, Practice reference videos, History actions
+and optional video saving. Android still uses its own MediaPipe/TFLite sign models;
+NAME spelling needs a compatible Android letter model and stays unavailable.
+Build on internal disk to avoid exFAT rewrite failures:
+
+```sh
+ATLAS/mobile_app/build_android_mirror.sh :app:testDebugUnitTest :app:assembleDebug
+```
+
+The default mirror is `~/slt_android_build_mirror/slt_mobile_app`; override with
+`SLT_ANDROID_MIRROR`. APK: `build/app/outputs/apk/debug/app-debug.apk` in that mirror.
+Caption fixtures verify English rendering from supplied signs, not camera accuracy.
+
+
 Verification: 52 focused Python tests pass; the unsigned iOS Release and offline
 Android Debug builds pass from this location. All 582 inventoried mobile source/
 asset hashes and 11 compiled Core ML weight payloads were preserved. Build setup
