@@ -100,4 +100,24 @@ class SltInferenceService {
     final rows = await _channel.invokeListMethod<Object?>('listSessions') ?? const [];
     return [for (final row in rows) Map<String, dynamic>.from(row as Map)];
   }
+
+  /// iPhone and Android: delete one saved session (its file, trace and any saved takes).
+  Future<void> deleteSession(String stamp) => _channel.invokeMethod<void>('deleteSession', {'stamp': stamp});
+
+  /// iPhone and Android: delete every saved session.
+  Future<void> clearSessions() => _channel.invokeMethod<void>('clearSessions');
+
+  /// iPhone and Android: read English aloud (History's Speak again).
+  Future<void> speak(String text) => _channel.invokeMethod<void>('speak', {'text': text});
+
+  /// Live settings (NAME spelling requires the iPhone letter model). {"nameSpelling": bool, "saveVideos": bool} (both default off).
+  Future<Map<String, Object?>> getLiveSettings() async =>
+      Map<String, Object?>.from(await _channel.invokeMapMethod<String, Object?>('getLiveSettings') ?? const {});
+
+  /// Set "saveVideos" on either phone; "nameSpelling" is iPhone only.
+  Future<void> setLiveSetting(String key, bool value) =>
+      _channel.invokeMethod<void>('setLiveSetting', {'key': key, 'value': value});
+
+  /// Show the first-Live tips again next time Live opens.
+  Future<void> resetLiveTips() => _channel.invokeMethod<void>('resetLiveTips');
 }
