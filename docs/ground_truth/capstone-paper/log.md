@@ -1,3 +1,45 @@
+## 2026-10-28 — Start/End terminators added to both manuscript flowcharts
+
+User requested Start and End on the flowcharts. Regenerated Figures 8 and 9 from
+their existing code/vector sources in `artifacts/reports/flowchart_terminators_20261028/`.
+Navigation retains Live, Glosses, Practice, History and Manuals; Start precedes
+Open ATLAS/Home, End follows a labeled Close application route. Processing pipeline
+adds Start before camera input and End after English text/speech output.
+Historical sources/renders preserved. Replaced only those two inline images in
+Revised Manuscript (`t.npvgh2mbwuhs`) of document
+`1i-sVr5ny6vmf6QDb_Dbr1e_CA3_xH7y7s68-wVqaSzc`, with fresh revision-guarded reads/writes.
+Preserved displayed image heights and aspect ratios. Readback verifies target body
+structure/text/tables unchanged apart from image IDs; other tabs unchanged apart
+from temporary image URL refreshes. PDF pages visually checked: Figure 8 on printed
+75, Figure 9 on 77, both terminators visible and captions retained. No new model
+comparison rows were authorized or added. Brief volume disappearance resolved when
+it remounted; user confirmed reconnection. Regenerated large-artifact index.
+Next safe action: author review of the two diagrams; no remaining requested edit.
+
+## 2026-10-28 — Approved post-defense revisions applied to Revised Manuscript
+
+Google Docs tools became available in the existing extension session; resumed
+the already-authorized edit without new approval. Updated only Revised Manuscript
+(`t.npvgh2mbwuhs`) in document `1i-sVr5ny6vmf6QDb_Dbr1e_CA3_xH7y7s68-wVqaSzc`.
+Applied all 16 requested P-items from POST_DEFENSE_BATIANCELA_REVIEW.md version 3:
+1.3 objective, 3.2 Finish gesture, 4.5 flowchart/metrics, 4.7.2 precision/timing,
+4.8 results/development/phone/precision/calibration, 5.1/5.2 and references.
+Inserted both supplied PNGs and native Tables 11, 18 and 20; captions and references
+renumbered, 4.8 sections shifted, contents/figure/table lists and page references
+refreshed. Exact readback: all quoted paragraphs once, every new table cell matches,
+Figures 1–19/Tables 1–28, zero old 31.14 ms occurrences, zero navigation page mismatches.
+Other tabs unchanged after excluding refreshed temporary image URLs.
+Rendered affected PDF pages; resized tall pipeline image, kept Table 18 together,
+pinned table headers and retained two-page contents layout. Temporary duplicate P-19,
+two invalid formatting batches, ambiguous automatic page matches and transient shared
+quota 429 were corrected; details in report. No model/app/data/training changes.
+Changed this log and current-state capstone entry; verification/report:
+`artifacts/reports/post_defense_manuscript_applied_20261028/`.
+QA export/renderings: `artifacts/generated/post_defense_doc_qa_20261027/`.
+Regenerated `artifacts/LARGE_FILES.md` after the report/QA exports; scoped
+`git diff --check` passed. Final navigation page visually checked after corrections.
+Next safe action: author review of the edited tab; no pending P-item or image placeholder.
+
 ## 2026-10-27 — Approved post-defense application blocked by missing connector tools
 
 User authorized applying all 16 specified P-items from

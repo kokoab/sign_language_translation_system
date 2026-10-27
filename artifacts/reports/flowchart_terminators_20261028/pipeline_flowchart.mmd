@@ -1,0 +1,39 @@
+flowchart TD
+    start(["Start"])
+    camera["Device camera frame (30 fps)"]
+    gate{"Engine free and 50 ms since last processed frame?"}
+    drop["Skip frame; keep only the newest frame"]
+    landmarks["Landmark extraction: 61 points, 5 values each"]
+    boundary["Boundary model: outside / begin / inside per frame (0.3 s look-ahead)"]
+    crops["Hand crops (left, right, both) to MobileCLIP2-S0 features"]
+    intervals["Candidate sign intervals, each resampled to 32 frames"]
+    recognize["Squeezeformer recognizer: scores for 100 signs"]
+    decode["Segmental decoder: combine timing and sign scores"]
+    commit{"Commit conditions met?"}
+    wait["Keep observing next frames"]
+    buffer["Gloss buffer: append committed sign"]
+    english["Update English text from accumulated glosses"]
+    finish{"Finish button or one-second Finish gesture?"}
+    more["Continue signing"]
+    final["Flush open sign; finalize English text"]
+    output["Display English text and speak it on the device"]
+    end(["End"])
+    start --> camera
+    camera --> gate
+    gate -->|"No"| drop
+    gate -->|"Yes"| landmarks
+    landmarks --> boundary
+    landmarks --> crops
+    boundary --> intervals
+    intervals --> recognize
+    crops --> recognize
+    recognize --> decode
+    decode --> commit
+    commit -->|"No"| wait
+    commit -->|"Yes"| buffer
+    buffer --> english
+    english --> finish
+    finish -->|"No"| more
+    finish -->|"Yes"| final
+    final --> output
+    output --> end
