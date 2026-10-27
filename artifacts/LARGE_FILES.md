@@ -1,6 +1,6 @@
 # Large artifact files — read this, not them
 
-Every file under `artifacts/` at or above 1 MB — 362 files, largest first. Smaller-but-still-costly files (200 KB–1 MB) are not listed; find them with:
+Every file under `artifacts/` at or above 1 MB — 364 files, largest first. Smaller-but-still-costly files (200 KB–1 MB) are not listed; find them with:
 
 ```sh
 find artifacts -size +200k \( -name '*.json' -o -name '*.csv' \) | xargs ls -S
@@ -89,6 +89,7 @@ Regenerate: `venv/bin/python scripts/index_large_artifacts_v17.py`
 | `artifacts/reports/live_reel_mobile_v17_20260928/fixtures/fixture_3.json` | 4.6 | `id`=local:HELLO_HOW_YOU:069536d5; `video`=/Volumes/secret/SLT/SLT/data/raw_videos/PHRASES FIXED/HELLO_… — nested: `reference`, `frames`, `bio_words`, `bio_letters`, `spans`, `crops`, `words` |
 | `artifacts/reports/live_reel_mobile_v17_20260928/fixtures/fixture_0.json` | 4.6 | `id`=local:HELLO_HOW_YOU:64f34df5; `video`=/Volumes/secret/SLT/SLT/data/raw_videos/PHRASES FIXED/HELLO_… — nested: `reference`, `frames`, `bio_words`, `bio_letters`, `spans`, `crops`, `words` |
 | `artifacts/reports/my_like_regression_v17_20261011/rollback_review/contacts.inputs.json` | 4.6 | array, 12 items of objects keyed `boxes`, `embeddings`, `end`, `id`, `landmarks`, `phone_gloss`, `start`, `take` |
+| `artifacts/reports/mobile_live_captions_20261015/parity_cases.json` | 4.5 | array, 352 items of objects keyed `id`, `events` |
 | `artifacts/reports/my_transition_recovery_v17_20261011/boost_genuine.json` | 4.5 | nested: `compute_ms`, `records` |
 | `artifacts/reports/stage2_v17_live_matched_v1/cache.json` | 4.4 | `format`=slt_stage2_live_matched_cache_v17; `protected_test_accessed`=false — nested: `contract`, `rows` |
 | `artifacts/reports/stage2_v17_live_matched_v1/cache_progress.json` | 4.4 | `completed`=1647; `total`=1647; `elapsed_seconds`=3386.57542425 — nested: `results` |
@@ -322,6 +323,7 @@ Regenerate: `venv/bin/python scripts/index_large_artifacts_v17.py`
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/citizen_val__COLD__39072948576699607-COLD.json` | 1.2 | nested: `frames` |
 | `artifacts/reports/my_transition_recovery_v17_20261011/hybrid_genuine.json` | 1.2 | nested: `compute_ms`, `records` |
 | `artifacts/reports/my_transition_recovery_v17_20261011/contact_negative.json` | 1.2 | nested: `records` |
+| `artifacts/reports/manuscript_ch4_reorganization_20261013/before.json` | 1.2 | `tabId`=t.d1buvx4fb1j1; `title`=Manuscript; `parentTabId`=null; `index`=0; `nestingLevel`=null; `iconEmoji`=null; `footnotes`=null; `suggestedDocumentStyleChanges`=null — nested: `body`, `headers`, `footers`, `documentStyle`, `namedStyles`, `lists`, `inlineObj… |
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/citizen_val__WATER__03174577769237463-WATER.json` | 1.2 | nested: `frames` |
 | `artifacts/reports/my_transition_recovery_v17_20261011/global_localA_genuine.json` | 1.2 | nested: `compute_ms`, `records` |
 | `artifacts/reports/my_have_joint_experiment_v17_20261011/validation_traces/citizen_val__LISTEN__1493429103533752-LISTEN.json` | 1.2 | nested: `frames` |

@@ -1,6 +1,6 @@
 # SLT Project Ground Truth
 
-**Last updated:** 2026-10-13 PHT (+0800, Asia/Manila)
+**Last updated:** 2026-10-28 PHT (+0800, Asia/Manila)
 
 This file is the current state of the project, and it is the only file you must read
 before changing the pipeline. It states what is true and what binds you now.
@@ -28,13 +28,75 @@ The old seven-person dataset is not acceptable evidence of generalization.
 
 ## Capstone paper authoring
 
-**2026-10-13 template restructuring draft:** Full proposed wording is in
-`docs/capstone_papers/CHAPTER_4_TEMPLATE_ALIGNED_DRAFT.md`:4.3Prototype,4.4ImplementationPlan,
-4.5ImplementationResults; training methods relocate within4.2. Schedule/budget and missing
-software-testing outcomes remain explicit author fields. Draft now includes item-by-item
-placement notes: retain SDLC, activity list, GANTT, PERT, diagrams and safeguards; move
-adjusted blocks and insert agreed additions without replacing existing material. GoogleDocs
-unchanged by this draft.
+**2026-10-28 flowchart terminators:** Figures8/9 in Revised Manuscript now include
+oval Start/End nodes. Five navigation branches and processing flow preserved;
+other text/tables/tabs unchanged. Rendered figures retain printed pages75/77.
+Source and QA: `artifacts/reports/flowchart_terminators_20261028/`.
+
+**2026-10-28 post-defense revisions applied:** all 16 requested P-items from
+POST_DEFENSE_BATIANCELA_REVIEW.md v3 applied in place to Revised Manuscript
+(`t.npvgh2mbwuhs`, document `1i-sVr5ny6vmf6QDb_Dbr1e_CA3_xH7y7s68-wVqaSzc`).
+Phone results now final paper results; development 12.83% remains scoped to 4.8.2.
+Both figures and native Tables11/18/20 inserted; captions/references/navigation
+renumbered (Figures1–19,Tables1–28). Exact text/table readback and affected-page
+PDF QA pass; other tabs unchanged. No model/app change. Evidence:
+`artifacts/reports/post_defense_manuscript_applied_20261028/`.
+
+**2026-10-27 post-defense metrics:** paper's 12.83% WER is the Python development implementation; the app's Swift
+code gives 15.04% (Mac) / 14.60% (iPhone 13, every frame) / 15.04–16.81% (iPhone, camera timing). FP32=FP16 accuracy
+and every-frame WER; FP32 too slow on phone (85 vs 20 ms/frame). Calibration ECE 3.03→1.02% (not deployed). iPhone
+English is the caption engine, paper keeps T5 by author decision. Review: docs/capstone_papers/POST_DEFENSE_BATIANCELA_REVIEW.md.
+
+**2026-10-20 separate Top-5 batch:** Added two dashboards in
+`docs/capstone_papers/review_assets/20261020_metrics_top5/`, preserving every original
+chart file(hashchecked). Primary exact3957validation replay:Top5 3912/3957=98.86%;
+base selectedepoch100 recordedTop5 375/378=99.21%. Primary Top5 is a selected-checkpoint
+point; base has recorded epochcurve. User removed the entire primaryLoss panel;
+latest primaryexport has accuracy,macro metrics,learningrate and summarytable.
+MeasuredCE receipt preserved as evidence only. Original/basecharts unchanged; no testgate access.
+
+**2026-10-20 recognizer charts:** Primary and base-landmark dashboard PNG/SVG/PDF
+in `docs/capstone_papers/review_assets/20261020_primary_metrics/`. Each model has
+one combined accuracy curve. Primary saved3957clip validation summary: accuracy95.50%,
+macro precision94.51%, recall94.52%, F1 94.38%; its historical curve pools3982clips.
+Base epoch100 cached Citizen validation378 replay reproduces96.83%accuracy and
+96.61%macroF1; macro precision97.77%, recall96.58%. Receipts retain hashes and
+base predictions. No protected-test access, training or manuscript changes.
+
+
+**2026-10-14 layout verified:** Chapter 4 body spacing, figure-caption flow, table row continuity and screenshot sizing repaired. Full rendered chapter checked in `spacing_verified.pdf`; Gantt/PERT pages retained separately per user instruction.
+
+**2026-10-14 condensation applied:** Manuscript4.3–4.5 condensed; metrics unchanged.
+App images are nowFigures10–14; deployment15,basecurve16,WER17; Englishcurve moved
+toAppendixB/B1. Tables1–20. Updatedflowcharts/context/DFD;Manuals is fifthpeer appbranch.
+SDLC,PERT,GANTTpreserved. Existingalpha-testingplaceholder now explicitunreportedstatus.
+AppendixA body absent in currenttab despite oldcontentsentry (supersedes earlier
+application claim below). Evidence: `artifacts/reports/paper_condensation_20261014/REPORT.md`.
+
+**2026-10-13 application walkthrough applied:** Manuscript4.3.3 now has ten app
+images in six compact figure groups (Figures10–15; printed88–93), with ready prose.
+Later figures and contents/list references updated; other tabs preserved. Review and
+source notes: `docs/capstone_papers/APPLICATION_SCREENSHOTS_REVIEW.md`. Live/Practice
+are prepared phone-layout illustrations using recorded signer frames, with active
+HELLO99% backed by native-code Mac replay; not a new phone performance measurement.
+
+
+**2026-10-13 software testing applied:** Manuscript4.5.5now contains Tables20–21
+andAppendixA:47selected cases,38internal+9interface, allpassing finalresults and0skips.
+BroaderPython245/245,Flutter7/7,native9uniqueafter documentedstaleassertion corrections,
+andfreshJVM2/2. Initialnativefailure/retest retained; no combinedfull-repositorypassclaim.
+ReviewMD: `docs/capstone_papers/WHITE_BOX_TESTING_REVIEW.md`; evidence:
+`artifacts/reports/paper_software_testing_20261013/REPORT.md`. No model/device changes.
+
+**2026-10-13 Chapter4 reorganization applied:** Manuscript tab `t.d1buvx4fb1j1`
+is the current working paper. Approved structure: preserved design/development4.2,
+prototype4.3, implementation plan4.4, results4.5. Original4.1/4.2 blocks, SDLC,
+ActivityList, GANTT, PERT and diagrams verified unchanged; participant provisions
+moved intact. PageCheck and other tabs unchanged. Native tables/figures retained,
+resource/risk matrices inserted, captions and contents references updated. Budget,
+module duration, evaluator assignment and software-quality evidence gaps remain explicit.
+Draft application record: `docs/capstone_papers/CHAPTER_4_TEMPLATE_ALIGNED_DRAFT.md`.
+Verification: `artifacts/reports/manuscript_ch4_reorganization_20261013/REPORT.md`.
 
 **2026-10-13 applied manuscript:** Updated Page Check tab `t.8u4bn2h16og9` with agreed
 development narrative and4.3.5FinalSystemConfiguration. Five-stage WER uses current lineage
@@ -228,6 +290,87 @@ and provenance in `docs/capstone_papers/ATLAS_MEASUREMENT_NOTES.md`; never relab
 
 
 ## Pipeline state
+
+**2026-10-19 known-training examples:** `data/local/model_class_examples/` contains
+100unchanged Citizen official-train MP4 copies, one canonical class name per file,
+no subfolders,64.9MB. All100give exact expected single-word outputs in native Mac
+replay with current FP16 models and fresh Vision state per standalone file; shared-stream
+cadence/order can change outputs. This is selected training-demo evidence, not independent
+accuracy or phone-camera verification. Sources/hashes/results:
+`artifacts/reports/model_class_examples_20261019/`. Models/app/training gates unchanged.
+Fresh primary re-audit of the100actual copied files:100/100expected top1 in deployed
+CoreML retained primary and current PyTorch99a18801onidenticalnative tensors. ASK98.03%,
+YOU99.57%; no swap found. Sampled visual screening100clips,97pinnedASL-LEXreferences;
+not linguistic certification or a live-boundary guarantee. Evidence:
+`artifacts/reports/model_class_examples_reaudit_20261019/`. No video replacements.
+
+**2026-10-20 owner preview replacement:** Mobile Flutter/native iOS catalogs now use
+all 100 previews from `/Users/frnzlo/Downloads/signs` (66 filename labels, 32 model-assisted,
+2 user-confirmed). User confirmed IMG_4068=STOP and IMG_4122=YOU; no incumbent fallback.
+Original inputs/backups preserved; new clips preview_only, not training admissions.
+All 100 full decodes and native playback/loop checks pass; Android Debug builds.
+Updated iOS Release installed on jaz iPhone 16; automatic launch blocked by phone
+lock. Android APK built; no Android connected. No runtime/model change or
+recording fix. Evidence: `artifacts/reports/mobile_user_previews_20261020/`. Supersedes
+earlier mobile 63/37 training-reference description; historical desktop/model-class
+examples unchanged.
+
+**2026-10-20 jaz iPhone16 update:** Current canonical signedRelease builds and installs
+successfully on jaz; launch retry succeeds(process34488). Initial Security refusal
+retained in receipts; local signature valid, profile admits device and expiresOct27.
+Current update opened; physical Live behavior/performance remains unverified. Receipts:
+`artifacts/reports/ios_jaz_update_20261020_uZpMCH/`. No source/model changes.
+
+**2026-10-20 Android behavior port built:** Android now implements current iOS Live
+captions/Finish speech, updated Finish pose, portrait+rotation/flip, display toggles,
+framing hints,0.75x Practice references, History speech/delete/clear and optional silent
+video saving(defaultoff). MediaPipe/TFLite recognition models/settings unchanged;
+NAME spelling still unavailable on Android. Caption parity0/91445mismatches across
+352streams; JVM5/5,Flutter10/10,analyzerclean; DebugAPKbuildpasses in internal mirror
+`~/slt_android_build_mirror/slt_mobile_app`. Helper:`ATLAS/mobile_app/build_android_mirror.sh`.
+Installed and launched on SamsungGalaxyA23 5G(SM-A236E,Android14) after USBsetup;
+Live camera,recording,speech and sustainedspeed acceptance pending. Install receipt:
+`artifacts/reports/android_ios_parity_20261020/samsung_install.json`.
+Receipts:`artifacts/reports/android_ios_parity_20261020/`. No training/testgate access.
+
+**2026-10-15 UX batch installed (iPhone):** FINGERSPELL sign off; NAME letters only via Settings switch (default
+off); Live videos saved only via Settings switch (default off); clips 0.75×; Speak again (Live + History);
+History English-first with delete/clear; framing hints + outline; first-Live tips; manual has no fingerspelling.
+
+**2026-10-15 Live ••• menu + Show signs installed:** toolbar = Flip + ••• (Show landmarks, Show signs, guide);
+Show signs off leaves only the English; landscape caption level with ↺/Finish. iPhone builds now go through
+`ATLAS/mobile_app/build_ios_release_mirror.sh` (internal-disk mirror; exFAT large rewrites fail).
+
+**2026-10-15 iPhone Live captions (option B) installed on angelo iPhone 13:** Live English now comes from
+the desktop caption engine (Swift port, 0/91,445 parity mismatches over 352 streams); Finish finalizes and
+speaks the caption once; T5 not loaded; no per-sign speech. Android unchanged. Awaiting user live check.
+Log: mobile-deployment 2026-10-15; evidence: artifacts/reports/mobile_live_captions_20261015/.
+
+**2026-10-13 portrait placement follow-up:** Practice reference is top-center; round/sign
+card is bottom-center, 12pt above centered Skip (retry stays left). Live bottom controls are
+centered; its toolbar now shares the Back/LIVE row in portrait. Settings/Letters buttons are
+removed in both modes, and the manual Letters override is always false (old preferences ignored).
+Sign-triggered spelling retains existing off-mode behavior. Topbar follow-up passes2/2native checks and7/7Flutter tests; signedRelease installed and
+launched on angelo iPhone13.
+Focused native layout/overlay test passes at 320×568, 390×844 and 844×390; snapshots reviewed.
+Signed iPhone Release build succeeds; this follow-up and camera/playback changes are installed
+and launched on angelo iPhone 13 (00008110-00111D1A0130A01E). Initial connection failure
+resolved on install retry; physical behavior still awaits user verification.
+
+**2026-10-13 mobile controls/playback update (installed on angelo iPhone 13):** Live/Practice open in
+portrait and allow landscape with a recommendation. Active native controller maps landmarks
+through the preview layer's rotation/mirroring; Live adds front-default camera flip,
+Practice remains front-only. Shared landmark visibility defaults on and persists. Practice
+reference expands in place with X/outside dismissal; loading is asynchronous/cancellable.
+All100 selected references now use H264 Main/yuv420p for playback compatibility, with original
+MPEG4 bytes preserved; source selections, frame counts, dimensions and durations unchanged.
+Decoded-frame SSIM minimum .993861; catalog/media hashes agree across Flutter/native/desktop.
+Prior exact-preview recognition results apply to the pre-conversion MPEG4 pixels; H264
+previews have not been re-scored. Original clips also play in simulator, so the intermittent
+real-iPhone failure's exact cause and physical camera alignment remain unconfirmed.
+Unsigned iPhone Release builds; simulator3/3 (all100clips play/loop), Flutter7/7 and
+previewbuilder16/16pass. Models/decoders/training gates unchanged.
+Report:mobile_camera_controls_20261013.
 
 **2026-10-13 installed on dwight ramos iPhone11:** canonical signedRelease installation
 succeeds afterDeveloperMode enabled; targetprofile andsignature verified. Usertrusted
@@ -602,6 +745,40 @@ hands stay on the signer (largest face at pick, re-picked after 2 s unseen). One
 previous selection exactly: 238-clip full-engine replay gives identical words. Two-person composites:
 wrong-person hands 50% -> 5%, faces/bodies nearly eliminated; iPhone cost +1 ms only with two people.
 Desktop app unchanged. Report: `artifacts/reports/signer_lock_v17_20260929/REPORT.md`.
+
+**Desktop speech/gesture update 2026-10-14:** captions spoken 1.5 s after the last sign (was 3.5 s),
+long pause (3.5 s) makes a sentence final, fingerspelling off by default, middle-finger novelty gesture
+(0 false triggers over 43,197 signing frames). See live-streaming log.
+
+**Desktop live captions 2026-10-14 — desktop Live default (phones unchanged):**
+`scripts/live_captions_v17.py` + `artifacts/models/live_captions_v17_20261014/`. English captions
+while signing, settled sentences spoken, Finish optional; `--no-live-captions` restores the old
+Finish-time T5 path. Runtime context 0 (validation-chosen); parity with the evaluated engine tested.
+Recognition and frame cost unchanged on a recorded session. Report: caption_tagger/REPORT_V2.md.
+
+**v2 live caption engine 2026-10-13 — experiment, not wired into ATLAS:**
+`experiments/streaming_translation/caption_tagger/REPORT_V2.md`. Learned live tagger + learned
+clause finalizer (≤1 sign moved). Held-out meaning parity with Finish-time T5 (706 vs 708/784
+sentences), every sign kept, 0 invented sign words on 3,200 all-class combos; phone NE0.16,
+text immediate, ~5ms/update desktop CPU. 26.5/30 training min used. Open: YOU→your, NO scope.
+
+**Subtitle caption tagger 2026-10-13 — experiment only, no promotion:**
+`experiments/streaming_translation/caption_tagger/REPORT.md`. Learned 1.58M monotone tagger
+(sign + closed insertion inventory, lookahead1) captions append-only (NE0; draft k0 NE0.10),
+keeps every sign in order 300/300 held-out and 99.3% of 3,200 new all-class combos with no
+invented sign words; installed T5 still more fluent at Finish (chrF85.1 vs78.8) but drops/
+invents signs. Open: late time sign, WH-final, late NO, inserted pronouns. 19.3/30 min used.
+
+**Streaming English experiment 2026-10-13 — separate replay, no promotion:**
+`experiments/streaming_translation/REPORT.md` compares five local model/prompt
+conditions on26historical phone utterances (20causally timed),24text diagnostics
+and2synthetic gap cases. Tiny full-output native parity26/26. Fixed1.5s no-commit
+timeout changes12/20phone outputs; conservative sentence agreement commits only
+3/20tails and fails diagnostic stability checks. Draft captions revise unsupported
+early meanings. FLAN-base and Qwen0.5B-Instruct tested prompts have critical semantic
+errors; no replacement/live-demo promotion. No ATLAS writes, training or test access;
+optional adaptation allowance remains unused (30min cap). Desktop timings are not
+iPhone measurements. Next: reviewed partial-input and boundary evidence/evaluation.
 
 **Stage3 shared-meaning audit 2026-10-11 — full vocabulary, no production change:**
 1,188native cases using phone-matching current packages:865diagnostic/phone cases covering
