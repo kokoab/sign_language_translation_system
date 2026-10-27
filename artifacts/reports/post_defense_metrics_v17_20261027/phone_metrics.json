@@ -1,0 +1,965 @@
+{
+ "definitions": "Score the iPhone 13 ABBA replays: sequence metrics, commit latency, frame cost, English timing, commit-score reliability.\n\nDefinitions (also written into phone_metrics.json):\n- WER = (S + D + I) / reference signs, Levenshtein alignment per recording, pooled over recordings.\n- Sequence precision = correct / output signs; sequence recall = correct / reference signs; F1 their harmonic mean.\n- Commit latency = commit time - model-estimated sign end + compute time of the committing frame, for signs\n  committed during the stream (the end-of-recording flush is excluded, as in score_live_reel_swift_v17.py).\n- Frame compute = engine.process wall time per processed frame (landmarks, hand crops, MobileCLIP2, boundary,\n  recognizer, decoder); camera capture/decoding, model loading, UI and English are outside it.\n- Real-time factor = summed frame compute / recording duration.\n",
+ "device": "iPhone 13 (angelo), camera-paced replay through the Live path",
+ "runs": {
+  "tune_fp16_p0": {
+   "recordings": 89,
+   "substitutions": 8,
+   "deletions": 18,
+   "insertions": 8,
+   "correct": 200,
+   "references": 226,
+   "hypotheses": 216,
+   "wer": 0.1504424778761062,
+   "precision": 0.9259259259259259,
+   "recall": 0.8849557522123894,
+   "f1": 0.9049773755656108,
+   "exact_sequences": 63,
+   "commit_latency_s": {
+    "n": 133,
+    "median": 0.2597772916158041,
+    "p90": 0.6631178617477418,
+    "max": 1.0909186283747356,
+    "share_under_0_5": 0.706766917293233
+   },
+   "frame_compute_ms": {
+    "frames": 5144,
+    "median": 36.32444143295288,
+    "mean": 37.08939233426914,
+    "p90": 56.98987245559692,
+    "p95": 61.62954568862915,
+    "max": 350.2110242843628
+   },
+   "recording_seconds": 258.10000100000013,
+   "processed_fps": 19.93025951208732,
+   "offered_fps": 29.999999883765966,
+   "real_time_factor": 0.7392012143676062,
+   "captions_ms": {
+    "update_median": 2.073541661957279,
+    "update_p95": 3.987395844887942,
+    "finish_median": 7.635624991962686,
+    "finish_p95": 14.181891671614716
+   },
+   "t5_ms": {
+    "append_median": 71.77416665945202,
+    "append_p95": 106.05486667482177,
+    "finish_median": 75.42154166731052,
+    "finish_p95": 102.23491665674374,
+    "per_utterance_total_median": 159.1212083294522,
+    "per_utterance_total_p95": 293.08628332801163
+   },
+   "thermal_max": 2,
+   "load_ms": 821.7580416530836,
+   "peak_sampled_mb": 336.70413970947266,
+   "system_version": "Version 26.7.2 (Build 23H127)"
+  },
+  "tune_fp32_p1": {
+   "recordings": 89,
+   "substitutions": 9,
+   "deletions": 40,
+   "insertions": 4,
+   "correct": 177,
+   "references": 226,
+   "hypotheses": 190,
+   "wer": 0.2345132743362832,
+   "precision": 0.9315789473684211,
+   "recall": 0.7831858407079646,
+   "f1": 0.8509615384615384,
+   "exact_sequences": 49,
+   "commit_latency_s": {
+    "n": 120,
+    "median": 0.4923090577125549,
+    "p90": 1.3398600474993387,
+    "max": 1.5171805540720622,
+    "share_under_0_5": 0.5
+   },
+   "frame_compute_ms": {
+    "frames": 3643,
+    "median": 65.19901752471924,
+    "mean": 63.881022963522554,
+    "p90": 107.91792869567871,
+    "p95": 117.10312366485591,
+    "max": 471.7749357223511
+   },
+   "recording_seconds": 258.10000100000013,
+   "processed_fps": 14.114684176231359,
+   "offered_fps": 29.999999883765966,
+   "real_time_factor": 0.9016604639847039,
+   "captions_ms": {
+    "update_median": 1.8484166648704559,
+    "update_p95": 2.9752916656434536,
+    "finish_median": 4.758208349812776,
+    "finish_p95": 8.811024995520704
+   },
+   "t5_ms": {
+    "append_median": 37.386916679679416,
+    "append_p95": 65.5715833287104,
+    "finish_median": 37.75612497702241,
+    "finish_p95": 77.04394166357811,
+    "per_utterance_total_median": 76.77400004467927,
+    "per_utterance_total_p95": 191.8566499836742
+   },
+   "thermal_max": 2,
+   "load_ms": 18540.667499997653,
+   "peak_sampled_mb": 496.1730270385742,
+   "system_version": "Version 26.7.2 (Build 23H127)"
+  },
+  "tune_fp32_p2": {
+   "recordings": 89,
+   "substitutions": 9,
+   "deletions": 41,
+   "insertions": 3,
+   "correct": 176,
+   "references": 226,
+   "hypotheses": 188,
+   "wer": 0.2345132743362832,
+   "precision": 0.9361702127659575,
+   "recall": 0.7787610619469026,
+   "f1": 0.8502415458937199,
+   "exact_sequences": 48,
+   "commit_latency_s": {
+    "n": 121,
+    "median": 0.5173599958419799,
+    "p90": 1.2939270257949829,
+    "max": 1.49689998626709,
+    "share_under_0_5": 0.48760330578512395
+   },
+   "frame_compute_ms": {
+    "frames": 3622,
+    "median": 66.64246320724487,
+    "mean": 64.40271859271694,
+    "p90": 108.06394815444946,
+    "p95": 116.39124155044554,
+    "max": 391.2060260772705
+   },
+   "recording_seconds": 258.10000100000013,
+   "processed_fps": 14.033320364070816,
+   "offered_fps": 29.999999883765966,
+   "real_time_factor": 0.9037839823286967,
+   "captions_ms": {
+    "update_median": 1.845583348767832,
+    "update_p95": 2.918464581307489,
+    "finish_median": 4.54925000667572,
+    "finish_p95": 8.14640832832083
+   },
+   "t5_ms": {
+    "append_median": 36.032000003615394,
+    "append_p95": 65.5374166672118,
+    "finish_median": 40.5952500004787,
+    "finish_p95": 65.62071666121483,
+    "per_utterance_total_median": 78.15012498758733,
+    "per_utterance_total_p95": 150.9636499918997
+   },
+   "thermal_max": 2,
+   "load_ms": 3224.752208334394,
+   "peak_sampled_mb": 485.9698791503906,
+   "system_version": "Version 26.7.2 (Build 23H127)"
+  },
+  "tune_fp16_p3": {
+   "recordings": 89,
+   "substitutions": 9,
+   "deletions": 19,
+   "insertions": 10,
+   "correct": 198,
+   "references": 226,
+   "hypotheses": 217,
+   "wer": 0.168141592920354,
+   "precision": 0.9124423963133641,
+   "recall": 0.8761061946902655,
+   "f1": 0.8939051918735892,
+   "exact_sequences": 61,
+   "commit_latency_s": {
+    "n": 135,
+    "median": 0.25298236211140945,
+    "p90": 0.696820572217306,
+    "max": 1.3653202851613364,
+    "share_under_0_5": 0.674074074074074
+   },
+   "frame_compute_ms": {
+    "frames": 5154,
+    "median": 37.465035915374756,
+    "mean": 37.95259485514903,
+    "p90": 57.76543617248535,
+    "p95": 61.47266626358031,
+    "max": 391.42000675201416
+   },
+   "recording_seconds": 258.10000100000013,
+   "processed_fps": 19.969004184544723,
+   "offered_fps": 29.999999883765966,
+   "real_time_factor": 0.7578755254768016,
+   "captions_ms": {
+    "update_median": 2.0914166525471956,
+    "update_p95": 3.298137515957933,
+    "finish_median": 8.112458337564021,
+    "finish_p95": 12.498900014907122
+   },
+   "t5_ms": {
+    "append_median": 67.18845834257081,
+    "append_p95": 98.79926668654662,
+    "finish_median": 74.61433333810419,
+    "finish_p95": 103.08178333798423,
+    "per_utterance_total_median": 151.94320835871622,
+    "per_utterance_total_p95": 276.4099583495408
+   },
+   "thermal_max": 2,
+   "load_ms": 987.7147083170712,
+   "peak_sampled_mb": 316.89168548583984,
+   "system_version": "Version 26.7.2 (Build 23H127)"
+  },
+  "live_fp16_p0": {
+   "recordings": 1,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "correct": 16,
+   "references": 16,
+   "hypotheses": 16,
+   "wer": 0.0,
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0,
+   "exact_sequences": 1,
+   "commit_latency_s": {
+    "n": 16,
+    "median": 0.65379368464152,
+    "p90": 0.7578254461288481,
+    "max": 0.8185220241546638,
+    "share_under_0_5": 0.3125
+   },
+   "frame_compute_ms": {
+    "frames": 518,
+    "median": 28.171002864837646,
+    "mean": 34.53646180252311,
+    "p90": 57.178401947021484,
+    "p95": 62.897300720214844,
+    "max": 954.7940492630005
+   },
+   "recording_seconds": 26.066667,
+   "processed_fps": 19.872122508029125,
+   "offered_fps": 29.999999616368292,
+   "real_time_factor": 0.6863127999336076,
+   "captions_ms": {
+    "update_median": 4.121916688745841,
+    "update_p95": 10.465208344976407,
+    "finish_median": 6.269916688324884,
+    "finish_p95": 6.269916688324884
+   },
+   "t5_ms": {
+    "append_median": 161.95106248778757,
+    "append_p95": 322.93835417658556,
+    "finish_median": 0.07174999336712062,
+    "finish_p95": 0.07174999336712062,
+    "per_utterance_total_median": 2875.552791694645,
+    "per_utterance_total_p95": 2875.552791694645
+   },
+   "thermal_max": 0,
+   "load_ms": 2279.873041668907,
+   "peak_sampled_mb": 313.62601470947266,
+   "system_version": "Version 26.7.2 (Build 23H127)"
+  },
+  "tune_every_fp16_p0": {
+   "recordings": 89,
+   "substitutions": 9,
+   "deletions": 15,
+   "insertions": 9,
+   "correct": 202,
+   "references": 226,
+   "hypotheses": 220,
+   "wer": 0.14601769911504425,
+   "precision": 0.9181818181818182,
+   "recall": 0.8938053097345132,
+   "f1": 0.9058295964125559,
+   "exact_sequences": 63,
+   "commit_latency_s": {
+    "n": 141,
+    "median": 0.23721904754638667,
+    "p90": 0.6602083524068196,
+    "max": 1.056663425763448,
+    "share_under_0_5": 0.6808510638297872
+   },
+   "frame_compute_ms": {
+    "frames": 5161,
+    "median": 19.731998443603516,
+    "mean": 19.342587821545052,
+    "p90": 29.443979263305664,
+    "p95": 33.558011054992676,
+    "max": 398.38099479675293
+   },
+   "recording_seconds": 258.10000100000013,
+   "processed_fps": 19.996125455264906,
+   "offered_fps": 29.999999883765966,
+   "real_time_factor": 0.386776812709094,
+   "captions_ms": {
+    "update_median": 1.7466666613472626,
+    "update_p95": 2.8163687413325533,
+    "finish_median": 7.341583346715197,
+    "finish_p95": 13.812500005587934
+   },
+   "t5_ms": {
+    "append_median": 69.44729166571051,
+    "append_p95": 98.58308333787136,
+    "finish_median": 62.62054166290909,
+    "finish_p95": 101.07910833903588,
+    "per_utterance_total_median": 154.85837499727495,
+    "per_utterance_total_p95": 285.7296499889343
+   },
+   "thermal_max": 1,
+   "load_ms": 1036.6814166482072,
+   "peak_sampled_mb": 252.54784393310547,
+   "system_version": "Version 26.7.2 (Build 23H127)"
+  },
+  "tune_every_fp32_p1": {
+   "recordings": 89,
+   "substitutions": 8,
+   "deletions": 15,
+   "insertions": 10,
+   "correct": 203,
+   "references": 226,
+   "hypotheses": 221,
+   "wer": 0.14601769911504425,
+   "precision": 0.918552036199095,
+   "recall": 0.8982300884955752,
+   "f1": 0.9082774049217002,
+   "exact_sequences": 64,
+   "commit_latency_s": {
+    "n": 143,
+    "median": 0.3096359491348266,
+    "p90": 0.766722207069397,
+    "max": 1.1465439796447754,
+    "share_under_0_5": 0.6853146853146853
+   },
+   "frame_compute_ms": {
+    "frames": 5161,
+    "median": 85.01601219177246,
+    "mean": 80.84613704977052,
+    "p90": 136.37995719909668,
+    "p95": 146.95000648498535,
+    "max": 440.00399112701416
+   },
+   "recording_seconds": 258.10000100000013,
+   "processed_fps": 19.996125455264906,
+   "offered_fps": 29.999999883765966,
+   "real_time_factor": 1.6166094990207514,
+   "captions_ms": {
+    "update_median": 2.6399166672490537,
+    "update_p95": 3.7791958180605416,
+    "finish_median": 4.555916675599292,
+    "finish_p95": 7.9772166791372
+   },
+   "t5_ms": {
+    "append_median": 39.377500012051314,
+    "append_p95": 79.43625833140686,
+    "finish_median": 45.478708343580365,
+    "finish_p95": 96.6873583383858,
+    "per_utterance_total_median": 83.67116667795926,
+    "per_utterance_total_p95": 242.77653334429476
+   },
+   "thermal_max": 1,
+   "load_ms": 3104.9961666867603,
+   "peak_sampled_mb": 496.4074020385742,
+   "system_version": "Version 26.7.2 (Build 23H127)"
+  },
+  "tune_every_fp16_p2": {
+   "recordings": 89,
+   "substitutions": 9,
+   "deletions": 15,
+   "insertions": 9,
+   "correct": 202,
+   "references": 226,
+   "hypotheses": 220,
+   "wer": 0.14601769911504425,
+   "precision": 0.9181818181818182,
+   "recall": 0.8938053097345132,
+   "f1": 0.9058295964125559,
+   "exact_sequences": 63,
+   "commit_latency_s": {
+    "n": 141,
+    "median": 0.24047799110412593,
+    "p90": 0.6600383599599202,
+    "max": 1.0617443641026814,
+    "share_under_0_5": 0.6808510638297872
+   },
+   "frame_compute_ms": {
+    "frames": 5161,
+    "median": 20.161032676696777,
+    "mean": 19.619440136203423,
+    "p90": 30.616044998168945,
+    "p95": 34.75499153137207,
+    "max": 365.7439947128296
+   },
+   "recording_seconds": 258.10000100000013,
+   "processed_fps": 19.996125455264906,
+   "offered_fps": 29.999999883765966,
+   "real_time_factor": 0.3923127863255832,
+   "captions_ms": {
+    "update_median": 1.749875009409152,
+    "update_p95": 2.4871145869838074,
+    "finish_median": 7.835083320969716,
+    "finish_p95": 12.021583336172625
+   },
+   "t5_ms": {
+    "append_median": 67.05974999931641,
+    "append_p95": 100.19895833102055,
+    "finish_median": 56.58262499491684,
+    "finish_p95": 101.5593999880366,
+    "per_utterance_total_median": 152.0933749852702,
+    "per_utterance_total_p95": 264.971483318368
+   },
+   "thermal_max": 1,
+   "load_ms": 981.0197916813195,
+   "peak_sampled_mb": 335.09483337402344,
+   "system_version": "Version 26.7.2 (Build 23H127)"
+  }
+ },
+ "pooled": {
+  "tune_fp16": {
+   "recordings": 178,
+   "substitutions": 17,
+   "deletions": 37,
+   "insertions": 18,
+   "correct": 398,
+   "references": 452,
+   "hypotheses": 433,
+   "wer": 0.1592920353982301,
+   "precision": 0.9191685912240185,
+   "recall": 0.8805309734513275,
+   "f1": 0.8994350282485876,
+   "exact_sequences": 124,
+   "commit_latency_s": {
+    "n": 268,
+    "median": 0.2553051988283794,
+    "p90": 0.6770365436871847,
+    "max": 1.3653202851613364,
+    "share_under_0_5": 0.6902985074626866
+   },
+   "frame_compute_ms": {
+    "frames": 10298,
+    "median": 36.91500425338745,
+    "mean": 37.521412706439946,
+    "p90": 57.337331771850586,
+    "p95": 61.57160997390747,
+    "max": 391.42000675201416
+   },
+   "recording_seconds": 516.200002,
+   "processed_fps": 19.94963184831603,
+   "offered_fps": 29.99999988376598,
+   "real_time_factor": 0.7485383699222042,
+   "captions_ms": {
+    "update_median": 2.088416658807546,
+    "update_p95": 3.6588416609447427,
+    "finish_median": 7.819312493666075,
+    "finish_p95": 13.718379153579008
+   },
+   "t5_ms": {
+    "append_median": 68.94285418093204,
+    "append_p95": 100.26917500072159,
+    "finish_median": 75.01793750270735,
+    "finish_p95": 102.98150833841646,
+    "per_utterance_total_median": 154.07435418455862,
+    "per_utterance_total_p95": 292.01044583460316
+   },
+   "thermal_max": 2,
+   "commit_score_reliability": {
+    "n": 433,
+    "ece": 0.02815752600391954,
+    "mean_score": 0.9307177113157445,
+    "precision": 0.9191685912240185,
+    "bins": [
+     {
+      "low": 0.5,
+      "high": 0.6000000000000001,
+      "n": 5,
+      "precision": 0.2,
+      "mean_score": 0.5822703895503233
+     },
+     {
+      "low": 0.6000000000000001,
+      "high": 0.7000000000000001,
+      "n": 11,
+      "precision": 0.7272727272727273,
+      "mean_score": 0.6356209518146453
+     },
+     {
+      "low": 0.7000000000000001,
+      "high": 0.8,
+      "n": 15,
+      "precision": 0.9333333333333333,
+      "mean_score": 0.7608299766699342
+     },
+     {
+      "low": 0.8,
+      "high": 0.9,
+      "n": 45,
+      "precision": 0.8,
+      "mean_score": 0.860170341294731
+     },
+     {
+      "low": 0.9,
+      "high": 1.0,
+      "n": 357,
+      "precision": 0.9495798319327731,
+      "mean_score": 0.9607212088898957
+     }
+    ]
+   }
+  },
+  "tune_fp32": {
+   "recordings": 178,
+   "substitutions": 18,
+   "deletions": 81,
+   "insertions": 7,
+   "correct": 353,
+   "references": 452,
+   "hypotheses": 378,
+   "wer": 0.2345132743362832,
+   "precision": 0.9338624338624338,
+   "recall": 0.7809734513274337,
+   "f1": 0.8506024096385542,
+   "exact_sequences": 97,
+   "commit_latency_s": {
+    "n": 241,
+    "median": 0.5162279844284057,
+    "p90": 1.33947430451711,
+    "max": 1.5171805540720622,
+    "share_under_0_5": 0.49377593360995853
+   },
+   "frame_compute_ms": {
+    "frames": 7265,
+    "median": 66.05708599090576,
+    "mean": 64.14111677893096,
+    "p90": 107.93881416320801,
+    "p95": 116.76459312438958,
+    "max": 471.7749357223511
+   },
+   "recording_seconds": 516.200002,
+   "processed_fps": 14.074002270151095,
+   "offered_fps": 29.99999988376598,
+   "real_time_factor": 0.9027222231567007,
+   "captions_ms": {
+    "update_median": 1.8476666882634163,
+    "update_p95": 2.9689416580367833,
+    "finish_median": 4.628791662980802,
+    "finish_p95": 8.397916660760535
+   },
+   "t5_ms": {
+    "append_median": 36.771416693227366,
+    "append_p95": 65.53787499433383,
+    "finish_median": 39.81135417416226,
+    "finish_p95": 70.6890208341065,
+    "per_utterance_total_median": 77.01510416518431,
+    "per_utterance_total_p95": 160.80005416297357
+   },
+   "thermal_max": 2,
+   "commit_score_reliability": {
+    "n": 378,
+    "ece": 0.021625962022022535,
+    "mean_score": 0.9281541653574062,
+    "precision": 0.9338624338624338,
+    "bins": [
+     {
+      "low": 0.4,
+      "high": 0.5,
+      "n": 3,
+      "precision": 0.3333333333333333,
+      "mean_score": 0.46224717724197023
+     },
+     {
+      "low": 0.5,
+      "high": 0.6000000000000001,
+      "n": 5,
+      "precision": 0.8,
+      "mean_score": 0.5753436702916271
+     },
+     {
+      "low": 0.6000000000000001,
+      "high": 0.7000000000000001,
+      "n": 8,
+      "precision": 0.5,
+      "mean_score": 0.6684294296251203
+     },
+     {
+      "low": 0.7000000000000001,
+      "high": 0.8,
+      "n": 20,
+      "precision": 0.7,
+      "mean_score": 0.7637133552992565
+     },
+     {
+      "low": 0.8,
+      "high": 0.9,
+      "n": 39,
+      "precision": 0.8974358974358975,
+      "mean_score": 0.8529991847526196
+     },
+     {
+      "low": 0.9,
+      "high": 1.0,
+      "n": 303,
+      "precision": 0.9735973597359736,
+      "mean_score": 0.9659740721900237
+     }
+    ]
+   }
+  },
+  "live_fp16": {
+   "recordings": 1,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "correct": 16,
+   "references": 16,
+   "hypotheses": 16,
+   "wer": 0.0,
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0,
+   "exact_sequences": 1,
+   "commit_latency_s": {
+    "n": 16,
+    "median": 0.65379368464152,
+    "p90": 0.7578254461288481,
+    "max": 0.8185220241546638,
+    "share_under_0_5": 0.3125
+   },
+   "frame_compute_ms": {
+    "frames": 518,
+    "median": 28.171002864837646,
+    "mean": 34.53646180252311,
+    "p90": 57.178401947021484,
+    "p95": 62.897300720214844,
+    "max": 954.7940492630005
+   },
+   "recording_seconds": 26.066667,
+   "processed_fps": 19.872122508029125,
+   "offered_fps": 29.999999616368292,
+   "real_time_factor": 0.6863127999336076,
+   "captions_ms": {
+    "update_median": 4.121916688745841,
+    "update_p95": 10.465208344976407,
+    "finish_median": 6.269916688324884,
+    "finish_p95": 6.269916688324884
+   },
+   "t5_ms": {
+    "append_median": 161.95106248778757,
+    "append_p95": 322.93835417658556,
+    "finish_median": 0.07174999336712062,
+    "finish_p95": 0.07174999336712062,
+    "per_utterance_total_median": 2875.552791694645,
+    "per_utterance_total_p95": 2875.552791694645
+   },
+   "thermal_max": 0,
+   "commit_score_reliability": {
+    "n": 16,
+    "ece": 0.06904936260010096,
+    "mean_score": 0.930950637399899,
+    "precision": 1.0,
+    "bins": [
+     {
+      "low": 0.6000000000000001,
+      "high": 0.7000000000000001,
+      "n": 1,
+      "precision": 1.0,
+      "mean_score": 0.6485267204246811
+     },
+     {
+      "low": 0.8,
+      "high": 0.9,
+      "n": 3,
+      "precision": 1.0,
+      "mean_score": 0.8718350917351155
+     },
+     {
+      "low": 0.9,
+      "high": 1.0,
+      "n": 12,
+      "precision": 1.0,
+      "mean_score": 0.9692648502306964
+     }
+    ]
+   }
+  },
+  "tune_every_fp16": {
+   "recordings": 178,
+   "substitutions": 18,
+   "deletions": 30,
+   "insertions": 18,
+   "correct": 404,
+   "references": 452,
+   "hypotheses": 440,
+   "wer": 0.14601769911504425,
+   "precision": 0.9181818181818182,
+   "recall": 0.8938053097345132,
+   "f1": 0.9058295964125559,
+   "exact_sequences": 126,
+   "commit_latency_s": {
+    "n": 282,
+    "median": 0.2388485193252563,
+    "p90": 0.6601913531621297,
+    "max": 1.0617443641026814,
+    "share_under_0_5": 0.6808510638297872
+   },
+   "frame_compute_ms": {
+    "frames": 10322,
+    "median": 19.901514053344727,
+    "mean": 19.481013978874238,
+    "p90": 30.06070852279663,
+    "p95": 34.1749370098114,
+    "max": 398.38099479675293
+   },
+   "recording_seconds": 516.200002,
+   "processed_fps": 19.996125455264913,
+   "offered_fps": 29.99999988376598,
+   "real_time_factor": 0.3895447995173388,
+   "captions_ms": {
+    "update_median": 1.749875009409152,
+    "update_p95": 2.565541653893888,
+    "finish_median": 7.533187512308359,
+    "finish_p95": 12.721939582843335
+   },
+   "t5_ms": {
+    "append_median": 68.05289583280683,
+    "append_p95": 100.18950208177557,
+    "finish_median": 58.58875000558328,
+    "finish_p95": 101.47589374537347,
+    "per_utterance_total_median": 153.4060833218973,
+    "per_utterance_total_p95": 271.80803749797633
+   },
+   "thermal_max": 1,
+   "commit_score_reliability": {
+    "n": 440,
+    "ece": 0.01579151262464793,
+    "mean_score": 0.933973330806466,
+    "precision": 0.9181818181818182,
+    "bins": [
+     {
+      "low": 0.5,
+      "high": 0.6000000000000001,
+      "n": 2,
+      "precision": 0.0,
+      "mean_score": 0.5825378026636969
+     },
+     {
+      "low": 0.6000000000000001,
+      "high": 0.7000000000000001,
+      "n": 8,
+      "precision": 0.5,
+      "mean_score": 0.6324983456898141
+     },
+     {
+      "low": 0.7000000000000001,
+      "high": 0.8,
+      "n": 18,
+      "precision": 0.6666666666666666,
+      "mean_score": 0.7447068597718163
+     },
+     {
+      "low": 0.8,
+      "high": 0.9,
+      "n": 44,
+      "precision": 0.8181818181818182,
+      "mean_score": 0.8541448901701227
+     },
+     {
+      "low": 0.9,
+      "high": 1.0,
+      "n": 368,
+      "precision": 0.9565217391304348,
+      "mean_score": 0.9612394145125573
+     }
+    ]
+   }
+  },
+  "tune_every_fp32": {
+   "recordings": 89,
+   "substitutions": 8,
+   "deletions": 15,
+   "insertions": 10,
+   "correct": 203,
+   "references": 226,
+   "hypotheses": 221,
+   "wer": 0.14601769911504425,
+   "precision": 0.918552036199095,
+   "recall": 0.8982300884955752,
+   "f1": 0.9082774049217002,
+   "exact_sequences": 64,
+   "commit_latency_s": {
+    "n": 143,
+    "median": 0.3096359491348266,
+    "p90": 0.766722207069397,
+    "max": 1.1465439796447754,
+    "share_under_0_5": 0.6853146853146853
+   },
+   "frame_compute_ms": {
+    "frames": 5161,
+    "median": 85.01601219177246,
+    "mean": 80.84613704977052,
+    "p90": 136.37995719909668,
+    "p95": 146.95000648498535,
+    "max": 440.00399112701416
+   },
+   "recording_seconds": 258.10000100000013,
+   "processed_fps": 19.996125455264906,
+   "offered_fps": 29.999999883765966,
+   "real_time_factor": 1.6166094990207514,
+   "captions_ms": {
+    "update_median": 2.6399166672490537,
+    "update_p95": 3.7791958180605416,
+    "finish_median": 4.555916675599292,
+    "finish_p95": 7.9772166791372
+   },
+   "t5_ms": {
+    "append_median": 39.377500012051314,
+    "append_p95": 79.43625833140686,
+    "finish_median": 45.478708343580365,
+    "finish_p95": 96.6873583383858,
+    "per_utterance_total_median": 83.67116667795926,
+    "per_utterance_total_p95": 242.77653334429476
+   },
+   "thermal_max": 1,
+   "commit_score_reliability": {
+    "n": 221,
+    "ece": 0.027055717824949914,
+    "mean_score": 0.9363334661207319,
+    "precision": 0.918552036199095,
+    "bins": [
+     {
+      "low": 0.5,
+      "high": 0.6000000000000001,
+      "n": 1,
+      "precision": 1.0,
+      "mean_score": 0.5238435201960373
+     },
+     {
+      "low": 0.6000000000000001,
+      "high": 0.7000000000000001,
+      "n": 3,
+      "precision": 0.0,
+      "mean_score": 0.6575413368210314
+     },
+     {
+      "low": 0.7000000000000001,
+      "high": 0.8,
+      "n": 11,
+      "precision": 0.8181818181818182,
+      "mean_score": 0.7683043333170795
+     },
+     {
+      "low": 0.8,
+      "high": 0.9,
+      "n": 23,
+      "precision": 0.8260869565217391,
+      "mean_score": 0.8623607731274696
+     },
+     {
+      "low": 0.9,
+      "high": 1.0,
+      "n": 183,
+      "precision": 0.9508196721311475,
+      "mean_score": 0.9625550985442783
+     }
+    ]
+   }
+  },
+  "all_fp16": {
+   "recordings": 178,
+   "substitutions": 17,
+   "deletions": 37,
+   "insertions": 18,
+   "correct": 398,
+   "references": 452,
+   "hypotheses": 433,
+   "wer": 0.1592920353982301,
+   "precision": 0.9191685912240185,
+   "recall": 0.8805309734513275,
+   "f1": 0.8994350282485876,
+   "exact_sequences": 124,
+   "commit_latency_s": {
+    "n": 268,
+    "median": 0.2553051988283794,
+    "p90": 0.6770365436871847,
+    "max": 1.3653202851613364,
+    "share_under_0_5": 0.6902985074626866
+   },
+   "frame_compute_ms": {
+    "frames": 10298,
+    "median": 36.91500425338745,
+    "mean": 37.521412706439946,
+    "p90": 57.337331771850586,
+    "p95": 61.57160997390747,
+    "max": 391.42000675201416
+   },
+   "recording_seconds": 516.200002,
+   "processed_fps": 19.94963184831603,
+   "offered_fps": 29.99999988376598,
+   "real_time_factor": 0.7485383699222042,
+   "captions_ms": {
+    "update_median": 2.088416658807546,
+    "update_p95": 3.6588416609447427,
+    "finish_median": 7.819312493666075,
+    "finish_p95": 13.718379153579008
+   },
+   "t5_ms": {
+    "append_median": 68.94285418093204,
+    "append_p95": 100.26917500072159,
+    "finish_median": 75.01793750270735,
+    "finish_p95": 102.98150833841646,
+    "per_utterance_total_median": 154.07435418455862,
+    "per_utterance_total_p95": 292.01044583460316
+   },
+   "thermal_max": 2,
+   "commit_score_reliability": {
+    "n": 433,
+    "ece": 0.02815752600391954,
+    "mean_score": 0.9307177113157445,
+    "precision": 0.9191685912240185,
+    "bins": [
+     {
+      "low": 0.5,
+      "high": 0.6000000000000001,
+      "n": 5,
+      "precision": 0.2,
+      "mean_score": 0.5822703895503233
+     },
+     {
+      "low": 0.6000000000000001,
+      "high": 0.7000000000000001,
+      "n": 11,
+      "precision": 0.7272727272727273,
+      "mean_score": 0.6356209518146453
+     },
+     {
+      "low": 0.7000000000000001,
+      "high": 0.8,
+      "n": 15,
+      "precision": 0.9333333333333333,
+      "mean_score": 0.7608299766699342
+     },
+     {
+      "low": 0.8,
+      "high": 0.9,
+      "n": 45,
+      "precision": 0.8,
+      "mean_score": 0.860170341294731
+     },
+     {
+      "low": 0.9,
+      "high": 1.0,
+      "n": 357,
+      "precision": 0.9495798319327731,
+      "mean_score": 0.9607212088898957
+     }
+    ]
+   }
+  }
+ },
+ "available": [
+  "tune_fp16_p0",
+  "tune_fp32_p1",
+  "tune_fp32_p2",
+  "tune_fp16_p3",
+  "live_fp16_p0",
+  "tune_every_fp16_p0",
+  "tune_every_fp32_p1",
+  "tune_every_fp16_p2"
+ ]
+}
