@@ -1,3 +1,9 @@
+## 2026-10-30 — Award opening clip replay with current live captions
+
+At user request, located the full saved phone take `data/local/phone_session_pull_v17_20261009c/live_reel_videos/20260930_134459_04.mp4` (12.67 s; the Downloads copy is shorter) and ran the current desktop Live segmental entrypoint with `--realtime-video`, captions and speech enabled. Recognized HELLO GOOD MORNING HOW YOU; final caption “Hello, good morning, how are you?”. Caption events began at 1.67 s; full question settled and remaining sentence speech queued at 7.62 s, before EOF Finish at 12.63 s. This confirms existing desktop-caption behavior on the requested demo, not new phone performance or independent evaluation. Evidence: `artifacts/reports/magsaysay_demo_replay_20261030/REPORT.md` and session `20261030_211826_140378/history.json`. Desktop one-click launcher in `/Users/frnzlo/Desktop/ATLAS-recording/Replay-opening-with-live-captions.command`. No app source, model, training, manuscript or Canva changes; no protected test access. Current ground truth unchanged. Next: replay for recording, and describe this demonstration as the current live caption tagger, separate from the paper's retained T5 evaluation.
+
+---
+
 ## 2026-10-14 — Desktop: speech without Finish (1.5 s), long-pause sentence freeze, middle-finger gesture
 
 User tried the desktop app: speech waited for the 3.5 s settle (session 20261014_014607: HELLO HOW
